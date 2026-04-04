@@ -17,6 +17,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "ARC",
   description: "GTM Command Center",
+  icons: {
+    icon: "/ARC.png",
+    shortcut: "/ARC.png",
+    apple: "/ARC.png",
+  },
 };
 
 export default function RootLayout({

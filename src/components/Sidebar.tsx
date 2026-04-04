@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, PenLine, Calendar, BarChart3, AudioLines, Database } from "lucide-react";
 import { VERSION } from "@/lib/version";
@@ -22,21 +23,28 @@ export function Sidebar() {
       {/* Desktop sidebar */}
       <aside className="sidebar fixed top-0 left-0 z-40 h-screen bg-surface/80 backdrop-blur-xl border-r border-[rgba(255,255,255,0.06)] flex-col hidden lg:flex overflow-hidden">
         {/* Logo */}
-        <div className="h-14 flex items-center px-5 gap-3 shrink-0">
-          <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center shrink-0">
-            <span className="text-[10px] font-black text-black leading-none">A</span>
-          </div>
-          <div className="flex items-center logo-full">
-            <span className="text-sm font-semibold tracking-tight text-white">
-              ARC
-            </span>
-            <span 
-              className="text-[11px] font-medium px-1.5 py-0.5 rounded border border-white/30 ml-1.5"
-              style={{ opacity: 0.6 }}
-            >
-              v{VERSION}
-            </span>
-          </div>
+        <div className="w-full flex items-center justify-center py-3 shrink-0">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Image 
+              src="/ARC.png" 
+              alt="ARC" 
+              width={32} 
+              height={32} 
+              className="w-8 h-8 object-contain"
+              priority
+            />
+            <div className="flex items-center logo-full">
+              <span className="text-sm font-semibold tracking-tight text-white">
+                ARC
+              </span>
+              <span 
+                className="text-[11px] font-medium px-1.5 py-0.5 rounded border border-white/30 ml-1.5"
+                style={{ opacity: 0.6 }}
+              >
+                v{VERSION}
+              </span>
+            </div>
+          </Link>
         </div>
 
         {/* Nav */}

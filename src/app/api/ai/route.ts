@@ -10,6 +10,67 @@ function tryHostname(url: string) {
   try { return new URL(url).hostname.replace('www.', '') } catch { return '' }
 }
 
+// ICP relevance scoring
+const ICP_KEYWORDS = {
+  high: ['solo founder', 'coaching', 'clinic', 'real estate', 'tutoring', 'whatsapp', 'leads', 'india', 'small business', 'smb'],
+  medium: ['saas', 'marketing', 'sales', 'automation', 'crm', 'growth', 'startup', 'b2b', 'enterprise']
+}
+
+function calculateRelevanceScore(title: string, snippet: string = ''): number {
+  const text = (title + ' ' + snippet).toLowerCase()
+  let score = 0
+  
+  // High value keywords (+10)
+  ICP_KEYWORDS.high.forEach(kw => {
+    if (text.includes(kw)) score += 10
+  })
+  
+  // Medium value keywords (+5)
+  ICP_KEYWORDS.medium.forEach(kw => {
+    if (text.includes(kw)) score += 5
+  })
+  
+  return score
+}
+
+interface SignalInput {
+  title: string
+  url: string
+  snippet: string
+  source_name: string
+  published_date: string
+  image_url?: string
+  trend_score: number
+  label: string
+  source_type?: string
+  favicon?: string
+  source_url?: string
+  pillar?: string
+}
+
+interface SignalWithRelevance extends SignalInput {
+  relevance_score: number
+}
+
+function rankAndLimitSignals(signals: SignalInput[], limit = 20): SignalWithRelevance[] {
+  // Add relevance score to each signal
+  const scored: SignalWithRelevance[] = signals.map(s => ({
+    ...s,
+    relevance_score: calculateRelevanceScore(s.title, s.snippet)
+  }))
+  
+  // Sort by relevance score descending, then by trend_score
+  scored.sort((a, b) => {
+    if (b.relevance_score !== a.relevance_score) {
+      return b.relevance_score - a.relevance_score
+    }
+    return b.trend_score - a.trend_score
+  })
+  
+  // Return top N
+  return scored.slice(0, limit)
+}
+
 // Extract og:image from URL using Microlink API (free tier: 100 req/day)
 async function extractImage(url: string): Promise<string | null> {
   try {
@@ -154,7 +215,9 @@ export async function POST(req: Request) {
         const signals = Array.isArray(raw) ? raw : []
         // Extract images for signals without them
         await batchExtractImages(signals, 3)
-        return Response.json({ signals })
+        // Rank by relevance and limit to top 20
+        const ranked = rankAndLimitSignals(signals, 20)
+        return Response.json({ signals: ranked })
       }
 
       // Default: read all active sources from Supabase
@@ -186,7 +249,9 @@ export async function POST(req: Request) {
       )
       // Extract images for signals without them
       await batchExtractImages(signals, 3)
-      return Response.json({ signals })
+      // Rank by relevance and limit to top 20
+      const ranked = rankAndLimitSignals(signals, 20)
+      return Response.json({ signals: ranked })
     }
 
     // ── get-topics ─────────────────────────────────────────────

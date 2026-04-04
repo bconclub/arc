@@ -1,18 +1,10 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Rss, Search, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import type { Signal } from '@/lib/supabase'
 
 type Topic = { label: string; query: string }
-
-const PILLAR_COLORS: Record<string, string> = {
-  pain_points:     '#2d1515',
-  build_journey:   '#15152d',
-  marketing_tips:  '#152d1f',
-  client_results:  '#2d2015',
-  default:         '#1a1a1a'
-}
 
 const STORAGE_KEY = 'arc:feed-topics'
 
@@ -116,17 +108,18 @@ export default function FeedPage() {
     setTopics(next)
     saveTopics(next)
     
-    // If deleted topic was active, reset to All
     if (activeTopic?.label === topicToDelete.label) {
       setActiveTopic(null)
       loadFeed(null)
     }
   }
 
-  const scoreLabel = (s: Signal) => {
-    if (s.trend_score >= 80) return { text: '▲ Hot ' + s.trend_score, color: '#EF9F27', bg: '#2d1f00' }
-    if (s.trend_score >= 60) return { text: '↑ Rising ' + s.trend_score, color: '#1D9E75', bg: '#001f15' }
-    return { text: '· Steady ' + s.trend_score, color: '#888780', bg: '#1a1a1a' }
+  // Get score badge based on relevance_score
+  const getScoreBadge = (s: Signal & { relevance_score?: number }) => {
+    const score = s.relevance_score || 0
+    if (score >= 30) return { text: 'High Impact', color: '#EF9F27', bg: '#2d1f00' }
+    if (score >= 15) return { text: 'Relevant', color: '#1D9E75', bg: '#001f15' }
+    return { text: 'Trending', color: '#888780', bg: '#1a1a1a' }
   }
 
   return (
@@ -136,7 +129,7 @@ export default function FeedPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
           <span style={{ fontSize: 16, fontWeight: 500, color: 'white' }}>Feed</span>
-          <span style={{ fontSize: 12, color: '#666', marginLeft: 8 }}>{signals.length} signals</span>
+          <span style={{ fontSize: 12, color: '#666', marginLeft: 8 }}>Top {signals.length} signals</span>
         </div>
         <button
           onClick={() => selectTopic(activeTopic)}
@@ -238,10 +231,10 @@ export default function FeedPage() {
 
       {/* Skeleton loading */}
       {loading && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gridAutoRows: '320px', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gridAutoRows: '280px', gap: 16 }}>
           {[1,2,3,4,5,6].map(i => (
             <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '0.5px solid #222', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: 135, background: '#1a1a1a', flexShrink: 0 }} />
+              <div style={{ height: 120, background: '#1a1a1a', flexShrink: 0 }} />
               <div style={{ flex: 1, padding: 12, background: '#111' }}>
                 <div style={{ height: 12, background: '#222', borderRadius: 4, marginBottom: 8 }} />
                 <div style={{ height: 10, background: '#1a1a1a', borderRadius: 4, width: '60%' }} />
@@ -255,13 +248,12 @@ export default function FeedPage() {
       {!loading && (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          gridAutoRows: '320px',
-          gap: 12,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gridAutoRows: '280px',
+          gap: 16,
         }}>
           {Array.isArray(signals) && signals.map((s, i) => {
-            const badge = scoreLabel(s)
-            const bg = PILLAR_COLORS[s.pillar ?? 'default'] ?? PILLAR_COLORS.default
+            const badge = getScoreBadge(s)
             return (
               <div key={s.url || i} style={{
                 height: '100%',
@@ -277,8 +269,8 @@ export default function FeedPage() {
 
                 {/* Image */}
                 <div style={{
-                  position: 'relative', height: 135, flexShrink: 0,
-                  background: s.image_url ? '#000' : bg, overflow: 'hidden',
+                  position: 'relative', height: 120, flexShrink: 0,
+                  background: s.image_url ? '#000' : '#1a1a1a', overflow: 'hidden',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   {s.image_url ? (
@@ -289,90 +281,56 @@ export default function FeedPage() {
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
-                  ) : s.favicon ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                      <img 
-                        src={s.favicon.replace('sz=32', 'sz=64')} 
-                        alt="" 
-                        style={{ width: 48, height: 48, borderRadius: 8, opacity: 0.5 }}
-                      />
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '0 16px' }}>
-                        {s.source_name}
-                      </span>
-                    </div>
-                  ) : (
-                    <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.13)', letterSpacing: '-0.5px' }}>
-                      {s.source_name}
-                    </span>
-                  )}
-                  <span style={{
-                    position: 'absolute', bottom: 10, left: 10,
-                    fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 99,
-                    background: badge.bg, color: badge.color,
-                    border: '0.5px solid ' + badge.color + '44',
-                  }}>
-                    {badge.text}
-                  </span>
+                  ) : null}
                 </div>
 
                 {/* Content */}
                 <div style={{
                   flex: 1, overflow: 'hidden',
-                  padding: '10px 12px 12px',
+                  padding: '12px',
                   display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                 }}>
                   <div>
-                    {/* Meta row */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      {s.favicon && (
-                        <img 
-                          src={s.favicon} 
-                          alt="" 
-                          style={{ width: 16, height: 16, borderRadius: 3, flexShrink: 0 }}
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                        />
-                      )}
-                      <span style={{ fontSize: 11, color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {s.source_name}
-                      </span>
-                      <span style={{
-                        fontSize: 9, fontWeight: 500, padding: '2px 6px', borderRadius: 99,
-                        background: s.source_type === 'rss' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
-                        color: s.source_type === 'rss' ? '#f59e0b' : '#3b82f6',
-                        border: `0.5px solid ${s.source_type === 'rss' ? 'rgba(245,158,11,0.3)' : 'rgba(59,130,246,0.3)'}`,
-                        display: 'flex', alignItems: 'center', gap: 3,
-                      }}>
-                        {s.source_type === 'rss' ? <Rss size={9} /> : <Search size={9} />}
-                        {s.source_type === 'rss' ? 'RSS' : 'Search'}
-                      </span>
-                      {s.published_date && (
-                        <span style={{ fontSize: 10, color: '#666' }}>
-                          {formatRelativeTime(s.published_date)}
-                        </span>
-                      )}
-                    </div>
-                    
+                    {/* Title */}
                     <p style={{
-                      fontSize: 13, fontWeight: 500, color: 'white',
+                      fontSize: 14, fontWeight: 500, color: 'white',
                       margin: '0 0 8px', lineHeight: 1.4,
-                      display: '-webkit-box', WebkitLineClamp: 3,
+                      display: '-webkit-box', WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical', overflow: 'hidden',
                     }}>
                       {s.title}
                     </p>
+                    
+                    {/* Excerpt */}
+                    <p style={{
+                      fontSize: 12, color: '#888',
+                      margin: '0 0 12px', lineHeight: 1.4,
+                      display: '-webkit-box', WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                    }}>
+                      {s.snippet || 'No excerpt available'}
+                    </p>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  
+                  {/* Footer: Time + Score + Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: '#666', flex: 1 }}>
+                      {formatRelativeTime(s.published_date)}
+                    </span>
+                    
+                    <span style={{
+                      fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 99,
+                      background: badge.bg, color: badge.color,
+                      border: '0.5px solid ' + badge.color + '44',
+                    }}>
+                      {badge.text}
+                    </span>
+                    
                     <button
                       onClick={() => router.push('/dashboard/write?topic=' + encodeURIComponent(s.title) + '&context=' + encodeURIComponent(s.snippet || ''))}
-                      style={{ flex: 1, fontSize: 11, padding: '6px 0', borderRadius: 8, border: '0.5px solid #333', background: 'transparent', color: '#aaa', cursor: 'pointer' }}
+                      style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '0.5px solid #333', background: 'transparent', color: '#aaa', cursor: 'pointer' }}
                     >
-                      Write this
-                    </button>
-                    <button
-                      onClick={() => window.open(s.url, '_blank')}
-                      style={{ fontSize: 11, padding: '6px 10px', borderRadius: 8, border: '0.5px solid #333', background: 'transparent', color: '#555', cursor: 'pointer' }}
-                    >
-                      ↗
+                      Write
                     </button>
                   </div>
                 </div>
