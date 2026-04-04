@@ -10,6 +10,34 @@ function tryHostname(url: string) {
   try { return new URL(url).hostname.replace('www.', '') } catch { return '' }
 }
 
+// Extract og:image from URL using Microlink API (free tier: 100 req/day)
+async function extractImage(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`)
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.data?.image?.url || data.data?.logo?.url || null
+  } catch {
+    return null
+  }
+}
+
+// Batch extract images for signals (with concurrency limit)
+async function batchExtractImages(signals: { url: string; image_url?: string }[], concurrency = 5): Promise<void> {
+  const queue = signals.filter(s => !s.image_url)
+  
+  async function processBatch(batch: typeof queue) {
+    await Promise.all(batch.map(async (signal) => {
+      const image = await extractImage(signal.url)
+      if (image) signal.image_url = image
+    }))
+  }
+  
+  for (let i = 0; i < queue.length; i += concurrency) {
+    await processBatch(queue.slice(i, i + concurrency))
+  }
+}
+
 // Used for the main feed — included in Anthropic API cost, no separate credits
 async function anthropicWebSearch(query: string): Promise<{
   title: string; url: string; snippet: string; source_name: string;
@@ -124,6 +152,8 @@ export async function POST(req: Request) {
         const enriched = hasContext ? topic : `${topic} ${ICP_SUFFIX}`
         const raw = await anthropicWebSearch(enriched)
         const signals = Array.isArray(raw) ? raw : []
+        // Extract images for signals without them
+        await batchExtractImages(signals, 3)
         return Response.json({ signals })
       }
 
@@ -154,6 +184,8 @@ export async function POST(req: Request) {
       const signals = results.flatMap(r =>
         r.status === 'fulfilled' && Array.isArray(r.value) ? r.value : []
       )
+      // Extract images for signals without them
+      await batchExtractImages(signals, 3)
       return Response.json({ signals })
     }
 
@@ -220,6 +252,129 @@ export async function POST(req: Request) {
       return new Response(stream, {
         headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       })
+    }
+
+    // ── generate-brain-prompt ──────────────────────────────────
+    if (action === 'generate-brain-prompt') {
+      const payload = (body.payload || {}) as { model?: string }
+      const { model = 'claude' } = payload
+
+      // Fetch voice context from Supabase
+      const { data: contextRows, error: ctxError } = await supabaseAdmin
+        .from('arc_context')
+        .select('key, value')
+        .in('key', ['voice_style', 'about_me', 'sample_posts'])
+
+      if (ctxError) {
+        console.error('Failed to fetch context:', ctxError)
+        return Response.json({ error: 'Failed to fetch context' }, { status: 500 })
+      }
+
+      const ctx = Object.fromEntries((contextRows || []).map((r: { key: string; value: string }) => [r.key, r.value]))
+      
+      const systemPrompt = `You are a prompt engineering expert. Create a concise system prompt that captures the writer's voice and style. Be specific and actionable. Output only the prompt, no explanations.`
+      
+      const userMessage = `Create a system prompt for an AI content assistant based on this context:
+
+About: ${ctx.about_me || 'Not set'}
+Voice Style: ${ctx.voice_style || 'Not set'}
+Sample Posts: ${ctx.sample_posts || 'Not set'}
+
+Generate a concise system prompt (max 200 words) that captures this voice. The prompt should instruct the AI how to write in this style.`
+
+      try {
+        const response = await anthropic.messages.create({
+          model: model === 'claude' ? 'claude-sonnet-4-5-20251001' : 'claude-haiku-4-5-20251001',
+          max_tokens: 500,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }],
+        })
+
+        const prompt = Array.isArray(response?.content) 
+          ? response.content.map((c: { type: string; text?: string }) => c.type === 'text' ? c.text : '').join('')
+          : ''
+
+        return Response.json({ data: { prompt } })
+      } catch (e) {
+        console.error('Brain prompt generation error:', e)
+        return Response.json({ error: 'Failed to generate brain prompt' }, { status: 500 })
+      }
+    }
+
+    // ── get-saved-signals ──────────────────────────────────────
+    if (action === 'get-saved-signals') {
+      // Get user from auth header or session (simplified - using anon key for now)
+      // In production, verify JWT token
+      const { data, error } = await supabaseAdmin
+        .from('saved_signals')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('get-saved-signals error:', error)
+        return Response.json({ error: error.message }, { status: 500 })
+      }
+      return Response.json({ signals: data || [] })
+    }
+
+    // ── save-signal ────────────────────────────────────────────
+    if (action === 'save-signal') {
+      const { signal } = body as { 
+        signal: {
+          title: string;
+          url: string;
+          source_name: string;
+          source_type?: string;
+          published_date?: string;
+          trend_score?: number;
+          snippet?: string;
+          favicon?: string;
+        }
+      }
+
+      if (!signal?.url) {
+        return Response.json({ error: 'URL required' }, { status: 400 })
+      }
+
+      const { error } = await supabaseAdmin
+        .from('saved_signals')
+        .upsert({
+          title: signal.title,
+          url: signal.url,
+          source: signal.source_name,
+          source_type: signal.source_type || 'search',
+          published_at: signal.published_date || null,
+          score: signal.trend_score || 0,
+          excerpt: signal.snippet || '',
+          favicon_url: signal.favicon || '',
+          created_at: new Date().toISOString(),
+        }, { onConflict: 'url' })
+
+      if (error) {
+        console.error('save-signal error:', error)
+        return Response.json({ error: error.message }, { status: 500 })
+      }
+      return Response.json({ ok: true })
+    }
+
+    // ── unsave-signal ──────────────────────────────────────────
+    if (action === 'unsave-signal') {
+      const { url } = body as { url: string }
+
+      if (!url) {
+        return Response.json({ error: 'URL required' }, { status: 400 })
+      }
+
+      const { error } = await supabaseAdmin
+        .from('saved_signals')
+        .delete()
+        .eq('url', url)
+
+      if (error) {
+        console.error('unsave-signal error:', error)
+        return Response.json({ error: error.message }, { status: 500 })
+      }
+      return Response.json({ ok: true })
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 400 })

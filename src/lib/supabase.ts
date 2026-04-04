@@ -62,3 +62,18 @@ export type Signal = {
   favicon?: string;
   source_url?: string;
 };
+
+// Saved Signal (persisted to Supabase)
+export type SavedSignal = {
+  id: string;
+  user_id: string;
+  title: string;
+  url: string;
+  source: string;
+  source_type: "rss" | "search";
+  published_at?: string;
+  score: number;
+  excerpt?: string;
+  favicon_url?: string;
+  created_at: string;
+};

@@ -18,10 +18,12 @@ export default function VoicePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   const generateAI = useAI<{ prompt: string }>();
 
   useEffect(() => {
+    setMounted(true);
     loadContext();
   }, []);
 
@@ -61,7 +63,7 @@ export default function VoicePage() {
     }
   }, [generateAI.data]);
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-[calc(100vh-120px)] flex items-center justify-center">
         <Loader2 size={24} className="animate-spin text-text-muted" />

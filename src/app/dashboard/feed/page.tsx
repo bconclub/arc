@@ -5,6 +5,7 @@ import { Rss, Search } from 'lucide-react'
 import type { Signal } from '@/lib/supabase'
 
 type Topic = { label: string; query: string }
+type ViewMode = 'all' | 'saved'
 
 const PILLAR_COLORS: Record<string, string> = {
   pain_points:     '#2d1515',
@@ -36,9 +37,12 @@ function formatRelativeTime(dateStr: string): string {
 export default function FeedPage() {
   const router = useRouter()
   const [signals, setSignals] = useState<Signal[]>([])
+  const [savedSignals, setSavedSignals] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [topics, setTopics] = useState<Topic[]>([])
   const [activeTopic, setActiveTopic] = useState<Topic | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [showAdd, setShowAdd] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const addInputRef = useRef<HTMLInputElement>(null)
@@ -46,6 +50,7 @@ export default function FeedPage() {
   useEffect(() => {
     loadFeed(null)
     loadTopics()
+    loadSavedSignals()
   }, [])
 
   useEffect(() => {
@@ -65,6 +70,46 @@ export default function FeedPage() {
       setSignals(signalsArray)
     } catch(e) { console.error(e) }
     finally { setLoading(false) }
+  }
+
+  async function loadSavedSignals() {
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get-saved-signals' })
+      })
+      const data = await res.json()
+      const savedArray = Array.isArray(data?.signals) ? data.signals : []
+      setSavedSignals(new Set(savedArray.map((s: { url: string }) => s.url)))
+    } catch(e) { console.error(e) }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async function toggleSave(signal: Signal) {
+    const isSaved = savedSignals.has(signal.url)
+    const action = isSaved ? 'unsave-signal' : 'save-signal'
+    
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action, 
+          ...(isSaved ? { url: signal.url } : { signal })
+        })
+      })
+      
+      if (res.ok) {
+        const newSaved = new Set(savedSignals)
+        if (isSaved) {
+          newSaved.delete(signal.url)
+        } else {
+          newSaved.add(signal.url)
+        }
+        setSavedSignals(newSaved)
+      }
+    } catch(e) { console.error(e) }
   }
 
   async function loadTopics() {
@@ -217,22 +262,47 @@ export default function FeedPage() {
               onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
               onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}>
 
-                {/* Image — fixed 160px */}
+                {/* Image — 16:9 aspect ratio */}
                 <div style={{
-                  position: 'relative', height: 160, flexShrink: 0,
-                  background: bg, overflow: 'hidden',
+                  position: 'relative', height: 135, flexShrink: 0,
+                  background: s.image_url ? '#000' : bg, overflow: 'hidden',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  {s.image_url
-                    ? <img src={s.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }} />
-                    : <span style={{
-                        fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.13)',
-                        letterSpacing: '-0.5px', userSelect: 'none',
-                        textAlign: 'center', padding: '0 16px', wordBreak: 'break-all',
+                  {s.image_url ? (
+                    <img 
+                      src={s.image_url} 
+                      alt="" 
+                      loading="lazy"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none'
+                      }}
+                    />
+                  ) : s.favicon ? (
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                    }}>
+                      <img 
+                        src={s.favicon.replace('sz=32', 'sz=64')} 
+                        alt="" 
+                        style={{ width: 48, height: 48, borderRadius: 8, opacity: 0.5 }}
+                      />
+                      <span style={{
+                        fontSize: 11, color: 'rgba(255,255,255,0.3)',
+                        textAlign: 'center', padding: '0 16px',
                       }}>
                         {s.source_name}
                       </span>
-                  }
+                    </div>
+                  ) : (
+                    <span style={{
+                      fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.13)',
+                      letterSpacing: '-0.5px', userSelect: 'none',
+                      textAlign: 'center', padding: '0 16px', wordBreak: 'break-all',
+                    }}>
+                      {s.source_name}
+                    </span>
+                  )}
                   <span style={{
                     position: 'absolute', bottom: 10, left: 10,
                     fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 99,
