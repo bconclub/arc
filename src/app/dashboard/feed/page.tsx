@@ -38,8 +38,8 @@ export default function FeedPage() {
         console.log('Response status:', res.status)
         if (!res.ok) throw new Error('API failed: ' + res.status)
         const data = await res.json()
-        console.log('Data received:', data)
-        setSignals(data.data || [])
+        console.log('Signals received:', data.signals?.length)
+        setSignals(data.signals || [])
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         console.error('Feed error:', msg)
