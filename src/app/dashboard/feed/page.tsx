@@ -22,6 +22,8 @@ export default function FeedPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const addInputRef = useRef<HTMLInputElement>(null)
+  // Track whether we have ever loaded data — chip clicks shimmer, first load skeletons
+  const hasLoadedOnce = useRef(false)
 
   useEffect(() => {
     loadFeed(null)
@@ -43,7 +45,10 @@ export default function FeedPage() {
       const data = await res.json()
       setSignals(data.signals || [])
     } catch(e) { console.error(e) }
-    finally { setLoading(false) }
+    finally {
+      hasLoadedOnce.current = true
+      setLoading(false)
+    }
   }
 
   async function loadTopics() {
@@ -82,6 +87,11 @@ export default function FeedPage() {
     if (s.trend_score >= 60) return { text: '↑ Rising ' + s.trend_score, color: '#1D9E75', bg: '#001f15' }
     return { text: '· Steady ' + s.trend_score, color: '#888780', bg: '#1a1a1a' }
   }
+
+  // Which cards to render while loading
+  const displaySignals = loading && hasLoadedOnce.current ? signals : signals
+  const isShimmering = loading && hasLoadedOnce.current
+  const isFirstLoad  = loading && !hasLoadedOnce.current
 
   return (
     <div style={{ padding: '1rem 1.5rem' }}>
@@ -156,30 +166,31 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* Skeleton loading */}
-      {loading && (
+      {/* First-load skeleton grid */}
+      {isFirstLoad && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gridAutoRows: '320px', gap: 12 }}>
           {[1,2,3,4,5,6].map(i => (
             <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '0.5px solid #222', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: 160, background: '#1a1a1a', flexShrink: 0 }} />
-              <div style={{ flex: 1, padding: 12, background: '#111' }}>
-                <div style={{ height: 12, background: '#222', borderRadius: 4, marginBottom: 8 }} />
-                <div style={{ height: 10, background: '#1a1a1a', borderRadius: 4, width: '60%' }} />
+              <div className="card-line-shimmer" style={{ height: 160, flexShrink: 0 }} />
+              <div style={{ flex: 1, padding: 12, background: '#111', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="card-line-shimmer" style={{ height: 12, width: '90%' }} />
+                <div className="card-line-shimmer" style={{ height: 12, width: '70%' }} />
+                <div className="card-line-shimmer" style={{ height: 10, width: '40%', marginTop: 4 }} />
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Signal grid — fixed 320px rows, 160px image + 160px content */}
-      {!loading && (
+      {/* Signal grid — stays in place during chip re-fetch, shimmer overlaid */}
+      {!isFirstLoad && (
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
           gridAutoRows: '320px',
           gap: 12,
         }}>
-          {signals.map((s, i) => {
+          {displaySignals.map((s, i) => {
             const badge = scoreLabel(s)
             const bg = PILLAR_COLORS[s.pillar ?? 'default'] ?? PILLAR_COLORS.default
             return (
@@ -188,12 +199,12 @@ export default function FeedPage() {
                 borderRadius: 12, overflow: 'hidden',
                 border: '0.5px solid #2a2a2a',
                 background: '#111',
-                cursor: 'pointer',
+                cursor: isShimmering ? 'default' : 'pointer',
                 transition: 'transform 0.2s, border-color 0.2s',
                 display: 'flex', flexDirection: 'column',
               }}
-              onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
-              onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}>
+              onMouseEnter={e => { if (!isShimmering) e.currentTarget.style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}>
 
                 {/* Image — fixed 160px */}
                 <div style={{
@@ -219,6 +230,8 @@ export default function FeedPage() {
                   }}>
                     {badge.text}
                   </span>
+                  {/* Shimmer overlay during re-fetch */}
+                  {isShimmering && <div className="card-shimmer-overlay" />}
                 </div>
 
                 {/* Content — remaining 160px */}
@@ -227,33 +240,43 @@ export default function FeedPage() {
                   padding: '10px 12px 12px',
                   display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                 }}>
-                  <div>
-                    <p style={{
-                      fontSize: 13, fontWeight: 500, color: 'white',
-                      margin: '0 0 5px', lineHeight: 1.4,
-                      display: '-webkit-box', WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                    }}>
-                      {s.title}
-                    </p>
-                    <p style={{ fontSize: 11, color: '#555', margin: 0 }}>
-                      {s.source_name}{s.published_date && ' · ' + s.published_date}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      onClick={() => router.push('/dashboard/write?topic=' + encodeURIComponent(s.title) + '&context=' + encodeURIComponent(s.snippet || ''))}
-                      style={{ flex: 1, fontSize: 11, padding: '6px 0', borderRadius: 8, border: '0.5px solid #333', background: 'transparent', color: '#aaa', cursor: 'pointer' }}
-                    >
-                      Write this
-                    </button>
-                    <button
-                      onClick={() => window.open(s.url, '_blank')}
-                      style={{ fontSize: 11, padding: '6px 10px', borderRadius: 8, border: '0.5px solid #333', background: 'transparent', color: '#555', cursor: 'pointer' }}
-                    >
-                      ↗
-                    </button>
-                  </div>
+                  {isShimmering ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="card-line-shimmer" style={{ height: 12, width: '90%' }} />
+                      <div className="card-line-shimmer" style={{ height: 12, width: '70%' }} />
+                      <div className="card-line-shimmer" style={{ height: 10, width: '40%', marginTop: 4 }} />
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <p style={{
+                          fontSize: 13, fontWeight: 500, color: 'white',
+                          margin: '0 0 5px', lineHeight: 1.4,
+                          display: '-webkit-box', WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        }}>
+                          {s.title}
+                        </p>
+                        <p style={{ fontSize: 11, color: '#555', margin: 0 }}>
+                          {s.source_name}{s.published_date && ' · ' + s.published_date}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          onClick={() => router.push('/dashboard/write?topic=' + encodeURIComponent(s.title) + '&context=' + encodeURIComponent(s.snippet || ''))}
+                          style={{ flex: 1, fontSize: 11, padding: '6px 0', borderRadius: 8, border: '0.5px solid #333', background: 'transparent', color: '#aaa', cursor: 'pointer' }}
+                        >
+                          Write this
+                        </button>
+                        <button
+                          onClick={() => window.open(s.url, '_blank')}
+                          style={{ fontSize: 11, padding: '6px 10px', borderRadius: 8, border: '0.5px solid #333', background: 'transparent', color: '#555', cursor: 'pointer' }}
+                        >
+                          ↗
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )

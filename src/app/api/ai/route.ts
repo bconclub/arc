@@ -17,7 +17,7 @@ async function tavilySearch(query: string) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.TAVILY_API_KEY}`
     },
-    body: JSON.stringify({ query, search_depth: 'basic', max_results: 10, include_images: true })
+    body: JSON.stringify({ query, search_depth: 'basic', max_results: 10, include_images: true, days: 90 })
   })
   if (!res.ok) {
     console.error('Tavily error for query:', query, await res.text())
@@ -64,9 +64,12 @@ export async function POST(req: Request) {
     if (action === 'fetch-signals') {
       const { topic } = body as { topic?: string }
 
-      // Topic override: single Tavily search for that query
+      // Topic override: enrich with ICP context then run single Tavily search
       if (topic) {
-        const signals = await tavilySearch(topic)
+        const ICP_SUFFIX = 'India SMB business 2026'
+        const hasContext = /india|smb|business\s+20/i.test(topic)
+        const enriched = hasContext ? topic : `${topic} ${ICP_SUFFIX}`
+        const signals = await tavilySearch(enriched)
         return Response.json({ signals })
       }
 
