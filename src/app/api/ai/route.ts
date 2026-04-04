@@ -59,6 +59,7 @@ async function anthropicWebSearch(query: string): Promise<{
 // Reserved for extract-signal (Go deeper) — intentional single-URL extraction
 type TavilyResult = { title: string; url: string; content?: string; published_date?: string; images?: string[] }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function tavilyExtract(url: string) {
   const res = await fetch('https://api.tavily.com/extract', {
     method: 'POST',

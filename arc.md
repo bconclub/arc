@@ -24,11 +24,18 @@
 src/
 ├── app/
 │   ├── api/ai/route.ts          # AI API endpoints
+│   ├── api/fetch-rss/route.ts   # RSS feed proxy
 │   ├── dashboard/
 │   │   ├── campaigns/page.tsx   # Schedule & 90-day sprint
 │   │   ├── connections/page.tsx # Connected sources & feeds
 │   │   ├── content/page.tsx     # Topic bank, calendar, drafts
+│   │   ├── feed/page.tsx        # Signals feed with topic chips
 │   │   ├── overview/page.tsx    # Metrics dashboard
+│   │   ├── results/page.tsx     # Campaign results
+│   │   ├── schedule/page.tsx    # Schedule management
+│   │   ├── sources/page.tsx     # Source connections
+│   │   ├── voice/page.tsx       # Voice/writing style
+│   │   ├── write/page.tsx       # Post writing with AI
 │   │   ├── layout.tsx           # Dashboard layout (sidebar + topbar)
 │   │   └── page.tsx             # Redirects to /overview
 │   ├── page.tsx                 # Root redirect to /dashboard
@@ -49,7 +56,9 @@ src/
 │   ├── connections-defaults.ts  # Default connection data
 │   ├── content-defaults.ts      # Default topic data
 │   ├── defaults.ts              # Default metrics data
-│   └── schedule.ts              # Daily schedule blocks & targets
+│   ├── ai-client.ts             # AI client utilities
+│   ├── schedule.ts              # Daily schedule blocks & targets
+│   └── supabase.ts              # Supabase client
 └── types/
     ├── ai.ts                    # AI-related types
     ├── connections.ts           # Connection types
@@ -79,9 +88,26 @@ src/
 - **Daily Targets**: Checklist with streak counter
 - **AI Briefing**: Morning priority check
 
-### 4. Connections (/dashboard/connections)
+### 4. Feed (/dashboard/feed)
+- **Signals Feed**: Web search results via Anthropic web_search
+- **Topic Chips**: Filter signals by topic with ICP context enrichment
+- **AI-Powered**: Uses Haiku with web_search tool (included in API cost)
+- **90-Day Recency**: Filters for recent content only
+
+### 5. Connections (/dashboard/connections)
 - **Connected Sources**: LinkedIn, Instagram, Twitter, WhatsApp, GCal, GA
 - **Listening Feeds**: Track keywords and competitors
+
+### 6. Write (/dashboard/write)
+- **AI Writing**: Generate posts with Claude streaming
+- **Context-Aware**: Uses signal snippets as context
+- **Multi-Format**: Supports LinkedIn, Twitter/X, Instagram formats
+
+### 7. Voice (/dashboard/voice)
+- **Writing Style**: Configure brand voice and tone
+
+### 8. Results (/dashboard/results)
+- **Campaign Results**: Track performance metrics
 
 ---
 
@@ -94,6 +120,9 @@ src/
 | `analyze-metrics` | Sonnet | Analyze metrics & suggest actions |
 | `generate-dms` | Haiku | Create cold DM scripts |
 | `daily-briefing` | Sonnet | Morning priority briefing |
+| `fetch-signals` | Haiku | Fetch feed signals via Anthropic web_search |
+| `get-topics` | - | Get saved topic chips |
+| `save-topic` | - | Save topic chip configuration |
 
 ---
 
@@ -125,6 +154,9 @@ arc:feeds              # Listening feeds
 
 ```env
 ANTHROPIC_API_KEY=your-api-key-here
+TAVILY_API_KEY=your-tavily-key-here      # Reserved for extract-signal feature
+SUPABASE_URL=your-supabase-url
+SUPABASE_SERVICE_ROLE_KEY=your-service-key
 ```
 
 ---
@@ -161,9 +193,16 @@ Raw, vulnerable, build-in-public, first person. Short punchy sentences. No corpo
 
 ---
 
+## Recent Changes
+
+- **v0.2.0** - Migrated feed signals from Tavily to Anthropic web_search (no separate credits)
+- **v0.2.1** - Added error handling and type guards to anthropicWebSearch
+- **v0.2.2** - Hardened fetch-signals to always return `{ signals: [] }` structure
+
 ## Notes
 
 - Responsive design with mobile bottom nav and desktop sidebar
 - Dark theme with glassmorphism effects
 - Data export/import via TopBar backup/restore
 - All AI features require ANTHROPIC_API_KEY to be set
+- Feed signals use Anthropic's built-in web_search (no Tavily credits needed for search)
