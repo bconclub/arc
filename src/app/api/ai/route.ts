@@ -11,39 +11,49 @@ function tryHostname(url: string) {
 }
 
 // Used for the main feed — included in Anthropic API cost, no separate credits
-async function anthropicWebSearch(query: string) {
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
-    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
-    messages: [{ role: 'user', content: `Find recent news and articles about: ${query}` }],
-  })
+async function anthropicWebSearch(query: string): Promise<{
+  title: string; url: string; snippet: string; source_name: string;
+  published_date: string; image_url: string; trend_score: number; label: string
+}[]> {
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
+      messages: [{ role: 'user', content: `Find recent news and articles about: ${query}` }],
+    })
 
-  const signals: {
-    title: string; url: string; snippet: string; source_name: string;
-    published_date: string; image_url: string; trend_score: number; label: string
-  }[] = []
+    const content = Array.isArray(response?.content) ? response.content : []
+    const signals: {
+      title: string; url: string; snippet: string; source_name: string;
+      published_date: string; image_url: string; trend_score: number; label: string
+    }[] = []
 
-  for (const block of response.content) {
-    const b = block as WebSearchToolResultBlock
-    if (b.type === 'web_search_tool_result' && Array.isArray(b.content)) {
-      for (const r of b.content as WebSearchResultBlock[]) {
-        if (r.type === 'web_search_result') {
-          signals.push({
-            title: r.title,
-            url: r.url,
-            snippet: '',
-            source_name: tryHostname(r.url),
-            published_date: r.page_age || '',
-            image_url: '',
-            trend_score: Math.floor(Math.random() * 40 + 60),
-            label: 'rising',
-          })
+    for (const block of content) {
+      const b = block as WebSearchToolResultBlock
+      if (b.type === 'web_search_tool_result' && Array.isArray(b.content)) {
+        for (const r of b.content as WebSearchResultBlock[]) {
+          if (r.type === 'web_search_result' && r.url) {
+            signals.push({
+              title: r.title || r.url,
+              url: r.url,
+              snippet: '',
+              source_name: tryHostname(r.url),
+              published_date: r.page_age || '',
+              image_url: '',
+              trend_score: Math.floor(Math.random() * 40 + 60),
+              label: 'rising',
+            })
+          }
         }
       }
     }
+
+    return Array.isArray(signals) ? signals : []
+  } catch (e) {
+    console.error('Anthropic web_search error for query:', query, e)
+    return []
   }
-  return signals
 }
 
 // Reserved for extract-signal (Go deeper) — intentional single-URL extraction
@@ -95,7 +105,8 @@ export async function POST(req: Request) {
         const ICP_SUFFIX = 'India SMB business 2026'
         const hasContext = /india|smb|business\s+20/i.test(topic)
         const enriched = hasContext ? topic : `${topic} ${ICP_SUFFIX}`
-        const signals = await anthropicWebSearch(enriched)
+        const raw = await anthropicWebSearch(enriched)
+        const signals = Array.isArray(raw) ? raw : []
         return Response.json({ signals })
       }
 
@@ -123,7 +134,9 @@ export async function POST(req: Request) {
         )
       )
 
-      const signals = results.flatMap(r => r.status === 'fulfilled' ? r.value : [])
+      const signals = results.flatMap(r =>
+        r.status === 'fulfilled' && Array.isArray(r.value) ? r.value : []
+      )
       return Response.json({ signals })
     }
 
