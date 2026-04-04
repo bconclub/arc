@@ -57,4 +57,8 @@ export type Signal = {
   saved_at?: string;
   notes?: string;
   created_at: string;
+  // Source metadata
+  source_type?: "rss" | "search";
+  favicon?: string;
+  source_url?: string;
 };

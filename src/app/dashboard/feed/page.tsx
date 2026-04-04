@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { Rss, Search } from 'lucide-react'
 import type { Signal } from '@/lib/supabase'
 
 type Topic = { label: string; query: string }
@@ -11,6 +12,25 @@ const PILLAR_COLORS: Record<string, string> = {
   marketing_tips:  '#152d1f',
   client_results:  '#2d2015',
   default:         '#1a1a1a'
+}
+
+// Format relative time (e.g., "2h ago", "1d ago")
+function formatRelativeTime(dateStr: string): string {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ''
+  
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  
+  if (diffMins < 1) return 'now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 30) return `${diffDays}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 export default function FeedPage() {
@@ -230,16 +250,47 @@ export default function FeedPage() {
                   display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                 }}>
                   <div>
+                    {/* Top row: Favicon + Domain + Source Badge + Time */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
+                    }}>
+                      {s.favicon && (
+                        <img 
+                          src={s.favicon} 
+                          alt="" 
+                          style={{ width: 16, height: 16, borderRadius: 3, flexShrink: 0 }}
+                          onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        />
+                      )}
+                      <span style={{ fontSize: 11, color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {s.source_name}
+                      </span>
+                      {/* Source Type Badge */}
+                      <span style={{
+                        fontSize: 9, fontWeight: 500, padding: '2px 6px', borderRadius: 99,
+                        background: s.source_type === 'rss' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
+                        color: s.source_type === 'rss' ? '#f59e0b' : '#3b82f6',
+                        border: `0.5px solid ${s.source_type === 'rss' ? 'rgba(245,158,11,0.3)' : 'rgba(59,130,246,0.3)'}`,
+                        display: 'flex', alignItems: 'center', gap: 3,
+                      }}>
+                        {s.source_type === 'rss' ? <Rss size={9} /> : <Search size={9} />}
+                        {s.source_type === 'rss' ? 'RSS' : 'Search'}
+                      </span>
+                      {/* Relative Time */}
+                      {s.published_date && (
+                        <span style={{ fontSize: 10, color: '#666' }}>
+                          {formatRelativeTime(s.published_date)}
+                        </span>
+                      )}
+                    </div>
+                    
                     <p style={{
                       fontSize: 13, fontWeight: 500, color: 'white',
-                      margin: '0 0 5px', lineHeight: 1.4,
-                      display: '-webkit-box', WebkitLineClamp: 2,
+                      margin: '0 0 8px', lineHeight: 1.4,
+                      display: '-webkit-box', WebkitLineClamp: 3,
                       WebkitBoxOrient: 'vertical', overflow: 'hidden',
                     }}>
                       {s.title}
-                    </p>
-                    <p style={{ fontSize: 11, color: '#555', margin: 0 }}>
-                      {s.source_name}{s.published_date && ' · ' + s.published_date}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>

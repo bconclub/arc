@@ -13,7 +13,8 @@ function tryHostname(url: string) {
 // Used for the main feed — included in Anthropic API cost, no separate credits
 async function anthropicWebSearch(query: string): Promise<{
   title: string; url: string; snippet: string; source_name: string;
-  published_date: string; image_url: string; trend_score: number; label: string
+  published_date: string; image_url: string; trend_score: number; label: string;
+  source_type: 'search'; favicon: string; source_url: string;
 }[]> {
   try {
     const response = await anthropic.messages.create({
@@ -26,7 +27,8 @@ async function anthropicWebSearch(query: string): Promise<{
     const content = Array.isArray(response?.content) ? response.content : []
     const signals: {
       title: string; url: string; snippet: string; source_name: string;
-      published_date: string; image_url: string; trend_score: number; label: string
+      published_date: string; image_url: string; trend_score: number; label: string;
+      source_type: 'search'; favicon: string; source_url: string;
     }[] = []
 
     for (const block of content) {
@@ -34,15 +36,19 @@ async function anthropicWebSearch(query: string): Promise<{
       if (b.type === 'web_search_tool_result' && Array.isArray(b.content)) {
         for (const r of b.content as WebSearchResultBlock[]) {
           if (r.type === 'web_search_result' && r.url) {
+            const hostname = tryHostname(r.url)
             signals.push({
               title: r.title || r.url,
               url: r.url,
               snippet: '',
-              source_name: tryHostname(r.url),
+              source_name: hostname,
               published_date: r.page_age || '',
               image_url: '',
               trend_score: Math.floor(Math.random() * 40 + 60),
               label: 'rising',
+              source_type: 'search',
+              favicon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`,
+              source_url: r.url,
             })
           }
         }
@@ -82,15 +88,19 @@ async function rssFetch(feedUrl: string, baseUrl: string) {
     }
     const data = await res.json()
     const items = Array.isArray(data?.data) ? data.data : []
+    const sourceHostname = tryHostname(feedUrl)
     return items.map((r: { title: string; link: string; snippet?: string; pubDate?: string; image?: string }) => ({
       title: r.title || '',
       url: r.link || '',
       snippet: r.snippet || '',
-      source_name: tryHostname(feedUrl),
+      source_name: sourceHostname,
       published_date: r.pubDate || '',
       image_url: r.image || '',
       trend_score: Math.floor(Math.random() * 40 + 60),
       label: 'rising',
+      source_type: 'rss' as const,
+      favicon: `https://www.google.com/s2/favicons?domain=${sourceHostname}&sz=32`,
+      source_url: feedUrl,
     }))
   } catch (e) {
     console.error('RSS fetch error for url:', feedUrl, e)
