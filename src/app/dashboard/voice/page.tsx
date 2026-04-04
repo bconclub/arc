@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Save, Loader2, Bot } from "lucide-react";
+import { Sparkles, Loader2, Bot } from "lucide-react";
 import { getFullContext, setContext, type ContextKey } from "@/lib/context";
 import { useAI } from "@/hooks/useAI";
 import { MODEL_NAMES, type AIModel } from "@/lib/ai-client";
@@ -52,10 +52,11 @@ export default function VoicePage() {
   };
 
   useEffect(() => {
-    if (generateAI.data?.prompt) {
+    if (generateAI.data && typeof generateAI.data === "object" && "prompt" in generateAI.data) {
+      const data = generateAI.data as { prompt: string };
       setContextState(prev => ({
         ...prev,
-        brain_system_prompt: generateAI.data.prompt,
+        brain_system_prompt: data.prompt,
       }));
     }
   }, [generateAI.data]);

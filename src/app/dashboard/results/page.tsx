@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Linkedin, Instagram, MessageCircle, AtSign, Eye, MessageSquare, Send, Repeat } from "lucide-react";
+import { Globe, Eye, MessageSquare, Send, Repeat } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { ScheduledPost, PostResult } from "@/types/content-engine";
 
 const CHANNEL_ICONS: Record<string, React.ReactNode> = {
-  LinkedIn: <Linkedin size={14} />,
-  Instagram: <Instagram size={14} />,
-  WhatsApp: <MessageCircle size={14} />,
-  Twitter: <AtSign size={14} />,
-  X: <AtSign size={14} />,
+  LinkedIn: <Globe size={14} />,
+  Instagram: <Globe size={14} />,
+  WhatsApp: <Globe size={14} />,
+  Twitter: <Globe size={14} />,
+  X: <Globe size={14} />,
 };
 
 export default function ResultsPage() {
@@ -19,10 +19,8 @@ export default function ResultsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ views: 0, comments: 0, replies: 0, dms: 0 });
 
-  // Get done posts that don't have results yet
   const donePosts = schedule.filter(p => p.status === "done");
   
-  // Merge with existing results
   const postsWithResults = donePosts.map(post => {
     const result = results.find(r => r.id === post.id);
     return { post, result };
@@ -62,7 +60,6 @@ export default function ResultsPage() {
   };
 
   const handleRepost = (post: ScheduledPost) => {
-    // Create a new scheduled post with same topic
     const newPost: ScheduledPost = {
       id: `post-${Date.now()}`,
       topic: `${post.topic} (repost)`,
@@ -81,13 +78,11 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-[calc(100vh-120px)]">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold tracking-tight">Results</h1>
         <p className="text-[13px] text-text-muted mt-0.5">What landed</p>
       </div>
 
-      {/* Posts list */}
       <div className="space-y-3">
         {postsWithResults.length === 0 ? (
           <div className="card p-8 text-center">
@@ -100,7 +95,7 @@ export default function ResultsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-text-muted">{CHANNEL_ICONS[post.channel] || <AtSign size={14} />}</span>
+                    <span className="text-text-muted">{CHANNEL_ICONS[post.channel] || <Globe size={14} />}</span>
                     <span className="text-[11px] text-text-muted">{post.channel} · {post.date}</span>
                   </div>
                   <p className="text-[14px] font-medium text-text truncate">{post.topic}</p>
@@ -114,14 +109,13 @@ export default function ResultsPage() {
                 </button>
               </div>
 
-              {/* Stats */}
               {editingId === post.id ? (
                 <div className="grid grid-cols-4 gap-2 mt-4">
                   {[
                     { key: "views", icon: Eye, label: "Views" },
                     { key: "comments", icon: MessageSquare, label: "Comments" },
                     { key: "replies", icon: Send, label: "Replies" },
-                    { key: "dms", icon: MessageCircle, label: "DMs" },
+                    { key: "dms", icon: Globe, label: "DMs" },
                   ].map(({ key, icon: Icon, label }) => (
                     <div key={key} className="text-center">
                       <Icon size={12} className="mx-auto mb-1 text-text-muted" />
@@ -141,7 +135,7 @@ export default function ResultsPage() {
                     { key: "views", icon: Eye, label: "Views", val: result?.views || 0 },
                     { key: "comments", icon: MessageSquare, label: "Comments", val: result?.comments || 0 },
                     { key: "replies", icon: Send, label: "Replies", val: result?.replies || 0 },
-                    { key: "dms", icon: MessageCircle, label: "DMs", val: result?.dms || 0 },
+                    { key: "dms", icon: Globe, label: "DMs", val: result?.dms || 0 },
                   ].map(({ key, icon: Icon, label, val }) => (
                     <div key={key} className="text-center">
                       <Icon size={12} className="mx-auto mb-1 text-text-muted" />
@@ -152,7 +146,6 @@ export default function ResultsPage() {
                 </div>
               )}
 
-              {/* Edit/Save button */}
               <div className="flex justify-end mt-3">
                 {editingId === post.id ? (
                   <button

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, RefreshCw, ToggleLeft, ToggleRight, Newspaper, Search, Loader2 } from "lucide-react";
 import { supabase, type Source } from "@/lib/supabase";
 
-const TYPE_OPTIONS = [
+const TYPE_OPTIONS: { value: "rss" | "tavily_search"; label: string; placeholder: string }[] = [
   { value: "rss", label: "RSS Feed", placeholder: "https://example.com/feed.xml" },
   { value: "tavily_search", label: "Tavily Search", placeholder: "Enter search query..." },
 ];

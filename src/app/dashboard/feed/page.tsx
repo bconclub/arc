@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw, PenLine, FileText, Sparkles, Loader2 } from "lucide-react";
 import { useAI } from "@/hooks/useAI";
 import { supabase, type Signal } from "@/lib/supabase";
-import type { Source, TrendLabel, Pillar } from "@/types/signals";
+import type { TrendLabel, Pillar } from "@/types/signals";
 import { calculateTrendScore, detectPillar, getTrendBadge } from "@/types/signals";
 
 interface SignalWithMeta extends Signal {
@@ -30,16 +30,17 @@ export default function FeedPage() {
   const fetchAllSignals = useCallback(async () => {
     setLoading(true);
     
-    const { data: sources, error } = await supabase
-      .from("sources")
-      .select("*")
-      .eq("active", true);
-    
-    if (error) {
-      console.error("Error fetching sources:", error);
-      setLoading(false);
-      return;
-    }
+    try {
+      const { data: sources, error } = await supabase
+        .from("sources")
+        .select("*")
+        .eq("active", true);
+      
+      if (error) {
+        console.error("Error fetching sources:", error);
+        setLoading(false);
+        return;
+      }
 
     const allSignals: SignalWithMeta[] = [];
 
@@ -106,7 +107,11 @@ export default function FeedPage() {
 
     allSignals.sort((a, b) => b.trend_score - a.trend_score);
     setSignals(allSignals);
-    setLoading(false);
+    } catch (err) {
+      console.error("Error fetching signals:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -141,11 +146,12 @@ export default function FeedPage() {
   };
 
   useEffect(() => {
-    if (extractAI.data?.signal && extractAI.data?.fullContent) {
+    if (extractAI.data && typeof extractAI.data === "object" && "signal" in extractAI.data && "fullContent" in extractAI.data) {
+      const data = extractAI.data as { signal: Signal; fullContent: string };
       const params = new URLSearchParams({
-        topic: extractAI.data.signal.title,
-        context: extractAI.data.fullContent,
-        url: extractAI.data.signal.url,
+        topic: data.signal.title,
+        context: data.fullContent,
+        url: data.signal.url,
         deep: "true",
       });
       router.push(`/dashboard/write?${params.toString()}`);

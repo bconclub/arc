@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Linkedin, Instagram, MessageCircle, AtSign, Clock, Lock, Unlock, Check } from "lucide-react";
+import { Globe, Clock, Lock, Unlock, Check } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { ScheduledPost, SprintData } from "@/types/content-engine";
-import { PILLAR_COLORS } from "@/types/content-engine";
 
 const CHANNEL_ICONS: Record<string, React.ReactNode> = {
-  LinkedIn: <Linkedin size={14} />,
-  Instagram: <Instagram size={14} />,
-  WhatsApp: <MessageCircle size={14} />,
-  Twitter: <AtSign size={14} />,
-  X: <AtSign size={14} />,
+  LinkedIn: <Globe size={14} />,
+  Instagram: <Globe size={14} />,
+  WhatsApp: <Globe size={14} />,
+  Twitter: <Globe size={14} />,
+  X: <Globe size={14} />,
 };
 
 const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
@@ -63,7 +62,6 @@ export default function SchedulePage() {
   const sprintDay = getSprintDay(sprint.startDate);
   const weekDays = getWeekDays();
 
-  // Calculate posts this week
   const postsThisWeek = useMemo(() => {
     return schedule.filter(p => weekDays.includes(p.date) && (p.status === "scheduled" || p.status === "live" || p.status === "done")).length;
   }, [schedule, weekDays]);
@@ -81,7 +79,6 @@ export default function SchedulePage() {
 
   return (
     <div className="min-h-[calc(100vh-120px)]">
-      {/* Header with sprint info */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Schedule</h1>
@@ -91,7 +88,6 @@ export default function SchedulePage() {
         </div>
       </div>
 
-      {/* Sprint progress */}
       <div className="card p-4 mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] text-text-muted">Sprint progress</span>
@@ -105,7 +101,6 @@ export default function SchedulePage() {
         </div>
       </div>
 
-      {/* Week view */}
       <div className="space-y-3">
         {weekDays.map((date) => {
           const posts = getPostsForDay(date);
@@ -140,7 +135,7 @@ export default function SchedulePage() {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-text-muted">
-                          {CHANNEL_ICONS[post.channel] || <AtSign size={14} />}
+                          {CHANNEL_ICONS[post.channel] || <Globe size={14} />}
                         </span>
                         <div className="min-w-0">
                           <p className="text-[13px] text-text truncate">{post.topic}</p>
@@ -150,13 +145,7 @@ export default function SchedulePage() {
                               {post.time}
                             </span>
                             {post.pillar && (
-                              <span
-                                className="text-[9px] px-1.5 py-0.5 rounded-full"
-                                style={{
-                                  color: PILLAR_COLORS[post.pillar].text,
-                                  backgroundColor: PILLAR_COLORS[post.pillar].bg,
-                                }}
-                              >
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/10 text-text-muted">
                                 {post.pillar}
                               </span>
                             )}
