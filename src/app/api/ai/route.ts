@@ -73,22 +73,28 @@ async function tavilyExtract(url: string) {
 }
 
 async function rssFetch(feedUrl: string, baseUrl: string) {
-  const res = await fetch(`${baseUrl}/api/fetch-rss?url=${encodeURIComponent(feedUrl)}`)
-  if (!res.ok) {
-    console.error('RSS error for url:', feedUrl, await res.text())
+  try {
+    const res = await fetch(`${baseUrl}/api/fetch-rss?url=${encodeURIComponent(feedUrl)}`)
+    if (!res.ok) {
+      console.error('RSS error for url:', feedUrl, await res.text())
+      return []
+    }
+    const data = await res.json()
+    const items = Array.isArray(data?.data) ? data.data : []
+    return items.map((r: { title: string; link: string; snippet?: string; pubDate?: string; image?: string }) => ({
+      title: r.title || '',
+      url: r.link || '',
+      snippet: r.snippet || '',
+      source_name: tryHostname(feedUrl),
+      published_date: r.pubDate || '',
+      image_url: r.image || '',
+      trend_score: Math.floor(Math.random() * 40 + 60),
+      label: 'rising',
+    }))
+  } catch (e) {
+    console.error('RSS fetch error for url:', feedUrl, e)
     return []
   }
-  const data = await res.json()
-  return (data.data || []).map((r: { title: string; link: string; snippet?: string; pubDate?: string; image?: string }) => ({
-    title: r.title,
-    url: r.link,
-    snippet: r.snippet || '',
-    source_name: new URL(feedUrl).hostname.replace('www.', ''),
-    published_date: r.pubDate || '',
-    image_url: r.image || '',
-    trend_score: Math.floor(Math.random() * 40 + 60),
-    label: 'rising'
-  }))
 }
 
 export async function POST(req: Request) {
