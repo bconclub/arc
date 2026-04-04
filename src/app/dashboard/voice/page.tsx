@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Sparkles, Loader2, Bot } from "lucide-react";
 import { getFullContext, setContext, type ContextKey } from "@/lib/context";
 import { useAI } from "@/hooks/useAI";
-import { MODEL_NAMES, type AIModel } from "@/lib/ai-client";
+import { MODEL_NAMES, type AIModel } from "@/types/ai-client";
 
 export default function VoicePage() {
   const [context, setContextState] = useState({

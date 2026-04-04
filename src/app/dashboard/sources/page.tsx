@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, RefreshCw, ToggleLeft, ToggleRight, Newspaper, Search, Loader2 } from "lucide-react";
-import { supabase, type Source } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+
+interface Source {
+  id: string;
+  name: string;
+  type: "rss" | "tavily_search";
+  value: string;
+  active: boolean;
+  added_at: string;
+}
 
 const TYPE_OPTIONS: { value: "rss" | "tavily_search"; label: string; placeholder: string }[] = [
   { value: "rss", label: "RSS Feed", placeholder: "https://example.com/feed.xml" },
@@ -22,70 +31,89 @@ export default function SourcesPage() {
   });
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch sources from Supabase
   useEffect(() => {
     fetchSources();
   }, []);
 
   const fetchSources = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("sources")
-      .select("*")
-      .order("added_at", { ascending: false });
-    
-    if (error) {
-      console.error("Error fetching sources:", error);
-    } else {
-      setSources(data || []);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("sources")
+        .select("*")
+        .order("added_at", { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching sources:", error);
+      } else {
+        setSources(data || []);
+      }
+    } catch (err) {
+      console.error("Error:", err);
     }
     setLoading(false);
   };
 
   const handleToggle = async (id: string, currentActive: boolean) => {
-    const { error } = await supabase
-      .from("sources")
-      .update({ active: !currentActive })
-      .eq("id", id);
-    
-    if (error) {
-      console.error("Error toggling source:", error);
-    } else {
-      setSources(sources.map(s => s.id === id ? { ...s, active: !currentActive } : s));
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("sources")
+        .update({ active: !currentActive })
+        .eq("id", id);
+      
+      if (error) {
+        console.error("Error toggling source:", error);
+      } else {
+        setSources(sources.map(s => s.id === id ? { ...s, active: !currentActive } : s));
+      }
+    } catch (err) {
+      console.error("Error:", err);
     }
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from("sources")
-      .delete()
-      .eq("id", id);
-    
-    if (error) {
-      console.error("Error deleting source:", error);
-    } else {
-      setSources(sources.filter(s => s.id !== id));
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("sources")
+        .delete()
+        .eq("id", id);
+      
+      if (error) {
+        console.error("Error deleting source:", error);
+      } else {
+        setSources(sources.filter(s => s.id !== id));
+      }
+    } catch (err) {
+      console.error("Error:", err);
     }
   };
 
   const handleAdd = async () => {
     if (!newSource.name || !newSource.value) return;
 
-    const { error } = await supabase
-      .from("sources")
-      .insert({
-        name: newSource.name,
-        type: newSource.type,
-        value: newSource.value,
-        active: true,
-      });
-    
-    if (error) {
-      console.error("Error adding source:", error);
-    } else {
-      setShowAddModal(false);
-      setNewSource({ name: "", type: "rss", value: "" });
-      fetchSources();
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("sources")
+        .insert({
+          name: newSource.name,
+          type: newSource.type,
+          value: newSource.value,
+          active: true,
+        });
+      
+      if (error) {
+        console.error("Error adding source:", error);
+      } else {
+        setShowAddModal(false);
+        setNewSource({ name: "", type: "rss", value: "" });
+        fetchSources();
+      }
+    } catch (err) {
+      console.error("Error:", err);
     }
   };
 
@@ -98,7 +126,6 @@ export default function SourcesPage() {
 
   return (
     <div className="min-h-[calc(100vh-120px)]">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Sources</h1>
@@ -125,7 +152,6 @@ export default function SourcesPage() {
         </div>
       </div>
 
-      {/* Sources list */}
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -195,7 +221,6 @@ export default function SourcesPage() {
         </div>
       )}
 
-      {/* Add Source Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdrop">
           <div
@@ -206,7 +231,6 @@ export default function SourcesPage() {
             <h3 className="text-[16px] font-semibold text-text mb-4">Add Source</h3>
             
             <div className="space-y-4">
-              {/* Type selector */}
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-2">
                   Type
@@ -229,7 +253,6 @@ export default function SourcesPage() {
                 </div>
               </div>
 
-              {/* Name input */}
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1.5">
                   Name
@@ -243,7 +266,6 @@ export default function SourcesPage() {
                 />
               </div>
 
-              {/* Value input */}
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1.5">
                   Value

@@ -1,7 +1,16 @@
 // Model-agnostic AI client for ARC
 // Supports: Claude (Anthropic) and Kimi K2 (Moonshot)
+// ⚠️ SERVER-SIDE ONLY - Never import in client components!
 
 import Anthropic from "@anthropic-ai/sdk";
+
+// Guard: Prevent client-side usage
+if (typeof window !== "undefined") {
+  throw new Error(
+    "ai-client.ts must ONLY be used server-side in API routes. " +
+    "Client components should use fetch('/api/ai', ...) instead."
+  );
+}
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -30,7 +39,7 @@ export async function callAI({
         "Authorization": `Bearer ${process.env.KIMI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "kimi-k2-0711-preview", // Kimi K2 model
+        model: "kimi-k2-0711-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },

@@ -6,7 +6,7 @@ import { Check, Calendar, ArrowLeft, Sparkles, Bot } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useAI } from "@/hooks/useAI";
 import type { ScheduledPost } from "@/types/content-engine";
-import { MODEL_NAMES, type AIModel } from "@/lib/ai-client";
+import { MODEL_NAMES, type AIModel } from "@/types/ai-client";
 
 type ContentFormat = "LinkedIn" | "X" | "Reel script" | "WhatsApp broadcast";
 

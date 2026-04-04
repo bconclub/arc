@@ -1,6 +1,6 @@
 // Persistent context system for ARC AI calls
 import { supabase } from "./supabase";
-import type { AIModel } from "./ai-client";
+import type { AIModel } from "@/types/ai-client";
 
 export type ContextKey = 
   | "voice_style" 
@@ -30,7 +30,8 @@ const DEFAULT_CONTEXT: ArcContext = {
 
 // Seed default context if table is empty
 export async function seedDefaultContext(): Promise<void> {
-  const { data } = await supabase.from("arc_context").select("key").limit(1);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any).from("arc_context").select("key").limit(1);
   
   if (!data || data.length === 0) {
     const inserts = Object.entries(DEFAULT_CONTEXT).map(([key, value]) => ({
@@ -38,7 +39,8 @@ export async function seedDefaultContext(): Promise<void> {
       value,
     }));
     
-    await supabase.from("arc_context").insert(inserts);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("arc_context").insert(inserts);
   }
 }
 
@@ -46,7 +48,8 @@ export async function seedDefaultContext(): Promise<void> {
 export async function getContext(key: ContextKey): Promise<string> {
   await seedDefaultContext();
   
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from("arc_context")
     .select("value")
     .eq("key", key)
@@ -61,7 +64,8 @@ export async function getContext(key: ContextKey): Promise<string> {
 
 // Set single context value
 export async function setContext(key: ContextKey, value: string): Promise<void> {
-  const { error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
     .from("arc_context")
     .upsert({ key, value, updated_at: new Date().toISOString() });
   
@@ -75,7 +79,8 @@ export async function setContext(key: ContextKey, value: string): Promise<void> 
 export async function getFullContext(): Promise<ArcContext> {
   await seedDefaultContext();
   
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from("arc_context")
     .select("key, value");
   
@@ -83,7 +88,8 @@ export async function getFullContext(): Promise<ArcContext> {
     return DEFAULT_CONTEXT;
   }
   
-  const ctx = Object.fromEntries(data.map(r => [r.key, r.value])) as ArcContext;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctx = Object.fromEntries(data.map((r: any) => [r.key, r.value])) as ArcContext;
   return { ...DEFAULT_CONTEXT, ...ctx };
 }
 
