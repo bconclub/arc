@@ -1,12 +1,12 @@
 import { ConnectedSource, ListeningFeed } from "@/types/connections";
 
 export const defaultSources: ConnectedSource[] = [
-  { id: "linkedin", name: "LinkedIn", storageKeyPrefix: "koex:linkedin", status: "Connected", lastSync: null },
-  { id: "instagram", name: "Instagram", storageKeyPrefix: "koex:instagram", status: "Connected", lastSync: null },
-  { id: "twitter", name: "Twitter / X", storageKeyPrefix: "koex:twitter", status: "Connected", lastSync: null },
-  { id: "whatsapp", name: "WhatsApp Business", storageKeyPrefix: "koex:whatsapp", status: "Connected", lastSync: null },
-  { id: "gcal", name: "Google Calendar", storageKeyPrefix: "koex:gcal", status: "Not Connected", lastSync: null },
-  { id: "ga", name: "Google Analytics", storageKeyPrefix: "koex:ga", status: "Not Connected", lastSync: null },
+  { id: "linkedin", name: "LinkedIn", storageKeyPrefix: "arc:linkedin", status: "Connected", lastSync: null },
+  { id: "instagram", name: "Instagram", storageKeyPrefix: "arc:instagram", status: "Connected", lastSync: null },
+  { id: "twitter", name: "Twitter / X", storageKeyPrefix: "arc:twitter", status: "Connected", lastSync: null },
+  { id: "whatsapp", name: "WhatsApp Business", storageKeyPrefix: "arc:whatsapp", status: "Connected", lastSync: null },
+  { id: "gcal", name: "Google Calendar", storageKeyPrefix: "arc:gcal", status: "Not Connected", lastSync: null },
+  { id: "ga", name: "Google Analytics", storageKeyPrefix: "arc:ga", status: "Not Connected", lastSync: null },
 ];
 
 export const defaultFeeds: ListeningFeed[] = [

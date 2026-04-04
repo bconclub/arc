@@ -1,122 +1,300 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase";
+import { callAI, callAIStream, type AIModel } from "@/lib/ai-client";
+import { getFullContext, buildSystemPrompt, seedDefaultContext } from "@/lib/context";
+import type { Source } from "@/types/signals";
+import { calculateTrendScore, detectPillar } from "@/types/signals";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
+const TAVILY_BASE_URL = "https://api.tavily.com";
 
-const MODELS = {
-  haiku: "claude-haiku-4-5-20251001",
-  sonnet: "claude-sonnet-4-20250514",
-} as const;
+// Seed default sources if table is empty
+async function seedDefaultSources() {
+  const { data: existing } = await supabaseAdmin.from("sources").select("id").limit(1);
+  
+  if (!existing || existing.length === 0) {
+    const defaultSources = [
+      { name: "Inc42", type: "rss", value: "https://inc42.com/feed/", active: true },
+      { name: "YourStory", type: "rss", value: "https://yourstory.com/feed", active: true },
+      { name: "Neil Patel", type: "rss", value: "https://neilpatel.com/blog/feed/", active: true },
+      { name: "Ben's Bites", type: "rss", value: "https://www.bensbites.com/feed", active: true },
+      { name: "Marketing Brew", type: "rss", value: "https://www.marketingbrew.com/feeds/newsletter", active: true },
+      { name: "WhatsApp India", type: "tavily_search", value: "WhatsApp business leads India 2026", active: true },
+      { name: "Meta Ads India", type: "tavily_search", value: "Meta ads small business India 2026", active: true },
+      { name: "AI Sales", type: "tavily_search", value: "AI follow-up sales automation India", active: true },
+    ];
+    
+    await supabaseAdmin.from("sources").insert(defaultSources);
+  }
+}
 
-const ICP_CONTEXT = `Our ICP: Solo founders, coaching academies, clinics (dental/skin/physio), real estate agents, tutoring centers. Revenue 5-15L/month. India-based. They lose leads because they don't reply to WhatsApp inquiries fast enough or follow up properly. They're not tech-savvy but hungry to grow.`;
+// Fetch from Tavily Search
+async function fetchTavilySearch(query: string): Promise<Array<{
+  title: string;
+  url: string;
+  snippet: string;
+  image?: string;
+  publishedDate: string;
+  sourceName: string;
+}>> {
+  try {
+    const res = await fetch(`${TAVILY_BASE_URL}/search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${TAVILY_API_KEY}`,
+      },
+      body: JSON.stringify({
+        query,
+        search_depth: "basic",
+        max_results: 8,
+        include_images: true,
+        time_range: "week",
+      }),
+    });
+    
+    if (!res.ok) throw new Error(`Tavily search failed: ${res.status}`);
+    
+    const data = await res.json();
+    
+    return data.results.map((r: { title: string; url: string; content: string; published_date?: string; image?: string }) => ({
+      title: r.title,
+      url: r.url,
+      snippet: r.content?.slice(0, 300) || "",
+      image: r.image,
+      publishedDate: r.published_date || new Date().toISOString(),
+      sourceName: "Tavily",
+    }));
+  } catch (error) {
+    console.error("Tavily search error:", error);
+    return [];
+  }
+}
 
-const PILLARS = `Content Pillars:
-- Pain Points (red): Content about problems our ICP faces — lost leads, no follow-up, manual processes
-- Marketing Tips (blue): Actionable tactics — WhatsApp automations, follow-up systems, demo booking hacks
-- Build Journey (green): Raw build-in-public content — what we're building, wins, failures, learnings
-- Client Results (orange): Case studies, before/after, social proof from real clients`;
+// Tavily Extract for deep context
+async function extractTavilyContent(url: string): Promise<string> {
+  const res = await fetch(`${TAVILY_BASE_URL}/extract`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${TAVILY_API_KEY}`,
+    },
+    body: JSON.stringify({ urls: [url] }),
+  });
 
-const VOICE = `Writing voice: Thanzeel's style is raw, vulnerable, build-in-public, first person. Short punchy sentences. No corporate fluff. No motivational clichés. Conversational. Like texting a friend who happens to be building something real. Every post ends with a CTA like "DM me DEMO" or "Comment LEADS" or "Save this for later".`;
+  if (!res.ok) {
+    throw new Error(`Tavily extract failed: ${res.status}`);
+  }
 
-const SYSTEM_PROMPTS: Record<string, string> = {
-  "generate-topics": `You are a content strategist for Koex, a GTM command center for solo founders.
-${ICP_CONTEXT}
-${PILLARS}
-Generate topic ideas that would make solo founders stop scrolling. Each topic should be specific, provocative, or deeply relatable. Avoid generic advice.
-Respond with ONLY a valid JSON array of objects with fields: title (string), pillar (one of "Pain Points", "Marketing Tips", "Build Journey", "Client Results"), platform (one of "LinkedIn", "Instagram", "Twitter", "All"). No markdown, no explanation, just the JSON array.`,
+  const data = await res.json();
+  return data.results?.[0]?.content || data.results?.[0]?.raw_content || "Content extraction failed";
+}
 
-  "write-post": `You are a ghostwriter for Thanzeel, founder of Koex.
-${ICP_CONTEXT}
-${VOICE}
-Platform-specific guidelines:
-- LinkedIn: Longer form storytelling (800-1200 chars). Hook in first line. Line breaks between sentences. End with CTA.
-- Instagram: Punchier, carousel-friendly. Each point on its own line. Use "→" for lists. Max 400 chars for caption.
-- Twitter: Tight single banger or thread format. Max 280 chars per tweet. If thread, number them 1/ 2/ 3/.
-Write the full post copy. No meta-commentary. Just the post ready to publish.`,
+// Write post with persistent context and model selection
+async function* writePostStream(
+  topic: string,
+  context: string,
+  format: string,
+  model: AIModel
+) {
+  await seedDefaultContext();
+  const ctx = await getFullContext();
+  const systemPrompt = buildSystemPrompt(ctx);
 
-  "analyze-metrics": `You are a brutally honest growth advisor for Koex, a solo-founder GTM tool.
-${ICP_CONTEXT}
-Analyze the provided metrics data. Be specific with numbers. Don't sugarcoat.
-Structure: Start with a 1-line verdict. Then list what's working (with evidence). Then what's not (with evidence). Then 3 specific action items for this week. Keep it under 300 words.`,
+  const formatGuidelines: Record<string, string> = {
+    "LinkedIn": "Longer form storytelling (800-1200 chars). Hook in first line. Line breaks between sentences. End with CTA.",
+    "X": "Tight single banger or thread format. Max 280 chars per tweet. If thread, number them 1/ 2/ 3/.",
+    "Reel script": "Hook in first 3 seconds. Short sentences for voiceover. Include visual cues in [brackets]. CTA at end.",
+    "WhatsApp broadcast": "Conversational, personal tone. Use first person. Keep under 300 chars. Direct ask at end.",
+  };
 
-  "generate-dms": `You are an outreach specialist for Koex.
-${ICP_CONTEXT}
-Write cold DM scripts that are:
-- Short (under 50 words each message)
-- Value-first, not pitch-first
-- Specific to the target type
-- Designed to get a reply, not close a deal
-- Natural and conversational, not templated
-Respond with ONLY a valid JSON array of objects with fields: target (string), platform (string), opener (string - first message), body (string - follow up if they reply), cta (string - the ask). No markdown, just the JSON array.`,
+  const fullSystemPrompt = `${systemPrompt}\n\nFormat for this post (${format}):\n${formatGuidelines[format] || formatGuidelines["LinkedIn"]}`;
 
-  "daily-briefing": `You are Thanzeel's AI chief of staff at Koex.
-${ICP_CONTEXT}
-Generate a concise morning briefing. Structure:
-🎯 TOP PRIORITY (the one thing that matters most today)
-📊 METRICS CHECK (quick read on the numbers, any alerts)
-📝 CONTENT (what's scheduled, any gaps)
-📞 FOLLOW-UPS (leads to chase based on recent activity)
-💪 SPRINT CHECK (Day X of 90 context, pace check)
-Keep it actionable. No fluff. Under 250 words. Talk directly to Thanzeel.`,
-};
+  const userMessage = `Topic: ${topic}\n\nBackground context:\n${context || "No additional context provided."}\n\nWrite the ${format} now.`;
 
-// Streaming actions
-const STREAMING_ACTIONS = new Set(["write-post", "analyze-metrics", "daily-briefing"]);
+  yield* callAIStream({
+    model,
+    systemPrompt: fullSystemPrompt,
+    userMessage,
+    max_tokens: 1024,
+  });
+}
+
+// Generate brain prompt from context
+async function generateBrainSystemPrompt(model: AIModel): Promise<string> {
+  await seedDefaultContext();
+  const ctx = await getFullContext();
+  
+  const prompt = `Create a tight system prompt for an AI content writer.
+
+ABOUT THE FOUNDER:
+${ctx.about_me}
+
+VOICE STYLE:
+${ctx.voice_style}
+
+SAMPLE POSTS THAT WORKED:
+${ctx.sample_posts || "Not provided"}
+
+Generate a concise system prompt (3-5 sentences max) that captures:
+1. The exact tone and personality
+2. Specific patterns from sample posts
+3. What to avoid
+4. The CTA style
+
+Return ONLY the system prompt text, no commentary.`;
+
+  return await callAI({
+    model,
+    systemPrompt: "You are a prompt engineer. Create tight, effective system prompts.",
+    userMessage: prompt,
+    max_tokens: 500,
+  });
+}
+
+// Fetch all signals from sources
+async function fetchAllSignals(sources: Source[]): Promise<Array<{
+  id: string;
+  title: string;
+  url: string;
+  snippet: string;
+  source_name: string;
+  image_url?: string;
+  published_date: string;
+  pillar: string;
+  trend_score: number;
+  label: string;
+}>> {
+  const activeSources = sources.filter(s => s.active);
+  const allSignals: Array<{
+    id: string;
+    title: string;
+    url: string;
+    snippet: string;
+    source_name: string;
+    image_url?: string;
+    published_date: string;
+    pillar: string;
+    trend_score: number;
+    label: string;
+  }> = [];
+  
+  for (const source of activeSources) {
+    if (source.type === "tavily_search") {
+      const results = await fetchTavilySearch(source.value);
+      results.forEach((r, i) => {
+        const { score, label } = calculateTrendScore(r.title, r.snippet, r.publishedDate);
+        const pillar = detectPillar(r.title, r.snippet);
+        
+        allSignals.push({
+          id: `tav-${Date.now()}-${i}`,
+          title: r.title,
+          url: r.url,
+          snippet: r.snippet,
+          source_name: source.name,
+          image_url: r.image,
+          published_date: r.publishedDate,
+          pillar,
+          trend_score: score,
+          label,
+        });
+      });
+    }
+  }
+  
+  return allSignals.sort((a, b) => b.trend_score - a.trend_score);
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { action, payload } = await req.json();
 
-    if (!action || !SYSTEM_PROMPTS[action]) {
-      return Response.json({ error: "Invalid action" }, { status: 400 });
+    if (action === "fetch-signals") {
+      await seedDefaultSources();
+      
+      const { data: sources, error: sourcesError } = await supabaseAdmin
+        .from("sources")
+        .select("*")
+        .eq("active", true);
+      
+      if (sourcesError) {
+        return Response.json({ error: sourcesError.message }, { status: 500 });
+      }
+
+      const signals = await fetchAllSignals(sources || []);
+      return Response.json({ data: signals });
     }
 
-    const model = STREAMING_ACTIONS.has(action) ? MODELS.sonnet : MODELS.haiku;
-    const modelOverride = payload?.model;
-    const finalModel = modelOverride === "haiku" ? MODELS.haiku : modelOverride === "sonnet" ? MODELS.sonnet : model;
+    if (action === "extract-and-save") {
+      const { url, title, snippet, image_url, source_name, trend_score, label } = payload;
+      
+      const fullContent = await extractTavilyContent(url);
+      
+      const { data, error } = await supabaseAdmin
+        .from("signals")
+        .insert({
+          title,
+          url,
+          snippet,
+          source_name,
+          image_url,
+          published_date: new Date().toISOString(),
+          trend_score,
+          label,
+          saved: true,
+          saved_at: new Date().toISOString(),
+          notes: fullContent,
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        return Response.json({ error: error.message }, { status: 500 });
+      }
 
-    // Build user message based on action
-    let userMessage = "";
-
-    switch (action) {
-      case "generate-topics": {
-        const existing = (payload.existingTopics as string[]) || [];
-        userMessage = `Generate 5 fresh content topic ideas.\n\nExisting topics to avoid duplicating:\n${existing.join("\n") || "None yet"}\n\nFocus on topics for: ${payload.platform || "All"} platform.`;
-        break;
-      }
-      case "write-post": {
-        userMessage = `Write a ${payload.format || "Text Post"} for ${payload.platform || "LinkedIn"}.\n\nTopic: ${payload.topic}\nPillar: ${payload.pillar}\n\nWrite the post now.`;
-        break;
-      }
-      case "analyze-metrics": {
-        userMessage = `Analyze these metrics:\n\n${JSON.stringify(payload.metrics, null, 2)}\n\nMetric change history:\n${JSON.stringify(payload.history?.slice(-20), null, 2)}\n\nRecent activity log:\n${JSON.stringify(payload.logEntries?.slice(-10), null, 2)}`;
-        break;
-      }
-      case "generate-dms": {
-        userMessage = `Generate 3 cold DM scripts for: ${payload.targetType || "coaching academy owners"}\nPlatforms: LinkedIn and WhatsApp\nContext: ${payload.context || "Outreach for Koex - WhatsApp automation for lead management"}`;
-        break;
-      }
-      case "daily-briefing": {
-        userMessage = `Generate my morning briefing.\n\nSprint: Day ${payload.sprintDay || "?"} of 90\nToday's targets: ${JSON.stringify(payload.targets)}\nCurrent metrics snapshot: ${JSON.stringify(payload.metrics)}\nSchedule: ${JSON.stringify(payload.schedule)}\nRecent log: ${JSON.stringify(payload.recentLog?.slice(-5))}`;
-        break;
-      }
+      return Response.json({ data: { signal: data, fullContent } });
     }
 
-    if (STREAMING_ACTIONS.has(action)) {
-      const stream = client.messages.stream({
-        model: finalModel,
-        max_tokens: 1024,
-        system: SYSTEM_PROMPTS[action],
-        messages: [{ role: "user", content: userMessage }],
-      });
+    if (action === "generate-brain-prompt") {
+      const { model = "claude" } = payload;
+      const prompt = await generateBrainSystemPrompt(model);
+      
+      await supabaseAdmin
+        .from("arc_context")
+        .upsert({ 
+          key: "brain_system_prompt", 
+          value: prompt, 
+          updated_at: new Date().toISOString() 
+        });
+      
+      return Response.json({ data: { prompt } });
+    }
+
+    if (action === "write-post") {
+      const { topic, context, format, model } = payload;
+      if (!topic) {
+        return Response.json({ error: "Topic required" }, { status: 400 });
+      }
+
+      // Get preferred model from context if not specified
+      let useModel: AIModel = model || "claude";
+      if (!model) {
+        await seedDefaultContext();
+        const ctx = await getFullContext();
+        useModel = ctx.preferred_model || "claude";
+      }
+
+      const stream = writePostStream(topic, context || "", format || "LinkedIn", useModel);
 
       const readable = new ReadableStream({
         async start(controller) {
           const encoder = new TextEncoder();
-          for await (const event of stream) {
-            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-              controller.enqueue(encoder.encode(event.delta.text));
+          try {
+            for await (const chunk of stream) {
+              controller.enqueue(encoder.encode(chunk));
             }
+          } catch (error) {
+            controller.error(error);
           }
           controller.close();
         },
@@ -125,26 +303,12 @@ export async function POST(req: NextRequest) {
       return new Response(readable, {
         headers: { "Content-Type": "text/plain; charset=utf-8", "Transfer-Encoding": "chunked" },
       });
-    } else {
-      const response = await client.messages.create({
-        model: finalModel,
-        max_tokens: 1024,
-        system: SYSTEM_PROMPTS[action],
-        messages: [{ role: "user", content: userMessage }],
-      });
-
-      const text = response.content[0].type === "text" ? response.content[0].text : "";
-
-      try {
-        const parsed = JSON.parse(text);
-        return Response.json({ data: parsed });
-      } catch {
-        return Response.json({ data: text });
-      }
     }
+
+    return Response.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "AI request failed";
-    console.error("AI route error:", message);
+    const message = error instanceof Error ? error.message : "Request failed";
+    console.error("API error:", message);
     return Response.json({ error: message }, { status: 500 });
   }
 }

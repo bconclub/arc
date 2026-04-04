@@ -68,6 +68,99 @@ body {
 .flash-green { animation: flashGreen 0.8s ease-out; }
 .flash-red { animation: flashRed 0.8s ease-out; }
 
+/* ─── Feed tile breathing animation for hot signals ─── */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); }
+}
+.feed-tile-hot {
+  animation: breathe 3s ease-in-out infinite;
+}
+.feed-tile-hot:hover {
+  animation: none;
+}
+
+/* ─── YouTube-style Feed Tiles ─── */
+.tile {
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.thumb {
+  position: relative;
+  padding-top: 56.25%; /* 16:9 aspect ratio */
+  overflow: hidden;
+  background: var(--surface-hover);
+}
+.thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Trend badge on thumbnail */
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+/* Hover actions overlay */
+.hover-actions {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 20;
+}
+.tile:hover .hover-actions {
+  opacity: 1;
+}
+
+/* Info section below thumbnail */
+.info {
+  padding: 12px;
+}
+.title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ─── Premium card ─── */
 .card {
   background: var(--surface);
@@ -111,6 +204,15 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* ─── Hide scrollbar for horizontal scroll ─── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
 /* ─── Sidebar ─── */
 .sidebar {
@@ -200,4 +302,18 @@ input:focus, select:focus, textarea:focus {
 }
 .animate-dropdown {
   animation: dropdownIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ─── Line clamp utilities ─── */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

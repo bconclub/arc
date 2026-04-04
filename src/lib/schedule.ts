@@ -20,7 +20,7 @@ export const BLOCK_COLORS: Record<BlockType, { accent: string; bg: string; borde
 };
 
 export const SCHEDULE: ScheduleBlock[] = [
-  { id: "b1",  startHour: 9,  startMin: 0,  endHour: 9,  endMin: 30, title: "Koex Check-in",           description: "Log yesterday's numbers, check today's plan",                    type: "admin" },
+  { id: "b1",  startHour: 9,  startMin: 0,  endHour: 9,  endMin: 30, title: "ARC Check-in",           description: "Log yesterday's numbers, check today's plan",                    type: "admin" },
   { id: "b2",  startHour: 9,  startMin: 30, endHour: 10, endMin: 30, title: "Content Ship",              description: "Write, finalize, publish today's post on LinkedIn + IG",          type: "content" },
   { id: "b3",  startHour: 10, startMin: 30, endHour: 11, endMin: 0,  title: "Engagement",                description: "15 ICP comments, reply to all DMs and comments",                 type: "content" },
   { id: "b4",  startHour: 11, startMin: 0,  endHour: 13, endMin: 0,  title: "Outreach & Sales Block 1",  description: "Send 20 DMs, follow up warm leads, book demos",                  type: "selling" },
@@ -29,7 +29,7 @@ export const SCHEDULE: ScheduleBlock[] = [
   { id: "b7",  startHour: 15, startMin: 30, endHour: 17, endMin: 30, title: "Client Delivery",           description: "BCON active clients, ads, PROXe setup",                          type: "delivery" },
   { id: "b8",  startHour: 17, startMin: 30, endHour: 19, endMin: 0,  title: "Dev Block",                 description: "PROXe product work, bug fixes, features",                        type: "dev" },
   { id: "b9",  startHour: 19, startMin: 0,  endHour: 19, endMin: 30, title: "Outreach Block 2",          description: "Evening DMs, follow up afternoon conversations",                 type: "selling" },
-  { id: "b10", startHour: 19, startMin: 30, endHour: 20, endMin: 0,  title: "Koex End-of-Day",         description: "Log activity, update metrics, prep tomorrow",                    type: "admin" },
+  { id: "b10", startHour: 19, startMin: 30, endHour: 20, endMin: 0,  title: "ARC End-of-Day",         description: "Log activity, update metrics, prep tomorrow",                    type: "admin" },
 ];
 
 export function getBlockMinutes(block: ScheduleBlock): { start: number; end: number } {
@@ -61,5 +61,5 @@ export const DEFAULT_TARGETS: Omit<DailyTarget, "checked">[] = [
   { id: "t3", label: "15 ICP comments" },
   { id: "t4", label: "2 hours client delivery" },
   { id: "t5", label: "1.5 hours dev" },
-  { id: "t6", label: "Koex updated twice" },
+  { id: "t6", label: "ARC updated twice" },
 ];

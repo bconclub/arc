@@ -31,7 +31,7 @@ export const defaultTopics: Topic[] = [
   },
   {
     id: "t5",
-    title: "Week 1 of building Koex — here is what happened",
+    title: "Week 1 of building ARC — here is what happened",
     pillar: "Build Journey",
     status: "idea",
     platform: "LinkedIn",

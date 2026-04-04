@@ -18,7 +18,7 @@ export function TopBar() {
     const data: Record<string, unknown> = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith("koex:")) {
+      if (key?.startsWith("arc:")) {
         try {
           data[key] = JSON.parse(localStorage.getItem(key)!);
         } catch {
@@ -31,7 +31,7 @@ export function TopBar() {
     const a = document.createElement("a");
     const date = new Date().toISOString().split("T")[0];
     a.href = url;
-    a.download = `koex-backup-${date}.json`;
+    a.download = `arc-backup-${date}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -44,7 +44,7 @@ export function TopBar() {
       try {
         const data = JSON.parse(ev.target?.result as string);
         Object.entries(data).forEach(([key, value]) => {
-          if (key.startsWith("koex:")) {
+          if (key.startsWith("arc:")) {
             localStorage.setItem(key, JSON.stringify(value));
           }
         });
@@ -69,7 +69,7 @@ export function TopBar() {
           <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center">
             <span className="text-[10px] font-black text-black leading-none">K</span>
           </div>
-          <span className="text-sm font-semibold tracking-tight text-white">Koex</span>
+          <span className="text-sm font-semibold tracking-tight text-white">ARC</span>
         </div>
       </div>
       <div className="flex items-center gap-2">

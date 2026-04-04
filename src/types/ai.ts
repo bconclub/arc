@@ -1,11 +1,14 @@
 import type { Pillar, Platform } from "./content";
+import type { SignalPillar, ContentFormatV2 } from "./content-engine";
 
 export type AIAction =
   | "generate-topics"
   | "write-post"
   | "analyze-metrics"
   | "generate-dms"
-  | "daily-briefing";
+  | "daily-briefing"
+  | "fetch-signals"
+  | "write-post-v2";
 
 export interface AIRequest {
   action: AIAction;
@@ -30,4 +33,12 @@ export interface AIAnalysis {
   summary: string;
   insights: string[];
   recommendations: string[];
+}
+
+export interface AISignal {
+  headline: string;
+  source: string;
+  url?: string;
+  date: string;
+  pillar: SignalPillar;
 }

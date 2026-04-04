@@ -15,7 +15,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Koex",
+  title: "ARC",
   description: "GTM Command Center",
 };
 
