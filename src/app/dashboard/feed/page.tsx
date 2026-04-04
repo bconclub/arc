@@ -93,7 +93,7 @@ export default function FeedPage() {
           {filtered.map((s, i) => {
             const badge = scoreLabel(s)
             const imgH = 130 + (s.trend_score > 80 ? 40 : s.trend_score > 60 ? 20 : 0)
-            const bg = PILLAR_COLORS[s.pillar] || PILLAR_COLORS.default
+            const bg = PILLAR_COLORS[s.pillar ?? 'default'] ?? PILLAR_COLORS.default
             return (
               <div key={s.url || i} style={{
                 borderRadius: 12, overflow: 'hidden',
