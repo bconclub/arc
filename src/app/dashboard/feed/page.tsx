@@ -41,7 +41,8 @@ export default function FeedPage() {
         body: JSON.stringify({ action: 'fetch-signals', topic: topic?.query })
       })
       const data = await res.json()
-      setSignals(data.signals || [])
+      const signalsArray = Array.isArray(data?.signals) ? data.signals : []
+      setSignals(signalsArray)
     } catch(e) { console.error(e) }
     finally { setLoading(false) }
   }
@@ -54,7 +55,8 @@ export default function FeedPage() {
         body: JSON.stringify({ action: 'get-topics' })
       })
       const data = await res.json()
-      setTopics(data.topics || [])
+      const topicsArray = Array.isArray(data?.topics) ? data.topics : []
+      setTopics(topicsArray)
     } catch(e) { console.error(e) }
   }
 
@@ -117,7 +119,7 @@ export default function FeedPage() {
           All
         </button>
 
-        {topics.map((t, i) => (
+        {Array.isArray(topics) && topics.map((t, i) => (
           <button key={i} onClick={() => selectTopic(t)} style={{
             flexShrink: 0, fontSize: 12, padding: '4px 12px', borderRadius: 99,
             border: '0.5px solid #333', cursor: 'pointer', whiteSpace: 'nowrap',
@@ -179,7 +181,7 @@ export default function FeedPage() {
           gridAutoRows: '320px',
           gap: 12,
         }}>
-          {signals.map((s, i) => {
+          {Array.isArray(signals) && signals.map((s, i) => {
             const badge = scoreLabel(s)
             const bg = PILLAR_COLORS[s.pillar ?? 'default'] ?? PILLAR_COLORS.default
             return (
