@@ -1,39 +1,65 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { callAIStream } from '@/lib/ai-client'
 import type { AIModel } from '@/lib/ai-client'
+import Anthropic from '@anthropic-ai/sdk'
+import type { WebSearchResultBlock, WebSearchToolResultBlock } from '@anthropic-ai/sdk/resources/messages'
 
-type TavilyResult = {
-  title: string
-  url: string
-  content?: string
-  published_date?: string
-  images?: string[]
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+function tryHostname(url: string) {
+  try { return new URL(url).hostname.replace('www.', '') } catch { return '' }
 }
 
-async function tavilySearch(query: string) {
-  const res = await fetch('https://api.tavily.com/search', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.TAVILY_API_KEY}`
-    },
-    body: JSON.stringify({ query, search_depth: 'basic', max_results: 10, include_images: true, days: 90 })
+// Used for the main feed — included in Anthropic API cost, no separate credits
+async function anthropicWebSearch(query: string) {
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1024,
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
+    messages: [{ role: 'user', content: `Find recent news and articles about: ${query}` }],
   })
-  if (!res.ok) {
-    console.error('Tavily error for query:', query, await res.text())
-    return []
+
+  const signals: {
+    title: string; url: string; snippet: string; source_name: string;
+    published_date: string; image_url: string; trend_score: number; label: string
+  }[] = []
+
+  for (const block of response.content) {
+    const b = block as WebSearchToolResultBlock
+    if (b.type === 'web_search_tool_result' && Array.isArray(b.content)) {
+      for (const r of b.content as WebSearchResultBlock[]) {
+        if (r.type === 'web_search_result') {
+          signals.push({
+            title: r.title,
+            url: r.url,
+            snippet: '',
+            source_name: tryHostname(r.url),
+            published_date: r.page_age || '',
+            image_url: '',
+            trend_score: Math.floor(Math.random() * 40 + 60),
+            label: 'rising',
+          })
+        }
+      }
+    }
   }
+  return signals
+}
+
+// Reserved for extract-signal (Go deeper) — intentional single-URL extraction
+type TavilyResult = { title: string; url: string; content?: string; published_date?: string; images?: string[] }
+
+async function tavilyExtract(url: string) {
+  const res = await fetch('https://api.tavily.com/extract', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.TAVILY_API_KEY}` },
+    body: JSON.stringify({ urls: [url] })
+  })
+  if (!res.ok) { console.error('Tavily extract error:', await res.text()); return null }
   const data = await res.json()
-  return (data.results || []).map((r: TavilyResult) => ({
-    title: r.title,
-    url: r.url,
-    snippet: r.content?.substring(0, 200) || '',
-    source_name: new URL(r.url).hostname.replace('www.', ''),
-    published_date: r.published_date || '',
-    image_url: r.images?.[0] || '',
-    trend_score: Math.floor(Math.random() * 40 + 60),
-    label: 'rising'
-  }))
+  const r: TavilyResult = data.results?.[0]
+  if (!r) return null
+  return { content: r.content || '', title: r.title || '', url: r.url || url }
 }
 
 async function rssFetch(feedUrl: string, baseUrl: string) {
@@ -64,12 +90,12 @@ export async function POST(req: Request) {
     if (action === 'fetch-signals') {
       const { topic } = body as { topic?: string }
 
-      // Topic override: enrich with ICP context then run single Tavily search
+      // Topic chip override: enrich with ICP context then search via Anthropic
       if (topic) {
         const ICP_SUFFIX = 'India SMB business 2026'
         const hasContext = /india|smb|business\s+20/i.test(topic)
         const enriched = hasContext ? topic : `${topic} ${ICP_SUFFIX}`
-        const signals = await tavilySearch(enriched)
+        const signals = await anthropicWebSearch(enriched)
         return Response.json({ signals })
       }
 
@@ -92,7 +118,7 @@ export async function POST(req: Request) {
       const results = await Promise.allSettled(
         sources.map(s =>
           s.type === 'tavily_search'
-            ? tavilySearch(s.value)
+            ? anthropicWebSearch(s.value)   // Anthropic web_search, not Tavily
             : rssFetch(s.value, baseUrl)
         )
       )
