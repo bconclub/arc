@@ -1,13 +1,14 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Loader2 } from 'lucide-react'
+import { X, ExternalLink, PenLine } from 'lucide-react'
 import type { Signal } from '@/lib/supabase'
 import { getTopicColor } from '@/lib/topic-colors'
 
 type Topic = { label: string; query: string }
 
 const STORAGE_KEY = 'arc:feed-topics'
+const STREAM_DELAY = 100
 
 const DEFAULT_TOPICS: Topic[] = [
   { label: 'Marketing', query: 'marketing trends India SMB 2026' },
@@ -52,16 +53,229 @@ function saveTopics(topics: Topic[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(topics))
 }
 
+// Skeleton Card
+function SkeletonCard() {
+  return (
+    <div style={{
+      borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)',
+      background: '#111', height: 280, display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{
+        height: 140,
+        background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
+        backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite',
+      }} />
+      <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{
+          height: 16, background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
+          backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: 4, width: '90%',
+        }} />
+        <div style={{
+          height: 12, background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
+          backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: 4, width: '70%',
+        }} />
+        <div style={{
+          height: 12, background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
+          backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: 4, width: '50%', marginTop: 'auto',
+        }} />
+      </div>
+      <style jsx>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+    </div>
+  )
+}
+
+// Reading Drawer Component
+function ReadingDrawer({ signal, isOpen, onClose, onWrite }: { 
+  signal: Signal | null
+  isOpen: boolean
+  onClose: () => void
+  onWrite: (s: Signal) => void
+}) {
+  const [isVisible, setIsVisible] = useState(false)
+  
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true)
+      document.body.style.overflow = 'hidden'
+    } else {
+      const timer = setTimeout(() => setIsVisible(false), 300)
+      document.body.style.overflow = ''
+      return () => clearTimeout(timer)
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+  
+  // ESC key handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+  
+  if (!isVisible || !signal) return null
+  
+  const relScore = (signal as Signal & { relevance_score?: number }).relevance_score || 0
+  const badge = relScore >= 30 
+    ? { text: 'High Impact', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' }
+    : relScore >= 15
+    ? { text: 'Relevant', color: '#22c55e', bg: 'rgba(34,197,94,0.15)' }
+    : { text: 'Trending', color: '#a1a1aa', bg: 'rgba(255,255,255,0.08)' }
+  
+  return (
+    <>
+      {/* Backdrop */}
+      <div 
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)', zIndex: 40,
+          opacity: isOpen ? 1 : 0, transition: 'opacity 0.3s ease',
+        }}
+      />
+      
+      {/* Drawer */}
+      <div style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: 600,
+        background: '#0a0a0a', borderLeft: '1px solid rgba(255,255,255,0.08)',
+        zIndex: 50, display: 'flex', flexDirection: 'column',
+        transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 99,
+              background: badge.bg, color: badge.color, border: `1px solid ${badge.color}33`,
+            }}>
+              {badge.text}
+            </span>
+            <span style={{ fontSize: 12, color: '#666' }}>
+              {formatRelativeTime(signal.published_date)}
+            </span>
+          </div>
+          <button 
+            onClick={onClose}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 32, height: 32, borderRadius: 8, border: 'none',
+              background: 'transparent', color: '#888', cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#888' }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+        
+        {/* Content */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+          {/* Image */}
+          {signal.image_url && (
+            <div style={{
+              width: '100%', height: 200, borderRadius: 12, overflow: 'hidden',
+              marginBottom: 24, background: '#111',
+            }}>
+              <img 
+                src={signal.image_url} alt="" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            </div>
+          )}
+          
+          {/* Title */}
+          <h1 style={{
+            fontSize: 22, fontWeight: 600, color: 'white', margin: '0 0 16px',
+            lineHeight: 1.4,
+          }}>
+            {signal.title}
+          </h1>
+          
+          {/* Source */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+            {signal.favicon && (
+              <img src={signal.favicon} alt="" style={{ width: 16, height: 16, borderRadius: 3 }} />
+            )}
+            <span style={{ fontSize: 13, color: '#888' }}>{signal.source_name}</span>
+          </div>
+          
+          {/* Excerpt / Content */}
+          <div style={{
+            fontSize: 15, color: '#aaa', lineHeight: 1.7,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          }}>
+            {signal.snippet ? (
+              <p>{signal.snippet}</p>
+            ) : (
+              <p style={{ color: '#666', fontStyle: 'italic' }}>
+                No preview available. Open the original source to read the full article.
+              </p>
+            )}
+          </div>
+        </div>
+        
+        {/* Footer Actions */}
+        <div style={{
+          padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', gap: 10,
+        }}>
+          <button
+            onClick={() => window.open(signal.url, '_blank')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '10px 16px', borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'transparent', color: '#aaa',
+              fontSize: 13, cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#aaa' }}
+          >
+            <ExternalLink size={14} />
+            Open Original
+          </button>
+          
+          <button
+            onClick={() => { onWrite(signal); onClose(); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '10px 16px', borderRadius: 8,
+              border: 'none',
+              background: 'white', color: 'black',
+              fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+          >
+            <PenLine size={14} />
+            Write about this
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function FeedPage() {
   const router = useRouter()
   const [signals, setSignals] = useState<Signal[]>([])
-  const [loading, setLoading] = useState(true)
+  const [visibleCount, setVisibleCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
   const [topics, setTopics] = useState<Topic[]>([])
   const [activeTopic, setActiveTopic] = useState<Topic | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [hoveredChip, setHoveredChip] = useState<string | null>(null)
+  const [readingSignal, setReadingSignal] = useState<Signal | null>(null)
   const addInputRef = useRef<HTMLInputElement>(null)
+  const abortRef = useRef<boolean>(false)
 
   useEffect(() => {
     setTopics(getStoredTopics())
@@ -73,18 +287,30 @@ export default function FeedPage() {
   }, [showAdd])
 
   async function loadFeed(topic: Topic | null) {
-    setLoading(true)
+    abortRef.current = true
+    setSignals([])
+    setVisibleCount(0)
+    setIsLoading(true)
+    abortRef.current = false
+    
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'fetch-signals', topic: topic?.query })
       })
+      
       const data = await res.json()
       const signalsArray = Array.isArray(data?.signals) ? data.signals : []
       setSignals(signalsArray)
+      
+      for (let i = 0; i < signalsArray.length; i++) {
+        if (abortRef.current) break
+        await new Promise(resolve => setTimeout(resolve, STREAM_DELAY))
+        setVisibleCount(prev => prev + 1)
+      }
     } catch(e) { console.error(e) }
-    finally { setLoading(false) }
+    finally { setIsLoading(false) }
   }
 
   function selectTopic(t: Topic | null) {
@@ -113,6 +339,10 @@ export default function FeedPage() {
       loadFeed(null)
     }
   }
+  
+  const handleWrite = useCallback((s: Signal) => {
+    router.push('/dashboard/write?topic=' + encodeURIComponent(s.title) + '&context=' + encodeURIComponent(s.snippet || ''))
+  }, [router])
 
   const getScoreBadge = (s: Signal & { relevance_score?: number }) => {
     const score = s.relevance_score || 0
@@ -121,83 +351,64 @@ export default function FeedPage() {
     return { text: 'Trending', color: '#a1a1aa', bg: 'rgba(255,255,255,0.08)' }
   }
 
+  const skeletonCount = Math.max(0, 6 - visibleCount)
+  const visibleSignals = signals.slice(0, visibleCount)
+
   return (
     <div style={{ padding: '16px 24px' }}>
+      {/* Reading Drawer */}
+      <ReadingDrawer 
+        signal={readingSignal} 
+        isOpen={!!readingSignal} 
+        onClose={() => setReadingSignal(null)}
+        onWrite={handleWrite}
+      />
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <h1 style={{ fontSize: 20, fontWeight: 600, color: 'white', margin: 0 }}>Feed</h1>
-          <span style={{ fontSize: 13, color: '#666' }}>{signals.length} signals</span>
+          <span style={{ fontSize: 13, color: '#666' }}>
+            {isLoading ? `Loading ${visibleCount}/${signals.length || '...'}` : `${signals.length} signals`}
+          </span>
         </div>
         <button
           onClick={() => selectTopic(activeTopic)}
-          disabled={loading}
+          disabled={isLoading}
           style={{ 
-            fontSize: 13, 
-            padding: '6px 14px', 
-            borderRadius: 8, 
-            border: '1px solid #333', 
-            background: 'transparent', 
-            color: '#aaa', 
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.5 : 1,
-            transition: 'all 0.15s'
+            fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '1px solid #333',
+            background: 'transparent', color: '#aaa', cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.5 : 1, transition: 'all 0.15s'
           }}
         >
-          {loading ? 'Loading...' : 'Refresh'}
+          {isLoading ? 'Loading...' : 'Refresh'}
         </button>
       </div>
 
       {/* Topic Chips */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-        {/* All Topics Chip */}
-        <button
-          onClick={() => selectTopic(null)}
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 14px',
-            borderRadius: 99,
-            border: '1px solid',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            fontSize: 13,
-            fontWeight: 500,
-            transition: 'all 0.15s ease',
-            background: activeTopic === null ? 'white' : 'transparent',
-            color: activeTopic === null ? 'black' : '#a1a1aa',
-            borderColor: activeTopic === null ? 'white' : 'rgba(255,255,255,0.15)',
-          }}
-        >
+        <button onClick={() => selectTopic(null)} style={{
+          flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+          padding: '6px 14px', borderRadius: 99, border: '1px solid',
+          cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13, fontWeight: 500,
+          transition: 'all 0.15s ease',
+          background: activeTopic === null ? 'white' : 'transparent',
+          color: activeTopic === null ? 'black' : '#a1a1aa',
+          borderColor: activeTopic === null ? 'white' : 'rgba(255,255,255,0.15)',
+        }}>
           All Topics
         </button>
 
-        {/* Topic Chips */}
         {topics.map((t) => {
           const colors = getTopicColor(t.label)
           const isActive = activeTopic?.label === t.label
-          
           return (
-            <div
-              key={t.label}
-              onClick={() => selectTopic(t)}
-              onMouseEnter={() => setHoveredChip(t.label)}
-              onMouseLeave={() => setHoveredChip(null)}
+            <div key={t.label} onClick={() => selectTopic(t)} 
+              onMouseEnter={() => setHoveredChip(t.label)} onMouseLeave={() => setHoveredChip(null)}
               style={{
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 6px 6px 14px',
-                borderRadius: 99,
-                border: '1px solid',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                fontSize: 13,
-                fontWeight: 500,
+                flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
+                padding: '6px 6px 6px 14px', borderRadius: 99, border: '1px solid',
+                cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13, fontWeight: 500,
                 transition: 'all 0.15s ease',
                 background: isActive ? colors.bg : (hoveredChip === t.label ? 'rgba(255,255,255,0.05)' : 'transparent'),
                 color: isActive ? colors.text : '#a1a1aa',
@@ -205,260 +416,108 @@ export default function FeedPage() {
               }}
             >
               <span>{t.label}</span>
-              <button
-                onClick={(e) => deleteTopic(e, t)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 18,
-                  height: 18,
-                  borderRadius: 99,
-                  border: 'none',
-                  background: hoveredChip === t.label ? 'rgba(239,68,68,0.2)' : 'transparent',
-                  cursor: 'pointer',
-                  opacity: hoveredChip === t.label ? 1 : 0,
-                  transition: 'all 0.15s',
-                }}
-                title="Delete topic"
-              >
+              <button onClick={(e) => deleteTopic(e, t)} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 18, height: 18, borderRadius: 99, border: 'none',
+                background: hoveredChip === t.label ? 'rgba(239,68,68,0.2)' : 'transparent',
+                cursor: 'pointer', opacity: hoveredChip === t.label ? 1 : 0, transition: 'all 0.15s',
+              }} title="Delete topic">
                 <X size={12} color="#ef4444" />
               </button>
             </div>
           )
         })}
 
-        {/* Add Topic Input */}
         {showAdd ? (
-          <input
-            ref={addInputRef}
-            value={newLabel}
-            onChange={e => setNewLabel(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') addTopic()
-              if (e.key === 'Escape') { setShowAdd(false); setNewLabel('') }
-            }}
+          <input ref={addInputRef} value={newLabel} onChange={e => setNewLabel(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') addTopic(); if (e.key === 'Escape') { setShowAdd(false); setNewLabel('') }}}
             onBlur={() => { if (!newLabel.trim()) setShowAdd(false) }}
             placeholder="Topic..."
-            style={{
-              flexShrink: 0,
-              width: 120,
-              fontSize: 13,
-              padding: '6px 12px',
-              borderRadius: 99,
-              border: '1px solid #555',
-              background: 'transparent',
-              color: 'white',
-              outline: 'none',
-            }}
+            style={{ flexShrink: 0, width: 120, fontSize: 13, padding: '6px 12px', borderRadius: 99, border: '1px solid #555', background: 'transparent', color: 'white', outline: 'none' }}
           />
         ) : (
-          <button 
-            onClick={() => setShowAdd(true)}
-            style={{
-              flexShrink: 0,
-              width: 32,
-              height: 32,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 99,
-              border: '1px dashed rgba(255,255,255,0.2)',
-              background: 'transparent',
-              color: '#666',
-              cursor: 'pointer',
-              fontSize: 18,
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'
-              e.currentTarget.style.color = '#aaa'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
-              e.currentTarget.style.color = '#666'
-            }}
-          >
+          <button onClick={() => setShowAdd(true)} style={{
+            flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 99, border: '1px dashed rgba(255,255,255,0.2)', background: 'transparent', color: '#666',
+            cursor: 'pointer', fontSize: 18, transition: 'all 0.15s',
+          }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.color = '#aaa' }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#666' }}>
             +
           </button>
         )}
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          height: 200,
-          color: '#666'
-        }}>
-          <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
-        </div>
-      )}
-
       {/* Signal Grid */}
-      {!loading && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: 16,
-        }}>
-          {signals.length === 0 && (
-            <div style={{ 
-              gridColumn: '1 / -1',
-              textAlign: 'center',
-              padding: '60px 20px',
-              color: '#666'
-            }}>
-              <p>No signals found</p>
-              <p style={{ fontSize: 13, marginTop: 8 }}>Try a different topic or refresh</p>
-            </div>
-          )}
-          
-          {signals.map((s, i) => {
-            const badge = getScoreBadge(s)
-            return (
-              <div 
-                key={s.url || i} 
-                style={{
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  background: '#141414',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-                }}
-              >
-                {/* Image */}
-                <div style={{
-                  position: 'relative',
-                  height: 140,
-                  background: s.image_url ? '#000' : 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {s.image_url ? (
-                    <img 
-                      src={s.image_url} 
-                      alt="" 
-                      loading="lazy"
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease'
-                      }} 
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                    />
-                  ) : s.favicon ? (
-                    <img 
-                      src={s.favicon.replace('sz=32', 'sz=64')} 
-                      alt="" 
-                      style={{ width: 48, height: 48, borderRadius: 8, opacity: 0.3 }}
-                    />
-                  ) : null}
-                </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        {visibleSignals.map((s, i) => {
+          const badge = getScoreBadge(s)
+          return (
+            <div key={s.url || i} onClick={() => setReadingSignal(s)} style={{
+              borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)',
+              background: '#141414', cursor: 'pointer', transition: 'all 0.3s ease',
+              display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.3s ease',
+            }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}>
+              
+              {/* Image */}
+              <div style={{
+                position: 'relative', height: 140,
+                background: s.image_url ? '#000' : 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
+                overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {s.image_url ? (
+                  <img src={s.image_url} alt="" loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
+                ) : s.favicon ? (
+                  <img src={s.favicon.replace('sz=32', 'sz=64')} alt="" style={{ width: 48, height: 48, borderRadius: 8, opacity: 0.3 }} />
+                ) : null}
+              </div>
 
-                {/* Content */}
-                <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {/* Title */}
-                  <h3 style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: 'white',
-                    margin: 0,
-                    lineHeight: 1.4,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }}>
-                    {s.title}
-                  </h3>
+              {/* Content */}
+              <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <h3 style={{
+                  fontSize: 14, fontWeight: 500, color: 'white', margin: 0, lineHeight: 1.4,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>{s.title}</h3>
+                
+                <p style={{
+                  fontSize: 12, color: '#888', margin: 0, lineHeight: 1.5,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>{s.snippet || 'No excerpt available'}</p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto', paddingTop: 8 }}>
+                  <span style={{ fontSize: 12, color: '#666' }}>{formatRelativeTime(s.published_date)}</span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 99,
+                    background: badge.bg, color: badge.color, border: `1px solid ${badge.color}33`,
+                  }}>{badge.text}</span>
                   
-                  {/* Excerpt */}
-                  <p style={{
-                    fontSize: 12,
-                    color: '#888',
-                    margin: 0,
-                    lineHeight: 1.5,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }}>
-                    {s.snippet || 'No excerpt available'}
-                  </p>
-                  
-                  {/* Footer */}
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 10,
-                    marginTop: 'auto',
-                    paddingTop: 8
-                  }}>
-                    <span style={{ fontSize: 12, color: '#666' }}>
-                      {formatRelativeTime(s.published_date)}
-                    </span>
-                    
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 500,
-                      padding: '3px 10px',
-                      borderRadius: 99,
-                      background: badge.bg,
-                      color: badge.color,
-                      border: `1px solid ${badge.color}33`,
-                    }}>
-                      {badge.text}
-                    </span>
-                    
-                    <button
-                      onClick={() => router.push('/dashboard/write?topic=' + encodeURIComponent(s.title) + '&context=' + encodeURIComponent(s.snippet || ''))}
-                      style={{ 
-                        marginLeft: 'auto',
-                        fontSize: 12, 
-                        padding: '4px 12px', 
-                        borderRadius: 6, 
-                        border: '1px solid rgba(255,255,255,0.1)', 
-                        background: 'transparent', 
-                        color: '#aaa', 
-                        cursor: 'pointer',
-                        transition: 'all 0.15s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                        e.currentTarget.style.color = 'white'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent'
-                        e.currentTarget.style.color = '#aaa'
-                      }}
-                    >
-                      Write
-                    </button>
-                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); handleWrite(s); }} style={{
+                    marginLeft: 'auto', fontSize: 12, padding: '4px 12px', borderRadius: 6,
+                    border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#aaa', cursor: 'pointer', transition: 'all 0.15s'
+                  }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#aaa' }}>
+                    Write
+                  </button>
                 </div>
               </div>
-            )
-          })}
-        </div>
-      )}
+            </div>
+          )
+        })}
+        
+        {Array.from({ length: skeletonCount }).map((_, i) => <SkeletonCard key={`skeleton-${i}`} />)}
+        
+        {!isLoading && signals.length === 0 && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+            <p>No signals found</p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>Try a different topic or refresh</p>
+          </div>
+        )}
+      </div>
 
+      <style jsx global>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   )
 }
