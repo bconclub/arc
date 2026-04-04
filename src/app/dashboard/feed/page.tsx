@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Rss, Search } from 'lucide-react'
+import { Rss, Search, Bookmark } from 'lucide-react'
 import type { Signal } from '@/lib/supabase'
 
 type Topic = { label: string; query: string }
@@ -41,7 +41,6 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true)
   const [topics, setTopics] = useState<Topic[]>([])
   const [activeTopic, setActiveTopic] = useState<Topic | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [showAdd, setShowAdd] = useState(false)
   const [newLabel, setNewLabel] = useState('')
@@ -85,7 +84,6 @@ export default function FeedPage() {
     } catch(e) { console.error(e) }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function toggleSave(signal: Signal) {
     const isSaved = savedSignals.has(signal.url)
     const action = isSaved ? 'unsave-signal' : 'save-signal'
@@ -167,6 +165,33 @@ export default function FeedPage() {
         </button>
       </div>
 
+      {/* View mode filter - All | Saved */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: '0.75rem' }}>
+        <button
+          onClick={() => setViewMode('all')}
+          style={{
+            flexShrink: 0, fontSize: 11, padding: '4px 12px', borderRadius: 99,
+            border: '0.5px solid #333', cursor: 'pointer', whiteSpace: 'nowrap',
+            background: viewMode === 'all' ? 'white' : 'transparent',
+            color: viewMode === 'all' ? 'black' : '#aaa',
+          }}
+        >
+          All Signals
+        </button>
+        <button
+          onClick={() => setViewMode('saved')}
+          style={{
+            flexShrink: 0, fontSize: 11, padding: '4px 12px', borderRadius: 99,
+            border: '0.5px solid #333', cursor: 'pointer', whiteSpace: 'nowrap',
+            background: viewMode === 'saved' ? '#f59e0b' : 'transparent',
+            color: viewMode === 'saved' ? 'black' : '#f59e0b',
+          }}
+        >
+          <Bookmark size={10} style={{ marginRight: 4, display: 'inline' }} />
+          Saved ({savedSignals.size})
+        </button>
+      </div>
+
       {/* Scrollable topic chips */}
       <div
         className="scrollbar-hide"
@@ -181,7 +206,7 @@ export default function FeedPage() {
             color: activeTopic === null ? 'black' : '#aaa',
           }}
         >
-          All
+          All Topics
         </button>
 
         {Array.isArray(topics) && topics.map((t, i) => (
@@ -246,7 +271,9 @@ export default function FeedPage() {
           gridAutoRows: '320px',
           gap: 12,
         }}>
-          {Array.isArray(signals) && signals.map((s, i) => {
+          {Array.isArray(signals) && signals
+            .filter(s => viewMode === 'all' || savedSignals.has(s.url))
+            .map((s, i) => {
             const badge = scoreLabel(s)
             const bg = PILLAR_COLORS[s.pillar ?? 'default'] ?? PILLAR_COLORS.default
             return (
@@ -311,6 +338,27 @@ export default function FeedPage() {
                   }}>
                     {badge.text}
                   </span>
+                  
+                  {/* Save/Bookmark Button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleSave(s) }}
+                    style={{
+                      position: 'absolute', top: 10, right: 10,
+                      width: 28, height: 28, borderRadius: 99,
+                      background: savedSignals.has(s.url) ? '#f59e0b' : 'rgba(0,0,0,0.5)',
+                      border: '0.5px solid ' + (savedSignals.has(s.url) ? '#f59e0b' : 'rgba(255,255,255,0.2)'),
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s',
+                    }}
+                    title={savedSignals.has(s.url) ? 'Unsave' : 'Save'}
+                  >
+                    <Bookmark 
+                      size={14} 
+                      fill={savedSignals.has(s.url) ? 'black' : 'transparent'}
+                      color={savedSignals.has(s.url) ? 'black' : 'white'}
+                    />
+                  </button>
                 </div>
 
                 {/* Content — remaining 160px */}
