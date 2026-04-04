@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import type { Signal } from '@/lib/supabase'
 
 const PILLAR_COLORS: Record<string, string> = {
   pain_points:     '#2d1515',
@@ -12,7 +13,7 @@ const PILLAR_COLORS: Record<string, string> = {
 
 export default function FeedPage() {
   const router = useRouter()
-  const [signals, setSignals] = useState<any[]>([])
+  const [signals, setSignals] = useState<Signal[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
 
@@ -36,7 +37,7 @@ export default function FeedPage() {
     ? signals
     : signals.filter(s => s.pillar === filter)
 
-  const scoreLabel = (s: any) => {
+  const scoreLabel = (s: Signal) => {
     if (s.trend_score >= 80) return { text: '▲ Hot ' + s.trend_score, color: '#EF9F27', bg: '#2d1f00' }
     if (s.trend_score >= 60) return { text: '↑ Rising ' + s.trend_score, color: '#1D9E75', bg: '#001f15' }
     return { text: '· Steady ' + s.trend_score, color: '#888780', bg: '#1a1a1a' }
