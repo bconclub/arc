@@ -1,11 +1,10 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Rss, Search, Bookmark } from 'lucide-react'
+import { Rss, Search, X } from 'lucide-react'
 import type { Signal } from '@/lib/supabase'
 
 type Topic = { label: string; query: string }
-type ViewMode = 'all' | 'saved'
 
 const PILLAR_COLORS: Record<string, string> = {
   pain_points:     '#2d1515',
@@ -14,6 +13,13 @@ const PILLAR_COLORS: Record<string, string> = {
   client_results:  '#2d2015',
   default:         '#1a1a1a'
 }
+
+const STORAGE_KEY = 'arc:feed-topics'
+
+const DEFAULT_TOPICS: Topic[] = [
+  { label: 'Marketing', query: 'marketing trends India SMB 2026' },
+  { label: 'AI Tools', query: 'AI tools business automation 2026' },
+]
 
 // Format relative time (e.g., "2h ago", "1d ago")
 function formatRelativeTime(dateStr: string): string {
@@ -34,22 +40,40 @@ function formatRelativeTime(dateStr: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+// Get topics from localStorage
+function getStoredTopics(): Topic[] {
+  if (typeof window === 'undefined') return DEFAULT_TOPICS
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) return JSON.parse(stored)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TOPICS))
+    return DEFAULT_TOPICS
+  } catch {
+    return DEFAULT_TOPICS
+  }
+}
+
+// Save topics to localStorage
+function saveTopics(topics: Topic[]) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(topics))
+}
+
 export default function FeedPage() {
   const router = useRouter()
   const [signals, setSignals] = useState<Signal[]>([])
-  const [savedSignals, setSavedSignals] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [topics, setTopics] = useState<Topic[]>([])
   const [activeTopic, setActiveTopic] = useState<Topic | null>(null)
-  const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [showAdd, setShowAdd] = useState(false)
   const [newLabel, setNewLabel] = useState('')
+  const [hoveredTopic, setHoveredTopic] = useState<string | null>(null)
   const addInputRef = useRef<HTMLInputElement>(null)
 
+  // Load topics from localStorage on mount
   useEffect(() => {
+    setTopics(getStoredTopics())
     loadFeed(null)
-    loadTopics()
-    loadSavedSignals()
   }, [])
 
   useEffect(() => {
@@ -71,75 +95,32 @@ export default function FeedPage() {
     finally { setLoading(false) }
   }
 
-  async function loadSavedSignals() {
-    try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-saved-signals' })
-      })
-      const data = await res.json()
-      const savedArray = Array.isArray(data?.signals) ? data.signals : []
-      setSavedSignals(new Set(savedArray.map((s: { url: string }) => s.url)))
-    } catch(e) { console.error(e) }
+  function selectTopic(t: Topic | null) {
+    setActiveTopic(t)
+    loadFeed(t)
   }
 
-  async function toggleSave(signal: Signal) {
-    const isSaved = savedSignals.has(signal.url)
-    const action = isSaved ? 'unsave-signal' : 'save-signal'
-    
-    try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action, 
-          ...(isSaved ? { url: signal.url } : { signal })
-        })
-      })
-      
-      if (res.ok) {
-        const newSaved = new Set(savedSignals)
-        if (isSaved) {
-          newSaved.delete(signal.url)
-        } else {
-          newSaved.add(signal.url)
-        }
-        setSavedSignals(newSaved)
-      }
-    } catch(e) { console.error(e) }
-  }
-
-  async function loadTopics() {
-    try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-topics' })
-      })
-      const data = await res.json()
-      const topicsArray = Array.isArray(data?.topics) ? data.topics : []
-      setTopics(topicsArray)
-    } catch(e) { console.error(e) }
-  }
-
-  async function addTopic() {
+  function addTopic() {
     const label = newLabel.trim()
     if (!label) return
     const next = [...topics, { label, query: label }]
     setTopics(next)
+    saveTopics(next)
     setNewLabel('')
     setShowAdd(false)
-    await fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'save-topic', topics: next })
-    })
   }
 
-  function selectTopic(t: Topic | null) {
-    setActiveTopic(t)
-    loadFeed(t)
+  function deleteTopic(e: React.MouseEvent, topicToDelete: Topic) {
+    e.stopPropagation()
+    const next = topics.filter(t => t.label !== topicToDelete.label)
+    setTopics(next)
+    saveTopics(next)
+    
+    // If deleted topic was active, reset to All
+    if (activeTopic?.label === topicToDelete.label) {
+      setActiveTopic(null)
+      loadFeed(null)
+    }
   }
 
   const scoreLabel = (s: Signal) => {
@@ -165,34 +146,7 @@ export default function FeedPage() {
         </button>
       </div>
 
-      {/* View mode filter - All | Saved */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: '0.75rem' }}>
-        <button
-          onClick={() => setViewMode('all')}
-          style={{
-            flexShrink: 0, fontSize: 11, padding: '4px 12px', borderRadius: 99,
-            border: '0.5px solid #333', cursor: 'pointer', whiteSpace: 'nowrap',
-            background: viewMode === 'all' ? 'white' : 'transparent',
-            color: viewMode === 'all' ? 'black' : '#aaa',
-          }}
-        >
-          All Signals
-        </button>
-        <button
-          onClick={() => setViewMode('saved')}
-          style={{
-            flexShrink: 0, fontSize: 11, padding: '4px 12px', borderRadius: 99,
-            border: '0.5px solid #333', cursor: 'pointer', whiteSpace: 'nowrap',
-            background: viewMode === 'saved' ? '#f59e0b' : 'transparent',
-            color: viewMode === 'saved' ? 'black' : '#f59e0b',
-          }}
-        >
-          <Bookmark size={10} style={{ marginRight: 4, display: 'inline' }} />
-          Saved ({savedSignals.size})
-        </button>
-      </div>
-
-      {/* Scrollable topic chips */}
+      {/* Topic Chips */}
       <div
         className="scrollbar-hide"
         style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: '1.25rem' }}
@@ -209,15 +163,49 @@ export default function FeedPage() {
           All Topics
         </button>
 
-        {Array.isArray(topics) && topics.map((t, i) => (
-          <button key={i} onClick={() => selectTopic(t)} style={{
-            flexShrink: 0, fontSize: 12, padding: '4px 12px', borderRadius: 99,
-            border: '0.5px solid #333', cursor: 'pointer', whiteSpace: 'nowrap',
-            background: activeTopic?.label === t.label ? 'white' : 'transparent',
-            color: activeTopic?.label === t.label ? 'black' : '#aaa',
-          }}>
-            {t.label}
-          </button>
+        {topics.map((t) => (
+          <div
+            key={t.label}
+            onClick={() => selectTopic(t)}
+            onMouseEnter={() => setHoveredTopic(t.label)}
+            onMouseLeave={() => setHoveredTopic(null)}
+            style={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 4px 4px 12px',
+              borderRadius: 99,
+              border: '0.5px solid #333',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              background: activeTopic?.label === t.label ? 'white' : (hoveredTopic === t.label ? 'rgba(255,255,255,0.08)' : 'transparent'),
+              color: activeTopic?.label === t.label ? 'black' : '#aaa',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{t.label}</span>
+            {hoveredTopic === t.label && (
+              <button
+                onClick={(e) => deleteTopic(e, t)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 18,
+                  height: 18,
+                  borderRadius: 99,
+                  border: 'none',
+                  background: activeTopic?.label === t.label ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+                  cursor: 'pointer',
+                  marginLeft: 2,
+                }}
+                title="Delete topic"
+              >
+                <X size={10} color={activeTopic?.label === t.label ? 'black' : '#aaa'} />
+              </button>
+            )}
+          </div>
         ))}
 
         {showAdd ? (
@@ -253,7 +241,7 @@ export default function FeedPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gridAutoRows: '320px', gap: 12 }}>
           {[1,2,3,4,5,6].map(i => (
             <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '0.5px solid #222', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: 160, background: '#1a1a1a', flexShrink: 0 }} />
+              <div style={{ height: 135, background: '#1a1a1a', flexShrink: 0 }} />
               <div style={{ flex: 1, padding: 12, background: '#111' }}>
                 <div style={{ height: 12, background: '#222', borderRadius: 4, marginBottom: 8 }} />
                 <div style={{ height: 10, background: '#1a1a1a', borderRadius: 4, width: '60%' }} />
@@ -263,7 +251,7 @@ export default function FeedPage() {
         </div>
       )}
 
-      {/* Signal grid — fixed 320px rows, 160px image + 160px content */}
+      {/* Signal grid */}
       {!loading && (
         <div style={{
           display: 'grid',
@@ -271,9 +259,7 @@ export default function FeedPage() {
           gridAutoRows: '320px',
           gap: 12,
         }}>
-          {Array.isArray(signals) && signals
-            .filter(s => viewMode === 'all' || savedSignals.has(s.url))
-            .map((s, i) => {
+          {Array.isArray(signals) && signals.map((s, i) => {
             const badge = scoreLabel(s)
             const bg = PILLAR_COLORS[s.pillar ?? 'default'] ?? PILLAR_COLORS.default
             return (
@@ -289,7 +275,7 @@ export default function FeedPage() {
               onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
               onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}>
 
-                {/* Image — 16:9 aspect ratio */}
+                {/* Image */}
                 <div style={{
                   position: 'relative', height: 135, flexShrink: 0,
                   background: s.image_url ? '#000' : bg, overflow: 'hidden',
@@ -301,32 +287,21 @@ export default function FeedPage() {
                       alt="" 
                       loading="lazy"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none'
-                      }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                   ) : s.favicon ? (
-                    <div style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                    }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                       <img 
                         src={s.favicon.replace('sz=32', 'sz=64')} 
                         alt="" 
                         style={{ width: 48, height: 48, borderRadius: 8, opacity: 0.5 }}
                       />
-                      <span style={{
-                        fontSize: 11, color: 'rgba(255,255,255,0.3)',
-                        textAlign: 'center', padding: '0 16px',
-                      }}>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '0 16px' }}>
                         {s.source_name}
                       </span>
                     </div>
                   ) : (
-                    <span style={{
-                      fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.13)',
-                      letterSpacing: '-0.5px', userSelect: 'none',
-                      textAlign: 'center', padding: '0 16px', wordBreak: 'break-all',
-                    }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.13)', letterSpacing: '-0.5px' }}>
                       {s.source_name}
                     </span>
                   )}
@@ -338,52 +313,28 @@ export default function FeedPage() {
                   }}>
                     {badge.text}
                   </span>
-                  
-                  {/* Save/Bookmark Button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleSave(s) }}
-                    style={{
-                      position: 'absolute', top: 10, right: 10,
-                      width: 28, height: 28, borderRadius: 99,
-                      background: savedSignals.has(s.url) ? '#f59e0b' : 'rgba(0,0,0,0.5)',
-                      border: '0.5px solid ' + (savedSignals.has(s.url) ? '#f59e0b' : 'rgba(255,255,255,0.2)'),
-                      cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.2s',
-                    }}
-                    title={savedSignals.has(s.url) ? 'Unsave' : 'Save'}
-                  >
-                    <Bookmark 
-                      size={14} 
-                      fill={savedSignals.has(s.url) ? 'black' : 'transparent'}
-                      color={savedSignals.has(s.url) ? 'black' : 'white'}
-                    />
-                  </button>
                 </div>
 
-                {/* Content — remaining 160px */}
+                {/* Content */}
                 <div style={{
                   flex: 1, overflow: 'hidden',
                   padding: '10px 12px 12px',
                   display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                 }}>
                   <div>
-                    {/* Top row: Favicon + Domain + Source Badge + Time */}
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
-                    }}>
+                    {/* Meta row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                       {s.favicon && (
                         <img 
                           src={s.favicon} 
                           alt="" 
                           style={{ width: 16, height: 16, borderRadius: 3, flexShrink: 0 }}
-                          onError={(e) => { e.currentTarget.style.display = 'none' }}
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                         />
                       )}
                       <span style={{ fontSize: 11, color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {s.source_name}
                       </span>
-                      {/* Source Type Badge */}
                       <span style={{
                         fontSize: 9, fontWeight: 500, padding: '2px 6px', borderRadius: 99,
                         background: s.source_type === 'rss' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
@@ -394,7 +345,6 @@ export default function FeedPage() {
                         {s.source_type === 'rss' ? <Rss size={9} /> : <Search size={9} />}
                         {s.source_type === 'rss' ? 'RSS' : 'Search'}
                       </span>
-                      {/* Relative Time */}
                       {s.published_date && (
                         <span style={{ fontSize: 10, color: '#666' }}>
                           {formatRelativeTime(s.published_date)}
