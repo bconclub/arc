@@ -1,4 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
+import { callAIStream } from '@/lib/ai-client'
+import type { AIModel } from '@/lib/ai-client'
 
 type TavilyResult = {
   title: string
@@ -15,7 +17,7 @@ async function tavilySearch(query: string) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.TAVILY_API_KEY}`
     },
-    body: JSON.stringify({ query, search_depth: 'basic', max_results: 10 })
+    body: JSON.stringify({ query, search_depth: 'basic', max_results: 10, include_images: true })
   })
   if (!res.ok) {
     console.error('Tavily error for query:', query, await res.text())
@@ -58,7 +60,17 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { action } = body
 
+    // ── fetch-signals ──────────────────────────────────────────
     if (action === 'fetch-signals') {
+      const { topic } = body as { topic?: string }
+
+      // Topic override: single Tavily search for that query
+      if (topic) {
+        const signals = await tavilySearch(topic)
+        return Response.json({ signals })
+      }
+
+      // Default: read all active sources from Supabase
       const { data: sources, error } = await supabaseAdmin
         .from('sources')
         .select('*')
@@ -74,7 +86,6 @@ export async function POST(req: Request) {
       }
 
       const baseUrl = new URL(req.url).origin
-
       const results = await Promise.allSettled(
         sources.map(s =>
           s.type === 'tavily_search'
@@ -84,8 +95,72 @@ export async function POST(req: Request) {
       )
 
       const signals = results.flatMap(r => r.status === 'fulfilled' ? r.value : [])
-
       return Response.json({ signals })
+    }
+
+    // ── get-topics ─────────────────────────────────────────────
+    if (action === 'get-topics') {
+      const { data, error } = await supabaseAdmin
+        .from('arc_context')
+        .select('value')
+        .eq('key', 'feed_topics')
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('get-topics error:', error)
+      }
+      return Response.json({ topics: data?.value || [] })
+    }
+
+    // ── save-topic ─────────────────────────────────────────────
+    if (action === 'save-topic') {
+      const { topics } = body as { topics: { label: string; query: string }[] }
+      const { error } = await supabaseAdmin
+        .from('arc_context')
+        .upsert({ key: 'feed_topics', value: topics, updated_at: new Date().toISOString() })
+
+      if (error) {
+        console.error('save-topic error:', error)
+        return Response.json({ error: error.message }, { status: 500 })
+      }
+      return Response.json({ ok: true })
+    }
+
+    // ── write-post ─────────────────────────────────────────────
+    if (action === 'write-post') {
+      const payload = (body.payload || {}) as {
+        topic?: string
+        context?: string
+        format?: string
+        model?: string
+      }
+      const { topic, context, format = 'LinkedIn', model = 'claude' } = payload
+
+      if (!topic) return Response.json({ error: 'topic required' }, { status: 400 })
+
+      const systemPrompt = `You are an expert social media content writer. Write punchy, engaging ${format} posts that drive real engagement. Be direct, conversational, and avoid corporate fluff. No hashtag spam. Sound like a sharp founder, not a marketer.`
+      const userMessage = `Write a ${format} post about: ${topic}${context ? '\n\nContext: ' + context : ''}`
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of callAIStream({
+              model: model as AIModel,
+              systemPrompt,
+              userMessage,
+              max_tokens: 800,
+            })) {
+              controller.enqueue(new TextEncoder().encode(chunk))
+            }
+          } finally {
+            controller.close()
+          }
+        }
+      })
+
+      return new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      })
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 400 })
