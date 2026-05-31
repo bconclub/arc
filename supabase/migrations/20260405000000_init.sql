@@ -17,7 +17,7 @@ create table if not exists public.sources (
 create table if not exists public.signals (
   id             uuid primary key default gen_random_uuid(),
   title          text not null,
-  url            text not null,
+  url            text not null unique,
   snippet        text not null default '',
   source_name    text not null default '',
   image_url      text,
@@ -28,6 +28,7 @@ create table if not exists public.signals (
   saved          boolean not null default false,
   saved_at       timestamptz,
   notes          text,
+  fetched_at     timestamptz,  -- Cache timestamp for feed results
   created_at     timestamptz not null default now()
 );
 
@@ -47,13 +48,13 @@ create policy "Allow update signals" on public.signals
   for update using (true);
 
 -- ── default sources seed ────────────────────────────────────
+-- RSS only for main feed (zero tokens, zero credits)
 insert into public.sources (name, type, value, active) values
-  ('Inc42',          'rss',           'https://inc42.com/feed/',                          true),
-  ('YourStory',      'rss',           'https://yourstory.com/feed',                       true),
-  ('Neil Patel',     'rss',           'https://neilpatel.com/blog/feed/',                 true),
-  ('Ben''s Bites',   'rss',           'https://www.bensbites.com/feed',                   true),
-  ('Marketing Brew', 'rss',           'https://www.marketingbrew.com/feeds/newsletter',   true),
-  ('WhatsApp India', 'tavily_search', 'WhatsApp business leads India 2026',               true),
-  ('Meta Ads India', 'tavily_search', 'Meta ads small business India 2026',               true),
-  ('AI Sales',       'tavily_search', 'AI follow-up sales automation India',              true)
+  ('Inc42',          'rss', 'https://inc42.com/feed/',                          true),
+  ('YourStory',      'rss', 'https://yourstory.com/feed',                       true),
+  ('TechCrunch',     'rss', 'https://techcrunch.com/feed',                      true),
+  ('Neil Patel',     'rss', 'https://neilpatel.com/blog/feed/',                 true),
+  ('Marketing Brew', 'rss', 'https://www.marketingbrew.com/feeds/newsletter',   true),
+  ('Hacker News',    'rss', 'https://hnrss.org/frontpage',                      true),
+  ('Product Hunt',   'rss', 'https://www.producthunt.com/feed',                 true)
 on conflict do nothing;

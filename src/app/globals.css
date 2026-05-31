@@ -232,32 +232,17 @@ body {
   display: none;
 }
 
-/* ─── Sidebar ─── */
+/* ─── Sidebar (fixed-width, always expanded) ─── */
 .sidebar {
-  width: var(--sidebar-width);
-  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.sidebar:hover {
   width: var(--sidebar-expanded);
 }
 .sidebar .nav-label {
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
-}
-.sidebar:hover .nav-label {
-  opacity: 1;
-  transform: translateX(0);
+  text-overflow: ellipsis;
 }
 .sidebar .logo-full {
-  opacity: 0;
-  transition: opacity 0.2s ease;
   white-space: nowrap;
-}
-.sidebar:hover .logo-full {
-  opacity: 1;
 }
 
 /* ─── Table row styling ─── */

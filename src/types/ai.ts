@@ -9,7 +9,8 @@ export type AIAction =
   | "fetch-signals"
   | "write-post-v2"
   | "extract-and-save"
-  | "generate-brain-prompt";
+  | "generate-brain-prompt"
+  | "analyze-voice";
 
 export interface AIRequest {
   action: AIAction;

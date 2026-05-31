@@ -9,7 +9,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen">
       <Sidebar />
-      <main className="lg:ml-[200px] min-h-screen flex flex-col pb-20 lg:pb-0">
+      <main className="lg:ml-[220px] min-h-screen flex flex-col pb-20 lg:pb-0">
         <TopBar />
         <div className="flex-1 animate-fade-in">
           {children}

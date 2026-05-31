@@ -2,11 +2,18 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, Calendar, ArrowLeft, Sparkles, Bot } from "lucide-react";
+import { Check, Calendar, ArrowLeft, Sparkles } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useAI } from "@/hooks/useAI";
 import type { ScheduledPost } from "@/types/content-engine";
-import { MODEL_NAMES, type AIModel } from "@/types/ai-client";
+import { supabase } from "@/lib/supabase";
+
+interface VoiceTemplate {
+  id: string;
+  name: string;
+  pattern: string;
+  example: string;
+}
 
 type ContentFormat = "LinkedIn" | "X" | "Reel script" | "WhatsApp broadcast";
 
@@ -27,24 +34,51 @@ function WritePageContent() {
   const [url, setUrl] = useState("");
   const [format, setFormat] = useState<ContentFormat>("LinkedIn");
   const [draft, setDraft] = useState("");
-  const [model, setModel] = useState<AIModel>("claude");
   const [schedule, setSchedule] = useLocalStorage<ScheduledPost[]>("arc:schedule", []);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("09:00");
-  
+
+  // Templates
+  const [templates, setTemplates] = useState<VoiceTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [, setLoadingTemplates] = useState(true);
+
   const writeAI = useAI<string>();
+
+  // Load templates
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("voice_templates")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setTemplates(data);
+      }
+    } catch (err) {
+      console.error("Error loading templates:", err);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
 
   // Load from URL params
   useEffect(() => {
     const t = searchParams.get("topic");
     const c = searchParams.get("context");
     const u = searchParams.get("url");
-    
+
     if (t) setTopic(t);
     if (c) setContext(c);
     if (u) setUrl(u);
-    
+
     // Set default date to tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -66,7 +100,7 @@ function WritePageContent() {
         topic,
         context,
         format,
-        model,
+        template: selectedTemplate,
       },
       true
     );
@@ -85,7 +119,7 @@ function WritePageContent() {
 
   const handleSchedule = () => {
     if (!topic || !scheduleDate) return;
-    
+
     const newPost: ScheduledPost = {
       id: `post-${Date.now()}`,
       topic,
@@ -95,7 +129,7 @@ function WritePageContent() {
       status: "scheduled",
       draft,
     };
-    
+
     setSchedule([...schedule, newPost]);
     router.push("/dashboard/schedule");
   };
@@ -140,6 +174,40 @@ function WritePageContent() {
         )}
       </div>
 
+      {/* Template Selector */}
+      {templates.length > 0 && (
+        <div className="mb-4">
+          <span className="text-[10px] uppercase tracking-wider text-text-muted block mb-2">
+            Template
+          </span>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+            <button
+              onClick={() => setSelectedTemplate("")}
+              className={`shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-full transition-all ${
+                selectedTemplate === ""
+                  ? "bg-white text-black"
+                  : "bg-surface text-text-muted hover:text-text"
+              }`}
+            >
+              None
+            </button>
+            {templates.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setSelectedTemplate(t.name)}
+                className={`shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-full transition-all ${
+                  selectedTemplate === t.name
+                    ? "bg-white text-black"
+                    : "bg-surface text-text-muted hover:text-text"
+                }`}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Format selector */}
       <div className="mb-4">
         <span className="text-[10px] uppercase tracking-wider text-text-muted block mb-2">Format</span>
@@ -160,27 +228,6 @@ function WritePageContent() {
         </div>
       </div>
 
-      {/* Model selector */}
-      <div className="mb-5">
-        <span className="text-[10px] uppercase tracking-wider text-text-muted block mb-2">AI Model</span>
-        <div className="flex items-center gap-2">
-          {(Object.keys(MODEL_NAMES) as AIModel[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setModel(m)}
-              className={`flex items-center gap-2 px-3 py-1.5 text-[12px] font-medium rounded-full transition-all ${
-                model === m
-                  ? "bg-white text-black"
-                  : "bg-surface text-text-muted hover:text-text"
-              }`}
-            >
-              <Bot size={14} />
-              {MODEL_NAMES[m]}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Draft output */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
@@ -188,7 +235,7 @@ function WritePageContent() {
           {writeAI.loading && (
             <span className="text-[11px] text-text-muted flex items-center gap-1.5">
               <Sparkles size={12} className="animate-pulse" />
-              Writing with {MODEL_NAMES[model]}...
+              Writing with Claude...
             </span>
           )}
         </div>
@@ -228,7 +275,7 @@ function WritePageContent() {
           />
           <div className="relative w-full max-w-sm card p-5 animate-modal">
             <h3 className="text-[15px] font-semibold text-text mb-4">Schedule Post</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1.5">
@@ -241,7 +288,7 @@ function WritePageContent() {
                   className="w-full bg-bg border border-white/[0.08] rounded-xl px-4 py-3 text-[14px] text-text focus:border-white/20 focus:outline-none"
                 />
               </div>
-              
+
               <div>
                 <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1.5">
                   Time
@@ -280,11 +327,13 @@ function WritePageContent() {
 
 export default function WritePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-[calc(100vh-120px)] flex items-center justify-center">
-        <div className="animate-pulse text-text-muted">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-[calc(100vh-120px)] flex items-center justify-center">
+          <div className="animate-pulse text-text-muted">Loading...</div>
+        </div>
+      }
+    >
       <WritePageContent />
     </Suspense>
   );

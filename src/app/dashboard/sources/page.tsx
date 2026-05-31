@@ -14,6 +14,17 @@ interface Source {
   added_at: string;
 }
 
+// Default RSS sources to seed if no RSS sources exist.
+// Curated to be bot-accessible (200 OK) and relevant to the India SMB / founder / marketing ICP.
+const DEFAULT_RSS_SOURCES: Omit<Source, "id" | "added_at">[] = [
+  { name: "Inc42", type: "rss", value: "https://inc42.com/feed/", active: true },
+  { name: "Entrackr", type: "rss", value: "https://entrackr.com/feed", active: true },
+  { name: "TechCrunch", type: "rss", value: "https://techcrunch.com/feed", active: true },
+  { name: "Neil Patel", type: "rss", value: "https://neilpatel.com/blog/feed/", active: true },
+  { name: "Social Media Today", type: "rss", value: "https://www.socialmediatoday.com/feeds/news/", active: true },
+  { name: "Hacker News", type: "rss", value: "https://hnrss.org/frontpage", active: true },
+];
+
 const TYPE_OPTIONS: { value: "rss" | "tavily_search"; label: string; placeholder: string }[] = [
   { value: "rss", label: "RSS Feed", placeholder: "https://example.com/feed.xml" },
   { value: "tavily_search", label: "Tavily Search", placeholder: "Enter search query..." },
@@ -47,12 +58,43 @@ export default function SourcesPage() {
       if (error) {
         console.error("Error fetching sources:", error);
       } else {
-        setSources(data || []);
+        const rows = (data || []) as Source[];
+        // Self-heal: seed default RSS sources if none exist (covers a table that
+        // only ever had search sources, or where RSS feeds were all deleted).
+        const hasRss = rows.some((s) => s.type === "rss");
+        if (!hasRss) {
+          await seedDefaultSources();
+        } else {
+          setSources(rows);
+        }
       }
     } catch (err) {
       console.error("Error:", err);
     }
     setLoading(false);
+  };
+
+  const seedDefaultSources = async () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("sources")
+        .insert(DEFAULT_RSS_SOURCES);
+      
+      if (error) {
+        console.error("Error seeding default sources:", error);
+      } else {
+        // Fetch again after seeding
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data } = await (supabase as any)
+          .from("sources")
+          .select("*")
+          .order("added_at", { ascending: false });
+        setSources(data || []);
+      }
+    } catch (err) {
+      console.error("Error seeding:", err);
+    }
   };
 
   const handleToggle = async (id: string, currentActive: boolean) => {

@@ -1,14 +1,12 @@
 // Persistent context system for ARC AI calls
 import { supabase } from "./supabase";
-import type { AIModel } from "@/types/ai-client";
 
 export type ContextKey = 
   | "voice_style" 
   | "about_me" 
   | "content_pillars" 
   | "sample_posts" 
-  | "brain_system_prompt"
-  | "preferred_model";
+  | "brain_system_prompt";
 
 export interface ArcContext {
   voice_style: string;
@@ -16,7 +14,6 @@ export interface ArcContext {
   content_pillars: string;
   sample_posts: string;
   brain_system_prompt: string;
-  preferred_model: AIModel;
 }
 
 const DEFAULT_CONTEXT: ArcContext = {
@@ -25,7 +22,6 @@ const DEFAULT_CONTEXT: ArcContext = {
   content_pillars: "Pain Points, Marketing Tips, Build Journey, Client Results",
   sample_posts: "",
   brain_system_prompt: "",
-  preferred_model: "claude",
 };
 
 // Seed default context if table is empty
