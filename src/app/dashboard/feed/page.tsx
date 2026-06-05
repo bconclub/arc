@@ -57,29 +57,15 @@ function saveTopics(topics: Topic[]) {
 function SkeletonCard() {
   return (
     <div style={{
-      borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)',
-      background: '#111', height: 280, display: 'flex', flexDirection: 'column',
+      borderRadius: 12, overflow: 'hidden', border: '1px solid var(--card-border)',
+      background: 'var(--card-skeleton)', height: 280, display: 'flex', flexDirection: 'column',
     }}>
-      <div style={{
-        height: 140,
-        background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
-        backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite',
-      }} />
+      <div className="skeleton" style={{ height: 140 }} />
       <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{
-          height: 16, background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
-          backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: 4, width: '90%',
-        }} />
-        <div style={{
-          height: 12, background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
-          backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: 4, width: '70%',
-        }} />
-        <div style={{
-          height: 12, background: 'linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)',
-          backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: 4, width: '50%', marginTop: 'auto',
-        }} />
+        <div className="skeleton" style={{ height: 16, borderRadius: 4, width: '90%' }} />
+        <div className="skeleton" style={{ height: 12, borderRadius: 4, width: '70%' }} />
+        <div className="skeleton" style={{ height: 12, borderRadius: 4, width: '50%', marginTop: 'auto' }} />
       </div>
-      <style jsx>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
     </div>
   )
 }
@@ -129,16 +115,16 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
       <div 
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          position: 'fixed', inset: 0, background: 'var(--overlay)',
           backdropFilter: 'blur(4px)', zIndex: 40,
           opacity: isOpen ? 1 : 0, transition: 'opacity 0.3s ease',
         }}
       />
-      
+
       {/* Drawer */}
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: 600,
-        background: '#0a0a0a', borderLeft: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--drawer-bg)', borderLeft: '1px solid var(--border)',
         zIndex: 50, display: 'flex', flexDirection: 'column',
         transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -146,7 +132,7 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          padding: '16px 20px', borderBottom: '1px solid var(--border)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{
@@ -155,20 +141,20 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
             }}>
               {badge.text}
             </span>
-            <span style={{ fontSize: 12, color: '#666' }}>
+            <span style={{ fontSize: 12, color: 'var(--faint)' }}>
               {formatRelativeTime(signal.published_date)}
             </span>
           </div>
-          <button 
+          <button
             onClick={onClose}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 32, height: 32, borderRadius: 8, border: 'none',
-              background: 'transparent', color: '#888', cursor: 'pointer',
+              background: 'transparent', color: 'var(--body)', cursor: 'pointer',
               transition: 'all 0.15s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#888' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--glow-white)'; e.currentTarget.style.color = 'var(--text)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--body)' }}
           >
             <X size={18} />
           </button>
@@ -180,7 +166,7 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
           {signal.image_url && (
             <div style={{
               width: '100%', height: 200, borderRadius: 12, overflow: 'hidden',
-              marginBottom: 24, background: '#111',
+              marginBottom: 24, background: 'var(--card-skeleton)',
             }}>
               <img 
                 src={signal.image_url} alt="" 
@@ -192,29 +178,29 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
           
           {/* Title */}
           <h1 style={{
-            fontSize: 22, fontWeight: 600, color: 'white', margin: '0 0 16px',
+            fontSize: 22, fontWeight: 600, color: 'var(--heading)', margin: '0 0 16px',
             lineHeight: 1.4,
           }}>
             {signal.title}
           </h1>
-          
+
           {/* Source */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
             {signal.favicon && (
               <img src={signal.favicon} alt="" style={{ width: 16, height: 16, borderRadius: 3 }} />
             )}
-            <span style={{ fontSize: 13, color: '#888' }}>{signal.source_name}</span>
+            <span style={{ fontSize: 13, color: 'var(--body)' }}>{signal.source_name}</span>
           </div>
-          
+
           {/* Excerpt / Content */}
           <div style={{
-            fontSize: 15, color: '#aaa', lineHeight: 1.7,
+            fontSize: 15, color: 'var(--body)', lineHeight: 1.7,
             fontFamily: 'system-ui, -apple-system, sans-serif',
           }}>
             {signal.snippet ? (
               <p>{signal.snippet}</p>
             ) : (
-              <p style={{ color: '#666', fontStyle: 'italic' }}>
+              <p style={{ color: 'var(--faint)', fontStyle: 'italic' }}>
                 No preview available. Open the original source to read the full article.
               </p>
             )}
@@ -223,7 +209,7 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
         
         {/* Footer Actions */}
         <div style={{
-          padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)',
+          padding: '16px 20px', borderTop: '1px solid var(--border)',
           display: 'flex', gap: 10,
         }}>
           <button
@@ -231,12 +217,12 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '10px 16px', borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'transparent', color: '#aaa',
+              border: '1px solid var(--border)',
+              background: 'transparent', color: 'var(--text-muted)',
               fontSize: 13, cursor: 'pointer', transition: 'all 0.15s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#aaa' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--glow-white)'; e.currentTarget.style.color = 'var(--text)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
           >
             <ExternalLink size={14} />
             Open Original
@@ -248,7 +234,7 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '10px 16px', borderRadius: 8,
               border: 'none',
-              background: 'white', color: 'black',
+              background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)',
               fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
@@ -384,8 +370,8 @@ export default function FeedPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'white', margin: 0 }}>Feed</h1>
-          <span style={{ fontSize: 13, color: '#666' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--heading)', margin: 0 }}>Feed</h1>
+          <span style={{ fontSize: 13, color: 'var(--faint)' }}>
             {isLoading
               ? `Loading ${visibleCount}/${signals.length || '...'}`
               : activeTopic
@@ -397,8 +383,8 @@ export default function FeedPage() {
           onClick={() => loadFeed(null)}
           disabled={isLoading}
           style={{ 
-            fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '1px solid #333',
-            background: 'transparent', color: '#aaa', cursor: isLoading ? 'not-allowed' : 'pointer',
+            fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-strong)',
+            background: 'transparent', color: 'var(--text-muted)', cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.5 : 1, transition: 'all 0.15s'
           }}
         >
@@ -413,9 +399,9 @@ export default function FeedPage() {
           padding: '6px 14px', borderRadius: 99, border: '1px solid',
           cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13, fontWeight: 500,
           transition: 'all 0.15s ease',
-          background: activeTopic === null ? 'white' : 'transparent',
-          color: activeTopic === null ? 'black' : '#a1a1aa',
-          borderColor: activeTopic === null ? 'white' : 'rgba(255,255,255,0.15)',
+          background: activeTopic === null ? 'var(--chip-active-bg)' : 'transparent',
+          color: activeTopic === null ? 'var(--chip-active-text)' : 'var(--text-muted)',
+          borderColor: activeTopic === null ? 'var(--chip-active-bg)' : 'var(--chip-border)',
         }}>
           All Topics
         </button>
@@ -431,9 +417,9 @@ export default function FeedPage() {
                 padding: '6px 6px 6px 14px', borderRadius: 99, border: '1px solid',
                 cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13, fontWeight: 500,
                 transition: 'all 0.15s ease',
-                background: isActive ? colors.bg : (hoveredChip === t.label ? 'rgba(255,255,255,0.05)' : 'transparent'),
-                color: isActive ? colors.text : '#a1a1aa',
-                borderColor: isActive ? colors.border : (hoveredChip === t.label ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.15)'),
+                background: isActive ? colors.bg : (hoveredChip === t.label ? 'var(--glow-white)' : 'transparent'),
+                color: isActive ? colors.text : 'var(--text-muted)',
+                borderColor: isActive ? colors.border : (hoveredChip === t.label ? 'var(--border-strong)' : 'var(--chip-border)'),
               }}
             >
               <span>{t.label}</span>
@@ -454,15 +440,15 @@ export default function FeedPage() {
             onKeyDown={e => { if (e.key === 'Enter') addTopic(); if (e.key === 'Escape') { setShowAdd(false); setNewLabel('') }}}
             onBlur={() => { if (!newLabel.trim()) setShowAdd(false) }}
             placeholder="Topic..."
-            style={{ flexShrink: 0, width: 120, fontSize: 13, padding: '6px 12px', borderRadius: 99, border: '1px solid #555', background: 'transparent', color: 'white', outline: 'none' }}
+            style={{ flexShrink: 0, width: 120, fontSize: 13, padding: '6px 12px', borderRadius: 99, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text)', outline: 'none' }}
           />
         ) : (
           <button onClick={() => setShowAdd(true)} style={{
             flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: 99, border: '1px dashed rgba(255,255,255,0.2)', background: 'transparent', color: '#666',
+            borderRadius: 99, border: '1px dashed var(--border-strong)', background: 'transparent', color: 'var(--faint)',
             cursor: 'pointer', fontSize: 18, transition: 'all 0.15s',
-          }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.color = '#aaa' }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#666' }}>
+          }} onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--faint)' }}>
             +
           </button>
         )}
@@ -474,16 +460,16 @@ export default function FeedPage() {
           const badge = getScoreBadge(s)
           return (
             <div key={s.url || i} onClick={() => setReadingSignal(s)} style={{
-              borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)',
-              background: '#141414', cursor: 'pointer', transition: 'all 0.3s ease',
+              borderRadius: 12, overflow: 'hidden', border: '1px solid var(--card-border)',
+              background: 'var(--card-bg)', cursor: 'pointer', transition: 'all 0.3s ease',
               display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.3s ease',
-            }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}>
-              
+            }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'var(--card-border-hover)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--card-border)' }}>
+
               {/* Image */}
               <div style={{
                 position: 'relative', height: 140,
-                background: s.image_url ? '#000' : 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
+                background: s.image_url ? 'var(--thumb-bg)' : 'var(--thumb-empty)',
                 overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {s.image_url ? (
@@ -510,7 +496,7 @@ export default function FeedPage() {
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                   )}
-                  <span style={{ fontSize: 12, color: '#777', fontWeight: 500, textAlign: 'center', padding: '0 12px' }}>
+                  <span style={{ fontSize: 12, color: 'var(--body)', fontWeight: 500, textAlign: 'center', padding: '0 12px' }}>
                     {s.source_name}
                   </span>
                 </div>
@@ -519,27 +505,27 @@ export default function FeedPage() {
               {/* Content */}
               <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <h3 title={s.title} style={{
-                  fontSize: 14, fontWeight: 500, color: 'white', margin: 0, lineHeight: 1.4,
+                  fontSize: 14, fontWeight: 500, color: 'var(--heading)', margin: 0, lineHeight: 1.4,
                   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{s.title}</h3>
-                
+
                 <p title={s.snippet || ''} style={{
-                  fontSize: 12, color: '#888', margin: 0, lineHeight: 1.5,
+                  fontSize: 12, color: 'var(--body)', margin: 0, lineHeight: 1.5,
                   display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{s.snippet || 'No excerpt available'}</p>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto', paddingTop: 8 }}>
-                  <span style={{ fontSize: 12, color: '#666' }}>{formatRelativeTime(s.published_date)}</span>
+                  <span style={{ fontSize: 12, color: 'var(--faint)' }}>{formatRelativeTime(s.published_date)}</span>
                   <span style={{
                     fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 99,
                     background: badge.bg, color: badge.color, border: `1px solid ${badge.color}33`,
                   }}>{badge.text}</span>
-                  
+
                   <button onClick={(e) => { e.stopPropagation(); handleWrite(s); }} style={{
                     marginLeft: 'auto', fontSize: 12, padding: '4px 12px', borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#aaa', cursor: 'pointer', transition: 'all 0.15s'
-                  }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#aaa' }}>
+                    border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.15s'
+                  }} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--glow-white)'; e.currentTarget.style.color = 'var(--text)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}>
                     Write
                   </button>
                 </div>
@@ -551,14 +537,14 @@ export default function FeedPage() {
         {Array.from({ length: skeletonCount }).map((_, i) => <SkeletonCard key={`skeleton-${i}`} />)}
         
         {!isLoading && signals.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: 'var(--faint)' }}>
             <p>No signals found</p>
             <p style={{ fontSize: 13, marginTop: 8 }}>Try refreshing</p>
           </div>
         )}
 
         {!isLoading && signals.length > 0 && activeTopic && filteredSignals.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: 'var(--faint)' }}>
             <p>No signals match &ldquo;{activeTopic.label}&rdquo;</p>
             <p style={{ fontSize: 13, marginTop: 8 }}>
               Every word in the keyword must appear in a story. Try a broader keyword or pick All Topics.

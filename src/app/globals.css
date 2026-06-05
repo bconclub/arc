@@ -17,6 +17,50 @@
   --glow-white: rgba(255, 255, 255, 0.04);
   --sidebar-width: 64px;
   --sidebar-expanded: 220px;
+
+  /* ── Semantic tokens used across the app (esp. the inline-styled Feed) ── */
+  --card-bg: #141414;        /* feed card surface */
+  --card-skeleton: #111;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-border-hover: rgba(255, 255, 255, 0.15);
+  --heading: #ffffff;        /* card titles / strong text */
+  --body: #888888;           /* card excerpt / secondary text */
+  --faint: #666666;          /* timestamps / tertiary */
+  --thumb-bg: #000000;       /* image area background */
+  --thumb-empty: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  --chip-bg: transparent;
+  --chip-active-bg: #ffffff;
+  --chip-active-text: #000000;
+  --chip-border: rgba(255, 255, 255, 0.15);
+  --drawer-bg: #0a0a0a;
+  --overlay: rgba(0, 0, 0, 0.6);
+}
+
+/* ── Light theme ── one-click override of every token above ── */
+[data-theme="light"] {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-hover: #f0f0f2;
+  --border: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --glow-white: rgba(0, 0, 0, 0.03);
+
+  --card-bg: #ffffff;
+  --card-skeleton: #ececef;
+  --card-border: rgba(0, 0, 0, 0.10);
+  --card-border-hover: rgba(0, 0, 0, 0.20);
+  --heading: #111111;
+  --body: #555555;
+  --faint: #888888;
+  --thumb-bg: #eceef1;
+  --thumb-empty: linear-gradient(135deg, #ececef 0%, #f6f6f8 100%);
+  --chip-active-bg: #111111;
+  --chip-active-text: #ffffff;
+  --chip-border: rgba(0, 0, 0, 0.15);
+  --drawer-bg: #ffffff;
+  --overlay: rgba(0, 0, 0, 0.35);
 }
 
 * {

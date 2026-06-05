@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-05 03:26 IST · one-click light/dark theme toggle (whole UI)
+
+- **Theme system (`globals.css`):** added a full set of semantic CSS variables (card/heading/body/faint/thumb/chip/drawer/overlay) plus a `[data-theme="light"]` override that re-maps every token, so flipping the attribute restyles the entire app.
+- **Toggle (`ThemeToggle.tsx`, `TopBar.tsx`):** new sun/moon button in the top-right — one click switches light↔dark, persists to `localStorage('arc:theme')`.
+- **No-flash (`layout.tsx`):** a tiny blocking script applies the saved theme to `<html data-theme>` before first paint.
+- **Feed page (`dashboard/feed/page.tsx`):** converted ~50 hardcoded inline colors (cards, header, chips, skeleton, reading drawer, empty states) to the theme variables so the feed — not just the chrome — flips with the toggle. Score-badge accent colors (orange/green) intentionally kept.
+- User-facing: a light/dark switch top-right; one click changes the whole UI and the choice sticks across reloads.
+- (`d4430f6`)
+
 ## 2026-06-05 03:20 IST · fix BCON icon clipping in collapsed sidebar
 
 - **Sidebar (`Sidebar.tsx`):** the brand row had double padding (outer `px-3` + inner `px-2` = 40px) which, on the 64px collapsed rail, left only 24px for a 32px icon — so `overflow:hidden` clipped it (only a sliver showed). Shrunk the icon to 28px, flattened the label into a single truncating `<p>`, and added `overflow-hidden` on the row. Verified via DOM measurement: icon now sits left:20→right:43, fully inside the 0–64 rail.

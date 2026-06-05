@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Download, Upload } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function TopBar() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -76,6 +77,7 @@ export function TopBar() {
         {showImportSuccess && (
           <span className="text-xs text-accent-green animate-fade-in font-medium">Restored!</span>
         )}
+        <ThemeToggle />
         <button
           onClick={() => fileRef.current?.click()}
           className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-white/[0.04] transition-all duration-150"
