@@ -28,8 +28,17 @@ interface StyleAnalysis {
 }
 
 // Hardcoded identity — ARC knows who this is. Not editable.
-const IDENTITY =
-  "Thanzeel (Z), founder of PROXe and BCON Club. Solo builder running a 100-clients-in-90-days push. ICP: solo founders, coaching academies, clinics, real estate, tutoring centers in India losing leads to slow WhatsApp replies.";
+const IDENTITY = `Thanzeel Ashruf (Z). Founder of PROXe (goproxe.com) and BCON Club (bconclub.com).
+
+I've spent 7 years in marketing, building brands across retail, services, hospitality, real estate, and healthcare — obsessed with how brands grow, why some win, and why great ones still lose customers they should have kept.
+
+That obsession led here: the same problem showed up everywhere — leads lost not to better competitors, but to slow replies and forgotten follow-ups. So I built the fix.
+
+What we do: help businesses go AI-native in marketing, two ways. Done-for-you → PROXe: enterprise-grade conversational AI for SMBs that listens across every channel (website, WhatsApp, Instagram, email, SMS, voice), warms leads, books calls, and never forgets a follow-up, with a founder dashboard. Build-your-own → BCON Club: helping businesses learn to build with AI.
+
+What drives me: I love marketing and brands. Now I'm solving marketing with AI, in public, while running a 100-clients-in-90-days push.
+
+ICP: solo founders, coaching academies, clinics, real estate, tutoring centers in India losing leads to slow WhatsApp replies.`;
 
 export default function StylePage() {
   const [styleGuide, setStyleGuide] = useState("");

@@ -125,10 +125,10 @@ on conflict do nothing;
 
 -- ── seed: default context rows (plain text values) ───────────
 insert into public.arc_context (key, value) values
-  ('voice_style',         'Raw, vulnerable, build-in-public, first person. Short punchy sentences. No corporate fluff. Conversational like texting a friend. Every post ends with a CTA.'),
-  ('about_me',            'Thanzeel (Z), founder of PROXe and BCON Club. Solo builder running a 100-clients-in-90-days push. ICP: solo founders, coaching academies, clinics, real estate, tutoring centers in India losing leads to slow WhatsApp replies.'),
+  ('voice_style',         E'VOICE\n- First person. lowercase. like texting a friend, not writing an ad.\n- Vulnerable and honest. admit your own mistakes ("i forgot the follow-up too").\n- Confident, not preachy. strong opinions, no lecturing.\n\nSTRUCTURE\n- Open with a hook that names a problem people quietly accept.\n- Short punchy sentences. one thought per line. heavy line breaks.\n- Build: story, then the insight, then the shift, then the product/CTA.\n- Use concrete details. real scenarios, specific numbers, named industries.\n\nRULES\n- No corporate fluff. no AI buzzwords (synergy, leverage, revolutionize, game-changer).\n- Never use em dashes. ever.\n- Don''t oversell. let the story carry it.\n- End every post with a CTA or an open question.\n\nPRODUCT PUNCHLINE (keep consistent)\n"PROXe turns every potential customer into revenue. Listens across every channel. Never forgets. Always improving."\n\nRECURRING THEMES\n- gaps quietly accepted as normal\n- great product losing to faster response\n- the AI-native moment (India, Kurzweil, the shift)\n- build with AI, or let me build it for you'),
+  ('about_me',            'Thanzeel Ashruf (Z). Founder of PROXe (goproxe.com) and BCON Club (bconclub.com). 7 years in marketing across retail, services, hospitality, real estate, healthcare. We help businesses go AI-native in marketing: PROXe is enterprise-grade conversational AI for SMBs (listens across website, WhatsApp, Instagram, email, SMS, voice; warms leads, books calls, never forgets follow-up, founder dashboard); BCON Club helps businesses learn to build with AI. Running a 100-clients-in-90-days push. ICP: solo founders, coaching academies, clinics, real estate, tutoring centers in India losing leads to slow WhatsApp replies.'),
   ('brain_system_prompt', ''),
-  ('feed_topics',         '[{"label":"Marketing","query":"marketing trends India SMB 2026"},{"label":"AI Tools","query":"AI tools business automation 2026"}]')
+  ('feed_topics',         '[{"label":"Marketing","query":"Marketing"},{"label":"AI","query":"AI"}]')
 on conflict (key) do nothing;
 
 -- Done. Verify:

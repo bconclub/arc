@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-05 13:08 IST · real identity + full style guide wired everywhere
+
+- **Expanded "Who we are" (`style/page.tsx`, `lib/context.ts`, `apply_all.sql`):** replaced the one-liner with the real founder identity — Thanzeel Ashruf, PROXe (goproxe.com) + BCON Club (bconclub.com), 7 years in marketing, the done-for-you (PROXe) vs build-your-own (BCON) positioning, and the ICP.
+- **Real style guide (`arc_context.voice_style`):** wrote the full VOICE / STRUCTURE / RULES guide to the live DB (lowercase first person, vulnerable, hook on a quietly-accepted problem, **never use em dashes**, no AI buzzwords, story-led, end with CTA/question, plus the PROXe punchline and recurring themes). Updated the SQL seed + code default so fresh installs match.
+- **write-post rewritten (`api/ai/route.ts`):** now writes AS the founder, treating the style guide as source of truth, with hard rules enforced (lowercase, no em dashes, no buzzwords, hook-first). Verified: generated a LinkedIn post in the exact voice with 0 em dashes.
+- User-facing: Style page shows the real identity + guide; Write now produces genuinely on-brand posts.
+- (`1ff9829`)
+
 ## 2026-06-05 05:44 IST · fix article click-through in reading drawer
 
 - **Root cause:** the reading drawer (`position:fixed`) was nested inside the page's `animate-fade-in` wrapper, whose lingering `transform` created a containing block — so the drawer grew to ~10,000px tall and its footer ("Open Original") rendered 10,000px off-screen, completely unreachable. That's why there was no visible way to open the article.

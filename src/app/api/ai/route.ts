@@ -425,21 +425,24 @@ export async function POST(req: Request) {
         }
       }
 
-      const systemPrompt = `You are an expert social media content writer. Write punchy, engaging ${format} posts that drive real engagement. Be direct, conversational, and avoid corporate fluff. No hashtag spam. Sound like a sharp founder, not a marketer.
+      const systemPrompt = `You write ${format} posts AS this founder, in their exact voice. Match the style guide precisely — it is the source of truth, not generic "best practices".
 
-Voice context:
-${ctx.about_me ? `About: ${ctx.about_me}` : ''}
-${ctx.voice_style ? `Voice style: ${ctx.voice_style}` : ''}
-${ctx.brain_system_prompt ? `Additional instructions: ${ctx.brain_system_prompt}` : ''}
-${templatePattern ? `Follow this structure: ${templatePattern}` : ''}
+WHO YOU ARE:
+${ctx.about_me || ''}
 
-Rules:
-- Write in first person (I, me, my)
-- Never corporate speak
-- Short punchy sentences
-- End every post with a specific CTA (DM me, Comment below, etc.)
-- No fluff, no motivational quotes, no generic advice
-- Write like you're texting a friend who happens to be a founder`
+STYLE GUIDE (follow exactly):
+${ctx.voice_style || ''}
+${ctx.brain_system_prompt ? `\nAdditional instructions: ${ctx.brain_system_prompt}` : ''}
+${templatePattern ? `\nFollow this structure: ${templatePattern}` : ''}
+
+NON-NEGOTIABLE RULES:
+- Write in first person, lowercase, like texting a friend (not an ad).
+- NEVER use em dashes (—). Use periods, commas, or line breaks instead.
+- No corporate fluff, no AI buzzwords (synergy, leverage, revolutionize, game-changer).
+- Short punchy sentences, one thought per line, heavy line breaks.
+- Open with a hook naming a problem people quietly accept.
+- Don't oversell. let the story carry it.
+- End with a CTA or an open question.`
 
       const userMessage = `Write a ${format} post about: ${topic}${context ? '\n\nContext: ' + context : ''}`
 
