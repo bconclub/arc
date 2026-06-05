@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-05 02:37 IST · sidebar logo: restore version badge (icon stays removed)
+
+- **Sidebar (`Sidebar.tsx`):** put the version badge back — header now reads "ARC v0.0.3". The icon image was already removed earlier; only the text + badge remain (reverts the prior badge-removal, which was a misread of the request).
+- (`e5d40b5`)
+
 ## 2026-06-05 02:32 IST · sidebar logo: just "ARC"
 
 - **Sidebar (`Sidebar.tsx`):** removed the version badge (`v0.0.3`) next to the logo — the sidebar header now shows only the word "ARC". Dropped the now-unused `VERSION` import.
