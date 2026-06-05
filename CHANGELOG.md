@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-05 05:03 IST · fix sidebar invisible in light mode
+
+- **Sidebar (`Sidebar.tsx`):** the logo, version badge, BCON Club label, nav text, active pill, and borders were hardcoded `text-white` / `bg-white` / white-tinted — so in light mode the whole panel vanished (white-on-white). Swapped all to theme tokens: text→`text-text`, active pill→`bg-text text-bg` (inverts per theme), borders→`var(--border)`, hovers→`var(--glow-white)`. Verified in light mode: "ARC" and "BCON Club" render `rgb(26,26,26)` on the `rgb(247,247,248)` background.
+- **TopBar (`TopBar.tsx`):** border + import/export hovers themed; replaced the stale white "K" box mobile logo with a plain themed "ARC" wordmark.
+- **ThemeToggle (`ThemeToggle.tsx`):** hover bg themed.
+- User-facing: the left panel and top bar are now fully visible and correct in both light and dark mode.
+- (`3807c20`)
+
 ## 2026-06-05 03:26 IST · one-click light/dark theme toggle (whole UI)
 
 - **Theme system (`globals.css`):** added a full set of semantic CSS variables (card/heading/body/faint/thumb/chip/drawer/overlay) plus a `[data-theme="light"]` override that re-maps every token, so flipping the attribute restyles the entire app.

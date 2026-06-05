@@ -63,14 +63,11 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-20 h-14 bg-bg/60 backdrop-blur-xl border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between px-5 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 h-14 bg-bg/60 backdrop-blur-xl border-b border-[var(--border)] flex items-center justify-between px-5 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         {/* Mobile logo */}
         <div className="flex items-center gap-2 lg:hidden">
-          <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center">
-            <span className="text-[10px] font-black text-black leading-none">K</span>
-          </div>
-          <span className="text-sm font-semibold tracking-tight text-white">ARC</span>
+          <span className="text-sm font-bold tracking-tight text-text">ARC</span>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -80,7 +77,7 @@ export function TopBar() {
         <ThemeToggle />
         <button
           onClick={() => fileRef.current?.click()}
-          className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-white/[0.04] transition-all duration-150"
+          className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-[var(--glow-white)] transition-all duration-150"
           title="Import backup"
         >
           <Upload size={15} />
@@ -88,7 +85,7 @@ export function TopBar() {
         <input ref={fileRef} type="file" accept=".json" onChange={importData} className="hidden" />
         <button
           onClick={exportData}
-          className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-white/[0.04] transition-all duration-150"
+          className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-[var(--glow-white)] transition-all duration-150"
           title="Export all data"
         >
           <Download size={15} />
