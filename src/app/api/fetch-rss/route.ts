@@ -66,6 +66,56 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Fetch a page's OpenGraph image (og:image / twitter:image) as a last-resort
+// image source for feeds that ship no image in their RSS (TechCrunch, HN, etc.).
+async function fetchOgImage(pageUrl: string): Promise<string> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(pageUrl, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; ARC-ContentEngine/1.0)" },
+    });
+    clearTimeout(timer);
+    if (!res.ok) return "";
+    // Only read the <head> — bail after ~50KB to stay fast.
+    const reader = res.body?.getReader();
+    if (!reader) return "";
+    const decoder = new TextDecoder();
+    let html = "";
+    while (html.length < 50000) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      html += decoder.decode(value, { stream: true });
+      if (html.includes("</head>")) break;
+    }
+    reader.cancel().catch(() => {});
+    const m =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
+      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+    if (!m) return "";
+    const url = m[1].trim();
+    return url.startsWith("//") ? `https:${url}` : url;
+  } catch {
+    return "";
+  }
+}
+
+// Run async tasks with a concurrency cap (keeps OG fetching from stampeding).
+async function mapWithLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx]);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
 // New POST handler for multiple URLs
 export async function POST(req: NextRequest) {
   try {
@@ -119,6 +169,16 @@ export async function POST(req: NextRequest) {
       const dateB = new Date(b.pubDate).getTime();
       return dateB - dateA;
     });
+
+    // OG-image fallback: for items still missing an image, fetch the article's
+    // og:image. Capped concurrency + per-request timeout to keep the feed snappy.
+    const needsImage = allItems.filter((it) => !it.image && it.link);
+    if (needsImage.length > 0) {
+      await mapWithLimit(needsImage, 6, async (it) => {
+        const og = await fetchOgImage(it.link);
+        if (og) it.image = og;
+      });
+    }
 
     const failedCount = results.filter(r => r.status === 'rejected' || !r.value.success).length;
 

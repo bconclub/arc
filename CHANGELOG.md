@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-05 02:52 IST · OpenGraph image fallback (near-full feed image coverage)
+
+- **`api/fetch-rss/route.ts`:** for items with no image in their RSS, now fetches the article page and reads its `og:image` / `twitter:image` meta tag. Capped at 6 concurrent requests with a 4s timeout each and a 50KB head-only read, so the feed stays fast. Lifted image coverage from 10/30 to **28/30** — TechCrunch 0→10/10, Hacker News 0→8/10, Inc42 10/10. Remaining misses are pages with genuinely no og:image (e.g. arXiv).
+- User-facing: nearly every feed card now shows a real article image instead of a favicon placeholder.
+- (`997516d`)
+
 ## 2026-06-05 02:41 IST · feed images from RSS content + full-heading tooltip
 
 - **RSS image extraction (`api/fetch-rss/route.ts`):** added `customFields` for `content:encoded` / `media:content` / `media:thumbnail`, and a fallback that pulls the first real `<img>` out of the article HTML (skips tracking pixels). Image-rich feeds like Inc42 now return 10/10 images instead of 0. Note: TechCrunch and Hacker News publish no images in their RSS, so those still fall back to the source favicon.
