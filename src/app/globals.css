@@ -232,17 +232,44 @@ body {
   display: none;
 }
 
-/* ─── Sidebar (fixed-width, always expanded) ─── */
+/* ─── Sidebar (collapsed icon rail, expands on hover — Supabase/Vercel style) ─── */
 .sidebar {
+  width: var(--sidebar-width);
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar:hover {
   width: var(--sidebar-expanded);
 }
 .sidebar .nav-label {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+.sidebar:hover .nav-label {
+  opacity: 1;
+  transform: translateX(0);
 }
 .sidebar .logo-full {
+  opacity: 0;
+  transition: opacity 0.18s ease;
   white-space: nowrap;
+  pointer-events: none;
+}
+.sidebar:hover .logo-full {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Bottom user block: hide the name/plan text when collapsed */
+.sidebar .user-text {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar:hover .user-text {
+  opacity: 1;
 }
 
 /* ─── Table row styling ─── */

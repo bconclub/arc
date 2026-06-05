@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-05 02:30 IST · sidebar hover-to-expand + text-only logo
+
+- **Sidebar (`globals.css`, `Sidebar.tsx`, `dashboard/layout.tsx`):** restored the Supabase/Vercel-style collapsed icon rail (64px) that expands to 220px on hover and auto-collapses on mouse-out. Nav labels, version badge, and user name/plan fade in on hover and hide when collapsed. Main content margin set to the collapsed 64px (rail overlays content on hover instead of pushing it).
+- **Logo:** removed the `/ARC.png` image entirely — the sidebar now shows text-only "ARC" + version badge. Dropped the unused `next/image` import.
+- User-facing: left panel is now a clean icon rail that opens on hover, just the word "ARC" as the logo.
+- (`8d1b652`)
+
 ## 2026-06-05 02:20 IST · reset DB to ARC schema (feed live end-to-end)
 
 - **New `supabase/01_drop_old_tables.sql`:** destructive, run-once script that drops the 16 stale tables that were occupying ARC's Supabase project (they were an unrelated CRM dataset — leads, conversations, sessions, knowledge_base). Cleared the project so it can be used for ARC.

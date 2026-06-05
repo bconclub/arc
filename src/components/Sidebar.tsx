@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { LayoutGrid, PenLine, Calendar, BarChart3, AudioLines, Database } from "lucide-react";
@@ -45,28 +44,13 @@ export function Sidebar() {
     <>
       {/* Desktop sidebar */}
       <aside className="sidebar fixed top-0 left-0 z-40 h-screen bg-surface/80 backdrop-blur-xl border-r border-[rgba(255,255,255,0.06)] flex-col hidden lg:flex overflow-hidden">
-        {/* Logo */}
-        <div className="w-full flex items-center justify-center py-3 shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Image 
-              src="/ARC.png" 
-              alt="ARC" 
-              width={32} 
-              height={32} 
-              className="w-8 h-8 object-contain"
-              priority
-            />
-            <div className="flex items-center logo-full">
-              <span className="text-sm font-semibold tracking-tight text-white">
-                ARC
-              </span>
-              <span 
-                className="text-[11px] font-medium px-1.5 py-0.5 rounded border border-white/30 ml-1.5"
-                style={{ opacity: 0.6 }}
-              >
-                v{VERSION}
-              </span>
-            </div>
+        {/* Logo (text only) */}
+        <div className="w-full flex items-center px-4 py-4 shrink-0">
+          <Link href="/dashboard" className="flex items-center gap-1.5">
+            <span className="text-[15px] font-bold tracking-tight text-white shrink-0">ARC</span>
+            <span className="logo-full text-[10px] font-medium px-1.5 py-0.5 rounded border border-white/20 text-white/50">
+              v{VERSION}
+            </span>
           </Link>
         </div>
 
@@ -93,23 +77,23 @@ export function Sidebar() {
 
         {/* User Profile */}
         <div className="px-3 py-3 border-t border-white/[0.06]">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.04] transition-colors cursor-pointer">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors cursor-pointer">
             {user?.avatar ? (
-              <img 
-                src={user.avatar} 
-                alt="Profile" 
-                className="w-8 h-8 rounded-full object-cover border border-white/10"
+              <img
+                src={user.avatar}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
                 onError={(e) => {
                   // Hide broken image, show fallback
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-medium text-white border border-white/10">
+              <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-medium text-white border border-white/10 shrink-0">
                 {user?.name?.[0]?.toUpperCase() || 'U'}
               </div>
             )}
-            <div className="flex-1 min-w-0">
+            <div className="user-text flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
                 {user?.name || 'User'}
               </p>
