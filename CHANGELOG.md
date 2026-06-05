@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-05 03:20 IST · fix BCON icon clipping in collapsed sidebar
+
+- **Sidebar (`Sidebar.tsx`):** the brand row had double padding (outer `px-3` + inner `px-2` = 40px) which, on the 64px collapsed rail, left only 24px for a 32px icon — so `overflow:hidden` clipped it (only a sliver showed). Shrunk the icon to 28px, flattened the label into a single truncating `<p>`, and added `overflow-hidden` on the row. Verified via DOM measurement: icon now sits left:20→right:43, fully inside the 0–64 rail.
+- (`2fdc7b8`)
+
 ## 2026-06-05 03:06 IST · richer card excerpts + curated marketing RSS sources
 
 - **Curated marketing RSS sources:** verified (200 OK + items) and added a strong set of marketing/AI/business feeds — India (Inc42, ET BrandEquity, YourStory Marketing) and global (HubSpot, Search Engine Land, Search Engine Journal, Neil Patel, Seth Godin, Adweek, Buffer, Marketing Week, MarTech, Social Media Today) plus AI/tech (VentureBeat AI, MIT Tech Review, TechCrunch, Hacker News). Inserted the 12 new ones into the live `sources` table (now 18 active) and updated both the `apply_all.sql` seed and the Sources-page self-heal defaults so fresh installs get them. Dead/blocked feeds (Storyboard18, Exchange4media, Convince&Convert, MarketingProfs) were tested and excluded.

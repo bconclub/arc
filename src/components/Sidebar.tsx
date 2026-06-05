@@ -55,17 +55,15 @@ export function Sidebar() {
 
         {/* Brand */}
         <div className="px-3 py-3 border-t border-white/[0.06]">
-          <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors cursor-pointer">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors cursor-pointer overflow-hidden">
             <Image
               src="/bcon-icon.png"
               alt="BCON Club"
               width={32}
               height={32}
-              className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
+              className="w-7 h-7 rounded-full object-cover border border-white/10 shrink-0"
             />
-            <div className="user-text flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">BCON Club</p>
-            </div>
+            <p className="user-text text-sm font-medium text-white truncate min-w-0">BCON Club</p>
           </div>
         </div>
       </aside>
