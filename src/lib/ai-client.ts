@@ -12,7 +12,15 @@ if (typeof window !== "undefined") {
   );
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Strip inherited Anthropic env overrides so the SDK uses ONLY our x-api-key
+// against the public API (some runtimes inject an OAuth token + proxy base URL).
+delete process.env.ANTHROPIC_AUTH_TOKEN;
+delete process.env.ANTHROPIC_BASE_URL;
+delete process.env.ANTHROPIC_CUSTOM_HEADERS;
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  baseURL: "https://api.anthropic.com",
+});
 
 // Model is hardcoded to Claude
 export type AIModel = "claude";
@@ -31,7 +39,7 @@ export async function callAI({
   max_tokens = 1000,
 }: CallAIOptions): Promise<string> {
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5-20251001",
+    model: "claude-sonnet-4-6",
     max_tokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
@@ -47,7 +55,7 @@ export async function* callAIStream({
   max_tokens = 1000,
 }: CallAIOptions): AsyncGenerator<string, void, unknown> {
   const stream = anthropic.messages.stream({
-    model: "claude-sonnet-4-5-20251001",
+    model: "claude-sonnet-4-6",
     max_tokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],

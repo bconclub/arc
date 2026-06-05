@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-05 05:35 IST · Voice → Style: learning style engine with diff approval
+
+- **Renamed Voice → Style** (`/dashboard/voice` → `/dashboard/style`, nav label, palette icon instead of audio). It's about tone/how we write, not audio.
+- **Hardcoded identity:** the page shows who we are (Thanzeel/PROXe/BCON, ICP) as read-only — no editing, no "regenerate brain prompt" button.
+- **Learning loop (`api/ai/route.ts` new actions `analyze-style` + `save-style-guide`):** paste a post you like OR upload a screenshot → Claude (vision) extracts the text, auto-detects LinkedIn/Twitter, names the pattern, and proposes how to ENHANCE the existing style guide as a structured **diff** (add/modify cards). You Accept all, reject individual changes, or Discard — nothing changes until approved. Approved guide saves to `arc_context.voice_style`, which `write-post` already reads, so improving Style instantly improves writing.
+- **Critical model fix (`api/ai/route.ts`, `lib/ai-client.ts`):** the app hardcoded `claude-sonnet-4-5-20251001`, which is **retired** (`not_found_error`) — this was silently breaking ALL AI calls (write, analyze, brain prompt). Updated to `claude-sonnet-4-6` (verified against the live model list).
+- **Anthropic client hardening:** strip inherited `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_BASE_URL` / `ANTHROPIC_CUSTOM_HEADERS` and pin `baseURL` to the public API, so the SDK always uses our real `x-api-key` (some runtimes inject an OAuth token that caused 401 "Invalid bearer token").
+- Verified end-to-end: analyze (LinkedIn post → pattern + 4-change diff), apply, and persist to the DB all work.
+- (`db3a814`)
+
 ## 2026-06-05 05:09 IST · whole-word keyword matching + bigger signal pool
 
 - **Whole-word filtering (`dashboard/feed/page.tsx`):** the keyword filter matched word *prefixes*, so "AI marketing" wrongly matched a DGCA airport story ("**ai**rports") and any "...marketing" fragment. Changed the regex from `\bTOKEN` to `\bTOKEN\b` (boundaries on both sides). Now "ai" matches "AI", "AI.", "(AI)" but NOT "airports". Verified: the DGCA story is in the pool but no longer matches "ai marketing".

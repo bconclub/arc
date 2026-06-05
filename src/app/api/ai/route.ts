@@ -2,7 +2,17 @@ import { supabaseAdmin } from '@/lib/supabase'
 import Anthropic from '@anthropic-ai/sdk'
 import type { WebSearchResultBlock, WebSearchToolResultBlock } from '@anthropic-ai/sdk/resources/messages'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+// The SDK auto-reads ANTHROPIC_AUTH_TOKEN / ANTHROPIC_BASE_URL / ANTHROPIC_CUSTOM_HEADERS
+// from the environment. Some runtimes inject those (e.g. an OAuth bearer token + proxy),
+// which makes the SDK send the wrong auth → 401 "Invalid bearer token". Strip them so the
+// client uses ONLY our real x-api-key against the public API. No-op on Vercel.
+delete process.env.ANTHROPIC_AUTH_TOKEN
+delete process.env.ANTHROPIC_BASE_URL
+delete process.env.ANTHROPIC_CUSTOM_HEADERS
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  baseURL: 'https://api.anthropic.com',
+})
 
 function tryHostname(url: string) {
   try { return new URL(url).hostname.replace('www.', '') } catch { return '' }
@@ -434,7 +444,7 @@ Rules:
       const userMessage = `Write a ${format} post about: ${topic}${context ? '\n\nContext: ' + context : ''}`
 
       const stream = anthropic.messages.stream({
-        model: 'claude-sonnet-4-5-20251001',
+        model: 'claude-sonnet-4-6',
         max_tokens: 800,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
@@ -484,7 +494,7 @@ Generate a concise system prompt (max 200 words) that captures this voice and in
 
       try {
         const response = await anthropic.messages.create({
-          model: 'claude-sonnet-4-5-20251001',
+          model: 'claude-sonnet-4-6',
           max_tokens: 500,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }],
@@ -533,7 +543,7 @@ Return 3 templates as JSON.`
 
       try {
         const response = await anthropic.messages.create({
-          model: 'claude-sonnet-4-5-20251001',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }],
@@ -584,6 +594,100 @@ Return 3 templates as JSON.`
         console.error('Voice analysis error:', e)
         return Response.json({ error: 'Failed to analyze voice' }, { status: 500 })
       }
+    }
+
+    // ── analyze-style ──────────────────────────────────────────
+    // Takes a liked post (pasted text OR a screenshot) + the current style guide,
+    // and proposes how to ENHANCE the guide. Returns a structured diff for approval.
+    if (action === 'analyze-style') {
+      const payload = (body.payload || {}) as {
+        text?: string
+        imageBase64?: string   // data URL or raw base64 of a screenshot
+        imageMediaType?: string
+        currentGuide?: string
+      }
+      const { text, imageBase64, imageMediaType, currentGuide = '' } = payload
+
+      if (!text && !imageBase64) {
+        return Response.json({ error: 'Provide post text or a screenshot' }, { status: 400 })
+      }
+
+      const systemPrompt = `You are a writing-style analyst for a founder's content engine.
+You are given ONE post the user liked (as text or a screenshot of a LinkedIn/Twitter/X post) and their CURRENT style guide.
+
+Do TWO things:
+1. Detect the post's source platform ("LinkedIn", "Twitter", or "Other") and extract its text + the structural pattern (hook, body shape, formatting, CTA style).
+2. Propose how to ENHANCE the existing style guide based on what's good in this post. DO NOT rewrite the whole guide. Propose small, additive changes.
+
+Return ONLY valid JSON, no prose, in EXACTLY this shape:
+{
+  "source": "LinkedIn" | "Twitter" | "Other",
+  "extractedText": "the post's text",
+  "patternName": "short name for the structure, e.g. 'Contrarian hook + proof + CTA'",
+  "summary": "1-2 sentence read on what makes this post work",
+  "changes": [
+    { "type": "add" | "modify", "title": "short label", "detail": "the specific line/rule to add to or change in the style guide" }
+  ],
+  "proposedGuide": "the FULL updated style guide text if every change is accepted"
+}`
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userContent: any[] = []
+      if (imageBase64) {
+        const raw = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64
+        const mt = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(imageMediaType || '')
+          ? imageMediaType
+          : 'image/png'
+        userContent.push({
+          type: 'image',
+          source: { type: 'base64', media_type: mt, data: raw },
+        })
+      }
+      userContent.push({
+        type: 'text',
+        text: `CURRENT STYLE GUIDE:\n${currentGuide || '(empty — this is the first inspiration)'}\n\n${text ? `LIKED POST:\n${text}` : 'The liked post is in the attached screenshot.'}\n\nReturn the JSON.`,
+      })
+
+      try {
+        const response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1500,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userContent }],
+        })
+        const out = Array.isArray(response?.content)
+          ? response.content.map((c: { type: string; text?: string }) => (c.type === 'text' ? c.text : '')).join('')
+          : ''
+        let parsed: unknown = null
+        try {
+          const m = out.match(/```json\n?([\s\S]*?)\n?```/) || out.match(/\{[\s\S]*\}/)
+          parsed = JSON.parse(m ? (m[1] || m[0]) : out)
+        } catch {
+          return Response.json({ error: 'Could not parse analysis', raw: out.slice(0, 400) }, { status: 502 })
+        }
+        return Response.json({ data: parsed })
+      } catch (e) {
+        console.error('analyze-style error:', e)
+        return Response.json({ error: 'Failed to analyze style' }, { status: 500 })
+      }
+    }
+
+    // ── save-style-guide ───────────────────────────────────────
+    // Persist the approved (merged) style guide into arc_context.voice_style,
+    // which is what write-post already reads — so improving Style improves writing.
+    if (action === 'save-style-guide') {
+      const { guide } = body as { guide?: string }
+      if (typeof guide !== 'string') {
+        return Response.json({ error: 'guide required' }, { status: 400 })
+      }
+      const { error } = await supabaseAdmin
+        .from('arc_context')
+        .upsert({ key: 'voice_style', value: guide, updated_at: new Date().toISOString() })
+      if (error) {
+        console.error('save-style-guide error:', error)
+        return Response.json({ error: error.message }, { status: 500 })
+      }
+      return Response.json({ ok: true })
     }
 
     // ── get-saved-signals ──────────────────────────────────────

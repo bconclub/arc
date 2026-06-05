@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { LayoutGrid, PenLine, Calendar, BarChart3, AudioLines, Database } from "lucide-react";
+import { LayoutGrid, PenLine, Calendar, BarChart3, Palette, Database } from "lucide-react";
 import { VERSION } from "@/lib/version";
 
 const navItems = [
@@ -11,7 +11,7 @@ const navItems = [
   { label: "Write", href: "/dashboard/write", icon: PenLine },
   { label: "Schedule", href: "/dashboard/schedule", icon: Calendar },
   { label: "Results", href: "/dashboard/results", icon: BarChart3 },
-  { label: "Voice", href: "/dashboard/voice", icon: AudioLines },
+  { label: "Style", href: "/dashboard/style", icon: Palette },
   { label: "Sources", href: "/dashboard/sources", icon: Database },
 ];
 

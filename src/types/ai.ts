@@ -10,7 +10,9 @@ export type AIAction =
   | "write-post-v2"
   | "extract-and-save"
   | "generate-brain-prompt"
-  | "analyze-voice";
+  | "analyze-voice"
+  | "analyze-style"
+  | "save-style-guide";
 
 export interface AIRequest {
   action: AIAction;
