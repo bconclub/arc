@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-05 05:44 IST · fix article click-through in reading drawer
+
+- **Root cause:** the reading drawer (`position:fixed`) was nested inside the page's `animate-fade-in` wrapper, whose lingering `transform` created a containing block — so the drawer grew to ~10,000px tall and its footer ("Open Original") rendered 10,000px off-screen, completely unreachable. That's why there was no visible way to open the article.
+- **Fix (`dashboard/feed/page.tsx`):** render the drawer via `createPortal` into `document.body`, escaping the transformed ancestor. Drawer is now exactly viewport height (verified 859px) with the footer pinned on-screen.
+- **Added an always-visible "Read full article ↗" link** next to the source name at the top of the drawer, so click-through is obvious and never depends on the footer being in view. Also added `flexShrink:0` + `minHeight:0` so content scrolls and the footer stays put.
+- User-facing: opening a feed card now clearly shows how to read the full article — a link up top plus the Open Original button at the bottom.
+- (`3068322`)
+
 ## 2026-06-05 05:35 IST · Voice → Style: learning style engine with diff approval
 
 - **Renamed Voice → Style** (`/dashboard/voice` → `/dashboard/style`, nav label, palette icon instead of audio). It's about tone/how we write, not audio.

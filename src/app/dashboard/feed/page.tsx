@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { X, ExternalLink, PenLine } from 'lucide-react'
 import type { Signal } from '@/lib/supabase'
@@ -109,10 +110,13 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
     ? { text: 'Relevant', color: '#22c55e', bg: 'rgba(34,197,94,0.15)' }
     : { text: 'Trending', color: '#a1a1aa', bg: 'rgba(255,255,255,0.08)' }
   
-  return (
+  // Render into document.body so the fixed-position drawer escapes any
+  // transformed ancestor (the page's animate-fade-in wrapper created a
+  // containing block that made the drawer 10,000px tall and hid the footer).
+  return createPortal(
     <>
       {/* Backdrop */}
-      <div 
+      <div
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, background: 'var(--overlay)',
@@ -161,7 +165,7 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
         </div>
         
         {/* Content */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+        <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '24px' }}>
           {/* Image */}
           {signal.image_url && (
             <div style={{
@@ -184,12 +188,27 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
             {signal.title}
           </h1>
 
-          {/* Source */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-            {signal.favicon && (
-              <img src={signal.favicon} alt="" style={{ width: 16, height: 16, borderRadius: 3 }} />
-            )}
-            <span style={{ fontSize: 13, color: 'var(--body)' }}>{signal.source_name}</span>
+          {/* Source + always-visible read link */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {signal.favicon && (
+                <img src={signal.favicon} alt="" style={{ width: 16, height: 16, borderRadius: 3 }} />
+              )}
+              <span style={{ fontSize: 13, color: 'var(--body)' }}>{signal.source_name}</span>
+            </div>
+            <a
+              href={signal.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                fontSize: 13, fontWeight: 500, textDecoration: 'none',
+                color: 'var(--accent-blue)', cursor: 'pointer',
+              }}
+            >
+              Read full article
+              <ExternalLink size={14} />
+            </a>
           </div>
 
           {/* Excerpt / Content */}
@@ -210,7 +229,7 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
         {/* Footer Actions */}
         <div style={{
           padding: '16px 20px', borderTop: '1px solid var(--border)',
-          display: 'flex', gap: 10,
+          display: 'flex', gap: 10, flexShrink: 0, background: 'var(--drawer-bg)',
         }}>
           <button
             onClick={() => window.open(signal.url, '_blank')}
@@ -245,7 +264,8 @@ function ReadingDrawer({ signal, isOpen, onClose, onWrite }: {
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 
