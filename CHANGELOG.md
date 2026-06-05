@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-05 02:41 IST · feed images from RSS content + full-heading tooltip
+
+- **RSS image extraction (`api/fetch-rss/route.ts`):** added `customFields` for `content:encoded` / `media:content` / `media:thumbnail`, and a fallback that pulls the first real `<img>` out of the article HTML (skips tracking pixels). Image-rich feeds like Inc42 now return 10/10 images instead of 0. Note: TechCrunch and Hacker News publish no images in their RSS, so those still fall back to the source favicon.
+- **Feed headings (`dashboard/feed/page.tsx`):** added a `title` attribute on the card `<h3>` so hovering a clamped (2-line) heading shows the full text as a native tooltip — no more guessing at cut-off titles.
+- User-facing: feed cards now show article images where the source provides them, and full headings on hover.
+- (`78eaa8d`)
+
 ## 2026-06-05 02:37 IST · sidebar logo: restore version badge (icon stays removed)
 
 - **Sidebar (`Sidebar.tsx`):** put the version badge back — header now reads "ARC v0.0.3". The icon image was already removed earlier; only the text + badge remain (reverts the prior badge-removal, which was a misread of the request).

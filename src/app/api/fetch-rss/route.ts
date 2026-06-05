@@ -6,7 +6,26 @@ const rssParser = new Parser({
   headers: {
     "User-Agent": "ARC-ContentEngine/1.0",
   },
+  customFields: {
+    item: [
+      ["content:encoded", "contentEncoded"],
+      ["media:content", "mediaContent", { keepArray: true }],
+      ["media:thumbnail", "mediaThumbnail"],
+    ],
+  },
 });
+
+// Pull the first usable <img> src out of an HTML blob (handles most feeds that
+// embed the hero image in the article body instead of a media tag).
+function extractImageFromHtml(html: string): string {
+  if (!html) return "";
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (!match) return "";
+  const url = match[1];
+  // Skip tracking pixels / 1x1 spacers
+  if (/(1x1|pixel|spacer|blank\.gif|doubleclick|feedburner)/i.test(url)) return "";
+  return url.startsWith("//") ? `https:${url}` : url;
+}
 
 interface RSSItem {
   title: string;
@@ -149,11 +168,39 @@ function parseRSSItem(
   }
 
   // media:group (YouTube, etc)
-  const mediaGroup = (item as Record<string, unknown>)["media:group"] as { 
-    "media:thumbnail"?: { $?: { url: string } }[] 
+  const mediaGroup = (item as Record<string, unknown>)["media:group"] as {
+    "media:thumbnail"?: { $?: { url: string } }[]
   } | undefined;
   if (mediaGroup?.["media:thumbnail"]?.[0]?.$?.url) {
     image = mediaGroup["media:thumbnail"][0].$.url;
+  }
+
+  const rec = item as Record<string, unknown>;
+
+  // media:content captured via customFields (can be array)
+  if (!image) {
+    const mc = rec.mediaContent as Array<{ $?: { url?: string; medium?: string; type?: string } }> | undefined;
+    if (Array.isArray(mc)) {
+      const img = mc.find((m) => m?.$?.url && (!m.$.medium || m.$.medium === "image") && !/video/i.test(m.$.type || ""));
+      if (img?.$?.url) image = img.$.url;
+    }
+  }
+
+  // media:thumbnail captured via customFields
+  if (!image) {
+    const mt = rec.mediaThumbnail as { $?: { url?: string } } | undefined;
+    if (mt?.$?.url) image = mt.$.url;
+  }
+
+  // Fallback: pull the first <img> out of the full article HTML.
+  // This is what fills images for most blog/news feeds (Inc42, TechCrunch, etc.)
+  if (!image) {
+    const html =
+      (rec.contentEncoded as string) ||
+      (item.content as string) ||
+      (rec["content:encoded"] as string) ||
+      "";
+    image = extractImageFromHtml(html);
   }
 
   // Extract snippet from contentSnippet or description

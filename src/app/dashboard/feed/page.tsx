@@ -477,7 +477,7 @@ export default function FeedPage() {
 
               {/* Content */}
               <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <h3 style={{
+                <h3 title={s.title} style={{
                   fontSize: 14, fontWeight: 500, color: 'white', margin: 0, lineHeight: 1.4,
                   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{s.title}</h3>
