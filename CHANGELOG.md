@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-05 02:32 IST · sidebar logo: just "ARC"
+
+- **Sidebar (`Sidebar.tsx`):** removed the version badge (`v0.0.3`) next to the logo — the sidebar header now shows only the word "ARC". Dropped the now-unused `VERSION` import.
+- (`2103ad8`)
+
 ## 2026-06-05 02:30 IST · sidebar hover-to-expand + text-only logo
 
 - **Sidebar (`globals.css`, `Sidebar.tsx`, `dashboard/layout.tsx`):** restored the Supabase/Vercel-style collapsed icon rail (64px) that expands to 220px on hover and auto-collapses on mouse-out. Nav labels, version badge, and user name/plan fade in on hover and hide when collapsed. Main content margin set to the collapsed 64px (rail overlays content on hover instead of pushing it).

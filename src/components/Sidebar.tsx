@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { LayoutGrid, PenLine, Calendar, BarChart3, AudioLines, Database } from "lucide-react";
-import { VERSION } from "@/lib/version";
 
 // Simple user hook
 function useUser() {
@@ -46,11 +45,8 @@ export function Sidebar() {
       <aside className="sidebar fixed top-0 left-0 z-40 h-screen bg-surface/80 backdrop-blur-xl border-r border-[rgba(255,255,255,0.06)] flex-col hidden lg:flex overflow-hidden">
         {/* Logo (text only) */}
         <div className="w-full flex items-center px-4 py-4 shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-1.5">
+          <Link href="/dashboard" className="flex items-center">
             <span className="text-[15px] font-bold tracking-tight text-white shrink-0">ARC</span>
-            <span className="logo-full text-[10px] font-medium px-1.5 py-0.5 rounded border border-white/20 text-white/50">
-              v{VERSION}
-            </span>
           </Link>
         </div>
 
