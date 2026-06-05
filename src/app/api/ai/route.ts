@@ -91,7 +91,7 @@ async function getCachedSignals(): Promise<CachedSignal[] | null> {
       .select('*')
       .gte('fetched_at', twoHoursAgo)
       .order('trend_score', { ascending: false })
-      .limit(50)
+      .limit(150)
 
     if (error) {
       console.error('Cache check error:', error)
@@ -338,8 +338,9 @@ export async function POST(req: Request) {
       // Sort by trend_score descending (recency-based)
       signals.sort((a, b) => b.trend_score - a.trend_score)
 
-      // Limit to top 30 signals
-      const limitedSignals = signals.slice(0, 30)
+      // Keep a large pool so keyword filtering has real depth to search across
+      // (18 sources × ~15 items). The UI streams/limits what it shows.
+      const limitedSignals = signals.slice(0, 150)
 
       // Cache results for future requests
       if (!topic && limitedSignals.length > 0) {

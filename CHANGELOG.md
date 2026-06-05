@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-05 05:09 IST · whole-word keyword matching + bigger signal pool
+
+- **Whole-word filtering (`dashboard/feed/page.tsx`):** the keyword filter matched word *prefixes*, so "AI marketing" wrongly matched a DGCA airport story ("**ai**rports") and any "...marketing" fragment. Changed the regex from `\bTOKEN` to `\bTOKEN\b` (boundaries on both sides). Now "ai" matches "AI", "AI.", "(AI)" but NOT "airports". Verified: the DGCA story is in the pool but no longer matches "ai marketing".
+- **Bigger signal pool (`api/ai/route.ts`, `api/fetch-rss/route.ts`):** the feed capped at 30 signals, so filtering could only ever search 30 items even with 18 sources. Raised the pool to 150 (cache read + final slice), and the per-feed item cap 10→15. A fresh fetch now returns 150 signals across all 18 sources, so keyword filters surface far more relevant content.
+- **Feed streaming (`dashboard/feed/page.tsx`):** stagger-reveal the first 24 cards for the nice effect, then reveal the rest instantly — so a 150-item pool doesn't animate for 15s.
+- User-facing: keyword filters are now precise (no fragment false-positives) and pull from a much deeper pool.
+- (`85d3d16`)
+
 ## 2026-06-05 05:03 IST · fix sidebar invisible in light mode
 
 - **Sidebar (`Sidebar.tsx`):** the logo, version badge, BCON Club label, nav text, active pill, and borders were hardcoded `text-white` / `bg-white` / white-tinted — so in light mode the whole panel vanished (white-on-white). Swapped all to theme tokens: text→`text-text`, active pill→`bg-text text-bg` (inverts per theme), borders→`var(--border)`, hovers→`var(--glow-white)`. Verified in light mode: "ARC" and "BCON Club" render `rgb(26,26,26)` on the `rgb(247,247,248)` background.

@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
       urls.map(async (url) => {
         try {
           const feed = await rssParser.parseURL(url);
-          const items = feed.items.slice(0, 10).map((item) => 
+          const items = feed.items.slice(0, 15).map((item) =>
             parseRSSItem(item, feed.title || extractSourceName(url))
           );
           return {

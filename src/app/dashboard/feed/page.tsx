@@ -289,12 +289,17 @@ export default function FeedPage() {
       const data = await res.json()
       const signalsArray = Array.isArray(data?.signals) ? data.signals : []
       setSignals(signalsArray)
-      
-      for (let i = 0; i < signalsArray.length; i++) {
+
+      // Stagger-reveal the first batch for a nice effect, then reveal the rest
+      // instantly so the full pool (up to 150) is available to filter without a
+      // long animation.
+      const STAGGER = 24
+      for (let i = 0; i < Math.min(signalsArray.length, STAGGER); i++) {
         if (abortRef.current) break
         await new Promise(resolve => setTimeout(resolve, STREAM_DELAY))
         setVisibleCount(prev => prev + 1)
       }
+      if (!abortRef.current) setVisibleCount(signalsArray.length)
     } catch(e) { console.error(e) }
     finally { setIsLoading(false) }
   }
@@ -337,19 +342,19 @@ export default function FeedPage() {
     return { text: 'Trending', color: '#a1a1aa', bg: 'rgba(255,255,255,0.08)' }
   }
 
-  // Rigorous keyword filter: EVERY word in the topic query must appear somewhere
-  // in the signal (title + snippet + source). "AI agents" => must contain both
-  // "ai" AND "agents". Matches whole words (so "ai" won't match "rain").
+  // Rigorous keyword filter: EVERY word in the topic must appear as a WHOLE word
+  // in the signal (title + snippet + source). "AI marketing" => the story must
+  // contain "ai" AND "marketing" as full words — NOT as fragments. This stops
+  // "ai" matching "airports" or "marketing" matching only via a partial.
   function matchesTopic(s: Signal, t: Topic | null): boolean {
     if (!t) return true
     const haystack = `${s.title || ''} ${s.snippet || ''} ${s.source_name || ''}`.toLowerCase()
-    // Filter on the chip LABEL (the keyword the user typed), not a long seeded query.
-    // "AI agents" => every word (ai, agents) must appear in the story.
     const tokens = t.label.toLowerCase().split(/[\s,]+/).filter(Boolean)
     if (tokens.length === 0) return true
     return tokens.every(tok => {
       const safe = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      return new RegExp(`\\b${safe}`, 'i').test(haystack)
+      // \b on BOTH sides = whole word only. "ai" matches "AI" / "AI." / "(AI)" but not "airports".
+      return new RegExp(`\\b${safe}\\b`, 'i').test(haystack)
     })
   }
 
