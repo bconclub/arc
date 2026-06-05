@@ -2,30 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import Image from "next/image";
 import { LayoutGrid, PenLine, Calendar, BarChart3, AudioLines, Database } from "lucide-react";
 import { VERSION } from "@/lib/version";
-
-// Simple user hook
-function useUser() {
-  const [user, setUser] = useState<{ name?: string; avatar?: string } | null>(null);
-  
-  useEffect(() => {
-    // Try localStorage first
-    try {
-      const stored = localStorage.getItem('arc:user');
-      if (stored) {
-        setUser(JSON.parse(stored));
-        return;
-      }
-    } catch {}
-    
-    // Default user
-    setUser({ name: 'User' });
-  }, []);
-  
-  return user;
-}
 
 const navItems = [
   { label: "Feed", href: "/dashboard/feed", icon: LayoutGrid },
@@ -38,7 +17,6 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const user = useUser();
 
   return (
     <>
@@ -75,29 +53,18 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* User Profile */}
+        {/* Brand */}
         <div className="px-3 py-3 border-t border-white/[0.06]">
           <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors cursor-pointer">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
-                onError={(e) => {
-                  // Hide broken image, show fallback
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-medium text-white border border-white/10 shrink-0">
-                {user?.name?.[0]?.toUpperCase() || 'U'}
-              </div>
-            )}
+            <Image
+              src="/bcon-icon.png"
+              alt="BCON Club"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
+            />
             <div className="user-text flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user?.name || 'User'}
-              </p>
-              <p className="text-[11px] text-text-muted truncate">Free Plan</p>
+              <p className="text-sm font-medium text-white truncate">BCON Club</p>
             </div>
           </div>
         </div>

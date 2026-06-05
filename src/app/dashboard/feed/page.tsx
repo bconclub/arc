@@ -11,8 +11,8 @@ const STORAGE_KEY = 'arc:feed-topics'
 const STREAM_DELAY = 100
 
 const DEFAULT_TOPICS: Topic[] = [
-  { label: 'Marketing', query: 'marketing trends India SMB 2026' },
-  { label: 'AI Tools', query: 'AI tools business automation 2026' },
+  { label: 'Marketing', query: 'Marketing' },
+  { label: 'AI', query: 'AI' },
 ]
 
 // Format relative time
@@ -313,9 +313,10 @@ export default function FeedPage() {
     finally { setIsLoading(false) }
   }
 
+  // Selecting a topic does NOT refetch — it filters the already-loaded signals
+  // client-side so the keyword filter is rigorous and instant.
   function selectTopic(t: Topic | null) {
     setActiveTopic(t)
-    loadFeed(t)
   }
 
   function addTopic() {
@@ -336,7 +337,6 @@ export default function FeedPage() {
     
     if (activeTopic?.label === topicToDelete.label) {
       setActiveTopic(null)
-      loadFeed(null)
     }
   }
   
@@ -351,8 +351,25 @@ export default function FeedPage() {
     return { text: 'Trending', color: '#a1a1aa', bg: 'rgba(255,255,255,0.08)' }
   }
 
-  const skeletonCount = Math.max(0, 6 - visibleCount)
-  const visibleSignals = signals.slice(0, visibleCount)
+  // Rigorous keyword filter: EVERY word in the topic query must appear somewhere
+  // in the signal (title + snippet + source). "AI agents" => must contain both
+  // "ai" AND "agents". Matches whole words (so "ai" won't match "rain").
+  function matchesTopic(s: Signal, t: Topic | null): boolean {
+    if (!t) return true
+    const haystack = `${s.title || ''} ${s.snippet || ''} ${s.source_name || ''}`.toLowerCase()
+    // Filter on the chip LABEL (the keyword the user typed), not a long seeded query.
+    // "AI agents" => every word (ai, agents) must appear in the story.
+    const tokens = t.label.toLowerCase().split(/[\s,]+/).filter(Boolean)
+    if (tokens.length === 0) return true
+    return tokens.every(tok => {
+      const safe = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return new RegExp(`\\b${safe}`, 'i').test(haystack)
+    })
+  }
+
+  const filteredSignals = signals.filter(s => matchesTopic(s, activeTopic))
+  const skeletonCount = isLoading ? Math.max(0, 6 - visibleCount) : 0
+  const visibleSignals = filteredSignals.slice(0, activeTopic ? filteredSignals.length : visibleCount)
 
   return (
     <div style={{ padding: '16px 24px' }}>
@@ -369,11 +386,15 @@ export default function FeedPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <h1 style={{ fontSize: 20, fontWeight: 600, color: 'white', margin: 0 }}>Feed</h1>
           <span style={{ fontSize: 13, color: '#666' }}>
-            {isLoading ? `Loading ${visibleCount}/${signals.length || '...'}` : `${signals.length} signals`}
+            {isLoading
+              ? `Loading ${visibleCount}/${signals.length || '...'}`
+              : activeTopic
+              ? `${filteredSignals.length} of ${signals.length} match "${activeTopic.label}"`
+              : `${signals.length} signals`}
           </span>
         </div>
         <button
-          onClick={() => selectTopic(activeTopic)}
+          onClick={() => loadFeed(null)}
           disabled={isLoading}
           style={{ 
             fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '1px solid #333',
@@ -468,11 +489,31 @@ export default function FeedPage() {
                 {s.image_url ? (
                   <img src={s.image_url} alt="" loading="lazy"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    onError={(e) => {
+                      // If the article image 404s, fall back to the source-logo placeholder.
+                      const img = e.target as HTMLImageElement
+                      img.style.display = 'none'
+                      const ph = img.nextElementSibling as HTMLElement | null
+                      if (ph) ph.style.display = 'flex'
+                    }}
                   />
-                ) : s.favicon ? (
-                  <img src={s.favicon.replace('sz=32', 'sz=64')} alt="" style={{ width: 48, height: 48, borderRadius: 8, opacity: 0.3 }} />
                 ) : null}
+                {/* Source-logo placeholder (shown when no image, or image fails) */}
+                <div style={{
+                  display: s.image_url ? 'none' : 'flex',
+                  flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  position: 'absolute', inset: 0,
+                }}>
+                  {s.favicon && (
+                    <img src={s.favicon.replace('sz=32', 'sz=64')} alt=""
+                      style={{ width: 40, height: 40, borderRadius: 8, opacity: 0.85 }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  )}
+                  <span style={{ fontSize: 12, color: '#777', fontWeight: 500, textAlign: 'center', padding: '0 12px' }}>
+                    {s.source_name}
+                  </span>
+                </div>
               </div>
 
               {/* Content */}
@@ -512,7 +553,16 @@ export default function FeedPage() {
         {!isLoading && signals.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#666' }}>
             <p>No signals found</p>
-            <p style={{ fontSize: 13, marginTop: 8 }}>Try a different topic or refresh</p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>Try refreshing</p>
+          </div>
+        )}
+
+        {!isLoading && signals.length > 0 && activeTopic && filteredSignals.length === 0 && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+            <p>No signals match &ldquo;{activeTopic.label}&rdquo;</p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>
+              Every word in the keyword must appear in a story. Try a broader keyword or pick All Topics.
+            </p>
           </div>
         )}
       </div>

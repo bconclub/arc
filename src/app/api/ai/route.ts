@@ -60,6 +60,27 @@ function getLabelFromScore(score: number): string {
   return 'steady'
 }
 
+// ICP relevance booster — we're a marketing company focused on business,
+// marketing, and AI. Boost stories in those fields so they rank above generic
+// finance/hardware/etc. Returns a score delta added to the recency trend score.
+const RELEVANCE_KEYWORDS: { terms: string[]; weight: number }[] = [
+  { terms: ['marketing', 'brand', 'advertis', 'campaign', 'seo', 'social media', 'content', 'growth', 'lead'], weight: 30 },
+  { terms: ['ai', 'artificial intelligence', 'llm', 'gpt', 'agent', 'automation', 'chatbot', 'machine learning'], weight: 25 },
+  { terms: ['startup', 'founder', 'saas', 'b2b', 'smb', 'small business', 'entrepreneur', 'product'], weight: 20 },
+]
+// Topics we actively want to push DOWN (not our focus).
+const DEMOTE_KEYWORDS = ['stock', 'shares', 'ipo', 'crypto', 'bitcoin', 'fund raises', 'block deal', 'quarterly results']
+
+function relevanceBoost(title: string, snippet: string): number {
+  const text = `${title} ${snippet}`.toLowerCase()
+  let boost = 0
+  for (const group of RELEVANCE_KEYWORDS) {
+    if (group.terms.some(t => text.includes(t))) boost += group.weight
+  }
+  if (DEMOTE_KEYWORDS.some(t => text.includes(t))) boost -= 20
+  return boost
+}
+
 // Check if we have valid cached signals (within 2 hours)
 async function getCachedSignals(): Promise<CachedSignal[] | null> {
   try {
@@ -208,7 +229,9 @@ async function fetchRSSBatch(feedUrls: string[], baseUrl: string): Promise<Signa
       image?: string;
       source_name?: string;
     }) => {
-      const trendScore = r.pubDate ? calculateTrendScore(r.pubDate) : 50
+      const recency = r.pubDate ? calculateTrendScore(r.pubDate) : 50
+      // Blend recency with ICP relevance so business/marketing/AI floats to top.
+      const trendScore = recency + relevanceBoost(r.title || '', r.snippet || '')
       return {
         title: r.title || '',
         url: r.link || '',

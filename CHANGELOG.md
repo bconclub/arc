@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-05 03:01 IST · BCON brand, rigorous keyword filtering, ICP ranking, logo fallback
+
+- **Sidebar (`Sidebar.tsx`, `public/bcon-icon.png`):** replaced the "User / Free Plan" block with the **BCON Club** brand + its icon (copied from the bconclub repo). Removed the unused user hook.
+- **Rigorous keyword filtering (`dashboard/feed/page.tsx`):** selecting a topic chip now filters the loaded signals **client-side and strictly** — every word in the keyword must appear in the story (title + snippet + source). "AI agents" → only stories containing both "ai" AND "agents". Whole-word match (so "ai" won't match "rain"). Header shows "N of M match", with a dedicated empty-state when nothing matches. Filtering no longer refetches, so it's instant.
+- **Keyword persistence:** topic chips already persist in localStorage and now stay until explicitly removed (filtering no longer triggers refetches that could reset them). Default chips simplified to clean keywords ("Marketing", "AI").
+- **ICP relevance ranking (`api/ai/route.ts`):** feed now blends recency with a relevance boost for our focus areas (marketing/brand/SEO/content, AI/LLM/agents/automation, startup/SaaS/B2B/SMB) and demotes off-topic finance/crypto/stock items, so business-marketing-AI stories rank at the top.
+- **Source-logo image fallback (`dashboard/feed/page.tsx`):** cards with no article image (or a broken image) now show the source's logo + name as a clean branded placeholder instead of a faint icon.
+- User-facing: BCON Club branding in the sidebar; keyword chips filter strictly and stick; top of feed is marketing/AI/business-relevant; every card shows either an image or its source logo.
+- (`ec56c3a`)
+
 ## 2026-06-05 02:52 IST · OpenGraph image fallback (near-full feed image coverage)
 
 - **`api/fetch-rss/route.ts`:** for items with no image in their RSS, now fetches the article page and reads its `og:image` / `twitter:image` meta tag. Capped at 6 concurrent requests with a 4s timeout each and a 50KB head-only read, so the feed stays fast. Lifted image coverage from 10/30 to **28/30** — TechCrunch 0→10/10, Hacker News 0→8/10, Inc42 10/10. Remaining misses are pages with genuinely no og:image (e.g. arXiv).
