@@ -99,14 +99,28 @@ create policy "Allow all voice_templates"   on public.voice_templates   for all 
 drop policy if exists "Allow all inspiration_posts" on public.inspiration_posts;
 create policy "Allow all inspiration_posts" on public.inspiration_posts for all using (true) with check (true);
 
--- ── seed: default RSS sources (bot-accessible, 200 OK) ────────
+-- ── seed: default RSS sources (verified 200 OK + items; marketing/AI/business) ──
 insert into public.sources (name, type, value, active) values
-  ('Inc42',             'rss', 'https://inc42.com/feed/',                    true),
-  ('TechCrunch',        'rss', 'https://techcrunch.com/feed',                true),
-  ('Neil Patel',        'rss', 'https://neilpatel.com/blog/feed/',           true),
-  ('HubSpot Marketing', 'rss', 'https://blog.hubspot.com/marketing/rss.xml', true),
-  ('Hacker News',       'rss', 'https://hnrss.org/frontpage',                true),
-  ('Smashing Magazine', 'rss', 'https://www.smashingmagazine.com/feed/',     true)
+  -- India
+  ('Inc42',                'rss', 'https://inc42.com/feed/',                                           true),
+  ('ET BrandEquity',       'rss', 'https://brandequity.economictimes.indiatimes.com/rss/topstories',   true),
+  ('YourStory Marketing',  'rss', 'https://yourstory.com/category/marketing/feed',                     true),
+  -- Global marketing
+  ('HubSpot Marketing',    'rss', 'https://blog.hubspot.com/marketing/rss.xml',                        true),
+  ('Search Engine Land',   'rss', 'https://searchengineland.com/feed',                                 true),
+  ('Search Engine Journal','rss', 'https://www.searchenginejournal.com/feed/',                         true),
+  ('Neil Patel',           'rss', 'https://neilpatel.com/blog/feed/',                                  true),
+  ('Seth Godin',           'rss', 'https://seths.blog/feed/',                                          true),
+  ('Adweek',               'rss', 'https://www.adweek.com/feed/',                                      true),
+  ('Buffer',               'rss', 'https://buffer.com/resources/rss/',                                 true),
+  ('Marketing Week',       'rss', 'https://www.marketingweek.com/feed/',                               true),
+  ('MarTech',              'rss', 'https://martech.org/feed/',                                         true),
+  ('Social Media Today',   'rss', 'https://www.socialmediatoday.com/feeds/news/',                      true),
+  -- AI / tech
+  ('VentureBeat AI',       'rss', 'https://venturebeat.com/category/ai/feed',                          true),
+  ('MIT Technology Review','rss', 'https://www.technologyreview.com/feed/',                            true),
+  ('TechCrunch',           'rss', 'https://techcrunch.com/feed',                                       true),
+  ('Hacker News',          'rss', 'https://hnrss.org/frontpage',                                       true)
 on conflict do nothing;
 
 -- ── seed: default context rows (plain text values) ───────────

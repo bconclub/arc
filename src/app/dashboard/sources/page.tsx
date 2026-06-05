@@ -17,11 +17,25 @@ interface Source {
 // Default RSS sources to seed if no RSS sources exist.
 // Curated to be bot-accessible (200 OK) and relevant to the India SMB / founder / marketing ICP.
 const DEFAULT_RSS_SOURCES: Omit<Source, "id" | "added_at">[] = [
+  // India
   { name: "Inc42", type: "rss", value: "https://inc42.com/feed/", active: true },
-  { name: "Entrackr", type: "rss", value: "https://entrackr.com/feed", active: true },
-  { name: "TechCrunch", type: "rss", value: "https://techcrunch.com/feed", active: true },
+  { name: "ET BrandEquity", type: "rss", value: "https://brandequity.economictimes.indiatimes.com/rss/topstories", active: true },
+  { name: "YourStory Marketing", type: "rss", value: "https://yourstory.com/category/marketing/feed", active: true },
+  // Global marketing
+  { name: "HubSpot Marketing", type: "rss", value: "https://blog.hubspot.com/marketing/rss.xml", active: true },
+  { name: "Search Engine Land", type: "rss", value: "https://searchengineland.com/feed", active: true },
+  { name: "Search Engine Journal", type: "rss", value: "https://www.searchenginejournal.com/feed/", active: true },
   { name: "Neil Patel", type: "rss", value: "https://neilpatel.com/blog/feed/", active: true },
+  { name: "Seth Godin", type: "rss", value: "https://seths.blog/feed/", active: true },
+  { name: "Adweek", type: "rss", value: "https://www.adweek.com/feed/", active: true },
+  { name: "Buffer", type: "rss", value: "https://buffer.com/resources/rss/", active: true },
+  { name: "Marketing Week", type: "rss", value: "https://www.marketingweek.com/feed/", active: true },
+  { name: "MarTech", type: "rss", value: "https://martech.org/feed/", active: true },
   { name: "Social Media Today", type: "rss", value: "https://www.socialmediatoday.com/feeds/news/", active: true },
+  // AI / tech
+  { name: "VentureBeat AI", type: "rss", value: "https://venturebeat.com/category/ai/feed", active: true },
+  { name: "MIT Technology Review", type: "rss", value: "https://www.technologyreview.com/feed/", active: true },
+  { name: "TechCrunch", type: "rss", value: "https://techcrunch.com/feed", active: true },
   { name: "Hacker News", type: "rss", value: "https://hnrss.org/frontpage", active: true },
 ];
 

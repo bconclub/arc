@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-05 03:06 IST · richer card excerpts + curated marketing RSS sources
+
+- **Curated marketing RSS sources:** verified (200 OK + items) and added a strong set of marketing/AI/business feeds — India (Inc42, ET BrandEquity, YourStory Marketing) and global (HubSpot, Search Engine Land, Search Engine Journal, Neil Patel, Seth Godin, Adweek, Buffer, Marketing Week, MarTech, Social Media Today) plus AI/tech (VentureBeat AI, MIT Tech Review, TechCrunch, Hacker News). Inserted the 12 new ones into the live `sources` table (now 18 active) and updated both the `apply_all.sql` seed and the Sources-page self-heal defaults so fresh installs get them. Dead/blocked feeds (Storyboard18, Exchange4media, Convince&Convert, MarketingProfs) were tested and excluded.
+- **Richer card excerpts (`api/fetch-rss/route.ts`, `dashboard/feed/page.tsx`):** snippet length lifted 300→500 chars and whitespace-cleaned; feed cards now show a 3-line excerpt (was 2) with a hover tooltip for the full text — enough to size up an article before opening it.
+- User-facing: feed is now marketing/AI-dense from many sources, and each card gives a real preview of what the article is about.
+- (`67c6143`)
+
 ## 2026-06-05 03:01 IST · BCON brand, rigorous keyword filtering, ICP ranking, logo fallback
 
 - **Sidebar (`Sidebar.tsx`, `public/bcon-icon.png`):** replaced the "User / Free Plan" block with the **BCON Club** brand + its icon (copied from the bconclub repo). Removed the unused user hook.

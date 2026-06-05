@@ -266,11 +266,14 @@ function parseRSSItem(
   // Extract snippet from contentSnippet or description
   const snippet = item.contentSnippet || item.summary || "";
 
+  // Clean up whitespace and give the card a fuller excerpt (was 300).
+  const cleanSnippet = snippet.replace(/\s+/g, " ").trim().slice(0, 500);
+
   return {
     title: item.title || "Untitled",
     link: item.link || "",
     pubDate: item.pubDate || item.isoDate || new Date().toISOString(),
-    snippet: snippet.slice(0, 300),
+    snippet: cleanSnippet,
     image,
     source_name: sourceName,
   };

@@ -523,9 +523,9 @@ export default function FeedPage() {
                   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{s.title}</h3>
                 
-                <p style={{
+                <p title={s.snippet || ''} style={{
                   fontSize: 12, color: '#888', margin: 0, lineHeight: 1.5,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{s.snippet || 'No excerpt available'}</p>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto', paddingTop: 8 }}>
