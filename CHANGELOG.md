@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-16 10:05 IST · ARC OS: Pulse analytics hub (v1, stubbed)
+
+- **New Pulse screen (`dashboard/pulse`)** — the "see the whole business" half of the OS. Three sections in one view: Content (posts/reach/replies/top post), Meta Ads (spend/leads/cost-per-lead/ROAS + a per-campaign table), and Site behaviour via Microsoft Clarity (sessions/scroll depth/dead+rage clicks + a top-pages table). Metric cards have up/down delta pills; tables are color-coded (ROAS, low scroll depth, high dead clicks).
+- **`lib/os-analytics.ts`:** data shaped to mirror the real APIs (Clarity Data Export + Meta Marketing API / the live MCP), so swapping stub → live is a data-source change only. Every section is honestly badged "stub".
+- This grounds the decide-brain: once wired, Today's ranked needs will reason over these real numbers (e.g. scroll depth drop → a content need).
+- Nav: added **Pulse** (Activity icon, 2nd). Checkpoint commit, not pushed.
+- (`e7290f3`)
+
 ## 2026-06-16 10:02 IST · ARC OS: Today screen (business command center, v1)
 
 - **New direction — ARC as the business OS.** First screen of the loop Goals → Needs → Plays → Work → Results. Built the **Today** front door (`dashboard/today`): a goals strip (live progress) + a ranked "what the business needs" list across four lanes (Outreach, Content, Delivery, Build), each need carrying a grounded *why*, effort, and priority.
