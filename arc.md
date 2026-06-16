@@ -153,11 +153,18 @@ arc:feeds              # Listening feeds
 ## Environment Variables
 
 ```env
-ANTHROPIC_API_KEY=your-api-key-here
-TAVILY_API_KEY=your-tavily-key-here      # Reserved for extract-signal feature
-SUPABASE_URL=your-supabase-url
+ANTHROPIC_API_KEY=your-anthropic-key            # direct Anthropic (write/style/outreach)
+OPENROUTER_API_KEY=sk-or-v1-...                 # OpenRouter gateway (many models, optional)
+TAVILY_API_KEY=your-tavily-key-here             # reserved
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-key
+NEXT_PUBLIC_SITE_URL=https://arc-liard-two.vercel.app   # used as OpenRouter referer
 ```
+
+**OpenRouter** — one key, many models (`openai/*`, `anthropic/*`, `google/*`, …).
+Server-side client at `src/lib/openrouter.ts`: `openrouterChat()` and `openrouterStream()`.
+Add `OPENROUTER_API_KEY` to Vercel → Settings → Environment Variables for production.
 
 ---
 

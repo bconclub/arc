@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-16 13:15 IST · OpenRouter client + credentials
+
+- **OpenRouter integration (`src/lib/openrouter.ts`):** server-side client giving ARC one gateway to many models (`openai/*`, `anthropic/*`, `google/*`…). `openrouterChat()` (non-streaming) + `openrouterStream()` (SSE), model overridable per call, with sensible defaults (`OPENROUTER_MODELS.smart = anthropic/claude-sonnet-4.6`, verified valid on OpenRouter).
+- **Credentials:** `OPENROUTER_API_KEY` added to `.env.local` (gitignored — key never committed). Verified live against the OpenRouter API (returned "ARC ok"). For production, add `OPENROUTER_API_KEY` (and optional `NEXT_PUBLIC_SITE_URL` for the referer header) to Vercel env.
+- **Docs:** `arc.md` env section updated with the full var list + OpenRouter usage note.
+- (`c74724a`)
+
 ## 2026-06-16 12:14 IST · ARC OS: Outreach lane + Market watch + focused lanes
 
 - **Scoped the OS to what we run now:** Outreach, Content, Market (industry). Dropped Delivery/Build from the model (`types/os.ts` Lane = outreach | content | market). Today's needs reseeded to these three; every need now routes to a real destination (content→Write, outreach→Outreach, market→Feed).
