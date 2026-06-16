@@ -458,7 +458,10 @@ NON-NEGOTIABLE RULES:
           try {
             for await (const event of stream) {
               if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                controller.enqueue(new TextEncoder().encode(event.delta.text))
+                // Enforce the no-em-dash rule on the fly (em/en dash is a single char,
+                // never split across deltas).
+                const clean = event.delta.text.replace(/\s*[—–]\s*/g, '. ')
+                controller.enqueue(new TextEncoder().encode(clean))
               }
             }
           } finally {
@@ -691,6 +694,78 @@ Return ONLY valid JSON, no prose, in EXACTLY this shape:
         return Response.json({ error: error.message }, { status: 500 })
       }
       return Response.json({ ok: true })
+    }
+
+    // ── draft-outreach ─────────────────────────────────────────
+    // Drafts a personalized outreach message for a lead, in our voice, for a
+    // channel + product. Uses the style guide so DMs sound like the founder.
+    if (action === 'draft-outreach') {
+      const payload = (body.payload || {}) as {
+        lead?: { name?: string; company?: string; role?: string; industry?: string; region?: string; why?: string }
+        channel?: string
+        product?: { name?: string; pitch?: string }
+        kind?: string // "first touch" | "follow up" | "re-engage"
+      }
+      const { lead, channel = 'whatsapp', product, kind = 'first touch' } = payload
+      if (!lead?.name) return Response.json({ error: 'lead required' }, { status: 400 })
+
+      // Pull the founder voice/style guide.
+      const { data: ctxRows } = await supabaseAdmin
+        .from('arc_context').select('key, value').in('key', ['voice_style', 'about_me'])
+      const ctx = Object.fromEntries((ctxRows || []).map((r: { key: string; value: string }) => [r.key, r.value]))
+
+      const channelRules: Record<string, string> = {
+        whatsapp: 'WhatsApp: very short, 2-4 lines, no subject, casual, one clear ask. Indian SMB tone.',
+        email: 'Cold email: a subject line that names their leak + a tight 4-6 line body. US business tone. End with a soft call ask.',
+        linkedin: 'LinkedIn DM: 3-4 lines, value-first, no hard pitch in the first message.',
+        instagram: 'Instagram DM: 2-3 lines, warm, casual, reference their content/business.',
+      }
+
+      const systemPrompt = `You write outreach messages AS this founder, in their exact voice.
+
+WHO YOU ARE:
+${ctx.about_me || ''}
+
+STYLE GUIDE (follow exactly):
+${ctx.voice_style || ''}
+
+CHANNEL RULES:
+${channelRules[channel] || channelRules.whatsapp}
+
+HARD RULES:
+- lowercase, first person, sound human not salesy.
+- NEVER use em dashes.
+- Lead with a specific result or their exact pain, not a feature list.
+- One clear, low-friction ask (reply, quick call). Never beg.
+- Personalize to the lead's company + industry + region.
+${channel === 'email' ? 'Return the result as: Subject: <line>\\n\\n<body>.' : 'Return just the message text.'}`
+
+      const userMessage = `Write a ${kind} ${channel} message to:
+Name: ${lead.name}
+Company: ${lead.company} (${lead.role})
+Industry: ${lead.industry}, Region: ${lead.region}
+Why now: ${lead.why}
+
+Pitching: ${product?.name || 'PROXe'} — ${product?.pitch || ''}`
+
+      try {
+        const response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 600,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }],
+        })
+        let text = Array.isArray(response?.content)
+          ? response.content.map((c: { type: string; text?: string }) => (c.type === 'text' ? c.text : '')).join('')
+          : ''
+        // Hard guarantee the no-em-dash rule (model occasionally slips): replace
+        // em/en dashes with a period or comma depending on surrounding spacing.
+        text = text.replace(/\s*[—–]\s*/g, '. ').replace(/\.\s*\./g, '.')
+        return Response.json({ data: { message: text } })
+      } catch (e) {
+        console.error('draft-outreach error:', e)
+        return Response.json({ error: 'Failed to draft outreach' }, { status: 500 })
+      }
     }
 
     // ── get-saved-signals ──────────────────────────────────────

@@ -78,6 +78,25 @@ export function getMetaAds(): MetaAdsData {
   };
 }
 
+// ── Industry / market watch (stub — wire to the real feed later) ──
+export interface MarketItem {
+  headline: string;
+  source: string;
+  soWhat: string;       // why it matters to US specifically
+  tag: "competitor" | "trend" | "regulation" | "opportunity";
+}
+
+export function getMarketWatch(): { items: MarketItem[] } {
+  return {
+    items: [
+      { headline: "Google must let sites opt out of AI Search (UK CMA)", source: "Search Engine Journal", soWhat: "Publishers gaining control over AI = a trust angle our ICP cares about. Good post + sales talking point.", tag: "regulation" },
+      { headline: "3 clinic-software players shipped AI front-desk this week", source: "Industry watch", soWhat: "Rivals moving into PROXe's lane. Sharpen the 'never forgets a follow-up' wedge before they own it.", tag: "competitor" },
+      { headline: "WhatsApp Business API opens cheaper tiers in India", source: "Inc42", soWhat: "Lowers PROXe's delivery cost for Indian SMBs. Bake into pricing + the India outreach pitch.", tag: "opportunity" },
+      { headline: "US SMBs cite 'slow lead response' as #1 growth leak (survey)", source: "MarTech", soWhat: "Third-party proof of the exact problem we sell against. Use as the cold-email hook for US.", tag: "trend" },
+    ],
+  };
+}
+
 // ── Content results (real-ish: from our own results store later) ──
 export function getContentPulse(): { metrics: Metric[] } {
   return {

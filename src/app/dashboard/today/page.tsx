@@ -54,9 +54,13 @@ export default function TodayPage() {
   const approve = (need: Need) => {
     log(need, "approved");
     persist(needs.map((n) => (n.id === need.id ? { ...n, status: "approved" } : n)));
-    // Route into the lane's engine. Content has a real path today (Write); others land on a stub.
+    // Route into the lane's engine.
     if (need.lane === "content") {
       router.push("/dashboard/write?topic=" + encodeURIComponent(need.title));
+    } else if (need.lane === "outreach") {
+      router.push("/dashboard/outreach");
+    } else if (need.lane === "market") {
+      router.push("/dashboard/feed");
     }
   };
 
@@ -133,8 +137,8 @@ export default function TodayPage() {
                     className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium bg-text text-bg rounded-lg hover:opacity-90 transition-all"
                   >
                     <Check size={13} />
-                    {need.lane === "content" ? "Start" : "Approve"}
-                    {need.lane === "content" && <ArrowRight size={12} />}
+                    Start
+                    <ArrowRight size={12} />
                   </button>
                   <button
                     onClick={() => dismiss(need)}

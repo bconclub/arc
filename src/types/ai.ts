@@ -12,7 +12,8 @@ export type AIAction =
   | "generate-brain-prompt"
   | "analyze-voice"
   | "analyze-style"
-  | "save-style-guide";
+  | "save-style-guide"
+  | "draft-outreach";
 
 export interface AIRequest {
   action: AIAction;

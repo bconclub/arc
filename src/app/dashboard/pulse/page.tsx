@@ -1,12 +1,20 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Megaphone, MousePointerClick, PenLine } from "lucide-react";
+import { TrendingUp, TrendingDown, Megaphone, MousePointerClick, PenLine, Globe } from "lucide-react";
 import {
   getClarity,
   getMetaAds,
   getContentPulse,
+  getMarketWatch,
   type Metric,
 } from "@/lib/os-analytics";
+
+const TAG_META: Record<string, { label: string; color: string; bg: string }> = {
+  competitor:  { label: "Competitor",  color: "#ff4444", bg: "rgba(255,68,68,0.12)" },
+  trend:       { label: "Trend",       color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  regulation:  { label: "Regulation",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  opportunity: { label: "Opportunity", color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+};
 
 function DeltaPill({ delta }: { delta?: number }) {
   if (delta === undefined) return null;
@@ -60,6 +68,7 @@ export default function PulsePage() {
   const content = getContentPulse();
   const ads = getMetaAds();
   const clarity = getClarity();
+  const market = getMarketWatch();
 
   return (
     <div className="min-h-[calc(100vh-120px)] px-6 py-4 pb-24 max-w-5xl">
@@ -73,6 +82,32 @@ export default function PulsePage() {
       <p className="text-[11px] text-text-muted/60 mb-2">
         Showing placeholder data. Meta Ads + Microsoft Clarity connect at the integrations stage.
       </p>
+
+      {/* Market watch — what the industry is doing */}
+      <SectionHeader icon={<Globe size={15} />} title="What the market is doing" range="this week" />
+      <div className="space-y-2">
+        {market.items.map((item) => {
+          const tag = TAG_META[item.tag];
+          return (
+            <div key={item.headline} className="card p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md shrink-0 mt-0.5" style={{ color: tag.color, background: tag.bg }}>
+                  {tag.label}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[14px] font-medium text-text">{item.headline}</span>
+                    <span className="text-[11px] text-text-muted/60">· {item.source}</span>
+                  </div>
+                  <p className="text-[12px] text-text-muted mt-1 leading-relaxed">
+                    <span className="text-text-muted/60">so what: </span>{item.soWhat}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Content */}
       <SectionHeader icon={<PenLine size={15} />} title="Content" range="this week" />

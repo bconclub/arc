@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-06-16 12:14 IST · ARC OS: Outreach lane + Market watch + focused lanes
+
+- **Scoped the OS to what we run now:** Outreach, Content, Market (industry). Dropped Delivery/Build from the model (`types/os.ts` Lane = outreach | content | market). Today's needs reseeded to these three; every need now routes to a real destination (content→Write, outreach→Outreach, market→Feed).
+- **New Outreach lane (`dashboard/outreach`, `lib/os-outreach.ts`):** the full "who to reach, what to pitch, the plan" screen. Three tabs:
+  - **Leads** — fit-scored lead list (India + US), region + stage filters, stage badges, why-now per lead. 8 seed leads.
+  - **Plan** — region playbooks (India WhatsApp-first, US email+LinkedIn) with concrete steps + daily targets.
+  - **Products** — PROXe + BCON pitch cards.
+  - **AI draft per lead** (new `draft-outreach` action): writes a personalized message in the founder voice for the lead's channel + chosen product + type (first touch / follow up / re-engage). Verified live: produced an on-brand, personalized WhatsApp DM. Copy/redraft.
+- **Market watch in Pulse:** new top section "What the market is doing" — industry items tagged competitor/trend/regulation/opportunity, each with a "so what for us" line. This is the industry-feed pillar.
+- **No-em-dash guarantee:** both write-post (streaming) and draft-outreach now strip em/en dashes server-side, so the style rule holds even when the model slips.
+- Nav: added **Outreach** (Send icon, 3rd). All stubbed where noted; drafts are real AI.
+- (`7592b5c`)
+
 ## 2026-06-16 10:05 IST · ARC OS: Pulse analytics hub (v1, stubbed)
 
 - **New Pulse screen (`dashboard/pulse`)** — the "see the whole business" half of the OS. Three sections in one view: Content (posts/reach/replies/top post), Meta Ads (spend/leads/cost-per-lead/ROAS + a per-campaign table), and Site behaviour via Microsoft Clarity (sessions/scroll depth/dead+rage clicks + a top-pages table). Metric cards have up/down delta pills; tables are color-coded (ROAS, low scroll depth, high dead clicks).
