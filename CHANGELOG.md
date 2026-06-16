@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-16 10:02 IST · ARC OS: Today screen (business command center, v1)
+
+- **New direction — ARC as the business OS.** First screen of the loop Goals → Needs → Plays → Work → Results. Built the **Today** front door (`dashboard/today`): a goals strip (live progress) + a ranked "what the business needs" list across four lanes (Outreach, Content, Delivery, Build), each need carrying a grounded *why*, effort, and priority.
+- **Approve / dismiss flow** logged to `arc:os:log` (localStorage) — this interaction log is the training data that lets a lane eventually run autonomously. Content needs route into the real Write engine; other lanes are stubbed pending their own engines.
+- **`types/os.ts` + `lib/os-decide.ts`:** the Need/Goal/Lane/Interaction model and a stubbed "decide" brain (seed needs, ranked). Shape is final; only the source swaps stub → real (Clarity + Meta Ads + lead data) later.
+- Nav: added **Today** (first item, Sparkles icon); dashboard root now redirects to Today. Everything else (Feed/Write/Style…) untouched, additive only.
+- Stubbed by design; nothing connected yet. A checkpoint commit, not pushed.
+- (`a971def`)
+
 ## 2026-06-05 13:08 IST · real identity + full style guide wired everywhere
 
 - **Expanded "Who we are" (`style/page.tsx`, `lib/context.ts`, `apply_all.sql`):** replaced the one-liner with the real founder identity — Thanzeel Ashruf, PROXe (goproxe.com) + BCON Club (bconclub.com), 7 years in marketing, the done-for-you (PROXe) vs build-your-own (BCON) positioning, and the ICP.
