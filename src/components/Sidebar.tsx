@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { Sparkles, Activity, Send, LayoutGrid, PenLine, Calendar, BarChart3, Palette, Database } from "lucide-react";
+import { Sparkles, Activity, Send, LayoutGrid, PenLine, Calendar, BarChart3, Palette, Database, Bot } from "lucide-react";
 import { VERSION } from "@/lib/version";
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { label: "Results", href: "/dashboard/results", icon: BarChart3 },
   { label: "Style", href: "/dashboard/style", icon: Palette },
   { label: "Sources", href: "/dashboard/sources", icon: Database },
+  { label: "ARC Agent", href: "/dashboard/arc", icon: Bot },
 ];
 
 export function Sidebar() {
