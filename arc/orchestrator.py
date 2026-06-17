@@ -24,7 +24,7 @@ def run_loop(stages: list[str] | None = None, dry_run: bool = False) -> dict:
     stages: if provided, only run these stages (e.g. ['aggregate', 'evaluate'])
     dry_run: log what would happen, don't write to DB
     """
-    run_id = start_run("full_loop" if not stages else "+".join(stages))
+    run_id = None if dry_run else start_run("full_loop" if not stages else "+".join(stages))
     summary: dict = {}
     ok = True
 
@@ -42,11 +42,12 @@ def run_loop(stages: list[str] | None = None, dry_run: bool = False) -> dict:
 
         # Phase 1 gate: stop here if human approval required
         if APPROVAL_GATE == "human" and not stages:
-            proposed = get_ideas_by_status("proposed")
+            proposed = [] if dry_run else get_ideas_by_status("proposed")
             summary["gate"] = f"APPROVAL_GATE=human — {len(proposed)} ideas awaiting review"
             print(f"[orchestrator] {summary['gate']}")
             print("[orchestrator] Review at /dashboard/arc — approve to continue pipeline.")
-            finish_run(run_id, summary, ok=True)
+            if not dry_run:
+                finish_run(run_id, summary, ok=True)
             return summary
 
         # Phase 2 / manual override: auto-approve top idea
@@ -81,7 +82,8 @@ def run_loop(stages: list[str] | None = None, dry_run: bool = False) -> dict:
         summary["error"] = str(e)
         ok = False
 
-    finish_run(run_id, summary, ok=ok)
+    if not dry_run and run_id is not None:
+        finish_run(run_id, summary, ok=ok)
     print(f"[orchestrator] run {run_id} finished — ok={ok}")
     return summary
 
