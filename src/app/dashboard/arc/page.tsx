@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, Clock, Zap, TrendingUp, RefreshCw } from "lucide-react";
+import { CheckCircle, XCircle, TrendingUp, RefreshCw } from "lucide-react";
 
 interface Trend {
   id: number;
