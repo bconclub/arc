@@ -3,13 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { Sparkles, Activity, Send, LayoutGrid, PenLine, Calendar, BarChart3, Palette, Database, Bot } from "lucide-react";
+import { LayoutGrid, PenLine, Calendar, BarChart3, Palette, Database, Bot } from "lucide-react";
 import { VERSION } from "@/lib/version";
 
 const navItems = [
-  { label: "Today", href: "/dashboard/today", icon: Sparkles },
-  { label: "Pulse", href: "/dashboard/pulse", icon: Activity },
-  { label: "Outreach", href: "/dashboard/outreach", icon: Send },
   { label: "Feed", href: "/dashboard/feed", icon: LayoutGrid },
   { label: "Write", href: "/dashboard/write", icon: PenLine },
   { label: "Schedule", href: "/dashboard/schedule", icon: Calendar },
