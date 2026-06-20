@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-20 22:40 IST · Feed engine: 21 sources, in-process RSS, autowire sync
+
+- **Seeded 21 verified RSS sources** into Supabase `sources` (deep-research + live-verified, June 2026): India startup (Inc42, YourStory), marketing (HubSpot, Neil Patel, Buffer, Sprout Social, MarTech Series, Social Media Examiner), SEO (Ahrefs, Moz, Search Engine Journal), AI/tech (VentureBeat AI, MIT Tech Review, TechCrunch, Ben's Bites), creator economy (Fast Company, ICYMI, Simon Owens, Next in Media), B2B SaaS (SaaStr). Recorded in `supabase/seed_sources.sql`.
+- **Fixed the silent cache failure** (root cause of the `/api/ai` 500s in prod logs): the `signals` table has no `fetched_at`/`source_type`/`favicon` columns, so every cache write was failing and every feed open did a slow full fetch. Cache now keys freshness on `created_at` and writes only existing columns. No DDL required.
+- **New shared RSS engine (`src/lib/arc/rss.ts`):** parse/score/cache feeds **in-process** — removes the internal `/api/fetch-rss` HTTP hop that Vercel deployment protection would block. `fetchFeeds`, `itemsToSignals`, `readSignalsCache`, `writeSignalsCache`.
+- **Autowire sync (`/api/arc/sync` + Vercel cron):** new route rewrites the signal cache from all active sources; `vercel.json` cron runs it daily (01:00 UTC). On-open refresh (2h cache) covers freshness during use. User-facing: Feed now loads instantly from cache and stays current automatically.
+- **Refactored `/api/ai` and `/api/fetch-rss`** to use the shared engine; dropped ~230 lines of duplicated/broken helpers.
+- Verified locally end-to-end: sync → 21 sources → 267 items → 150 cached; feed reads cache in 0.5s. (`1d702c5`)
+
 ## 2026-06-16 13:15 IST · OpenRouter client + credentials
 
 - **OpenRouter integration (`src/lib/openrouter.ts`):** server-side client giving ARC one gateway to many models (`openai/*`, `anthropic/*`, `google/*`…). `openrouterChat()` (non-streaming) + `openrouterStream()` (SSE), model overridable per call, with sensible defaults (`OPENROUTER_MODELS.smart = anthropic/claude-sonnet-4.6`, verified valid on OpenRouter).

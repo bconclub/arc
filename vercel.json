@@ -1,1 +1,5 @@
-{}
+{
+  "crons": [
+    { "path": "/api/arc/sync", "schedule": "0 1 * * *" }
+  ]
+}

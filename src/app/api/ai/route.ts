@@ -1,6 +1,10 @@
 import { supabaseAdmin } from '@/lib/supabase'
+import { fetchFeeds, itemsToSignals, readSignalsCache, writeSignalsCache, calculateTrendScore, getLabelFromScore } from '@/lib/arc/rss'
 import Anthropic from '@anthropic-ai/sdk'
 import type { WebSearchResultBlock, WebSearchToolResultBlock } from '@anthropic-ai/sdk/resources/messages'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 // The SDK auto-reads ANTHROPIC_AUTH_TOKEN / ANTHROPIC_BASE_URL / ANTHROPIC_CUSTOM_HEADERS
 // from the environment. Some runtimes inject those (e.g. an OAuth bearer token + proxy),
@@ -16,149 +20,6 @@ const anthropic = new Anthropic({
 
 function tryHostname(url: string) {
   try { return new URL(url).hostname.replace('www.', '') } catch { return '' }
-}
-
-interface SignalInput {
-  title: string
-  url: string
-  snippet: string
-  source_name: string
-  published_date: string
-  image_url?: string
-  trend_score: number
-  label: string
-  source_type?: string
-  favicon?: string
-  source_url?: string
-  pillar?: string
-}
-
-interface CachedSignal {
-  id: string
-  title: string
-  url: string
-  snippet: string
-  source_name: string
-  image_url?: string
-  published_date: string
-  trend_score: number
-  label: string
-  saved: boolean
-  fetched_at?: string
-  created_at: string
-}
-
-// Calculate trend score based on pubDate recency
-// today = 90, yesterday = 70, 2 days = 50, older = 30
-function calculateTrendScore(pubDate: string): number {
-  const now = new Date()
-  const date = new Date(pubDate)
-  const diffMs = now.getTime() - date.getTime()
-  const diffHours = diffMs / (1000 * 60 * 60)
-  const diffDays = diffHours / 24
-
-  if (diffDays < 1) return 90 // Today
-  if (diffDays < 2) return 70 // Yesterday
-  if (diffDays < 3) return 50 // 2 days ago
-  return 30 // Older
-}
-
-// Determine label based on trend score
-function getLabelFromScore(score: number): string {
-  if (score >= 80) return 'hot'
-  if (score >= 60) return 'rising'
-  return 'steady'
-}
-
-// ICP relevance booster — we're a marketing company focused on business,
-// marketing, and AI. Boost stories in those fields so they rank above generic
-// finance/hardware/etc. Returns a score delta added to the recency trend score.
-const RELEVANCE_KEYWORDS: { terms: string[]; weight: number }[] = [
-  { terms: ['marketing', 'brand', 'advertis', 'campaign', 'seo', 'social media', 'content', 'growth', 'lead'], weight: 30 },
-  { terms: ['ai', 'artificial intelligence', 'llm', 'gpt', 'agent', 'automation', 'chatbot', 'machine learning'], weight: 25 },
-  { terms: ['startup', 'founder', 'saas', 'b2b', 'smb', 'small business', 'entrepreneur', 'product'], weight: 20 },
-]
-// Topics we actively want to push DOWN (not our focus).
-const DEMOTE_KEYWORDS = ['stock', 'shares', 'ipo', 'crypto', 'bitcoin', 'fund raises', 'block deal', 'quarterly results']
-
-function relevanceBoost(title: string, snippet: string): number {
-  const text = `${title} ${snippet}`.toLowerCase()
-  let boost = 0
-  for (const group of RELEVANCE_KEYWORDS) {
-    if (group.terms.some(t => text.includes(t))) boost += group.weight
-  }
-  if (DEMOTE_KEYWORDS.some(t => text.includes(t))) boost -= 20
-  return boost
-}
-
-// Check if we have valid cached signals (within 2 hours)
-async function getCachedSignals(): Promise<CachedSignal[] | null> {
-  try {
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-    
-    const { data, error } = await supabaseAdmin
-      .from('signals')
-      .select('*')
-      .gte('fetched_at', twoHoursAgo)
-      .order('trend_score', { ascending: false })
-      .limit(150)
-
-    if (error) {
-      console.error('Cache check error:', error)
-      return null
-    }
-
-    // Only return cache if we have a reasonable number of signals
-    if (data && data.length >= 5) {
-      console.log(`[Cache] Returning ${data.length} cached signals`)
-      return data as CachedSignal[]
-    }
-    
-    return null
-  } catch (e) {
-    console.error('Cache check failed:', e)
-    return null
-  }
-}
-
-// Cache signals in Supabase
-async function cacheSignals(signals: SignalInput[]): Promise<void> {
-  try {
-    const now = new Date().toISOString()
-    
-    // Prepare signals for upsert
-    const signalsToUpsert = signals.map(signal => ({
-      title: signal.title,
-      url: signal.url,
-      snippet: signal.snippet,
-      source_name: signal.source_name,
-      image_url: signal.image_url || '',
-      published_date: signal.published_date,
-      trend_score: signal.trend_score,
-      label: signal.label,
-      source_type: signal.source_type || 'rss',
-      favicon: signal.favicon || '',
-      fetched_at: now,
-      // Don't overwrite saved status if signal already exists
-      saved: false,
-    }))
-
-    // Use upsert with onConflict on url
-    const { error } = await supabaseAdmin
-      .from('signals')
-      .upsert(signalsToUpsert, { 
-        onConflict: 'url',
-        ignoreDuplicates: false 
-      })
-
-    if (error) {
-      console.error('Cache save error:', error)
-    } else {
-      console.log(`[Cache] Saved ${signals.length} signals`)
-    }
-  } catch (e) {
-    console.error('Cache save failed:', e)
-  }
 }
 
 // Used for search chips only — reserved Tavily search for explicit user intent
@@ -214,54 +75,6 @@ async function anthropicWebSearch(query: string): Promise<{
   }
 }
 
-// Fetch RSS feeds in batch using new POST endpoint
-async function fetchRSSBatch(feedUrls: string[], baseUrl: string): Promise<SignalInput[]> {
-  try {
-    const res = await fetch(`${baseUrl}/api/fetch-rss`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls: feedUrls }),
-    })
-
-    if (!res.ok) {
-      console.error('RSS batch error:', await res.text())
-      return []
-    }
-
-    const data = await res.json()
-    const items = Array.isArray(data?.data) ? data.data : []
-
-    return items.map((r: { 
-      title: string; 
-      link: string; 
-      snippet?: string; 
-      pubDate?: string; 
-      image?: string;
-      source_name?: string;
-    }) => {
-      const recency = r.pubDate ? calculateTrendScore(r.pubDate) : 50
-      // Blend recency with ICP relevance so business/marketing/AI floats to top.
-      const trendScore = recency + relevanceBoost(r.title || '', r.snippet || '')
-      return {
-        title: r.title || '',
-        url: r.link || '',
-        snippet: r.snippet || '',
-        source_name: r.source_name || 'Unknown',
-        published_date: r.pubDate || '',
-        image_url: r.image || '',
-        trend_score: trendScore,
-        label: getLabelFromScore(trendScore),
-        source_type: 'rss' as const,
-        favicon: `https://www.google.com/s2/favicons?domain=${tryHostname(r.link || '')}&sz=32`,
-        source_url: r.link || '',
-      }
-    })
-  } catch (e) {
-    console.error('RSS batch fetch error:', e)
-    return []
-  }
-}
-
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -270,94 +83,59 @@ export async function POST(req: Request) {
     // ── fetch-signals ──────────────────────────────────────────
     if (action === 'fetch-signals') {
       const { topic, useSearch } = body as { topic?: string; useSearch?: boolean }
-      const baseUrl = new URL(req.url).origin
 
-      // If a specific topic chip is selected with "useSearch" flag, use Tavily
+      // Explicit search-chip path → live web search (Anthropic web_search).
       if (topic && useSearch) {
         const ICP_SUFFIX = 'India SMB business 2026'
         const hasContext = /india|smb|business\s+20/i.test(topic)
         const enriched = hasContext ? topic : `${topic} ${ICP_SUFFIX}`
         const raw = await anthropicWebSearch(enriched)
-        const signals = Array.isArray(raw) ? raw : []
-        return Response.json({ signals })
+        return Response.json({ signals: Array.isArray(raw) ? raw : [] })
       }
 
-      // Check cache first (for non-topic default load)
-      if (!topic) {
-        const cached = await getCachedSignals()
-        if (cached && cached.length > 0) {
-          // Transform cached signals to expected format
-          const signals = cached.map(s => ({
-            title: s.title,
-            url: s.url,
-            snippet: s.snippet,
-            source_name: s.source_name,
-            published_date: s.published_date,
-            image_url: s.image_url || '',
-            trend_score: s.trend_score,
-            label: s.label,
-            source_type: 'rss' as const,
-            favicon: `https://www.google.com/s2/favicons?domain=${tryHostname(s.url)}&sz=32`,
-            source_url: s.url,
-            saved: s.saved,
-          }))
-          return Response.json({ signals, cached: true })
-        }
+      // Shape an internal scored signal into the object the Feed UI expects.
+      const toApi = (s: {
+        title: string; url: string; snippet: string; source_name: string;
+        image_url: string; published_date: string; trend_score: number; label: string;
+      }) => ({
+        ...s,
+        relevance_score: s.trend_score,
+        source_type: 'rss' as const,
+        favicon: `https://www.google.com/s2/favicons?domain=${tryHostname(s.url)}&sz=32`,
+        source_url: s.url,
+        saved: false,
+      })
+
+      // Serve from the cache whenever it's warm — the /api/arc/sync cron keeps
+      // it fresh, so the Feed loads instantly without a live fetch.
+      const cached = await readSignalsCache()
+      if (cached && cached.length > 0) {
+        return Response.json({ signals: cached.map(toApi), cached: true })
       }
 
-      // Load all active sources from Supabase
+      // Cache cold → fetch every active RSS source in-process and warm the cache.
       const { data: sources, error } = await supabaseAdmin
         .from('sources')
-        .select('*')
+        .select('value, type, active')
         .eq('active', true)
+        .eq('type', 'rss')
 
       if (error) {
         console.error('Supabase error:', error)
         return Response.json({ error: 'Failed to load sources', detail: error.message }, { status: 500 })
       }
 
-      if (!sources || sources.length === 0) {
-        return Response.json({ signals: [] })
-      }
+      const rssUrls = (sources || []).map(s => s.value as string).filter(Boolean)
+      if (rssUrls.length === 0) return Response.json({ signals: [] })
 
-      // Separate RSS and search sources
-      const rssSources = sources.filter(s => s.type === 'rss')
-      const searchSources = sources.filter(s => s.type === 'tavily_search')
+      const items = await fetchFeeds(rssUrls, { ogFallback: true })
+      const signals = itemsToSignals(items)
+        .sort((a, b) => b.trend_score - a.trend_score)
+        .slice(0, 150)
 
-      let signals: SignalInput[] = []
+      await writeSignalsCache(signals)
 
-      // Fetch RSS feeds in parallel (zero tokens, zero credits)
-      if (rssSources.length > 0) {
-        const rssUrls = rssSources.map(s => s.value)
-        const rssSignals = await fetchRSSBatch(rssUrls, baseUrl)
-        signals = signals.concat(rssSignals)
-      }
-
-      // Only fetch search sources if user explicitly selected a search topic chip
-      // Default "All Topics" load = RSS only
-      if (topic && searchSources.length > 0 && useSearch) {
-        const searchResults = await Promise.allSettled(
-          searchSources.map(s => anthropicWebSearch(s.value))
-        )
-        const searchSignals = searchResults.flatMap(r =>
-          r.status === 'fulfilled' && Array.isArray(r.value) ? r.value : []
-        )
-        signals = signals.concat(searchSignals)
-      }
-
-      // Sort by trend_score descending (recency-based)
-      signals.sort((a, b) => b.trend_score - a.trend_score)
-
-      // Keep a large pool so keyword filtering has real depth to search across
-      // (18 sources × ~15 items). The UI streams/limits what it shows.
-      const limitedSignals = signals.slice(0, 150)
-
-      // Cache results for future requests
-      if (!topic && limitedSignals.length > 0) {
-        await cacheSignals(limitedSignals)
-      }
-
-      return Response.json({ signals: limitedSignals, cached: false })
+      return Response.json({ signals: signals.map(toApi), cached: false })
     }
 
     // ── get-topics ─────────────────────────────────────────────
