@@ -4,6 +4,7 @@
 // a live fetch, and no internal HTTP hop that deployment protection would block.
 import { supabaseAdmin } from "@/lib/supabase";
 import { fetchFeeds, itemsToSignals, writeSignalsCache } from "@/lib/arc/rss";
+import { regenerateProposedIdeas } from "@/lib/arc/ideas";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,15 @@ async function runSync() {
   const signals = itemsToSignals(items).sort((a, b) => b.trend_score - a.trend_score).slice(0, 150);
   const cached = await writeSignalsCache(signals);
 
-  return { ok: true, sources: urls.length, fetched: items.length, cached };
+  // Auto-generate top ideas from the fresh signals (cheap Haiku call).
+  let ideas = 0;
+  try {
+    ideas = await regenerateProposedIdeas(8);
+  } catch (e) {
+    console.error("[sync] idea generation failed:", e);
+  }
+
+  return { ok: true, sources: urls.length, fetched: items.length, cached, ideas };
 }
 
 // Vercel Cron sends GET. Optionally protect with CRON_SECRET if set.

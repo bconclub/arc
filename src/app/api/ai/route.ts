@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { fetchFeeds, itemsToSignals, readSignalsCache, writeSignalsCache, calculateTrendScore, getLabelFromScore } from '@/lib/arc/rss'
+import { recordUsage } from '@/lib/arc/usage'
 import Anthropic from '@anthropic-ai/sdk'
 import type { WebSearchResultBlock, WebSearchToolResultBlock } from '@anthropic-ai/sdk/resources/messages'
 
@@ -35,6 +36,7 @@ async function anthropicWebSearch(query: string): Promise<{
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
       messages: [{ role: 'user', content: `Find recent news and articles about: ${query}` }],
     })
+    await recordUsage('claude-haiku-4-5-20251001', response.usage?.input_tokens || 0, response.usage?.output_tokens || 0, 'web-search')
 
     const content = Array.isArray(response?.content) ? response.content : []
     const signals: {
@@ -233,9 +235,14 @@ NON-NEGOTIABLE RULES:
 
       const readableStream = new ReadableStream({
         async start(controller) {
+          let inTok = 0, outTok = 0
           try {
             for await (const event of stream) {
-              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+              if (event.type === 'message_start') {
+                inTok = event.message.usage?.input_tokens || 0
+              } else if (event.type === 'message_delta') {
+                outTok = event.usage?.output_tokens || outTok
+              } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
                 // Enforce the no-em-dash rule on the fly (em/en dash is a single char,
                 // never split across deltas).
                 const clean = event.delta.text.replace(/\s*[—–]\s*/g, '. ')
@@ -243,6 +250,7 @@ NON-NEGOTIABLE RULES:
               }
             }
           } finally {
+            await recordUsage('claude-sonnet-4-6', inTok, outTok, 'write-post')
             controller.close()
           }
         }
@@ -439,6 +447,7 @@ Return ONLY valid JSON, no prose, in EXACTLY this shape:
           system: systemPrompt,
           messages: [{ role: 'user', content: userContent }],
         })
+        await recordUsage('claude-sonnet-4-6', response.usage?.input_tokens || 0, response.usage?.output_tokens || 0, 'analyze-style')
         const out = Array.isArray(response?.content)
           ? response.content.map((c: { type: string; text?: string }) => (c.type === 'text' ? c.text : '')).join('')
           : ''

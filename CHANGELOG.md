@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-20 23:25 IST · Idea engine + token-cost Config page + prod Supabase fix
+
+- **Fixed the production root cause:** Vercel's `NEXT_PUBLIC_SUPABASE_URL` pointed at the dead old project (`zboanatspldypfrtrkfp` → NXDOMAIN → "fetch failed", every API 500). Updated it to `niypveotxuledkrcikun`. (The 2 JWT keys still need swapping by the user — I can't enter API tokens.)
+- **Created the 3 missing content tables** (`voice_templates`, `inspiration_posts`, `saved_signals`) via the Supabase SQL editor — Style/Write/save features now have their backing tables.
+- **Idea engine (`src/lib/arc/ideas.ts`, `/api/arc/ideas/generate`):** the ARC Agent page now generates the top ~8 content ideas from the live feed via a cheap Haiku call, scored against BCON fit, each with a hook/angle/rationale. "Generate Top Ideas" button (manual) + auto-generation on every feed sync. Each idea has a **Write this** button → opens the Write engine pre-loaded with the angle. Replaces the dead "run arc run on VPS" empty state.
+- **Token-cost tracking (`src/lib/arc/usage.ts`):** every Claude call (write-post, web-search, analyze-style, generate-ideas) records input/output tokens + estimated USD into `arc_context` — no new table.
+- **New Config page (`/dashboard/config`):** total tokens, estimated cost, breakdown by model + action, and system status (sources, cached signals, approval gate, models). Reset button. Added "Config" to the sidebar.
+- Verified locally end-to-end: generated 8 on-brand ideas (top score 95) for $0.0061; Config shows the spend live. (`4141108`)
+
 ## 2026-06-20 22:40 IST · Feed engine: 21 sources, in-process RSS, autowire sync
 
 - **Seeded 21 verified RSS sources** into Supabase `sources` (deep-research + live-verified, June 2026): India startup (Inc42, YourStory), marketing (HubSpot, Neil Patel, Buffer, Sprout Social, MarTech Series, Social Media Examiner), SEO (Ahrefs, Moz, Search Engine Journal), AI/tech (VentureBeat AI, MIT Tech Review, TechCrunch, Ben's Bites), creator economy (Fast Company, ICYMI, Simon Owens, Next in Media), B2B SaaS (SaaStr). Recorded in `supabase/seed_sources.sql`.

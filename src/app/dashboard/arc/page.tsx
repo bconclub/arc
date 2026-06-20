@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, TrendingUp, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle, XCircle, TrendingUp, RefreshCw, PenLine, Sparkles } from "lucide-react";
 
 interface Trend {
   id: number;
@@ -33,9 +34,11 @@ interface Run {
 }
 
 export default function ARCPage() {
+  const router = useRouter();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [actioning, setActioning] = useState<number | null>(null);
 
   const load = useCallback(async () => {
@@ -52,6 +55,25 @@ export default function ARCPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const generate = async () => {
+    setGenerating(true);
+    try {
+      await fetch("/api/arc/ideas/generate", { method: "POST" });
+      await load();
+    } catch (e) {
+      console.error(e);
+    }
+    setGenerating(false);
+  };
+
+  // Send an idea straight into the Write engine, pre-loaded with the angle.
+  const write = useCallback((idea: Idea) => {
+    const topic = idea.trends?.title || idea.angle || "";
+    const srcTitle = (idea.trends?.raw as Record<string, unknown>)?.source_title as string | undefined;
+    const context = [idea.angle, idea.rationale, srcTitle ? `Source: ${srcTitle}` : ""].filter(Boolean).join("\n\n");
+    router.push(`/dashboard/write?topic=${encodeURIComponent(topic)}&context=${encodeURIComponent(context)}`);
+  }, [router]);
 
   const action = async (id: number, status: "approved" | "rejected") => {
     setActioning(id);
@@ -78,14 +100,24 @@ export default function ARCPage() {
             {proposed.length} awaiting review · {approved.length} approved
           </p>
         </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 text-[12px] font-medium text-text-muted hover:text-text bg-surface hover:bg-surface-hover rounded-full transition-all"
-        >
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={generate}
+            disabled={generating || loading}
+            className="flex items-center gap-2 px-4 py-2 text-[12px] font-medium bg-text text-bg hover:opacity-90 rounded-full transition-all disabled:opacity-50"
+          >
+            <Sparkles size={14} className={generating ? "animate-pulse" : ""} />
+            {generating ? "Generating..." : "Generate Top Ideas"}
+          </button>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-2 text-[12px] font-medium text-text-muted hover:text-text bg-surface hover:bg-surface-hover rounded-full transition-all"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Proposed ideas */}
@@ -102,7 +134,7 @@ export default function ARCPage() {
           </div>
         ) : proposed.length === 0 ? (
           <div className="card p-8 text-center text-text-muted text-[13px]">
-            No proposed ideas — run <code className="text-text bg-surface px-1 rounded">arc run</code> on the VPS to pull new trends.
+            No ideas yet — click <span className="text-text font-medium">Generate Top Ideas</span> to pull the best from your feed.
           </div>
         ) : (
           <div className="space-y-3">
@@ -111,6 +143,7 @@ export default function ARCPage() {
                 key={idea.id}
                 idea={idea}
                 actioning={actioning === idea.id}
+                onWrite={() => write(idea)}
                 onApprove={() => action(idea.id, "approved")}
                 onReject={() => action(idea.id, "rejected")}
               />
@@ -132,6 +165,7 @@ export default function ARCPage() {
                 idea={idea}
                 actioning={false}
                 approved
+                onWrite={() => write(idea)}
               />
             ))}
           </div>
@@ -174,12 +208,14 @@ function IdeaCard({
   idea,
   actioning,
   approved,
+  onWrite,
   onApprove,
   onReject,
 }: {
   idea: Idea;
   actioning: boolean;
   approved?: boolean;
+  onWrite?: () => void;
   onApprove?: () => void;
   onReject?: () => void;
 }) {
@@ -230,31 +266,55 @@ function IdeaCard({
       </div>
 
       {/* Actions */}
-      {!approved && onApprove && onReject && (
+      {!approved && (
         <div className="flex gap-2 pt-1">
-          <button
-            onClick={onApprove}
-            disabled={actioning}
-            className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium bg-accent-green/10 text-accent-green hover:bg-accent-green/20 rounded-full transition-all disabled:opacity-50"
-          >
-            <CheckCircle size={14} />
-            Approve
-          </button>
-          <button
-            onClick={onReject}
-            disabled={actioning}
-            className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium bg-surface text-text-muted hover:text-text hover:bg-surface-hover rounded-full transition-all disabled:opacity-50"
-          >
-            <XCircle size={14} />
-            Reject
-          </button>
+          {onWrite && (
+            <button
+              onClick={onWrite}
+              className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium bg-text text-bg hover:opacity-90 rounded-full transition-all"
+            >
+              <PenLine size={14} />
+              Write this
+            </button>
+          )}
+          {onApprove && (
+            <button
+              onClick={onApprove}
+              disabled={actioning}
+              className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium bg-accent-green/10 text-accent-green hover:bg-accent-green/20 rounded-full transition-all disabled:opacity-50"
+            >
+              <CheckCircle size={14} />
+              Approve
+            </button>
+          )}
+          {onReject && (
+            <button
+              onClick={onReject}
+              disabled={actioning}
+              className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium bg-surface text-text-muted hover:text-text hover:bg-surface-hover rounded-full transition-all disabled:opacity-50"
+            >
+              <XCircle size={14} />
+              Reject
+            </button>
+          )}
         </div>
       )}
 
       {approved && (
-        <div className="flex items-center gap-1.5 text-[11px] text-accent-green">
-          <CheckCircle size={12} />
-          Approved — pipeline running
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-accent-green">
+            <CheckCircle size={12} />
+            Approved
+          </div>
+          {onWrite && (
+            <button
+              onClick={onWrite}
+              className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium bg-text text-bg hover:opacity-90 rounded-full transition-all"
+            >
+              <PenLine size={14} />
+              Write this
+            </button>
+          )}
         </div>
       )}
     </div>

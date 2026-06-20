@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { LayoutGrid, PenLine, Calendar, BarChart3, Palette, Database, Bot } from "lucide-react";
+import { LayoutGrid, PenLine, Calendar, BarChart3, Palette, Database, Bot, Settings } from "lucide-react";
 import { VERSION } from "@/lib/version";
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { label: "Style", href: "/dashboard/style", icon: Palette },
   { label: "Sources", href: "/dashboard/sources", icon: Database },
   { label: "ARC Agent", href: "/dashboard/arc", icon: Bot },
+  { label: "Config", href: "/dashboard/config", icon: Settings },
 ];
 
 export function Sidebar() {
