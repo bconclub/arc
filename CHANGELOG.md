@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-23 17:55 IST · fix: native dropdowns unreadable in dark mode
+
+- `color-scheme: dark` on `:root` (+ `light` under `[data-theme="light"]`) so native form controls — select popups, date-picker calendars, scrollbars — follow the app theme instead of the OS default.
+- Explicit `select option { background: var(--surface); color: var(--text) }` fallback for Chromium builds that ignore color-scheme on option backgrounds.
+- User-facing: status/size/platform dropdown options were white-on-white in dark mode (invisible); now themed. Date inputs get a matching dark calendar icon.
+- `(pending)`
+
 ## 2026-07-23 · ARC becomes the twin: Operations module + Brand module + password gate + pet
 
 - **ARC is now the master system** — three pillars in the sidebar: **Operations · Content · Brand**. The LUKO operations dashboard (previously a standalone Next 16 app at `Builds/Luko/webapp`, now deprecated) was ported in as the Operations module.

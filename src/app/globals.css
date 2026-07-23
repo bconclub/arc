@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  /* Native form controls (select popups, date pickers, scrollbars) follow the theme */
+  color-scheme: dark;
   --bg: #000000;
   --surface: #0a0a0a;
   --surface-hover: #141414;
@@ -38,6 +40,7 @@
 
 /* ── Light theme ── one-click override of every token above ── */
 [data-theme="light"] {
+  color-scheme: light;
   --bg: #f7f7f8;
   --surface: #ffffff;
   --surface-hover: #f0f0f2;
@@ -390,4 +393,10 @@ input:focus, select:focus, textarea:focus {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ─── Native select options: force theme colors (color-scheme fallback) ─── */
+select option {
+  background-color: var(--surface);
+  color: var(--text);
 }
