@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import type { OpsTask, PetState } from "@/types/ops";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 export async function GET() {
   const today = new Date().toISOString().slice(0, 10);
@@ -13,6 +15,9 @@ export async function GET() {
     supabaseAdmin.from("projects").select("tasks, status"),
     supabaseAdmin.from("now_tasks").select("done, due"),
   ]);
+
+  const firstError = payments.error || signals.error || projects.error || nowTasks.error;
+  if (firstError) console.error("[pet-state]", firstError.message);
 
   const pay = payments.data ?? [];
   const sig = signals.data ?? [];
