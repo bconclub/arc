@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-23 · ARC becomes the twin: Operations module + Brand module + password gate + pet
+
+- **ARC is now the master system** — three pillars in the sidebar: **Operations · Content · Brand**. The LUKO operations dashboard (previously a standalone Next 16 app at `Builds/Luko/webapp`, now deprecated) was ported in as the Operations module.
+- **Operations (`/dashboard/ops/*`):** Today overview (overdue/next-3-days attention list from project tasks + focus list, waiting-on-others, money out, proposals in play, unseen high/critical alerts), Projects (tiles with timeline start→end, size S–XL, budget ₹, progress bar, tasks checklist; full modal CRUD), People, Proposals, Money (with overdue/pending/paid stat cards), Alerts (severity inbox, mark seen). API under `/api/ops/*` on `supabaseAdmin`.
+- **Brand (`/dashboard/brand/*`):** Metrics — manual per-platform snapshots (followers/reach/engagement, one row per platform+day, upsert) with deltas + inline-SVG sparkline, no chart lib. Calendar — `content_plan` pipeline board (idea→draft→scheduled→posted) as a thin planning overlay; "Pull from ARC" imports agent `ideas`, rows can link to `posts`. Content source of truth stays in the agent tables.
+- **Password gate:** `src/middleware.ts` (Edge-safe: Web Crypto only, no Buffer) + `/login` + PBKDF2(210k)+HMAC session cookie (`arc_session`, 30d). Everything protected except `/login`, `/api/login`, static assets, and `/api/arc/sync` + `/api/arc/cron` (Vercel cron unaffected; still has optional `CRON_SECRET`). New env vars `SESSION_SECRET` + `DASHBOARD_PASSWORD_HASH` (generate: `node scripts/hash-password.mjs "pass"`); local temp password is `arc` — change it.
+- **ARC pet (`src/components/Pet.tsx`):** pixel-sprite corner companion on every dashboard page. States from `/api/ops/pet-state`: **on fire** (overdue payment / unseen critical alert), **alert** (overdue tasks / high alert), **happy** (open work, all on track), **sleeping** (nothing open). Click → Ops Today. Pure SVG rects, blink + fire flicker, `motion-reduce` safe.
+- **DB migration `supabase/migrations/20260723000000_twin_ops_brand.sql`** (+ appended to `apply_all.sql`): `projects`, `people`, `proposals`, `payments`, `now_tasks`, `ops_signals` (renamed — `signals` was taken by the RSS cache), `brand_metrics`, `content_plan` (FKs to `ideas`/`posts`). Permissive single-user RLS, same pattern as the content tables. **Must be run in the Supabase SQL editor** — REST can't do DDL.
+- Verified locally: gate blocks/admits correctly (curl cookie-jar + browser), cron bypasses, all new pages render in ARC's shell, Feed/Write/ARC Agent unaffected, `npm run build` clean.
+
 ## 2026-06-20 23:25 IST · Idea engine + token-cost Config page + prod Supabase fix
 
 - **Fixed the production root cause:** Vercel's `NEXT_PUBLIC_SUPABASE_URL` pointed at the dead old project (`zboanatspldypfrtrkfp` → NXDOMAIN → "fetch failed", every API 500). Updated it to `niypveotxuledkrcikun`. (The 2 JWT keys still need swapping by the user — I can't enter API tokens.)
