@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.15";
+export const VERSION = "0.0.16";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.16",
+    date: "2026-08-12",
+    notes: "New Revenue page: billed history by Indian financial year and by client, off the imported GST invoices. Money under a lakh now reads as 70k rather than 70,000, and receivables use the brand lime with red kept for overdue only.",
+  },
   {
     version: "0.0.15",
     date: "2026-08-12",

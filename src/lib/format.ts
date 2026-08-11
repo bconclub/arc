@@ -27,8 +27,16 @@ export function moneyShort(n: number | null | undefined): string {
   if (n == null || Number.isNaN(n)) return "—";
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
-  if (abs >= 10_000_000) return `${sign}₹${(abs / 10_000_000).toFixed(2)}Cr`;
-  if (abs >= 100_000) return `${sign}₹${(abs / 100_000).toFixed(2)}L`;
+  // Number() strips a trailing .00 so ₹1L reads as "₹1L" rather than "₹1.00L".
+  const trim = (v: number, dp: number) => Number(v.toFixed(dp));
+  if (abs >= 10_000_000) return `${sign}₹${trim(abs / 10_000_000, 2)}Cr`;
+  if (abs >= 100_000) return `${sign}₹${trim(abs / 100_000, 2)}L`;
+  // Thousands were previously written out in full, so a figure like ₹70,000 took
+  // as much room as ₹1.46L beside it. Above 100k the decimal adds nothing.
+  if (abs >= 1_000) {
+    const k = abs / 1_000;
+    return `${sign}₹${k >= 100 ? Math.round(k) : trim(k, 1)}k`;
+  }
   return `${sign}₹${Math.round(abs).toLocaleString("en-IN")}`;
 }
 

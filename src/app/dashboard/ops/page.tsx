@@ -235,11 +235,14 @@ export default function DashboardPage() {
     },
   ];
 
+  // Money you are still owed is the brand accent, on a lime ramp that darkens as
+  // the due date recedes. Red is kept strictly for overdue, so colour carries one
+  // meaning: anything red is a problem, anything lime is simply outstanding.
   const ageing = [
     { label: "Overdue", value: r.ageing.overdue, color: "#e5484d" },
-    { label: "Due in 7 days", value: r.ageing.soon, color: "#f59e0b" },
-    { label: "8 to 30 days", value: r.ageing.mid, color: "#cbfa0a" },
-    { label: "31 days or more", value: r.ageing.far, color: "#00d4aa" },
+    { label: "Due in 7 days", value: r.ageing.soon, color: "#cbfa0a" },
+    { label: "8 to 30 days", value: r.ageing.mid, color: "#a4cc08" },
+    { label: "31 days or more", value: r.ageing.far, color: "#7d9c06" },
     { label: "No due date", value: r.ageing.undated, color: "#6b6b6b" },
   ].filter((s) => s.value > 0);
 

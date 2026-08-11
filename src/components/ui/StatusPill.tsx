@@ -35,6 +35,11 @@ const STATUS_TONE: Record<string, Tone> = {
   lost: "bad",
   sent: "info",
   discussing: "warn",
+  // GST filing vocabulary from the invoice history.
+  filed: "good",
+  unfiled: "warn",
+  cancelled: "bad",
+  omitted: "neutral",
 };
 
 export function toneFor(status: string | null | undefined): Tone {

@@ -2,6 +2,15 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 05:45 IST · v0.0.16 — Revenue analytics
+
+- **New Revenue page** under Analytics, built on the 47 imported GST invoices: billed history by financial year, by client, and the full invoice table. Financial years run April to March, so grouping by calendar year would split every year's trading in two and make each half look like a bad year.
+- Figures verified against the database directly: ₹28,27,326 counted across five financial years, reconciling exactly with the ₹29,27,326 imported once the cancelled and undated invoices are removed. FY2023-24 was the strongest at ₹10.5L over 21 invoices.
+- **What is excluded is stated on the page.** One cancelled invoice was never revenue, and one invoice carries no date so it cannot be placed in any year. Both are named rather than quietly dropped, and any invoice with no amount recorded is flagged so the total is not read as complete.
+- Clicking a financial year filters the client breakdown and the table to that year.
+- **Money under a lakh now reads as `₹70k`**, not `₹70,000`. The formatter jumped straight from full digits to lakh, so a figure like ₹70,000 took as much room as ₹1.46L sitting beside it, and overflowed the receivables donut. Verified across every boundary from ₹0 to ₹1.25Cr, including negatives.
+- **Receivables now use the brand lime**, on a ramp that darkens as the due date recedes, with red reserved strictly for overdue. Colour now carries one meaning: red is a problem, lime is simply outstanding.
+
 ## 2026-08-12 05:00 IST · v0.0.15 — brand logos everywhere, radar opens up
 
 - **Brand logos appear wherever a brand does.** Projects, payments and proposals store the client as free text, so every screen except Brands had only a name and fell back to coloured initials. A shared `brandIndex` resolves that text back to the brand row, aliases included, so the real logo shows on the dashboard's live work cards, the receivables list, and every invoice row and detail header.
