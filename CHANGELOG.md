@@ -8,7 +8,7 @@
 - **Fixed: transparent logos disappeared.** A white-on-transparent mark such as ISIVIS vanished on a white card, and a black-on-transparent mark does the same on a dark one. The backdrop is now chosen from the artwork's own ink rather than from the theme: pale ink gets a dark tile, dark ink gets a pale tile, and an image that already carries its own background gets nothing added. Choosing by theme would have fixed one case and broken the other.
 - Logos whose host refuses cross-origin reads fall back to a neutral tile rather than failing.
 - **Em dashes removed from all user-facing copy**, replaced with the punctuation that actually fits each sentence rather than a blanket swap. The standalone `—` used to mean "no value" is left alone, since a hyphen there reads as broken.
-- `(pending)`
+- `(eb8d3a8)`
 
 ## 2026-08-12 02:05 IST · v0.0.11 — Money becomes an Invoices screen
 
