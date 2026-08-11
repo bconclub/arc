@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-12 03:20 IST · v0.0.13 — dashboard rebuilt, dead cron removed
+
+- **Dashboard rebuilt to the reference layout.** Greeting and date, four stat cards with lime icon badges (Critical, Today, Money waiting, Pipeline), ARC Radar and Money/Receivables side by side, a right rail carrying Focus today above the Activity feed, Live work as project cards with progress, and the pipeline funnel with win rate and average deal.
+- Nothing was dropped in the rebuild: severity counts, task priorities and estimates, live-work totals, the unpaid invoice list and the funnel all survive. The receivables figures now come from `lib/money`, so the dashboard and the Invoices screen cannot disagree about what is overdue.
+- Delta chips such as "2 from yesterday" are deliberately absent. ARC stores current state only, with no record of yesterday's counts, so there is nothing honest to compare against until a snapshot table exists.
+- **Backup export and restore moved into Settings**, recovered from git after they were deleted along with the top header. Restore now validates the file, asks before overwriting, and states plainly that it covers browser settings and not the database.
+- **Fixed: the timeline said "no date" for projects that have a start date.** `daysLeft` derives from the end date alone, so a project with a start and no end reported as undated. It now says which date is missing and shows which day of the project you are on.
+- **Removed a public, unauthenticated endpoint.** `/api/arc/cron` was exempted from auth in middleware, so anyone could call it, and it wrote run rows to the database before failing. It was never scheduled, nothing referenced it, and it 401'd on every build because it called the pipeline stages over HTTP rather than in-process. Deleted along with its auth exemption; builds are now clean.
+- **Average time to get paid** is wired but shows "Not recorded" until the new `payments.paid_at` column exists. The migration deliberately does not backfill: the only candidates are the due date or the row's creation date, and both would manufacture the very number the column exists to measure.
+- `(pending)`
+
 ## 2026-08-12 02:40 IST · v0.0.12 — one padding scale, no top header
 
 - **Removed the top header and the sprite.** The header sat above every page's own header, so two bars competed for the top of the screen. Pages now own the full viewport height with no 3.5rem strip to subtract.

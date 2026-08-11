@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.12";
+export const VERSION = "0.0.13";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.13",
+    date: "2026-08-12",
+    notes: "Dashboard rebuilt to the reference layout: greeting, four stat cards, radar and receivables side by side, a rail with focus tasks and activity, live work as cards and the pipeline funnel. Backup export and restore moved into Settings. Timeline no longer claims a project has no date when it only lacks an end date. Removed a public unauthenticated cron endpoint that wrote to the database.",
+  },
   {
     version: "0.0.12",
     date: "2026-08-12",

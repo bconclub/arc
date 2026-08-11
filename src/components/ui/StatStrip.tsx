@@ -81,9 +81,21 @@ export function StatCardBlock({ stat }: { stat: Stat }) {
   );
 }
 
+/** Column count follows the number of stats, so a five-stat strip does not
+ *  leave one card orphaned on its own row. */
+const COLS: Record<number, string> = {
+  1: "xl:grid-cols-1",
+  2: "xl:grid-cols-2",
+  3: "xl:grid-cols-3",
+  4: "xl:grid-cols-4",
+  5: "xl:grid-cols-5",
+  6: "xl:grid-cols-6",
+};
+
 export function StatStrip({ stats, className = "" }: { stats: Stat[]; className?: string }) {
+  const cols = COLS[stats.length] ?? "xl:grid-cols-4";
   return (
-    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 ${className}`}>
+    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 ${cols} ${className}`}>
       {stats.map((s) => <StatCardBlock key={s.key} stat={s} />)}
     </div>
   );

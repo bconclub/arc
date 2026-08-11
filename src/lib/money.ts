@@ -44,8 +44,15 @@ export type Receivables = {
   collected: number;
   ageing: Ageing;
   overdueBuckets: OverdueBuckets;
-  /** Unpaid invoices with no amount recorded — see note below. */
+  /** Unpaid invoices with no amount recorded, see note below. */
   unpricedCount: number;
+  /**
+   * Mean days from issue to payment, or null when nothing supports it.
+   * `measured` says how many rows the average is drawn from and `missing` how
+   * many paid rows were excluded for carrying no paid date, so the figure is
+   * never presented as covering more than it actually does.
+   */
+  daysToPay: { average: number | null; measured: number; missing: number };
 };
 
 export function receivables(payments: Payment[]): Receivables {
@@ -89,8 +96,31 @@ export function receivables(payments: Payment[]): Receivables {
     else ageing.far += amt;
   }
 
+  // Days from raising the invoice to the money landing. Only rows that carry a
+  // real paid_at count. Falling back to created_at or due for the rest would
+  // manufacture the exact number this measures, so those rows are excluded and
+  // reported separately instead.
+  const spans: number[] = [];
+  let missingPaidAt = 0;
+  for (const p of paidRows) {
+    if (!p.paid_at) { missingPaidAt += 1; continue; }
+    const paid = new Date(p.paid_at + "T00:00:00").getTime();
+    const issued = new Date(p.created_at).getTime();
+    if (!Number.isFinite(paid) || !Number.isFinite(issued)) { missingPaidAt += 1; continue; }
+    const days = Math.round((paid - issued) / DAY);
+    // A negative span means the dates contradict each other; counting it would
+    // drag the average below zero rather than surfacing the bad row.
+    if (days < 0) { missingPaidAt += 1; continue; }
+    spans.push(days);
+  }
+
   return {
     unpaid, overdueRows, paidRows,
+    daysToPay: {
+      average: spans.length ? Math.round(spans.reduce((s, x) => s + x, 0) / spans.length) : null,
+      measured: spans.length,
+      missing: missingPaidAt,
+    },
     total: unpaid.reduce((s, p) => s + (p.amount ?? 0), 0),
     overdueTotal: ageing.overdue,
     dueWithinMonth: ageing.soon + ageing.mid,

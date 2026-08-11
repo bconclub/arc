@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Trash2, Zap, Database, Bot } from "lucide-react";
+import { LocalBackup } from "@/components/settings/LocalBackup";
 
 interface ModelUse { input: number; output: number; calls: number; cost_usd: number }
 interface ActionUse { input: number; output: number; calls: number }
@@ -141,6 +142,8 @@ export default function ConfigPage() {
           </div>
         </div>
       </section>
+
+      <LocalBackup />
     </div>
   );
 }

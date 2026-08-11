@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, CheckCircle2, Plus, Wallet } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Clock, Plus, Wallet } from "lucide-react";
 import { Modal, Field, ModalActions, inputCls, btnPrimaryCls } from "@/components/ops/Modal";
 import { SegmentedTabs, type Tab } from "@/components/ui/SegmentedTabs";
 import { FilterBar, countActive, type SelectFilter } from "@/components/ui/FilterBar";
@@ -78,6 +78,21 @@ export default function MoneyPage() {
       hint: `${r.paidRows.length} paid`,
       icon: CheckCircle2,
       valueClass: "text-accent-green",
+    },
+    {
+      key: "speed",
+      label: "Average time to get paid",
+      // Null until paid dates exist. Showing "Not recorded" is the honest state:
+      // the alternative is averaging due dates, which measures when we asked to
+      // be paid rather than when we were.
+      value: r.daysToPay.average == null ? "Not recorded" : `${r.daysToPay.average} days`,
+      hint: r.daysToPay.average == null
+        ? `No paid dates on ${r.daysToPay.missing} paid invoice${r.daysToPay.missing === 1 ? "" : "s"}`
+        : r.daysToPay.missing > 0
+          ? `From ${r.daysToPay.measured} of ${r.paidRows.length} paid invoices`
+          : `Across ${r.daysToPay.measured} paid invoices`,
+      icon: Clock,
+      valueClass: r.daysToPay.average == null ? "text-text-muted" : "text-text",
     },
   ], [r]);
 

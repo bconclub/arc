@@ -130,7 +130,13 @@ export function Timeline({ rows }: { rows: TimelineRow[] }) {
                       <span className="block truncate text-[9.5px] text-text-muted">
                         {r.client ?? "—"}
                         {r.budget != null && ` · ${moneyShort(r.budget)}`}
-                        {!r.start_date && !r.end_date && " · no dates"}
+                        {!r.start_date && !r.end_date
+                          ? " · no dates"
+                          : r.start_date && !r.end_date
+                            ? " · no end date"
+                            : !r.start_date && r.end_date
+                              ? " · no start date"
+                              : ""}
                       </span>
                     </span>
                   </div>
@@ -158,7 +164,14 @@ export function Timeline({ rows }: { rows: TimelineRow[] }) {
                         late ? "font-medium text-accent-red" : soon ? "font-medium text-accent-orange" : "text-text-muted"
                       }`}
                     >
-                      {r.daysLeft == null ? "no date" : late ? `${Math.abs(r.daysLeft)}d over` : `${r.daysLeft}d left`}
+                      {/* daysLeft comes from end_date alone, so a project that
+                          has a start but no end used to report "no date" even
+                          though it plainly has one. Say which date is missing. */}
+                      {r.daysLeft != null
+                        ? late ? `${Math.abs(r.daysLeft)}d over` : `${r.daysLeft}d left`
+                        : s != null
+                          ? `day ${Math.max(1, Math.round((today - s) / DAY) + 1)}`
+                          : "no dates"}
                     </span>
                     <span className="block text-[9.5px] tabular-nums text-text-muted">
                       {progress}% · {r.openTasks} open

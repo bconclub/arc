@@ -55,6 +55,13 @@ export type Payment = {
   amount: number | null;
   due: string | null;
   status: PaymentStatus;
+  /**
+   * When the money actually landed. Optional on the type because the column is
+   * added by 20260812100000_payments_paid_at.sql: until that migration runs the
+   * field is simply absent from the API response, and everything reading it
+   * treats that the same as "not recorded".
+   */
+  paid_at?: string | null;
   created_at: string;
 };
 
