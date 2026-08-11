@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   // GST/billing columns (gstin, place_of_supply, currency, lifetime_revenue…)
   // are owned by the billing side and intentionally not patchable from the dashboard.
   const patch: Record<string, unknown> = {};
-  for (const key of ["name", "logo_url", "color", "status", "notes", "aliases", "domains", "github_repos"]) {
+  for (const key of ["name", "logo_url", "color", "status", "kind", "via_brand_id", "notes", "aliases", "domains", "github_repos"]) {
     if (key in body) patch[key] = body[key] === "" ? null : body[key];
   }
   patch.updated_at = new Date().toISOString();

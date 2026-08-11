@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-12 00:05 IST · v0.0.7 — brands classified by relationship
+
+- **Not everything in `brands` is a client.** Added a `kind` column — client / agency / partner / prospect / own — matching the vocabulary already used in `people.relation`. The Brands page groups by it, clients first, so a prospect no longer sits in the same grid as a paying account.
+- **Corrected a modelling error from v0.0.6.** Now Media had been folded into Kosh Studios as an alias, and Proago into Laptop Store, treating agencies as alternate spellings of their clients. Both are now separate rows: Now Media is an agency, Proago a partner. Neither is ever invoiced, which is what gave it away.
+- **Work arriving through an intermediary is recorded.** New `via_brand_id` — Kosh Studios stays a client because it is the name on the invoice, and links to Now Media. The profile reads "Client · via Now Media".
+- **Agency contacts surface on the client profile.** Moving Nithin and Afnan to Now Media left Kosh Studios showing no contacts at all; its profile now lists the agency's people in a separate "Via Now Media" block.
+- Classification as shipped: 9 clients, 1 agency (Now Media), 1 partner (Proago), 1 prospect (Axlrate R&I), 3 own (BCON Club, PROXe, OUCH! Piercing).
+- Verified live: every client name on payments/projects/proposals still matches a brand, and all 11 people now attach to one.
+- User-facing: Brands page is grouped by relationship; profiles gain a Type selector and a "work arrives via" field.
+- `(pending)`
+
 ## 2026-08-11 23:40 IST · v0.0.6 — brands become the client register
 
 - **Switched Supabase projects.** `.env.local` pointed at `niypveotxuledkrcikun` while the schema migration had been applied to `rqpjynurdlozjxvzkugy`. That mismatch — not a bad migration and not a PostgREST cache — is why the new columns appeared missing. The new project also carries richer operational data: 10 projects, 11 people, 19 signals against 5/8/8.

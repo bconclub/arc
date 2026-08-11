@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.6";
+export const VERSION = "0.0.7";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.7",
+    date: "2026-08-11",
+    notes: "Brands classified as client / agency / partner / prospect / own. Now Media and Proago separated out as their own entities instead of aliases. Kosh Studios linked to Now Media, whose contacts now surface on the client profile.",
+  },
   {
     version: "0.0.6",
     date: "2026-08-11",

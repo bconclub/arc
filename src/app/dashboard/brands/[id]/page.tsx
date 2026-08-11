@@ -10,9 +10,16 @@ import { money, moneyShort, timeAgo, initials, avatarColor } from "@/lib/format"
 import { rollupBrand, brandKeys, contactsFor, parseChannel, UNPAID, IN_PLAY } from "@/lib/rollup";
 import { HealthRing, TrendLine, Donut } from "@/components/ops/Charts";
 import { BrandMark } from "@/components/ops/BrandMark";
-import type {
-  Brand, Project, Payment, Proposal, OpsSignal, Person, GithubActivity,
+import {
+  BRAND_KIND_LABEL,
+  type Brand, type BrandKind, type Project, type Payment, type Proposal,
+  type OpsSignal, type Person, type GithubActivity,
 } from "@/types/ops";
+
+const KIND_COLOR: Record<BrandKind, string> = {
+  client: "#00d4aa", agency: "#8b5cf6", partner: "#3b82f6",
+  prospect: "#f59e0b", own: "#6b6b6b",
+};
 
 // The client register owns this vocabulary ('active', …) and can add values we
 // don't know about, so never index this map without the fallback below.
@@ -38,6 +45,7 @@ export default function BrandProfilePage() {
   const id = params?.id;
 
   const [brand, setBrand] = useState<Brand | null>(null);
+  const [allBrands, setAllBrands] = useState<Brand[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -50,6 +58,7 @@ export default function BrandProfilePage() {
 
   const [form, setForm] = useState({
     aliases: "", domains: "", notes: "", status: "active", logo_url: "", color: "", github_repos: "",
+    kind: "client", via_brand_id: "",
   });
 
   const load = useCallback(async () => {
@@ -60,6 +69,7 @@ export default function BrandProfilePage() {
       fetch("/api/ops/github").then((r) => r.json()).catch(() => null),
     ]);
     const list: Brand[] = Array.isArray(br) ? br : [];
+    setAllBrands(list);
     const found = list.find((b) => b.id === id) ?? null;
     setBrand(found);
     if (found) {
@@ -71,6 +81,8 @@ export default function BrandProfilePage() {
         status: found.status,
         logo_url: found.logo_url ?? "",
         color: found.color ?? "",
+        kind: found.kind ?? "client",
+        via_brand_id: found.via_brand_id ?? "",
       });
     }
     setProjects(Array.isArray(pr) ? pr : []);
@@ -101,6 +113,8 @@ export default function BrandProfilePage() {
         notes: form.notes,
         logo_url: form.logo_url,
         color: form.color,
+        kind: form.kind,
+        via_brand_id: form.via_brand_id || null,
         aliases: toArray(form.aliases),
         domains: toArray(form.domains),
         github_repos: toArray(form.github_repos),
@@ -112,13 +126,18 @@ export default function BrandProfilePage() {
     load();
   }
 
+  const viaBrand = useMemo(
+    () => (brand?.via_brand_id ? allBrands.find((b) => b.id === brand.via_brand_id) ?? null : null),
+    [brand, allBrands]
+  );
+
   const roll = useMemo(
     () => (brand ? rollupBrand(brand, projects, payments, proposals, signals) : null),
     [brand, projects, payments, proposals, signals]
   );
 
   const mine = useMemo(() => {
-    if (!brand) return { payments: [], projects: [], proposals: [], repos: [], events: [], commits: [], contacts: [] };
+    if (!brand) return { payments: [], projects: [], proposals: [], repos: [], events: [], commits: [], contacts: [], viaContacts: [] };
     // Must use the same name+aliases keys as rollupBrand, or the totals in the
     // header and the rows listed below them disagree.
     const keys = brandKeys(brand);
@@ -132,8 +151,11 @@ export default function BrandProfilePage() {
       events: (gh?.events ?? []).filter((e) => slugs.includes(e.repo.toLowerCase())),
       commits: (gh?.commits ?? []).filter((c) => slugs.includes(c.repo.toLowerCase())),
       contacts: contactsFor(brand, people),
+      // Work arriving through an agency means the day-to-day contacts sit on the
+      // agency, not the client — Kosh Studios would otherwise look contactless.
+      viaContacts: viaBrand ? contactsFor(viaBrand, people) : [],
     };
-  }, [brand, payments, projects, proposals, people, gh]);
+  }, [brand, viaBrand, payments, projects, proposals, people, gh]);
 
   if (!loaded) return <p className="px-6 py-16 text-center text-[13px] text-text-muted">Loading…</p>;
 
@@ -150,6 +172,8 @@ export default function BrandProfilePage() {
 
   const accent = brand.color ?? avatarColor(brand.name);
   const st = statusOf(brand.status);
+  const kind = (brand.kind ?? "client") as BrandKind;
+  const via = viaBrand;
 
   return (
     <div className="space-y-3 px-4 pb-24 pt-4 sm:px-5 lg:px-6">
@@ -166,9 +190,20 @@ export default function BrandProfilePage() {
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[22px] font-bold tracking-tight text-text">{brand.name}</h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-text-muted">
+            <span
+              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+              style={{ background: `${KIND_COLOR[kind]}22`, color: KIND_COLOR[kind] }}
+            >
+              {BRAND_KIND_LABEL[kind]}
+            </span>
             <span className="flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: st.color }} /> {st.text}
             </span>
+            {via && (
+              <Link href={`/dashboard/brands/${via.id}`} className="hover:text-text">
+                via <span className="text-text">{via.name}</span>
+              </Link>
+            )}
             {brand.domains?.[0] && (
               <a
                 href={`https://${brand.domains[0].replace(/^https?:\/\//, "")}`}
@@ -357,9 +392,9 @@ export default function BrandProfilePage() {
       {/* ── Contacts ── */}
       <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
         <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">
-          Contacts <span className="text-text-muted">({mine.contacts.length})</span>
+          Contacts <span className="text-text-muted">({mine.contacts.length + mine.viaContacts.length})</span>
         </h2>
-        {mine.contacts.length === 0 ? (
+        {mine.contacts.length === 0 && mine.viaContacts.length === 0 ? (
           <p className="py-4 text-[11.5px] text-text-muted">
             No contacts linked. Add a person under{" "}
             <Link href="/dashboard/ops/people" className="text-text underline">People</Link>{" "}
@@ -404,6 +439,47 @@ export default function BrandProfilePage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {mine.viaContacts.length > 0 && (
+          <div className="mt-3 border-t border-[var(--border)] pt-3">
+            <p className="mb-2 text-[10px] text-text-muted">
+              Via <Link href={`/dashboard/brands/${via?.id}`} className="text-text hover:underline">{via?.name}</Link>
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {mine.viaContacts.map((c) => {
+                const ch = parseChannel(c.channel);
+                return (
+                  <div key={c.id} className="rounded-xl border border-dashed border-[var(--border-strong)] p-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                        style={{ background: avatarColor(c.name) }}
+                      >
+                        {initials(c.name)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[12.5px] font-semibold text-text">{c.name}</span>
+                        <span className="block truncate text-[10px] text-text-muted">{c.role ?? c.relation ?? "—"}</span>
+                      </span>
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {ch.emails.map((e) => (
+                        <a key={e} href={`mailto:${e}`} className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text">
+                          <Mail size={11} className="shrink-0" /><span className="truncate">{e}</span>
+                        </a>
+                      ))}
+                      {ch.phones.map((t) => (
+                        <a key={t} href={`tel:${t}`} className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text">
+                          <Phone size={11} className="shrink-0" /><span className="truncate">{t}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </section>
@@ -468,6 +544,25 @@ export default function BrandProfilePage() {
               placeholder="bconclub/proxe, bconclub/goproxe.com"
               onChange={(e) => setForm({ ...form, github_repos: e.target.value })}
             />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[10px] text-text-muted">Type</span>
+            <select className={inputCls} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
+              {(Object.keys(BRAND_KIND_LABEL) as BrandKind[]).map((k) => (
+                <option key={k} value={k}>{BRAND_KIND_LABEL[k]}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[10px] text-text-muted">
+              Work arrives via <span className="opacity-70">— agency or partner</span>
+            </span>
+            <select className={inputCls} value={form.via_brand_id} onChange={(e) => setForm({ ...form, via_brand_id: e.target.value })}>
+              <option value="">Direct — no intermediary</option>
+              {allBrands
+                .filter((b) => b.id !== brand.id && ["agency", "partner"].includes(b.kind ?? ""))
+                .map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
           </label>
           <label className="block">
             <span className="mb-1 block text-[10px] text-text-muted">Status</span>

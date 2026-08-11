@@ -90,11 +90,30 @@ export type NowTask = {
  * pointed at carry slightly different column sets, so anything not guaranteed on
  * both is `?` and every read must tolerate `undefined`.
  */
+/**
+ * What a brand row represents. Not everything in `brands` pays you — agencies
+ * and partners route or deliver work, prospects haven't bought yet, and 'own'
+ * covers your own products. Money rollups are only meaningful for clients.
+ */
+export type BrandKind = "client" | "agency" | "partner" | "prospect" | "own";
+
+export const BRAND_KIND_LABEL: Record<BrandKind, string> = {
+  client: "Client",
+  agency: "Agency",
+  partner: "Partner",
+  prospect: "Prospect",
+  own: "Our own",
+};
+
 export type Brand = {
   id: string;
   name: string;
   status: string;
   notes: string | null;
+  /** Optional: absent until the brand_kind migration runs. Treat as "client". */
+  kind?: BrandKind | null;
+  /** Work arrives through this brand — e.g. Kosh Studios via Now Media. */
+  via_brand_id?: string | null;
   logo_url: string | null;
   color: string | null;
   github_repos: string[] | null;

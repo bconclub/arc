@@ -7,7 +7,7 @@ import { moneyShort, avatarColor } from "@/lib/format";
 import { rollupAll } from "@/lib/rollup";
 import { HealthRing, TrendLine } from "@/components/ops/Charts";
 import { BrandMark } from "@/components/ops/BrandMark";
-import type { Brand, Project, Payment, Proposal, OpsSignal } from "@/types/ops";
+import { BRAND_KIND_LABEL, type Brand, type BrandKind, type Project, type Payment, type Proposal, type OpsSignal } from "@/types/ops";
 
 // Status values come from the client register, which can add its own — always
 // fall through to a neutral colour rather than indexing blind.
@@ -22,6 +22,21 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const statusColor = (s: string) => STATUS_COLOR[s] ?? "#6b6b6b";
+
+// Rows without `kind` predate the classification migration; they were all
+// entered as clients, so that is the safe default.
+const kindOf = (b: Brand): BrandKind => (b.kind ?? "client") as BrandKind;
+
+const KIND_COLOR: Record<BrandKind, string> = {
+  client: "#00d4aa",
+  agency: "#8b5cf6",
+  partner: "#3b82f6",
+  prospect: "#f59e0b",
+  own: "#6b6b6b",
+};
+
+// Clients first — they are the ones with money attached.
+const KIND_ORDER: BrandKind[] = ["client", "agency", "partner", "prospect", "own"];
 
 export default function BrandsPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -65,6 +80,12 @@ export default function BrandsPage() {
   const rolled = useMemo(
     () => rollupAll(brands, projects, payments, proposals, signals),
     [brands, projects, payments, proposals, signals]
+  );
+
+  /** id -> name, so a card can say "via Now Media" without another fetch. */
+  const viaName = useMemo(
+    () => Object.fromEntries(brands.map((b) => [b.id, b.name])) as Record<string, string>,
+    [brands]
   );
 
   return (
@@ -113,8 +134,15 @@ export default function BrandsPage() {
           </p>
         </div>
       ) : (
+        KIND_ORDER.filter((k) => rolled.some((b) => kindOf(b) === k)).map((kind) => (
+        <section key={kind} className="space-y-2">
+          <h2 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: KIND_COLOR[kind] }} />
+            {BRAND_KIND_LABEL[kind]}
+            <span className="text-text-muted">({rolled.filter((b) => kindOf(b) === kind).length})</span>
+          </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {rolled.map((b) => {
+          {rolled.filter((b) => kindOf(b) === kind).map((b) => {
             const accent = b.color ?? avatarColor(b.name);
             return (
               <Link
@@ -132,6 +160,7 @@ export default function BrandsPage() {
                     <p className="flex items-center gap-1 text-[11px] text-text-muted">
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusColor(b.status) }} />
                       {b.status.replace("_", " ")}
+                      {b.via_brand_id && viaName[b.via_brand_id] ? ` · via ${viaName[b.via_brand_id]}` : ""}
                       {b.github_repos?.length ? ` · ${b.github_repos.length} repo${b.github_repos.length === 1 ? "" : "s"}` : ""}
                     </p>
                   </div>
@@ -163,6 +192,8 @@ export default function BrandsPage() {
             );
           })}
         </div>
+        </section>
+        ))
       )}
     </div>
   );

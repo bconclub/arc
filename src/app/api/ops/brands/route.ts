@@ -8,7 +8,7 @@ export const fetchCache = "force-no-store";
 // register and also holds GST/billing fields (gstin, place_of_supply, currency,
 // lifetime_revenue…) — those are owned by the billing side and are deliberately
 // NOT writable from here.
-const WRITABLE = ["name", "logo_url", "color", "notes", "status", "aliases", "domains", "github_repos"];
+const WRITABLE = ["name", "logo_url", "color", "notes", "status", "kind", "via_brand_id", "aliases", "domains", "github_repos"];
 
 export async function GET() {
   const { data, error } = await supabaseAdmin.from("brands").select("*").order("name");
