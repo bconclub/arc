@@ -9,7 +9,7 @@
 - **Fixed: the timeline said "no date" for projects that have a start date.** `daysLeft` derives from the end date alone, so a project with a start and no end reported as undated. It now says which date is missing and shows which day of the project you are on.
 - **Removed a public, unauthenticated endpoint.** `/api/arc/cron` was exempted from auth in middleware, so anyone could call it, and it wrote run rows to the database before failing. It was never scheduled, nothing referenced it, and it 401'd on every build because it called the pipeline stages over HTTP rather than in-process. Deleted along with its auth exemption; builds are now clean.
 - **Average time to get paid** is wired but shows "Not recorded" until the new `payments.paid_at` column exists. The migration deliberately does not backfill: the only candidates are the due date or the row's creation date, and both would manufacture the very number the column exists to measure.
-- `(pending)`
+- `(3164508)`
 
 ## 2026-08-12 02:40 IST · v0.0.12 — one padding scale, no top header
 
