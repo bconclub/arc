@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.8";
+export const VERSION = "0.0.9";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.9",
+    date: "2026-08-12",
+    notes: "Invoices can be read from a PDF or a photo — including scans with no text layer, which is why four amounts were blank. Logo pull now searches a repo properly and finds marks in nested folders. Real ARC logo artwork in the sidebar with the version beside it. Brands grouped Live / Proposed / Completed.",
+  },
   {
     version: "0.0.8",
     date: "2026-08-12",

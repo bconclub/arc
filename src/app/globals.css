@@ -369,3 +369,10 @@ select option {
   background-color: var(--surface);
   color: var(--text);
 }
+
+/* ─── Brand mark: swap the logo's ink with the theme ─── */
+/* The letterform is baked into the PNG, so the theme picks a file rather than
+   recolouring one — a filter would shift the lime wedge along with it. */
+.arc-mark-light { display: none; }
+[data-theme="light"] .arc-mark-dark { display: none; }
+[data-theme="light"] .arc-mark-light { display: inline-block; }

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-12 09:05 IST · v0.0.9 — invoices read themselves, logo search fixed
+
+- **Invoices can now be read from a PDF or a photo.** Four payment rows carried a null amount because the figure existed only inside an attachment. BCON's invoice template stopped emitting a text layer somewhere after April 2026 — `Invoice_BCON - Windchasers APR25.pdf` still extracts cleanly, while the newer `BCON - YV Homes Invoice.pdf` and `Exam Windchasers Invoice.pdf` are flattened images that text extraction reduces to "Invoice template design". `/api/ops/invoices/parse` reads the pages visually instead, so scanned, image-only and photographed invoices all work.
+- Returns invoice number, both dates, the billed party, subtotal, GST, total, GSTIN, a confidence level and notes, under a JSON schema rather than a hoped-for shape. Verified end to end against a skewed, text-layer-free test invoice: it read Indian 2-2-3 digit grouping correctly (1,85,000 → 185000), read 14-07-2026 as day-first, excluded BCON's own GSTIN in favour of the client's, and returned the ₹1,68,300 balance due rather than the ₹2,18,300 gross after an advance was deducted — recording the discrepancy in notes instead of silently reconciling it.
+- Parsing and writing are separate: nothing reaches the books without an explicit `apply`, because a wrong amount written silently is worse than a blank one.
+- **Fixed: "Pull logo" could not see logos that were there.** Three faults, each enough on its own — the search listed `public/images` but never descended into `public/images/logo/`; the filename pattern was anchored with `^`, so `ISIVIS-Icon.png` and `Maison-ISIVIS.png` were rejected for not *starting* with a mark word; and `.ico` was missing, discarding real favicons. It now walks the git tree recursively in one call, matches mark words anywhere in the name or in any parent folder, resolves the default branch (this repo is on `master`, not `main`), and ranks square icons above wide lockups, which crop badly into a 36px avatar.
+- When `GITHUB_TOKEN` is absent the response now says the repo was never searched, instead of reporting that the repo contains no logo.
+- **Real ARC artwork in the sidebar.** The supplied logo is a blackout variant — a #1C1E22 letterform on solid black with no alpha — so dropped in as-is only the lime wedge would have shown on the dark shell, and light theme would have rendered a black box. Both sources are rebuilt as transparent PNGs with the ink recoloured per theme and the lime left untouched; 1.2MB of source art becomes 52KB of assets.
+- **Version now sits beside the logo.** It was footer text, below the fold on a short viewport.
+- **Fixed: two theme toggles.** The global TopBar and the dashboard header each rendered one, a row apart.
+- **Brands grouped Live / Proposed / Completed**, then agencies and partners. A brand with only a proposal out is no longer counted as Live — nothing has been won yet, so it reads as a decision pending rather than work in progress.
+- User-facing: upload an invoice and ARC fills in the amount; brand logos actually pull; the sidebar carries the real mark and the running version.
+- `(6b00230)`
+
 ## 2026-08-12 00:20 IST · v0.0.8 — brands list simplified, logos resolved properly
 
 - **Fixed: the Money panel counted overdue invoices twice.** Every payment in the database has a null due date, so all of them fell into the "31 days+" bucket while the same rows were also reported as Overdue — ₹70,000 and ₹40,000 describing overlapping money. Buckets are now mutually exclusive, status wins over date, and undated invoices get their own bucket instead of being quietly filed as "31 days+".

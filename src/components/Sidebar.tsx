@@ -6,10 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Settings2, FileText, Boxes, FolderKanban, Wallet, Radio,
   Megaphone, BarChart3, Users, Radar, LayoutGrid, Rss, CalendarDays, PenLine,
-  Palette, Bot, TrendingUp, Plug, Settings, LogOut, Menu, X,
+  Palette, Bot, TrendingUp, Plug, Settings, LogOut, X,
 } from "lucide-react";
 import { VERSION } from "@/lib/version";
-import { ArcLogo } from "@/components/ArcLogo";
+import { ArcLogo, ArcMark } from "@/components/ArcLogo";
 
 type NavItem = {
   label: string;
@@ -82,6 +82,22 @@ function isActive(pathname: string, item: NavItem) {
 /** A parent counts as active if it or any of its children matches. */
 function inSubtree(pathname: string, item: NavItem) {
   return isActive(pathname, item) || (item.children ?? []).some((c) => isActive(pathname, c));
+}
+
+/**
+ * Sits against the logo so the running version is visible at a glance — it used
+ * to be footer text, below the fold on a short viewport, which is no use when
+ * the point is knowing what you're looking at.
+ */
+function VersionTag() {
+  return (
+    <span
+      title={`ARC v${VERSION}`}
+      className="select-none rounded-md bg-[var(--surface-hover)] px-1.5 py-0.5 font-mono text-[9.5px] leading-none text-text-muted"
+    >
+      v{VERSION}
+    </span>
+  );
 }
 
 function rowCls(active: boolean, depth = 0) {
@@ -189,10 +205,11 @@ export function Sidebar() {
     <>
       {/* ── Desktop sidebar ── */}
       <aside className="sidebar fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-[var(--border)] bg-surface lg:flex">
-        <div className="shrink-0 px-5 py-5">
-          <Link href="/dashboard/ops" aria-label="ARC home">
-            <ArcLogo size={26} />
+        <div className="flex shrink-0 items-center gap-2 px-5 py-5">
+          <Link href="/dashboard/ops" aria-label="ARC home" className="inline-flex">
+            <ArcLogo size={24} />
           </Link>
+          <VersionTag />
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
@@ -203,8 +220,7 @@ export function Sidebar() {
           <NavRows items={footerNav} pathname={pathname} />
         </div>
 
-        <div className="shrink-0 px-3 pb-2">{brandBlock}</div>
-        <p className="shrink-0 px-3 pb-4 text-center text-[10px] text-text-muted">ARC v{VERSION}</p>
+        <div className="shrink-0 px-3 pb-4">{brandBlock}</div>
       </aside>
 
       {/* ── Mobile drawer ── */}
@@ -222,7 +238,10 @@ export function Sidebar() {
             className="animate-fade-in absolute inset-y-0 left-0 flex w-[82%] max-w-[320px] flex-col border-r border-[var(--border)] bg-surface"
           >
             <div className="flex shrink-0 items-center justify-between px-5 py-4">
-              <ArcLogo size={22} />
+              <span className="flex items-center gap-2">
+                <ArcLogo size={20} />
+                <VersionTag />
+              </span>
               <button
                 onClick={() => setMenuOpen(false)}
                 aria-label="Close menu"
@@ -239,8 +258,7 @@ export function Sidebar() {
               </div>
             </nav>
 
-            <div className="shrink-0 px-3 pb-3">{brandBlock}</div>
-            <p className="shrink-0 px-3 pb-4 text-center text-[10px] text-text-muted">ARC v{VERSION}</p>
+            <div className="shrink-0 px-3 pb-4">{brandBlock}</div>
           </div>
         </div>
       )}
@@ -271,7 +289,8 @@ export function Sidebar() {
           aria-expanded={menuOpen}
           className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-text-muted transition-colors duration-150"
         >
-          <span className="rounded-xl p-1.5"><Menu size={16} strokeWidth={1.5} /></span>
+          {/* Menu closed: the icon mark stands in for the wordmark the drawer shows. */}
+          <span className="flex h-[28px] items-center rounded-xl p-1.5"><ArcMark size={15} /></span>
           <span className="text-[9px] font-medium">Menu</span>
         </button>
       </nav>

@@ -113,6 +113,16 @@ export function rollupBrand(
   const overdue = overdueRows.reduce((s, p) => s + (p.amount ?? 0), 0);
   const pipeline = myProposals.filter((p) => IN_PLAY.includes(p.status)).reduce((s, p) => s + (p.amount ?? 0), 0);
 
+  // Anything not finished is still an engagement. 'waiting' and 'parked' mean
+  // blocked or on hold, not closed — counting only 'active' made live accounts
+  // (a security incident response, a paused Shopify build) read as dormant.
+  const openProjects = myProjects.filter((p) => p.status !== "done").length;
+
+  // Count, not sum. Several invoices are issued with no amount recorded, so a
+  // brand with money genuinely outstanding was summing to zero and looking settled.
+  const unpaidCount = unpaid.length;
+  const unpricedCount = unpaid.filter((p) => p.amount == null).length;
+
   const allTasks = myProjects.flatMap((p) => p.tasks ?? []);
   const doneTasks = allTasks.filter((t) => t.done).length;
   const openTasks = allTasks.length - doneTasks;
@@ -141,6 +151,7 @@ export function rollupBrand(
     owed, collected, overdue, pipeline,
     openTasks, totalTasks: allTasks.length,
     activeProjects: myProjects.filter((p) => p.status === "active").length,
+    openProjects, unpaidCount, unpricedCount,
     projectCount: myProjects.length,
     avgProgress: Math.round(avgProgress),
     criticalSignals,

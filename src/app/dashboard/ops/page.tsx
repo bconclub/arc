@@ -12,7 +12,6 @@ import {
 import { UNPAID, IN_PLAY } from "@/lib/rollup";
 import { StatCard } from "@/components/ops/StatCard";
 import { Donut } from "@/components/ops/Charts";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import type {
   Project, Payment, Proposal, OpsSignal, NowTask,
 } from "@/types/ops";
@@ -337,7 +336,8 @@ export default function DashboardPage() {
             />
             <kbd className="pointer-events-none absolute right-2 rounded border border-[var(--border-strong)] px-1 text-[9px] text-text-muted">⌘K</kbd>
           </label>
-          <ThemeToggle />
+          {/* Theme toggle lives in the global TopBar; a second one here rendered
+              two identical controls one row apart. */}
           <Link
             href="/dashboard/ops/alerts"
             className="relative rounded-lg border border-[var(--border-strong)] p-1.5 text-text-muted transition-colors hover:text-text"

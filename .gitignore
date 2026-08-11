@@ -45,3 +45,12 @@ next-env.d.ts
 
 # isolated production build output (NEXT_DIST_DIR)
 .next-build/
+
+# Duplicate source art — byte-identical to the tracked arc-*-source.png /
+# bcon-icon.png, and unreferenced by any import.
+/public/ARC Full logo.png
+/public/ARC Icon.png
+/public/brand logos/
+
+# Stray exports dropped in the repo root
+/ChatGPT Image*.png

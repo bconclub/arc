@@ -188,6 +188,11 @@ export type BrandRollup = Brand & {
   openTasks: number;
   totalTasks: number;
   activeProjects: number;
+  /** Projects not yet done — includes waiting and parked, which are still live. */
+  openProjects: number;
+  /** Unpaid invoices by count, so ones with no amount recorded still register. */
+  unpaidCount: number;
+  unpricedCount: number;
   projectCount: number;
   avgProgress: number;
   criticalSignals: number;

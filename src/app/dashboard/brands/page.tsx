@@ -25,20 +25,31 @@ const KIND_COLOR: Record<BrandKind, string> = {
 };
 
 /**
- * "Live" means something is genuinely moving: work in flight, money outstanding,
- * or a deal in play. Everything else is finished or dormant and belongs below —
- * this page is for seeing what needs attention, not for browsing an archive.
+ * "Live" means work is actually moving: a project open, an invoice out, tasks
+ * outstanding. A proposal in play is deliberately NOT live — nothing has been
+ * won yet, so it belongs in Proposed where it reads as a decision pending
+ * rather than as work in progress.
  */
 function isLive(b: BrandRollup): boolean {
-  return b.activeProjects > 0 || b.owed > 0 || b.pipeline > 0 || b.openTasks > 0;
+  return b.openProjects > 0 || b.unpaidCount > 0 || b.openTasks > 0;
+}
+
+/** Money quoted and waiting on their answer, with nothing running yet. */
+function isProposed(b: BrandRollup): boolean {
+  return !isLive(b) && b.pipeline > 0;
 }
 
 /** One line saying what is actually happening, or why nothing is. */
 function summarise(b: BrandRollup): string {
   const bits: string[] = [];
-  if (b.activeProjects > 0) bits.push(`${b.activeProjects} active project${b.activeProjects === 1 ? "" : "s"}`);
+  if (b.openProjects > 0) bits.push(`${b.openProjects} project${b.openProjects === 1 ? "" : "s"} open`);
   if (b.openTasks > 0) bits.push(`${b.openTasks} open task${b.openTasks === 1 ? "" : "s"}`);
+  // An invoice with no amount recorded still needs chasing, so say so rather
+  // than letting it sum to zero and disappear.
   if (b.owed > 0) bits.push(`${moneyShort(b.owed)} outstanding`);
+  else if (b.unpaidCount > 0) {
+    bits.push(`${b.unpaidCount} invoice${b.unpaidCount === 1 ? "" : "s"} out · amount not recorded`);
+  }
   if (b.pipeline > 0) bits.push(`${moneyShort(b.pipeline)} in play`);
   if (bits.length) return bits.join(" · ");
   if (b.collected > 0) return `${moneyShort(b.collected)} collected · nothing open`;
@@ -47,7 +58,9 @@ function summarise(b: BrandRollup): string {
 }
 
 function BrandCard({ b }: { b: BrandRollup }) {
-  const live = isLive(b);
+  // Dot matches the group the card sits in, so a proposed brand doesn't read as
+  // dormant just because no work has started.
+  const dot = isLive(b) ? "#00d4aa" : isProposed(b) || kindOf(b) === "prospect" ? "#f59e0b" : "#6b6b6b";
   return (
     <Link
       href={`/dashboard/brands/${b.id}`}
@@ -66,7 +79,7 @@ function BrandCard({ b }: { b: BrandRollup }) {
         <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-muted">
           <span
             className="h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{ background: live ? "#00d4aa" : "#6b6b6b" }}
+            style={{ background: dot }}
           />
           <span className="truncate">{summarise(b)}</span>
         </span>
@@ -135,12 +148,28 @@ export default function BrandsPage() {
     [brands, projects, payments, proposals, signals]
   );
 
+  // Order is deliberate: what's running, then what's pending a decision, then
+  // the archive, then everyone who isn't a client at all.
   const clients = rolled.filter((b) => kindOf(b) === "client");
+  const prospects = rolled.filter((b) => kindOf(b) === "prospect");
+
   const live = clients.filter(isLive);
-  const done = clients.filter((b) => !isLive(b));
-  const others = (["agency", "partner", "prospect", "own"] as BrandKind[])
-    .map((k) => ({ kind: k, rows: rolled.filter((b) => kindOf(b) === k) }))
-    .filter((g) => g.rows.length > 0);
+  // A prospect is a proposal by definition, so it sits here rather than in a
+  // group of its own — the distinction is bookkeeping, not something to act on.
+  const proposed = [...clients.filter(isProposed), ...prospects];
+  const done = clients.filter((b) => !isLive(b) && !isProposed(b));
+
+  const groups: { key: string; title: string; color: string; rows: BrandRollup[] }[] = [
+    { key: "live", title: "Live", color: "#00d4aa", rows: live },
+    { key: "proposed", title: "Proposed", color: "#f59e0b", rows: proposed },
+    { key: "done", title: "Completed", color: "#6b6b6b", rows: done },
+    ...(["agency", "partner", "own"] as BrandKind[]).map((k) => ({
+      key: k,
+      title: BRAND_KIND_LABEL[k],
+      color: KIND_COLOR[k],
+      rows: rolled.filter((b) => kindOf(b) === k),
+    })),
+  ].filter((g) => g.rows.length > 0);
 
   return (
     <div className="space-y-5 px-4 pb-24 pt-4 sm:px-5 lg:px-6">
@@ -186,18 +215,8 @@ export default function BrandsPage() {
         </div>
       ) : (
         <>
-          {live.length > 0 && (
-            <Group title="Live" count={live.length} color="#00d4aa">
-              {live.map((b) => <BrandCard key={b.id} b={b} />)}
-            </Group>
-          )}
-          {done.length > 0 && (
-            <Group title="Completed / dormant" count={done.length} color="#6b6b6b">
-              {done.map((b) => <BrandCard key={b.id} b={b} />)}
-            </Group>
-          )}
-          {others.map((g) => (
-            <Group key={g.kind} title={BRAND_KIND_LABEL[g.kind]} count={g.rows.length} color={KIND_COLOR[g.kind]}>
+          {groups.map((g) => (
+            <Group key={g.key} title={g.title} count={g.rows.length} color={g.color}>
               {g.rows.map((b) => <BrandCard key={b.id} b={b} />)}
             </Group>
           ))}
