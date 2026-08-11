@@ -73,7 +73,115 @@ export type NowTask = {
   text: string;
   done: boolean;
   due: string | null;
+  estimate_minutes: number | null;
+  priority: "low" | "medium" | "high" | null;
   created_at: string;
+};
+
+/**
+ * The live `brands` table is the client register — it carries GST/billing data
+ * and its own status vocabulary ('active', …). Status is typed as a plain string
+ * because the values are owned by that table, not by this dashboard; never index
+ * a lookup map with it without a fallback.
+ */
+export type Brand = {
+  id: string;
+  name: string;
+  aliases: string[] | null;
+  domains: string[] | null;
+  status: string;
+  country: string | null;
+  currency: string | null;
+  gstin: string | null;
+  state_code: string | null;
+  place_of_supply: string | null;
+  is_export: boolean | null;
+  first_seen: string | null;
+  last_seen: string | null;
+  lifetime_revenue: number | null;
+  notes: string | null;
+  // Added by the ARC dashboard migration — presentation only.
+  logo_url: string | null;
+  color: string | null;
+  github_repos: string[] | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type GithubRepo = {
+  name: string;          // owner/repo
+  pushedAt: string | null;
+  openIssues: number;
+  stars: number;
+  private: boolean;
+  url: string;
+  /** False when a brand links a repo the token cannot read (client-owned, no access). */
+  accessible: boolean;
+  /** True when the repo belongs to someone else — a client's own account. */
+  external: boolean;
+};
+
+export type GithubEvent = {
+  id: string;
+  type: string;          // push | pull_request | issues | create | release
+  repo: string;
+  actor: string;
+  title: string;
+  url: string | null;
+  ts: string;
+};
+
+export type GithubCommit = {
+  repo: string;          // owner/repo
+  sha: string;
+  message: string;       // first line only
+  author: string;
+  date: string;
+  url: string;
+};
+
+export type GithubActivity = {
+  configured: boolean;
+  error: string | null;
+  org: string | null;
+  repos: GithubRepo[];
+  events: GithubEvent[];
+  commits: GithubCommit[];
+};
+
+/** A brand plus everything rolled up from projects / payments / proposals. */
+export type BrandRollup = Brand & {
+  owed: number;
+  collected: number;
+  overdue: number;
+  pipeline: number;
+  openTasks: number;
+  totalTasks: number;
+  activeProjects: number;
+  projectCount: number;
+  avgProgress: number;
+  criticalSignals: number;
+  health: number;
+  moneySeries: number[];
+};
+
+export type ServiceStatus = "healthy" | "issue" | "paused" | "failed" | "down";
+
+/**
+ * Infrastructure health. Backed by `system_health`, NOT the `services` table —
+ * `services` is the GST billing catalogue (SAC codes, tax rates) and must never
+ * receive uptime rows.
+ */
+export type SystemService = {
+  id: string;
+  name: string;
+  category: string | null;
+  status: ServiceStatus;
+  detail: string | null;
+  url: string | null;
+  last_checked: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type BrandPlatform = "instagram" | "tiktok" | "youtube" | "linkedin" | "x";
