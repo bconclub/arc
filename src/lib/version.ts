@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.21";
+export const VERSION = "0.0.22";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.22",
+    date: "2026-08-12",
+    notes: "Ad spend and website traffic now have panels on screen. Operations no longer claims the ad connectors are unbuilt. Removed a Google Cloud SDK that an installer had dropped inside the repo.",
+  },
   {
     version: "0.0.21",
     date: "2026-08-12",

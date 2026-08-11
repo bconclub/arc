@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Settings2, ChevronRight, AlertTriangle, Megaphone, CalendarClock, Wallet,
+  Settings2, ChevronRight, AlertTriangle, CalendarClock, Wallet,
 } from "lucide-react";
 import { money, moneyShort, initials, avatarColor } from "@/lib/format";
 import { UNPAID, IN_PLAY } from "@/lib/rollup";
+import { AdsPanel } from "@/components/ops/AdsPanel";
 import { Timeline, type TimelineRow } from "@/components/ops/Timeline";
 import type { Project, Payment, Proposal, OpsSignal } from "@/types/ops";
 
@@ -274,18 +275,10 @@ export default function OperationsPage() {
         </Panel>
       </div>
 
-      {/* ── Ads: awaiting the Meta/Google connectors ── */}
-      <Panel title="Ads running" sub="Live campaigns & spend" href="/dashboard/admin">
-        <div className="px-4 py-8 text-center">
-          <Megaphone size={20} className="mx-auto mb-2 text-text-muted" />
-          <p className="text-[12px] text-text-muted">
-            No ad data yet. Meta and Google Ads connectors aren&apos;t built.
-          </p>
-          <Link href="/dashboard/admin" className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium text-accent-red hover:underline">
-            Set up connectors <ChevronRight size={12} />
-          </Link>
-        </div>
-      </Panel>
+      {/* Real spend from the Meta connector. The panel reports not-connected,
+          failing and connected-but-idle as three separate states, since each
+          needs a different thing done about it. */}
+      <AdsPanel />
     </div>
   );
 }

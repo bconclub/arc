@@ -2,6 +2,16 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 10:10 IST . v0.0.22 - ads and traffic on screen
+
+- **Ads panel on Operations**, replacing a placeholder that claimed the Meta and Google connectors were not built. They were built in v0.0.19, so the page was stating something untrue about its own capabilities.
+- **Website traffic panel on Revenue**, showing sessions, users and conversions by channel.
+- Both panels report three states separately, because each needs something different done: not connected wants credentials, connected-but-failing usually wants the token renewed or the service account granted access, and connected-but-empty is simply a quiet month. Collapsing those into one "no data" message sends you to fix the wrong thing.
+- The not-connected states carry the specific traps rather than a generic link: a Meta System User token does not expire where a user token dies after about sixty days, and GA4 needs the numeric property id from Admin rather than the G-XXXXXXX measurement id that is easier to find.
+- Campaign results are always shown next to their own label. A lead and a link click are both "results" to Meta and are not comparable numbers.
+- **Removed the Google Cloud SDK from the repo.** The standalone installer defaults its install path to the working directory, so answering its prompt created ./yes/google-cloud-sdk, and a git add -A swept all 24,190 files into v0.0.21. The SDK now lives outside the repo and both paths are ignored. The blobs remain in history; purging them needs a rewrite and a force push.
+- Cleaned 155MB of build output, duplicate artwork and a stale credentials backup that pointed at the previous Supabase project and held an older Anthropic key.
+
 ## 2026-08-12 09:15 IST . v0.0.21 - review queue for invoices read from email
 
 - **Review queue on the Invoices page.** Scan reads invoice attachments out of email, shows what it found with the confidence level and the parser's own notes, and waits. Accepting either fills in an existing blank invoice or creates a new row; rejecting keeps the record so the same attachment is never offered again.

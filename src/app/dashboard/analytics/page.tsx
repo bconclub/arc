@@ -9,6 +9,7 @@ import { SegmentedTabs, type Tab } from "@/components/ui/SegmentedTabs";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { BrandMark } from "@/components/ops/BrandMark";
+import { WebAnalyticsPanel } from "@/components/ops/WebAnalyticsPanel";
 import type { Brand } from "@/types/ops";
 
 function Panel({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
@@ -191,6 +192,8 @@ export default function AnalyticsPage() {
               )}
             </Panel>
           </div>
+
+          <WebAnalyticsPanel />
 
           <Panel title="Invoices" sub={fy == null ? `${rows.length} in total` : fyLabel(fy)}>
             <div className="overflow-x-auto">
