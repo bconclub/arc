@@ -1,6 +1,6 @@
 // Autowire feed sync. Hit by Vercel Cron on a schedule (and callable manually).
 // Pulls every active RSS source in-process and rewrites the signals cache, so
-// the Feed page always loads fresh content instantly from cache — no waiting on
+// the Feed page always loads fresh content instantly from cache, no waiting on
 // a live fetch, and no internal HTTP hop that deployment protection would block.
 import { supabaseAdmin } from "@/lib/supabase";
 import { fetchFeeds, itemsToSignals, writeSignalsCache } from "@/lib/arc/rss";

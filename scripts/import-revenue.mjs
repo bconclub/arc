@@ -29,7 +29,7 @@ function env() {
   return out;
 }
 
-/** Minimal CSV reader — handles quoted fields and embedded commas. */
+/** Minimal CSV reader, handles quoted fields and embedded commas. */
 function parseCsv(text) {
   const rows = [];
   let row = [], field = "", quoted = false;
@@ -69,7 +69,7 @@ async function main() {
   const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 
   const rows = parseCsv(fs.readFileSync(file, "utf8"));
-  // Find the header row rather than assuming row 0 — these exports often carry
+  // Find the header row rather than assuming row 0, these exports often carry
   // a title or blank rows above the table.
   const headerIdx = rows.findIndex((r) => r.some((c) => /^year$/i.test(clean(c))));
   if (headerIdx === -1) throw new Error('No header row containing "Year" found.');
@@ -84,7 +84,7 @@ async function main() {
 
   const ledger = [];
   const skipped = [];
-  let year = null, month = null;   // merged cells leave blanks — carry forward
+  let year = null, month = null;   // merged cells leave blanks, carry forward
 
   for (const r of rows.slice(headerIdx + 1)) {
     const y = clean(r[iYear]), m = clean(r[iMonth]);
@@ -135,7 +135,7 @@ async function main() {
 
   for (const row of ledger) row.brand_id = known.get(row.client.trim().toLowerCase()) ?? null;
 
-  // Chunked upsert — one 500-row body is enough to trip PostgREST limits.
+  // Chunked upsert, one 500-row body is enough to trip PostgREST limits.
   let written = 0;
   for (let i = 0; i < ledger.length; i += 200) {
     const chunk = ledger.slice(i, i + 200);
@@ -148,7 +148,7 @@ async function main() {
     written += chunk.length;
     process.stdout.write(`\r  ${written}/${ledger.length}`);
   }
-  console.log(`\ndone — ${written} rows, ${known.size} brands linked`);
+  console.log(`\ndone, ${written} rows, ${known.size} brands linked`);
 }
 
 main().catch((err) => { console.error(err.message); process.exit(1); });

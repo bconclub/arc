@@ -1,5 +1,5 @@
 -- ============================================================
--- ARC — complete backend schema (idempotent, safe to re-run)
+-- ARC, complete backend schema (idempotent, safe to re-run)
 -- ------------------------------------------------------------
 -- Run AFTER 01_drop_old_tables.sql (or on a fresh ARC project).
 -- Paste into: Supabase Dashboard → SQL Editor → Run

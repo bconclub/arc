@@ -102,7 +102,7 @@ export function StatCard({
           <p className="mt-1.5 text-[11px] leading-tight text-text-muted">{sub}</p>
         </div>
 
-        {/* Only shown where there's genuinely room — below 2xl the four cards sit
+        {/* Only shown where there's genuinely room, below 2xl the four cards sit
             too narrow and the sparkline squeezes the label into an ellipsis. */}
         <div className="hidden self-center 2xl:block">
           <StatSpark values={series} color={a.hex} id={id} />

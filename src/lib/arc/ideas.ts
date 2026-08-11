@@ -1,5 +1,5 @@
 // On-demand content idea engine. Reads the current feed cache, asks Claude
-// (Haiku — cheap) for the top ideas to post about, scored against BCON fit,
+// (Haiku, cheap) for the top ideas to post about, scored against BCON fit,
 // and persists them as trends+ideas rows so the ARC Agent page can show them.
 import Anthropic from "@anthropic-ai/sdk";
 import { supabaseAdmin } from "@/lib/supabase";
@@ -8,7 +8,7 @@ import { recordUsage } from "@/lib/arc/usage";
 
 const IDEA_MODEL = "claude-haiku-4-5-20251001";
 
-const BCON = `BCON Club / PROXe — founder Thanzeel (Z). We help SMBs go AI-native in marketing. PROXe = done-for-you conversational AI that never drops a lead (listens across WhatsApp, IG, web, email, voice; warms leads, books calls). BCON Club = teach businesses to build with AI. Voice: lowercase, first-person, hook-first, no em dashes, no buzzwords, story-led. Content pillars: (1) pain points — leads lost to slow follow-up, (2) build-in-public / AI-native journey, (3) practical marketing+AI tips, (4) client results. ICP: solo founders, clinics, coaching academies, real estate, tutoring centers in India.`;
+const BCON = `BCON Club / PROXe, founder Thanzeel (Z). We help SMBs go AI-native in marketing. PROXe = done-for-you conversational AI that never drops a lead (listens across WhatsApp, IG, web, email, voice; warms leads, books calls). BCON Club = teach businesses to build with AI. Voice: lowercase, first-person, hook-first, no em dashes, no buzzwords, story-led. Content pillars: (1) pain points, leads lost to slow follow-up, (2) build-in-public / AI-native journey, (3) practical marketing+AI tips, (4) client results. ICP: solo founders, clinics, coaching academies, real estate, tutoring centers in India.`;
 
 export interface GeneratedIdea {
   title: string;
@@ -26,7 +26,7 @@ export async function generateTopIdeas(limit = 8): Promise<GeneratedIdea[]> {
 
   const pool = signals
     .slice(0, 25)
-    .map((s, i) => `${i + 1}. ${s.title} — ${(s.snippet || "").slice(0, 140)}`)
+    .map((s, i) => `${i + 1}. ${s.title}, ${(s.snippet || "").slice(0, 140)}`)
     .join("\n");
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, baseURL: "https://api.anthropic.com" });

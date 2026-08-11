@@ -17,7 +17,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "ARC",
   description: "GTM Command Center",
-  // Favicon comes from src/app/icon.svg (App Router file convention) — it is
+  // Favicon comes from src/app/icon.svg (App Router file convention), it is
   // theme-aware, so the mark stays visible on both light and dark browser chrome.
 };
 

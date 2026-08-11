@@ -14,7 +14,7 @@ const API = "https://api.github.com";
 
 /**
  * GitHub splits these endpoints by account type, and `bconclub` is a User, not an
- * Organization — /orgs/{name} 404s for it. Resolve the type once, then pick the
+ * Organization, /orgs/{name} 404s for it. Resolve the type once, then pick the
  * matching endpoints. When the account IS the token's own user we use /user/repos,
  * which is the only variant that returns private repos (45 vs 39 here).
  */
@@ -58,7 +58,7 @@ function describe(e: Record<string, unknown>): { type: string; title: string; ur
       const branch = String(payload.ref ?? "").replace("refs/heads/", "");
       return {
         type: "push",
-        title: n > 1 ? `${n} commits to ${branch} — ${head}` : head || `pushed to ${branch}`,
+        title: n > 1 ? `${n} commits to ${branch}, ${head}` : head || `pushed to ${branch}`,
         url: `https://github.com/${repoName}`,
       };
     }
@@ -66,7 +66,7 @@ function describe(e: Record<string, unknown>): { type: string; title: string; ur
       const pr = (payload.pull_request ?? {}) as { title?: string; html_url?: string; number?: number };
       return {
         type: "pull_request",
-        title: `PR #${pr.number ?? "?"} ${String(payload.action ?? "")} — ${pr.title ?? ""}`,
+        title: `PR #${pr.number ?? "?"} ${String(payload.action ?? "")}, ${pr.title ?? ""}`,
         url: pr.html_url ?? null,
       };
     }
@@ -74,7 +74,7 @@ function describe(e: Record<string, unknown>): { type: string; title: string; ur
       const issue = (payload.issue ?? {}) as { title?: string; html_url?: string; number?: number };
       return {
         type: "issues",
-        title: `Issue #${issue.number ?? "?"} ${String(payload.action ?? "")} — ${issue.title ?? ""}`,
+        title: `Issue #${issue.number ?? "?"} ${String(payload.action ?? "")}, ${issue.title ?? ""}`,
         url: issue.html_url ?? null,
       };
     }
@@ -166,7 +166,7 @@ export async function GET() {
     const rawRepos = (await reposRes.json()) as Record<string, unknown>[];
     const repos: GithubRepo[] = rawRepos.map(mapRepo);
 
-    // Brands can link repos that live under a CLIENT's account, not ours — those
+    // Brands can link repos that live under a CLIENT's account, not ours, those
     // never show up in the account listing above, so fetch each one directly.
     // A repo the token can't read is surfaced as inaccessible rather than dropped,
     // so a wrong slug or missing invite is visible instead of silently empty.
@@ -182,7 +182,7 @@ export async function GET() {
         )
       );
     } catch {
-      linked = [];   // brands table not migrated yet — account repos still work
+      linked = [];   // brands table not migrated yet, account repos still work
     }
 
     const known = new Set(repos.map((r) => r.name.toLowerCase()));
@@ -227,9 +227,8 @@ export async function GET() {
 
     // The events feed no longer carries a `commits` array (payload is trimmed to
     // ref/head/before), so "pushed to main" is all it can tell us. Real commit
-    // messages need a per-repo call — done only for the most recently pushed few.
-    // Brand-linked repos come first — those are the ones a brand profile needs —
-    // then the most recently pushed of everything else fills the remaining budget.
+    // messages need a per-repo call, done only for the most recently pushed few.
+    // Brand-linked repos come first, those are the ones a brand profile needs, // then the most recently pushed of everything else fills the remaining budget.
     const linkedSet = new Set(linked.map((s) => s.toLowerCase()));
     const commitTargets = [
       ...repos.filter((r) => r.accessible && linkedSet.has(r.name.toLowerCase())),

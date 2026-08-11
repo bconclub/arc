@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
     },
     {
       key: "avg", label: "Average invoice",
-      value: a.counted ? money(Math.round(a.totalBilled / a.counted)) : "—",
+      value: a.counted ? money(Math.round(a.totalBilled / a.counted)) : "-",
       icon: BarChart3, hint: fy == null ? "Across all years" : fyLabel(fy),
     },
   ];
@@ -210,13 +210,13 @@ export default function AnalyticsPage() {
                     .map((r) => (
                       <tr key={r.id} className="border-t border-[var(--border)]">
                         <td className="whitespace-nowrap px-4 py-2 tabular-nums text-text-muted">{r.issued_on ?? "No date"}</td>
-                        <td className="whitespace-nowrap px-4 py-2 font-mono text-[11px] text-text-muted">{r.invoice_no ?? "—"}</td>
+                        <td className="whitespace-nowrap px-4 py-2 font-mono text-[11px] text-text-muted">{r.invoice_no ?? "-"}</td>
                         <td className="px-4 py-2 text-text">{r.client}</td>
                         <td className="whitespace-nowrap px-4 py-2 tabular-nums text-text">
                           {r.billed_amount == null ? <span className="text-accent-orange">Not recorded</span> : money(r.billed_amount)}
                         </td>
                         <td className="whitespace-nowrap px-4 py-2 tabular-nums text-text-muted">
-                          {r.gst_amount == null ? "—" : money(r.gst_amount)}
+                          {r.gst_amount == null ? "-" : money(r.gst_amount)}
                         </td>
                         <td className="px-4 py-2"><StatusPill status={r.gst_status} /></td>
                       </tr>

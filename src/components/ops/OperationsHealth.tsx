@@ -31,7 +31,7 @@ function ServiceNode({ s }: { s: SystemService }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[12px] font-semibold text-text">{s.name}</span>
-        <span className="block truncate text-[10px] text-text-muted">{s.category ?? "—"}</span>
+        <span className="block truncate text-[10px] text-text-muted">{s.category ?? "-"}</span>
       </span>
       <span
         className="shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wide"
@@ -66,7 +66,7 @@ export function OperationsHealth({ services }: { services: SystemService[] }) {
 
   return (
     <div className="px-4 pb-4">
-      {/* Graph — lg and up */}
+      {/* Graph, lg and up */}
       <div className="relative hidden lg:block">
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full"
@@ -113,7 +113,7 @@ export function OperationsHealth({ services }: { services: SystemService[] }) {
         </div>
       </div>
 
-      {/* List — below lg */}
+      {/* List, below lg */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:hidden">
         {services.map((s) => <ServiceNode key={s.id} s={s} />)}
       </div>

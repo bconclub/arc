@@ -26,7 +26,7 @@ const KIND_COLOR: Record<BrandKind, string> = {
 
 /**
  * "Live" means work is actually moving: a project open, an invoice out, tasks
- * outstanding. A proposal in play is deliberately NOT live — nothing has been
+ * outstanding. A proposal in play is deliberately NOT live, nothing has been
  * won yet, so it belongs in Proposed where it reads as a decision pending
  * rather than as work in progress.
  */
@@ -160,7 +160,7 @@ export default function BrandsPage() {
 
   const live = clients.filter(isLive);
   // A prospect is a proposal by definition, so it sits here rather than in a
-  // group of its own — the distinction is bookkeeping, not something to act on.
+  // group of its own, the distinction is bookkeeping, not something to act on.
   const proposed = [...clients.filter(isProposed), ...prospects];
   const done = clients.filter((b) => !isLive(b) && !isProposed(b));
 

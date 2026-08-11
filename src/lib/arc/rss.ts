@@ -44,7 +44,7 @@ export function getLabelFromScore(score: number): "hot" | "rising" | "steady" {
   return "steady";
 }
 
-// ICP relevance booster — marketing / AI / startup float to the top.
+// ICP relevance booster, marketing / AI / startup float to the top.
 const RELEVANCE_KEYWORDS: { terms: string[]; weight: number }[] = [
   { terms: ["marketing", "brand", "advertis", "campaign", "seo", "social media", "content", "growth", "lead"], weight: 30 },
   { terms: ["ai", "artificial intelligence", "llm", "gpt", "agent", "automation", "chatbot", "machine learning"], weight: 25 },
@@ -173,7 +173,7 @@ export function extractSourceName(url: string): string {
 }
 
 // Fetch + parse many feeds in parallel, in-process. Optionally backfill missing
-// images via og:image (slower — disable for cron syncs to stay under time limits).
+// images via og:image (slower, disable for cron syncs to stay under time limits).
 export async function fetchFeeds(urls: string[], opts: { ogFallback?: boolean } = {}): Promise<RSSItem[]> {
   const { ogFallback = true } = opts;
   const results = await Promise.allSettled(

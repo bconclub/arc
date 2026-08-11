@@ -83,7 +83,7 @@ export function Donut({
   );
 }
 
-/** Single-value progress ring — used for brand health scores. */
+/** Single-value progress ring, used for brand health scores. */
 export function HealthRing({
   score, size = 58, thickness = 5,
 }: { score: number; size?: number; thickness?: number }) {
@@ -111,7 +111,7 @@ export function HealthRing({
   );
 }
 
-/** Vertical bars with labels underneath — the overdue-ageing breakdown. */
+/** Vertical bars with labels underneath, the overdue-ageing breakdown. */
 export function MiniBars({
   bars, height = 76, color = "#e5484d",
 }: { bars: { label: string; value: number }[]; height?: number; color?: string }) {

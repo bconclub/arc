@@ -125,7 +125,7 @@ export default function ProjectsPage() {
                   )}
                 </div>
                 <p className="mt-1.5 text-[12px] text-text-muted">
-                  next: <span className="text-text">{p.next || "—"}</span>
+                  next: <span className="text-text">{p.next || "-"}</span>
                 </p>
                 <p className="mt-0.5 text-[12px] text-text-muted">
                   {open} open · {done} done
@@ -179,7 +179,7 @@ export default function ProjectsPage() {
             </Field>
             <Field label="Size">
               <select className={inputCls} value={editing.size} onChange={(e) => setEditing({ ...editing, size: e.target.value as ProjectSize })}>
-                <option value="">—</option>
+                <option value="">-</option>
                 {["S", "M", "L", "XL"].map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>

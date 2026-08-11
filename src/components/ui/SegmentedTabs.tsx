@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Pill tab row with a lime active state — the control the reference screens use
+ * Pill tab row with a lime active state, the control the reference screens use
  * for "All Invoices / Draft 3 / Unpaid 5" and for the section switcher.
  *
  * Counts are part of the tab rather than a separate badge because the count is
@@ -12,7 +12,7 @@
 export type Tab<T extends string = string> = {
   value: T;
   label: string;
-  /** Omitted rather than zero when a count doesn't apply — 0 is meaningful. */
+  /** Omitted rather than zero when a count doesn't apply, 0 is meaningful. */
   count?: number;
 };
 

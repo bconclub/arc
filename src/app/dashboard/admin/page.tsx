@@ -129,7 +129,7 @@ export default function AdminPage() {
         </p>
       </div>
 
-      {/* Operations Health — moved off the dashboard so it stays a single screen. */}
+      {/* Operations Health, moved off the dashboard so it stays a single screen. */}
       <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-surface">
         <div className="px-4 pb-2 pt-3.5">
           <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">Operations health</h2>
@@ -140,7 +140,7 @@ export default function AdminPage() {
         <OperationsHealth services={services} />
       </section>
 
-      {/* GitHub — what's actually shipping across the repos. */}
+      {/* GitHub, what's actually shipping across the repos. */}
       <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-surface">
         <div className="px-4 pb-2 pt-3.5">
           <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">GitHub activity</h2>

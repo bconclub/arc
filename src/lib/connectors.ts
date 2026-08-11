@@ -1,4 +1,4 @@
-// Connector registry — SERVER ONLY. Never import this into a client component.
+// Connector registry. SERVER ONLY. Never import this into a client component.
 //
 // Secrets live in env vars, never in the database. Everything here reports
 // PRESENCE and REACHABILITY only: `process.env[x]` is coerced to a boolean at the
@@ -102,7 +102,7 @@ export const CONNECTORS: ConnectorDef[] = [
     category: "Database",
     envVars: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
     optionalEnv: ["NEXT_PUBLIC_SUPABASE_ANON_KEY"],
-    description: "Every table behind ARC — projects, money, brands, signals.",
+    description: "Every table behind ARC, projects, money, brands, signals.",
     docsUrl: "https://supabase.com/dashboard/project/_/settings/api",
     async probe() {
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -114,7 +114,7 @@ export const CONNECTORS: ConnectorDef[] = [
           Authorization: `Bearer ${key}`,
         });
         if (res.status === 401 || res.status === 403) return { ok: false, detail: "Service key rejected" };
-        if (res.status === 404) return { ok: false, detail: "brands table missing — run the migration" };
+        if (res.status === 404) return { ok: false, detail: "brands table missing, run the migration" };
         if (!res.ok) return { ok: false, detail: `HTTP ${res.status}` };
         return { ok: true, detail: "Connected, brands table present" };
       } catch (e) { return fail(e); }
@@ -164,7 +164,7 @@ export const CONNECTORS: ConnectorDef[] = [
     envVars: ["TAVILY_API_KEY"],
     description: "Web research feeding the signals pipeline.",
     docsUrl: "https://app.tavily.com/home",
-    // No free read-only endpoint — a probe would burn a paid search credit.
+    // No free read-only endpoint, a probe would burn a paid search credit.
   },
   {
     key: "whatsapp",
@@ -192,7 +192,7 @@ export const CONNECTORS: ConnectorDef[] = [
     name: "Gmail",
     category: "Email",
     envVars: ["GMAIL_CLIENT_ID", "GMAIL_CLIENT_SECRET", "GMAIL_REFRESH_TOKEN"],
-    description: "Inbox signals — bounces, client replies, invoice mail.",
+    description: "Inbox signals, bounces, client replies, invoice mail.",
     docsUrl: "https://console.cloud.google.com/apis/credentials",
     async probe() {
       const id = process.env.GMAIL_CLIENT_ID;
@@ -213,7 +213,7 @@ export const CONNECTORS: ConnectorDef[] = [
           signal: ctrl.signal,
           cache: "no-store",
         });
-        if (!res.ok) return { ok: false, detail: `Refresh failed — HTTP ${res.status}` };
+        if (!res.ok) return { ok: false, detail: `Refresh failed. HTTP ${res.status}` };
         return { ok: true, detail: "Refresh token valid" };
       } catch (e) {
         return fail(e);
@@ -272,7 +272,7 @@ export async function statusOf(def: ConnectorDef, runProbe: boolean): Promise<Co
     return { ...base, probed: false, ok: null, detail: `Missing ${base.missing.join(", ")}` };
   }
   if (!runProbe || !def.probe) {
-    return { ...base, probed: false, ok: null, detail: "Configured — not probed" };
+    return { ...base, probed: false, ok: null, detail: "Configured, not probed" };
   }
 
   const result = await def.probe();

@@ -1,5 +1,5 @@
 -- ============================================================
--- ⚠️  DESTRUCTIVE — run ONLY in the project you intend to wipe.
+-- ⚠️  DESTRUCTIVE, run ONLY in the project you intend to wipe.
 -- Confirm the top breadcrumb reads:  BCON Club / ARC / PRODUCTION
 -- This permanently deletes all 16 existing tables and their data.
 -- ============================================================

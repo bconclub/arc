@@ -6,7 +6,7 @@ export const fetchCache = "force-no-store";
 
 // Columns the dashboard is allowed to write. The `brands` table is the client
 // register and also holds GST/billing fields (gstin, place_of_supply, currency,
-// lifetime_revenue…) — those are owned by the billing side and are deliberately
+// lifetime_revenue…), those are owned by the billing side and are deliberately
 // NOT writable from here.
 const WRITABLE = ["name", "logo_url", "color", "notes", "status", "kind", "via_brand_id", "aliases", "domains", "github_repos"];
 

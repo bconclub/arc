@@ -74,10 +74,10 @@ export default function ConfigPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label="Estimated cost" value={usage ? fmtCost(usage.total_cost_usd) : "—"} accent />
-          <Stat label="API calls" value={usage ? fmt(usage.calls) : "—"} />
-          <Stat label="Input tokens" value={usage ? fmt(usage.total_input) : "—"} />
-          <Stat label="Output tokens" value={usage ? fmt(usage.total_output) : "—"} />
+          <Stat label="Estimated cost" value={usage ? fmtCost(usage.total_cost_usd) : "-"} accent />
+          <Stat label="API calls" value={usage ? fmt(usage.calls) : "-"} />
+          <Stat label="Input tokens" value={usage ? fmt(usage.total_input) : "-"} />
+          <Stat label="Output tokens" value={usage ? fmt(usage.total_output) : "-"} />
         </div>
         <p className="text-[10px] text-text-muted mt-2">
           Cost is an estimate (Sonnet ~$3/$15, Haiku ~$1/$5 per 1M in/out). {usage?.updated_at ? `Updated ${new Date(usage.updated_at).toLocaleString()}` : "No usage recorded yet."}
@@ -120,24 +120,24 @@ export default function ConfigPage() {
           <Database size={12} /> System
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label="Active sources" value={status ? `${status.active_sources}/${status.sources}` : "—"} />
-          <Stat label="Cached signals" value={status ? fmt(status.signals) : "—"} />
-          <Stat label="Approval gate" value={status?.approval_gate || "—"} />
-          <Stat label="Last signal" value={status?.last_signal_at ? new Date(status.last_signal_at).toLocaleDateString() : "—"} />
+          <Stat label="Active sources" value={status ? `${status.active_sources}/${status.sources}` : "-"} />
+          <Stat label="Cached signals" value={status ? fmt(status.signals) : "-"} />
+          <Stat label="Approval gate" value={status?.approval_gate || "-"} />
+          <Stat label="Last signal" value={status?.last_signal_at ? new Date(status.last_signal_at).toLocaleDateString() : "-"} />
         </div>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="card p-3 flex items-center gap-3 text-[12px]">
             <Bot size={14} className="text-text-muted shrink-0" />
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wider text-text-muted">Writing model</div>
-              <div className="text-text truncate">{status?.write_model || "—"}</div>
+              <div className="text-text truncate">{status?.write_model || "-"}</div>
             </div>
           </div>
           <div className="card p-3 flex items-center gap-3 text-[12px]">
             <Zap size={14} className="text-text-muted shrink-0" />
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wider text-text-muted">Idea model (cheap)</div>
-              <div className="text-text truncate">{status?.idea_model || "—"}</div>
+              <div className="text-text truncate">{status?.idea_model || "-"}</div>
             </div>
           </div>
         </div>

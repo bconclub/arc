@@ -10,7 +10,7 @@ const SYSTEM = `You are the head scriptwriter for BCON Club, an AI-native market
 
 Brand voice: ${BCON.voice}
 Format: ${BCON.winning_format}
-Video length: ${MIN}–${MAX} seconds
+Video length: ${MIN}-${MAX} seconds
 ICP: ${BCON.icp}
 
 Hook patterns that work for BCON:
@@ -18,15 +18,15 @@ ${BCON.hook_patterns.map((p) => `  - ${p}`).join("\n")}
 
 Return JSON with exactly these keys:
 {
-  "hook": "<first 3 seconds — one punchy sentence that stops the scroll>",
-  "body": "<the how-to beats — numbered steps, 1 sentence each, fits ${MIN}-${MAX}s when spoken>",
+  "hook": "<first 3 seconds, one punchy sentence that stops the scroll>",
+  "body": "<the how-to beats, numbered steps, 1 sentence each, fits ${MIN}-${MAX}s when spoken>",
   "on_screen_text": [{"t": 0, "text": "<overlay at 0s>"}, {"t": 5, "text": "<overlay at 5s>"}],
-  "caption": "<Instagram/TikTok/LinkedIn caption, 80–150 words, ends with one CTA>",
+  "caption": "<Instagram/TikTok/LinkedIn caption, 80-150 words, ends with one CTA>",
   "hashtags": ["tag1", "tag2", "...up to 10"],
   "shot_list": [{"shot": 1, "description": "<what to film>", "duration_s": 5}]
 }
 
-Shot list must cover the full ${MIN}–${MAX}s. Be specific — what's on screen, what Z says.
+Shot list must cover the full ${MIN}-${MAX}s. Be specific, what's on screen, what Z says.
 Caption ends with exactly one CTA (DM DEMO / Comment LEADS / Save this).`;
 
 interface ScriptResult {

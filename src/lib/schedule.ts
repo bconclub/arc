@@ -46,7 +46,7 @@ export function formatTime(hour: number, min: number): string {
 }
 
 export function formatBlockTime(block: ScheduleBlock): string {
-  return `${formatTime(block.startHour, block.startMin)} — ${formatTime(block.endHour, block.endMin)}`;
+  return `${formatTime(block.startHour, block.startMin)}, ${formatTime(block.endHour, block.endMin)}`;
 }
 
 export interface DailyTarget {

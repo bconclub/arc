@@ -1,5 +1,5 @@
 // Session tokens: "<expiryEpochSeconds>.<base64url HMAC-SHA256 signature>".
-// Web Crypto only, no Buffer — must run in the Edge middleware runtime.
+// Web Crypto only, no Buffer, must run in the Edge middleware runtime.
 
 const COOKIE_NAME = "arc_session";
 const SESSION_DAYS = 30;

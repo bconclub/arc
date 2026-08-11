@@ -1,5 +1,5 @@
 -- ============================================================
--- ARC — initial schema
+-- ARC, initial schema
 -- Run once in Supabase SQL editor or via `supabase db push`
 -- ============================================================
 

@@ -1,4 +1,4 @@
-// Content Engine Types — Feed → Write → Schedule → Results
+// Content Engine Types. Feed → Write → Schedule → Results
 
 export type ContentFormat = "LinkedIn post" | "Thread" | "Reel script" | "WhatsApp broadcast" | "X post";
 export type PostStatus = "draft" | "scheduled" | "live" | "done";

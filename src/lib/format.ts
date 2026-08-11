@@ -1,5 +1,5 @@
 export function money(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(n)) return "—";
+  if (n == null || Number.isNaN(n)) return "-";
   return `₹${Math.round(n).toLocaleString("en-IN")}`;
 }
 
@@ -16,7 +16,7 @@ export function dueClass(due: string | null): "" | "overdue" | "soon" {
 }
 
 export function daysAgo(dateStr: string | null): string {
-  if (!dateStr) return "—";
+  if (!dateStr) return "-";
   const d = new Date(dateStr + "T00:00:00");
   const diff = Math.round((Date.now() - d.getTime()) / 86_400_000);
   return `${diff}d ago`;
@@ -24,7 +24,7 @@ export function daysAgo(dateStr: string | null): string {
 
 // Indian short money: ₹4.61L, ₹1.28Cr. Below a lakh stays fully written out.
 export function moneyShort(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(n)) return "—";
+  if (n == null || Number.isNaN(n)) return "-";
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
   // Number() strips a trailing .00 so ₹1L reads as "₹1L" rather than "₹1.00L".
@@ -42,9 +42,9 @@ export function moneyShort(n: number | null | undefined): string {
 
 // Coarse relative time off a timestamp: 10m ago, 3h ago, 2d ago.
 export function timeAgo(ts: string | null): string {
-  if (!ts) return "—";
+  if (!ts) return "-";
   const t = new Date(ts).getTime();
-  if (!Number.isFinite(t)) return "—";
+  if (!Number.isFinite(t)) return "-";
   const mins = Math.max(0, Math.round((Date.now() - t) / 60_000));
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -57,9 +57,9 @@ export function timeAgo(ts: string | null): string {
 
 // Compact relative time for the activity rail: 2m, 45m, 3h, 1d, 4w.
 export function shortAgo(ts: string | null): string {
-  if (!ts) return "—";
+  if (!ts) return "-";
   const t = new Date(ts).getTime();
-  if (!Number.isFinite(t)) return "—";
+  if (!Number.isFinite(t)) return "-";
   const mins = Math.max(0, Math.round((Date.now() - t) / 60_000));
   if (mins < 1) return "now";
   if (mins < 60) return `${mins}m`;
@@ -74,9 +74,9 @@ export function shortAgo(ts: string | null): string {
 
 // Initials for an avatar tile: "BCON Club" → "BC", "WindChasers" → "WC".
 export function initials(name: string | null | undefined): string {
-  if (!name) return "—";
+  if (!name) return "-";
   const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return "—";
+  if (words.length === 0) return "-";
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
 }
@@ -127,7 +127,7 @@ export function dailyTotals(rows: { ts: string | null; amount: number | null }[]
     const amt = r.amount ?? 0;
     const idx = r.ts ? bucketIndex(r.ts, days) : null;
     if (idx == null) { baseline += amt; continue; }
-    if (idx >= days) continue;          // future-dated — not on the chart yet
+    if (idx >= days) continue;          // future-dated, not on the chart yet
     if (idx < 0) { baseline += amt; continue; }
     out[idx] += amt;
   }

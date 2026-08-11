@@ -1,5 +1,5 @@
 -- ============================================================
--- ARC — arc_context table (key-value store for app settings)
+-- ARC, arc_context table (key-value store for app settings)
 -- Run after 20260405000000_init.sql
 -- ============================================================
 

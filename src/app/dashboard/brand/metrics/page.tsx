@@ -106,7 +106,7 @@ export default function BrandMetricsPage() {
                     ).map(([label, curr, prevVal]) => (
                       <div key={label}>
                         <p className="text-lg font-bold tabular-nums tracking-tight text-text">
-                          {curr == null ? "—" : curr.toLocaleString()}
+                          {curr == null ? "-" : curr.toLocaleString()}
                         </p>
                         <p className="text-[10px] uppercase tracking-wider text-text-muted">
                           {label}
@@ -130,7 +130,7 @@ export default function BrandMetricsPage() {
                       {[...rows].reverse().map((r) => (
                         <li key={r.id} className="flex items-center gap-2 text-[12px] tabular-nums text-text-muted">
                           <span>{r.recorded_on}</span>
-                          <span>· {r.followers?.toLocaleString() ?? "—"} followers</span>
+                          <span>· {r.followers?.toLocaleString() ?? "-"} followers</span>
                           <button className="ml-auto hover:text-accent-red" onClick={() => removeEntry(r)}>
                             <Trash2 size={12} />
                           </button>

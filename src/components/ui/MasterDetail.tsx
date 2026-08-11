@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 /**
  * Two-pane list/detail layout.
  *
- * On desktop the panes sit side by side. On mobile they do NOT — squeezing a
+ * On desktop the panes sit side by side. On mobile they do NOT, squeezing a
  * detail panel next to a list at 375px gives two unusable columns and a
  * horizontal scrollbar. Instead the detail takes the full width and the list is
  * hidden behind a back control, which is how the pattern is expected to behave

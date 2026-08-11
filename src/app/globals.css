@@ -12,8 +12,7 @@
   --border-strong: rgba(255, 255, 255, 0.12);
   --text: #ededed;
   --text-muted: #6b6b6b;
-  /* Brand lime, sampled from public/ARC Icon.png. Identity only —
-     red/amber/green stay semantic (danger / warning / success). */
+  /* Brand lime, sampled from public/ARC Icon.png. Identity only, red/amber/green stay semantic (danger / warning / success). */
   --brand: #cbfa0a;
   --brand-ink: #0a0a0a;        /* text that sits on top of the lime */
   --brand-soft: rgba(203, 250, 10, 0.14);
@@ -90,7 +89,7 @@
   --drawer-bg: #ffffff;
   --overlay: rgba(0, 0, 0, 0.35);
 
-  /* Light theme carries elevation with shadow rather than border weight — the
+  /* Light theme carries elevation with shadow rather than border weight, the
      reference's cards float on an off-white page. */
   --shadow-card: 0 1px 2px rgba(16, 18, 20, 0.04), 0 4px 12px rgba(16, 18, 20, 0.05);
   --shadow-panel: 0 2px 4px rgba(16, 18, 20, 0.04), 0 12px 32px rgba(16, 18, 20, 0.07);
@@ -421,7 +420,7 @@ select option {
 
 /* ─── Brand mark: swap the logo's ink with the theme ─── */
 /* The letterform is baked into the PNG, so the theme picks a file rather than
-   recolouring one — a filter would shift the lime wedge along with it. */
+   recolouring one, a filter would shift the lime wedge along with it. */
 .arc-mark-light { display: none; }
 [data-theme="light"] .arc-mark-dark { display: none; }
 [data-theme="light"] .arc-mark-light { display: inline-block; }

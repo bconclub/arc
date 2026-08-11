@@ -25,7 +25,7 @@ function parse(d: string | null): number | null {
  *
  * The window is derived from the real project dates rather than a fixed range,
  * then padded so bars never touch the edges. Projects missing a start or end are
- * still listed — with an explicit marker instead of a bar — because silently
+ * still listed, with an explicit marker instead of a bar, because silently
  * dropping them would hide work that is genuinely running.
  */
 export function Timeline({ rows }: { rows: TimelineRow[] }) {
@@ -128,7 +128,7 @@ export function Timeline({ rows }: { rows: TimelineRow[] }) {
                         {r.name}
                       </Link>
                       <span className="block truncate text-[9.5px] text-text-muted">
-                        {r.client ?? "—"}
+                        {r.client ?? "-"}
                         {r.budget != null && ` · ${moneyShort(r.budget)}`}
                         {!r.start_date && !r.end_date
                           ? " · no dates"

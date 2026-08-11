@@ -1,4 +1,4 @@
--- ARC Feed Sources — 20 verified working RSS feeds (June 2026)
+-- ARC Feed Sources, 20 verified working RSS feeds (June 2026)
 -- Run in Supabase dashboard → SQL Editor
 -- Safe to re-run: ON CONFLICT(value) updates name and sets active=true
 
@@ -29,7 +29,7 @@ INSERT INTO sources (name, type, value, active, added_at) VALUES
 
   -- Creator economy & media
   ('Fast Company Creator Economy','rss', 'https://www.fastcompany.com/section/the-creator-economy/rss',        true, now()),
-  ('ICYMI — Lia Haberman',        'rss', 'https://liahaberman.substack.com/feed',                              true, now()),
+  ('ICYMI. Lia Haberman',        'rss', 'https://liahaberman.substack.com/feed',                              true, now()),
   ('Simon Owens Media',           'rss', 'https://simonowens.substack.com/feed',                               true, now()),
   ('Next in Media',               'rss', 'https://mikeshields.substack.com/feed',                              true, now()),
 

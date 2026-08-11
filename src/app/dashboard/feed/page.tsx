@@ -324,7 +324,7 @@ export default function FeedPage() {
     finally { setIsLoading(false) }
   }
 
-  // Selecting a topic does NOT refetch — it filters the already-loaded signals
+  // Selecting a topic does NOT refetch, it filters the already-loaded signals
   // client-side so the keyword filter is rigorous and instant.
   function selectTopic(t: Topic | null) {
     setActiveTopic(t)
@@ -364,7 +364,7 @@ export default function FeedPage() {
 
   // Rigorous keyword filter: EVERY word in the topic must appear as a WHOLE word
   // in the signal (title + snippet + source). "AI marketing" => the story must
-  // contain "ai" AND "marketing" as full words — NOT as fragments. This stops
+  // contain "ai" AND "marketing" as full words. NOT as fragments. This stops
   // "ai" matching "airports" or "marketing" matching only via a partial.
   function matchesTopic(s: Signal, t: Topic | null): boolean {
     if (!t) return true

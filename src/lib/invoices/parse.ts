@@ -6,7 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
  * Why a model and not a PDF text library: BCON's invoices stopped carrying a
  * text layer somewhere after April 2026. `Invoice_BCON - Windchasers APR25.pdf`
  * still extracts cleanly, but `BCON - YV Homes Invoice.pdf` and
- * `Exam Windchasers Invoice.pdf` are flattened images — pdftotext-style
+ * `Exam Windchasers Invoice.pdf` are flattened images, pdftotext-style
  * extraction returns "Invoice template design" and nothing else. Claude reads
  * the pages visually, so scanned and image-only invoices work the same as
  * digital ones, and a photographed invoice works too.
@@ -74,11 +74,11 @@ const SYSTEM = `You read invoices issued by BCON, a design and marketing studio 
 
 Return the fields exactly as printed on the document.
 
-- BCON is the SELLER. The client is whoever is billed — the "Bill To" / "Billed To" /
+- BCON is the SELLER. The client is whoever is billed, the "Bill To" / "Billed To" /
   "Customer" party. Never return BCON, BCON Club, or their GSTIN as the client.
 - Amounts are numbers only: no currency symbol, no thousands separators. "₹1,23,456.00"
   is 123456. Indian digit grouping is 2-2-3, so 1,23,456 is one hundred twenty-three
-  thousand — not 123.456 and not 12,3456.
+  thousand, not 123.456 and not 12,3456.
 - total_amount is the amount actually payable, after GST and after any discount or
   advance already deducted. If the invoice shows a "Balance Due" or "Amount Payable"
   that differs from the gross total, that balance is total_amount.
@@ -90,7 +90,7 @@ Return the fields exactly as printed on the document.
 - Any field not present on the document is null. Never guess a value to fill a field.
 
 Set confidence to "low" if the scan is unclear, figures are cut off, or you had to
-choose between readings — and put the specific doubt in notes. An honest "low" is more
+choose between readings, and put the specific doubt in notes. An honest "low" is more
 useful than a confident wrong number, because these figures go straight into the books.`;
 
 /** Base64 of the raw bytes, with no line breaks (the API rejects wrapped base64). */

@@ -8,7 +8,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
  * one-line descriptor, optional delta chip.
  *
  * `delta` is deliberately optional and has no default. The reference shows
- * "↓2 from yesterday" on every card, but ARC stores current state only — there
+ * "↓2 from yesterday" on every card, but ARC stores current state only, there
  * is no record of what these counts were yesterday, so for most stats there is
  * nothing to compare against. Cards render without the chip until a snapshot
  * history exists; an invented delta on a money figure is worse than none.
@@ -16,7 +16,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 
 export type Delta = {
   value: number;
-  /** e.g. "from yesterday", "vs last week" — the period being compared. */
+  /** e.g. "from yesterday", "vs last week", the period being compared. */
   label: string;
   /** Whether a rise is good. Money collected up = good; overdue up = bad. */
   upIsGood?: boolean;
@@ -31,7 +31,7 @@ export type Stat = {
   hint?: string;
   icon?: LucideIcon;
   delta?: Delta;
-  /** Tints the value — for figures that are bad news, like overdue. */
+  /** Tints the value, for figures that are bad news, like overdue. */
   valueClass?: string;
   href?: string;
 };

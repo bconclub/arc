@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST handler for multiple URLs — delegates to the shared in-process engine.
+// POST handler for multiple URLs, delegates to the shared in-process engine.
 export async function POST(req: NextRequest) {
   try {
     const { urls } = (await req.json()) as { urls: string[] };

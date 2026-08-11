@@ -72,10 +72,10 @@ export default function PeoplePage() {
                 <tr key={p.id} className="cursor-pointer border-t border-[var(--border)] transition-colors hover:bg-surface-hover"
                   onClick={() => { setError(""); setEditing({ id: p.id, name: p.name, role: p.role ?? "", org: p.org ?? "", relation: p.relation ?? "", channel: p.channel ?? "", notes: p.notes ?? "" }); }}>
                   <td className="px-4 py-2.5 font-medium text-text">{p.name}</td>
-                  <td className="px-4 py-2.5 text-text-muted">{p.role || "—"}</td>
-                  <td className="px-4 py-2.5 text-text-muted">{p.org || "—"}</td>
-                  <td className="px-4 py-2.5 text-text-muted">{p.relation || "—"}</td>
-                  <td className="px-4 py-2.5 text-text-muted">{p.channel || "—"}</td>
+                  <td className="px-4 py-2.5 text-text-muted">{p.role || "-"}</td>
+                  <td className="px-4 py-2.5 text-text-muted">{p.org || "-"}</td>
+                  <td className="px-4 py-2.5 text-text-muted">{p.relation || "-"}</td>
+                  <td className="px-4 py-2.5 text-text-muted">{p.channel || "-"}</td>
                 </tr>
               ))}
             </tbody>

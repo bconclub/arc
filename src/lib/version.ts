@@ -1,8 +1,8 @@
-// ARC version tracking — KEEP IN SYNC WITH package.json "version".
+// ARC version tracking. KEEP IN SYNC WITH package.json "version".
 // Sidebar, changelog and release tags all read from VERSION below.
 //
 // Scheme: the PATCH number counts up 1 → 100 before the minor moves.
-// It is NOT semver — patch is a running build counter, so 0.0.47 is normal and
+// It is NOT semver, patch is a running build counter, so 0.0.47 is normal and
 // 0.0.100 is the last patch in the series before the minor rolls.
 //
 //   0.0.1 · 0.0.2 · … · 0.0.99 · 0.0.100 → 0.1.0 → 0.1.1 · …
@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.17";
+export const VERSION = "0.0.18";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.18",
+    date: "2026-08-12",
+    notes: "Em dashes removed from the entire codebase, not just the visible copy: comments, changelog, migrations and the value placeholder that meant no data.",
+  },
   {
     version: "0.0.17",
     date: "2026-08-12",
@@ -46,17 +51,17 @@ export const CHANGELOG = [
   {
     version: "0.0.11",
     date: "2026-08-12",
-    notes: "Money is now an Invoices screen: overdue / due-soon / outstanding / collected across the top, status tabs, working client and month filters, and a list beside a detail panel. Upload an invoice PDF or photo and it reads the figures off the page — nothing is saved until you confirm what it read.",
+    notes: "Money is now an Invoices screen: overdue / due-soon / outstanding / collected across the top, status tabs, working client and month filters, and a list beside a detail panel. Upload an invoice PDF or photo and it reads the figures off the page, nothing is saved until you confirm what it read.",
   },
   {
     version: "0.0.10",
     date: "2026-08-12",
-    notes: "Design foundation for the dashboard rebuild: a radius and elevation scale, lime weights that work on both themes, and the shared pieces the new screens are built from — status pills, tab rows, stat cards, list/detail layout and avatar clusters.",
+    notes: "Design foundation for the dashboard rebuild: a radius and elevation scale, lime weights that work on both themes, and the shared pieces the new screens are built from, status pills, tab rows, stat cards, list/detail layout and avatar clusters.",
   },
   {
     version: "0.0.9",
     date: "2026-08-12",
-    notes: "Invoices can be read from a PDF or a photo — including scans with no text layer, which is why four amounts were blank. Logo pull now searches a repo properly and finds marks in nested folders. Real ARC logo artwork in the sidebar with the version beside it. Brands grouped Live / Proposed / Completed.",
+    notes: "Invoices can be read from a PDF or a photo, including scans with no text layer, which is why four amounts were blank. Logo pull now searches a repo properly and finds marks in nested folders. Real ARC logo artwork in the sidebar with the version beside it. Brands grouped Live / Proposed / Completed.",
   },
   {
     version: "0.0.8",

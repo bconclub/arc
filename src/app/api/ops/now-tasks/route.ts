@@ -15,8 +15,7 @@ export async function POST(req: NextRequest) {
 
   // priority / estimate_minutes are added by the brands_services migration.
   // Only send them when the caller actually supplied a value, so creating a task
-  // still works on a database where that migration hasn't been applied yet —
-  // otherwise Postgres rejects the whole insert on the unknown column.
+  // still works on a database where that migration hasn't been applied yet, // otherwise Postgres rejects the whole insert on the unknown column.
   const row: Record<string, unknown> = {
     text: body.text,
     due: body.due || null,

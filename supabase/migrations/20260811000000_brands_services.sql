@@ -1,4 +1,4 @@
--- ARC v2 dashboard — ADDITIVE ONLY. Safe to re-run.
+-- ARC v2 dashboard. ADDITIVE ONLY. Safe to re-run.
 --
 -- IMPORTANT naming note. This database already has two tables whose names look
 -- like what a dashboard would want, but mean something else entirely:

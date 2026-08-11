@@ -23,7 +23,7 @@ function tryHostname(url: string) {
   try { return new URL(url).hostname.replace('www.', '') } catch { return '' }
 }
 
-// Used for search chips only — reserved Tavily search for explicit user intent
+// Used for search chips only, reserved Tavily search for explicit user intent
 async function anthropicWebSearch(query: string): Promise<{
   title: string; url: string; snippet: string; source_name: string;
   published_date: string; image_url: string; trend_score: number; label: string;
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
         saved: false,
       })
 
-      // Serve from the cache whenever it's warm — the /api/arc/sync cron keeps
+      // Serve from the cache whenever it's warm, the /api/arc/sync cron keeps
       // it fresh, so the Feed loads instantly without a live fetch.
       const cached = await readSignalsCache()
       if (cached && cached.length > 0) {
@@ -205,7 +205,7 @@ export async function POST(req: Request) {
         }
       }
 
-      const systemPrompt = `You write ${format} posts AS this founder, in their exact voice. Match the style guide precisely — it is the source of truth, not generic "best practices".
+      const systemPrompt = `You write ${format} posts AS this founder, in their exact voice. Match the style guide precisely, it is the source of truth, not generic "best practices".
 
 WHO YOU ARE:
 ${ctx.about_me || ''}
@@ -217,7 +217,7 @@ ${templatePattern ? `\nFollow this structure: ${templatePattern}` : ''}
 
 NON-NEGOTIABLE RULES:
 - Write in first person, lowercase, like texting a friend (not an ad).
-- NEVER use em dashes (—). Use periods, commas, or line breaks instead.
+- NEVER use em dashes (-). Use periods, commas, or line breaks instead.
 - No corporate fluff, no AI buzzwords (synergy, leverage, revolutionize, game-changer).
 - Short punchy sentences, one thought per line, heavy line breaks.
 - Open with a hook naming a problem people quietly accept.
@@ -245,7 +245,7 @@ NON-NEGOTIABLE RULES:
               } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
                 // Enforce the no-em-dash rule on the fly (em/en dash is a single char,
                 // never split across deltas).
-                const clean = event.delta.text.replace(/\s*[—–]\s*/g, '. ')
+                const clean = event.delta.text.replace(/\s*[--]\s*/g, '. ')
                 controller.enqueue(new TextEncoder().encode(clean))
               }
             }
@@ -437,7 +437,7 @@ Return ONLY valid JSON, no prose, in EXACTLY this shape:
       }
       userContent.push({
         type: 'text',
-        text: `CURRENT STYLE GUIDE:\n${currentGuide || '(empty — this is the first inspiration)'}\n\n${text ? `LIKED POST:\n${text}` : 'The liked post is in the attached screenshot.'}\n\nReturn the JSON.`,
+        text: `CURRENT STYLE GUIDE:\n${currentGuide || '(empty, this is the first inspiration)'}\n\n${text ? `LIKED POST:\n${text}` : 'The liked post is in the attached screenshot.'}\n\nReturn the JSON.`,
       })
 
       try {
@@ -467,7 +467,7 @@ Return ONLY valid JSON, no prose, in EXACTLY this shape:
 
     // ── save-style-guide ───────────────────────────────────────
     // Persist the approved (merged) style guide into arc_context.voice_style,
-    // which is what write-post already reads — so improving Style improves writing.
+    // which is what write-post already reads, so improving Style improves writing.
     if (action === 'save-style-guide') {
       const { guide } = body as { guide?: string }
       if (typeof guide !== 'string') {
@@ -533,7 +533,7 @@ Company: ${lead.company} (${lead.role})
 Industry: ${lead.industry}, Region: ${lead.region}
 Why now: ${lead.why}
 
-Pitching: ${product?.name || 'PROXe'} — ${product?.pitch || ''}`
+Pitching: ${product?.name || 'PROXe'}, ${product?.pitch || ''}`
 
       try {
         const response = await anthropic.messages.create({
@@ -547,7 +547,7 @@ Pitching: ${product?.name || 'PROXe'} — ${product?.pitch || ''}`
           : ''
         // Hard guarantee the no-em-dash rule (model occasionally slips): replace
         // em/en dashes with a period or comma depending on surrounding spacing.
-        text = text.replace(/\s*[—–]\s*/g, '. ').replace(/\.\s*\./g, '.')
+        text = text.replace(/\s*[--]\s*/g, '. ').replace(/\.\s*\./g, '.')
         return Response.json({ data: { message: text } })
       } catch (e) {
         console.error('draft-outreach error:', e)

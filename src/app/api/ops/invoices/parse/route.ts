@@ -13,13 +13,13 @@ const MAX_BYTES = 20 * 1024 * 1024;
 
 /**
  * POST multipart/form-data
- *   file       — the invoice (PDF, PNG, JPEG, WebP, GIF)
- *   paymentId  — optional; write the parsed figures onto this payment row
- *   apply      — optional "true"; without it nothing is written
+ *   file      , the invoice (PDF, PNG, JPEG, WebP, GIF)
+ *   paymentId , optional; write the parsed figures onto this payment row
+ *   apply     , optional "true"; without it nothing is written
  *
  * Parsing and writing are deliberately separate. Several payment rows carry a
  * null amount, and a wrong figure written silently into the books is worse than
- * no figure at all — so the default is to return what was read and let the
+ * no figure at all, so the default is to return what was read and let the
  * caller confirm it before it lands.
  */
 export async function POST(req: NextRequest) {
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Only fill what the document actually establishes — a null due date on the
+  // Only fill what the document actually establishes, a null due date on the
   // invoice must not wipe a due date already recorded in ARC.
   const patch: Record<string, unknown> = { amount: parsed.total_amount };
   if (parsed.due_on) patch.due = parsed.due_on;

@@ -24,7 +24,7 @@ export function ThemeToggle() {
     } catch {}
   };
 
-  // Avoid hydration mismatch — render a stable placeholder until mounted.
+  // Avoid hydration mismatch, render a stable placeholder until mounted.
   if (!mounted) {
     return <div className="w-8 h-8" aria-hidden />;
   }

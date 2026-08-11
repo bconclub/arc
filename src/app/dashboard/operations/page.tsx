@@ -105,13 +105,13 @@ export default function OperationsPage() {
       });
       const dl = daysUntil(p.end_date);
       if ((p.status === "active" || p.status === "waiting") && dl != null && dl <= 7) {
-        week.push({ key: `p-${p.id}`, label: `${p.name} due`, sub: p.client ?? "—", days: dl, kind: "project" });
+        week.push({ key: `p-${p.id}`, label: `${p.name} due`, sub: p.client ?? "-", days: dl, kind: "project" });
       }
     }
     for (const p of payments.filter((x) => UNPAID.includes(x.status))) {
       const dl = daysUntil(p.due);
       if (dl != null && dl <= 7) {
-        week.push({ key: `m-${p.id}`, label: `${money(p.amount)} from ${p.client ?? "—"}`, sub: p.item ?? "—", days: dl, kind: "money" });
+        week.push({ key: `m-${p.id}`, label: `${money(p.amount)} from ${p.client ?? "-"}`, sub: p.item ?? "-", days: dl, kind: "money" });
       }
     }
     week.sort((a, b) => a.days - b.days);

@@ -27,7 +27,7 @@ interface StyleAnalysis {
   proposedGuide: string;
 }
 
-// Hardcoded identity — ARC knows who this is. Not editable.
+// Hardcoded identity. ARC knows who this is. Not editable.
 const IDENTITY = `Thanzeel Ashruf (Z). Founder of PROXe (goproxe.com) and BCON Club (bconclub.com).
 
 I've spent 7 years in marketing, building brands across retail, services, hospitality, real estate, and healthcare, obsessed with how brands grow, why some win, and why great ones still lose customers they should have kept.
@@ -134,7 +134,7 @@ export default function StylePage() {
     if (!analysis) return;
     setSaving(true);
     try {
-      // If some changes were rejected, ask the model is overkill — we keep the
+      // If some changes were rejected, ask the model is overkill, we keep the
       // full proposedGuide when nothing is rejected; otherwise we fall back to
       // appending only the accepted change details to the current guide.
       let merged = analysis.proposedGuide;

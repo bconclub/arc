@@ -8,7 +8,7 @@ const API = "https://api.github.com";
 const RAW = "https://raw.githubusercontent.com";
 
 /** Google returns a generic grey globe (~700 bytes) with HTTP 200 when a site has
- *  no favicon, so status alone can't be trusted — size is the only tell. */
+ *  no favicon, so status alone can't be trusted, size is the only tell. */
 const GENERIC_FAVICON_MAX_BYTES = 1000;
 
 const IMG_RE = /\.(svg|png|jpe?g|webp|ico)$/i;
@@ -16,7 +16,7 @@ const IMG_RE = /\.(svg|png|jpe?g|webp|ico)$/i;
 /**
  * A brand mark can be named anything. `ISIVIS-Icon.png` and `Maison-ISIVIS.png`
  * are both marks, so the word is matched anywhere in the filename rather than
- * anchored to the start — an earlier `^(logo|icon|…)` pattern rejected both.
+ * anchored to the start, an earlier `^(logo|icon|…)` pattern rejected both.
  */
 const MARK_NAME_RE = /(logo|icon|favicon|mark|brand|apple-touch|symbol|monogram|wordmark)/i;
 
@@ -43,7 +43,7 @@ type Candidate = {
   url: string;
   source: "repo" | "favicon";
   label: string;
-  /** Raw URLs on a private repo 403 in the browser — surfaced, not silently dropped. */
+  /** Raw URLs on a private repo 403 in the browser, surfaced, not silently dropped. */
   needsAuth?: boolean;
 };
 
@@ -80,7 +80,7 @@ async function fromRepo(repo: string, token: string): Promise<Candidate[]> {
   const metaRes = await fetch(`${API}/repos/${repo}`, { headers: ghHeaders(token), cache: "no-store" });
   if (!metaRes.ok) return [];
   const meta = (await metaRes.json()) as { default_branch?: string; private?: boolean };
-  const branch = meta.default_branch ?? "main";   // not always "main" — this repo is on "master"
+  const branch = meta.default_branch ?? "main";   // not always "main", this repo is on "master"
 
   const treeRes = await fetch(`${API}/repos/${repo}/git/trees/${branch}?recursive=1`, {
     headers: ghHeaders(token),
@@ -128,8 +128,8 @@ async function fromFavicon(domain: string): Promise<Candidate | null> {
 /**
  * POST { brandId, apply?: boolean }
  *
- * Finds logo candidates for a brand — first inside any linked GitHub repo, then
- * the site favicon — and with `apply` writes the best one to brands.logo_url.
+ * Finds logo candidates for a brand, first inside any linked GitHub repo, then
+ * the site favicon, and with `apply` writes the best one to brands.logo_url.
  * Resolving once and storing the result keeps the generic-globe check on the
  * server, where the response body can actually be measured.
  */
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
         ? "GITHUB_TOKEN is not set on the server, so the linked repo was never searched. Add it and try again."
         : repos.length === 0 && domains.length === 0
           ? "No repo or domain linked to this brand yet."
-          : "Nothing found — no logo file in the repo, and the site has no real favicon.";
+          : "Nothing found, no logo file in the repo, and the site has no real favicon.";
     return NextResponse.json({ candidates: [], applied: null, detail });
   }
 
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
     candidates,
     applied: apply ? best : null,
     detail: best.needsAuth
-      ? `Using ${best.label}, but that repo is private — the raw URL will not load in a browser.`
+      ? `Using ${best.label}, but that repo is private, the raw URL will not load in a browser.`
       : undefined,
   });
 }

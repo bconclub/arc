@@ -80,10 +80,10 @@ export default function ProposalsPage() {
                 <tr key={p.id} className="cursor-pointer border-t border-[var(--border)] transition-colors hover:bg-surface-hover"
                   onClick={() => { setError(""); setEditing({ id: p.id, name: p.name, client: p.client ?? "", amount: p.amount == null ? "" : String(p.amount), status: p.status, sent: p.sent ?? "", notes: p.notes ?? "" }); }}>
                   <td className="px-4 py-2.5 font-medium text-text">{p.name}</td>
-                  <td className="px-4 py-2.5 text-text-muted">{p.client || "—"}</td>
+                  <td className="px-4 py-2.5 text-text-muted">{p.client || "-"}</td>
                   <td className="px-4 py-2.5 tabular-nums text-text">{money(p.amount)}</td>
                   <td className="px-4 py-2.5 text-text-muted">{p.status}</td>
-                  <td className="px-4 py-2.5 tabular-nums text-text-muted">{p.sent ? daysAgo(p.sent) : "—"}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-text-muted">{p.sent ? daysAgo(p.sent) : "-"}</td>
                 </tr>
               ))}
             </tbody>

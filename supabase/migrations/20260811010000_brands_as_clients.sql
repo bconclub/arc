@@ -12,8 +12,7 @@
 --   4. backfills aliases so name variants resolve to one brand
 --   5. links people to brands
 --
--- It deletes nothing. BCON Club, PROXe and OUCH! Piercing are left in place —
--- they are your own products rather than paying clients, so remove them by hand
+-- It deletes nothing. BCON Club, PROXe and OUCH! Piercing are left in place, -- they are your own products rather than paying clients, so remove them by hand
 -- if you don't want them on the Brands page.
 
 -- ── 1. Client-register columns ──────────────────────────────
@@ -65,7 +64,7 @@ insert into public.brands (name, status) values
   ('Kosh Studios',                'on_track')
 on conflict (name) do nothing;
 
--- ── 4. Aliases — every other spelling the same client is recorded under ──
+-- ── 4. Aliases, every other spelling the same client is recorded under ──
 -- Without these the rollups split one client across several names, or drop rows
 -- entirely. Each value below was taken from a real string in this database.
 

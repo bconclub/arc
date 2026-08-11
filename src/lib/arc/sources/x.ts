@@ -3,7 +3,7 @@ import type { RawTrend, SourceRow } from "./index";
 export async function fetchX(row: SourceRow): Promise<RawTrend[]> {
   const token = process.env.X_BEARER_TOKEN;
   if (!token) {
-    console.log("[x] X_BEARER_TOKEN not set — skipping");
+    console.log("[x] X_BEARER_TOKEN not set, skipping");
     return [];
   }
 
@@ -20,7 +20,7 @@ export async function fetchX(row: SourceRow): Promise<RawTrend[]> {
     });
 
     if (res.status === 403) {
-      console.log("[x] 403 — free tier doesn't include search");
+      console.log("[x] 403, free tier doesn't include search");
       return [];
     }
     if (!res.ok) {

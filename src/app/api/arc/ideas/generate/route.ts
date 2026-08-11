@@ -1,4 +1,4 @@
-// Manual trigger for the idea engine — the ARC Agent page "Generate Top Ideas"
+// Manual trigger for the idea engine, the ARC Agent page "Generate Top Ideas"
 // button hits this. Regenerates the proposed-ideas list from the current feed.
 import { regenerateProposedIdeas } from "@/lib/arc/ideas";
 

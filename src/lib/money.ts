@@ -5,8 +5,7 @@ import type { Payment } from "@/types/ops";
  * Receivables maths, in one place.
  *
  * This logic previously lived inside the dashboard page. The Invoices screen
- * needs exactly the same numbers, and two copies of a money calculation drift —
- * which is how overdue came to be counted twice in the first place.
+ * needs exactly the same numbers, and two copies of a money calculation drift, * which is how overdue came to be counted twice in the first place.
  */
 
 const DAY = 86_400_000;
@@ -26,7 +25,7 @@ export function dueLabel(due: string | null): DueInfo {
   return { text: `Due in ${diff}d`, tone: diff <= 3 ? "soon" : "normal", days: diff };
 }
 
-/** Mutually exclusive — every unpaid invoice lands in exactly one. */
+/** Mutually exclusive, every unpaid invoice lands in exactly one. */
 export type Ageing = { overdue: number; soon: number; mid: number; far: number; undated: number };
 
 /** How far past due, for the overdue slice only: ≤15d, ≤30d, ≤60d, 60d+. */
@@ -74,7 +73,7 @@ export function receivables(payments: Payment[]): Receivables {
     const { days } = dueLabel(p.due);
 
     // Status wins over date: an invoice marked overdue is overdue whatever its
-    // due date says. Buckets stay exclusive — an earlier version added overdue
+    // due date says. Buckets stay exclusive, an earlier version added overdue
     // rows to both the overdue total AND a due-date bucket, so the same money
     // appeared twice in the same legend.
     if (p.status === "overdue" || (days != null && days < 0)) {

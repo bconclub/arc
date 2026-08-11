@@ -72,7 +72,7 @@ export function InvoiceDetail({
     try {
       const body = new FormData();
       body.append("file", file);
-      // Parse only — nothing is written until the figures below are confirmed.
+      // Parse only, nothing is written until the figures below are confirmed.
       const res = await fetch("/api/ops/invoices/parse", { method: "POST", body });
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? "Could not read that file."); return; }
@@ -85,7 +85,7 @@ export function InvoiceDetail({
   }
 
   /** Writes the parsed figures onto the row via the existing payments endpoint,
-   *  rather than re-posting the file with apply=true — that would re-read the
+   *  rather than re-posting the file with apply=true, that would re-read the
    *  document and bill a second model call for figures already on screen. */
   async function applyParsed() {
     if (!parsed || !payment) return;
@@ -170,7 +170,7 @@ export function InvoiceDetail({
         <Row label="Amount" strong value={payment.amount == null
           ? <span className="text-accent-orange">Not recorded</span>
           : money(payment.amount)} />
-        <Row label="Due" value={<span className={d.tone === "overdue" ? "text-accent-red" : ""}>{payment.due ?? "—"}</span>} />
+        <Row label="Due" value={<span className={d.tone === "overdue" ? "text-accent-red" : ""}>{payment.due ?? "-"}</span>} />
         <Row label="Status" value={d.text} />
       </div>
 
@@ -217,17 +217,17 @@ export function InvoiceDetail({
             <StatusPill status={`${parsed.confidence} confidence`} tone={CONFIDENCE_TONE[parsed.confidence]} />
           </div>
 
-          {/* Nothing here has been saved yet — the figures are a proposal until
+          {/* Nothing here has been saved yet, the figures are a proposal until
               confirmed, because a wrong amount written silently into the books
               is worse than a blank one. */}
           <div className="divide-y divide-[var(--border)]">
-            <Row label="Invoice no" value={parsed.invoice_no ?? "—"} />
-            <Row label="Issued" value={parsed.issued_on ?? "—"} />
-            <Row label="Due" value={parsed.due_on ?? "—"} />
-            <Row label="Billed to" value={parsed.client ?? "—"} />
-            <Row label="Subtotal" value={parsed.subtotal == null ? "—" : money(parsed.subtotal)} />
-            <Row label="GST" value={parsed.tax_amount == null ? "—" : money(parsed.tax_amount)} />
-            <Row label="Total" strong value={parsed.total_amount == null ? "—" : money(parsed.total_amount)} />
+            <Row label="Invoice no" value={parsed.invoice_no ?? "-"} />
+            <Row label="Issued" value={parsed.issued_on ?? "-"} />
+            <Row label="Due" value={parsed.due_on ?? "-"} />
+            <Row label="Billed to" value={parsed.client ?? "-"} />
+            <Row label="Subtotal" value={parsed.subtotal == null ? "-" : money(parsed.subtotal)} />
+            <Row label="GST" value={parsed.tax_amount == null ? "-" : money(parsed.tax_amount)} />
+            <Row label="Total" strong value={parsed.total_amount == null ? "-" : money(parsed.total_amount)} />
             {parsed.gstin && <Row label="GSTIN" value={parsed.gstin} />}
           </div>
 

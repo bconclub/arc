@@ -1,14 +1,14 @@
 /**
  * ARC brand marks, rendered from the real logo files.
  *
- * The supplied artwork is a blackout variant — the letterform is #1C1E22 on a
+ * The supplied artwork is a blackout variant, the letterform is #1C1E22 on a
  * solid black canvas, which is invisible on the dark shell and can't be tinted
  * from CSS. So the sources are rebuilt at build-prep time into transparent PNGs
  * with the ink recoloured: `arc-logo.png` carries a near-white letterform for
  * dark surfaces, `arc-logo-light.png` a charcoal one for light. The lime wedge
  * (#CBFA0A) is the brand constant and is identical in both.
  *
- * Swapping two images rather than tinting one keeps the wedge untouched — a CSS
+ * Swapping two images rather than tinting one keeps the wedge untouched, a CSS
  * filter that lightened the letterform would shift the lime as well.
  *
  * Sizes below are the intrinsic pixel dimensions of those files; width is
@@ -53,7 +53,7 @@ function Swappable({
   );
 }
 
-/** The "A" mark on its own — for collapsed rails and small slots. */
+/** The "A" mark on its own, for collapsed rails and small slots. */
 export function ArcMark({ size = 28, className = "" }: { size?: number; className?: string }) {
   return <Swappable base="arc-icon" alt="ARC" height={size} aspect={ICON_ASPECT} className={className} />;
 }

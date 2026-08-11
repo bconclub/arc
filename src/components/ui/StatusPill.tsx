@@ -2,7 +2,7 @@
  * The single place a status becomes a colour.
  *
  * Before this, "overdue" was styled inline on the Money table, again on the
- * brand card, and again on the dashboard — three definitions that had already
+ * brand card, and again on the dashboard, three definitions that had already
  * drifted. Anything status-shaped should render through here.
  */
 
@@ -51,7 +51,7 @@ export function StatusPill({
   status, tone, count, className = "",
 }: {
   status: string;
-  /** Override the mapping — for labels that aren't a known status. */
+  /** Override the mapping, for labels that aren't a known status. */
   tone?: Tone;
   count?: number;
   className?: string;

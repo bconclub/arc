@@ -91,14 +91,14 @@ export type NowTask = {
 /**
  * `brands` is the client register. Status is typed as a plain string because the
  * vocabulary belongs to that table, not this dashboard ('on_track', 'active', …)
- * — never index a lookup map with it without a fallback.
+ *, never index a lookup map with it without a fallback.
  *
  * Optional fields are genuinely optional: the two Supabase projects this app has
  * pointed at carry slightly different column sets, so anything not guaranteed on
  * both is `?` and every read must tolerate `undefined`.
  */
 /**
- * What a brand row represents. Not everything in `brands` pays you — agencies
+ * What a brand row represents. Not everything in `brands` pays you, agencies
  * and partners route or deliver work, prospects haven't bought yet, and 'own'
  * covers your own products. Money rollups are only meaningful for clients.
  */
@@ -119,7 +119,7 @@ export type Brand = {
   notes: string | null;
   /** Optional: absent until the brand_kind migration runs. Treat as "client". */
   kind?: BrandKind | null;
-  /** Work arrives through this brand — e.g. Kosh Studios via Now Media. */
+  /** Work arrives through this brand, e.g. Kosh Studios via Now Media. */
   via_brand_id?: string | null;
   logo_url: string | null;
   color: string | null;
@@ -154,7 +154,7 @@ export type GithubRepo = {
   url: string;
   /** False when a brand links a repo the token cannot read (client-owned, no access). */
   accessible: boolean;
-  /** True when the repo belongs to someone else — a client's own account. */
+  /** True when the repo belongs to someone else, a client's own account. */
   external: boolean;
 };
 
@@ -212,8 +212,7 @@ export type BrandRollup = Brand & {
 export type ServiceStatus = "healthy" | "issue" | "paused" | "failed" | "down";
 
 /**
- * Infrastructure health. Backed by `system_health`, NOT the `services` table —
- * `services` is the GST billing catalogue (SAC codes, tax rates) and must never
+ * Infrastructure health. Backed by `system_health`, NOT the `services` table, * `services` is the GST billing catalogue (SAC codes, tax rates) and must never
  * receive uptime rows.
  */
 export type SystemService = {

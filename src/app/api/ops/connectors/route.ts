@@ -6,8 +6,8 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 /**
- * GET  — presence check only (fast, no outbound calls).
- * GET ?probe=1 — also runs each connector's live reachability check and syncs
+ * GET , presence check only (fast, no outbound calls).
+ * GET ?probe=1, also runs each connector's live reachability check and syncs
  * the result into `services`, so Operations Health reflects reality instead of
  * hand-maintained rows.
  *
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const statuses = await Promise.all(CONNECTORS.map((def) => statusOf(def, probe)));
 
   if (probe) {
-    // Best-effort sync — a failure here must not break the panel.
+    // Best-effort sync, a failure here must not break the panel.
     try {
       const now = new Date().toISOString();
       await Promise.all(
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
         )
       );
     } catch {
-      // ignore — the connector statuses below are still valid
+      // ignore, the connector statuses below are still valid
     }
   }
 

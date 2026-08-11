@@ -85,7 +85,7 @@ export async function POST() {
         angle: item.angle,
       });
       ideas_created++;
-      console.log(`[evaluate] idea — score=${item.fit_score} — ${item.trend.title.slice(0, 60)}`);
+      console.log(`[evaluate] idea, score=${item.fit_score}, ${item.trend.title.slice(0, 60)}`);
     } catch (e) {
       console.error("[evaluate] insertIdea error:", e);
     }

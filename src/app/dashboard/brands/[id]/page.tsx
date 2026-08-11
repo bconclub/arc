@@ -202,7 +202,7 @@ export default function BrandProfilePage() {
       commits: (gh?.commits ?? []).filter((c) => slugs.includes(c.repo.toLowerCase())),
       contacts: contactsFor(brand, people),
       // Work arriving through an agency means the day-to-day contacts sit on the
-      // agency, not the client — Kosh Studios would otherwise look contactless.
+      // agency, not the client. Kosh Studios would otherwise look contactless.
       viaContacts: viaBrand ? contactsFor(viaBrand, people) : [],
     };
   }, [brand, viaBrand, payments, projects, proposals, people, gh]);
@@ -305,7 +305,7 @@ export default function BrandProfilePage() {
           <ul className="mt-3 space-y-1">
             {mine.payments.filter((p) => UNPAID.includes(p.status)).slice(0, 5).map((p) => (
               <li key={p.id} className="flex items-center gap-2 border-t border-[var(--border)] pt-1.5 text-[11.5px]">
-                <span className="min-w-0 flex-1 truncate text-text">{p.item ?? "—"}</span>
+                <span className="min-w-0 flex-1 truncate text-text">{p.item ?? "-"}</span>
                 <span className="shrink-0 tabular-nums text-text">{money(p.amount)}</span>
                 <span className={`shrink-0 text-[10px] ${p.status === "overdue" ? "text-accent-red" : "text-text-muted"}`}>
                   {p.status}
@@ -365,7 +365,7 @@ export default function BrandProfilePage() {
           {brand.github_repos?.length ? <span className="text-text-muted">({brand.github_repos.length})</span> : null}
         </h2>
 
-        {/* Add a repo inline — this is how logo and asset folders get pulled in. */}
+        {/* Add a repo inline, this is how logo and asset folders get pulled in. */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <input
             value={newRepo}
@@ -499,7 +499,7 @@ export default function BrandProfilePage() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-semibold text-text">{c.name}</span>
-                      <span className="block truncate text-[10px] text-text-muted">{c.role ?? c.relation ?? "—"}</span>
+                      <span className="block truncate text-[10px] text-text-muted">{c.role ?? c.relation ?? "-"}</span>
                     </span>
                   </div>
                   <div className="mt-2 space-y-1">
@@ -545,7 +545,7 @@ export default function BrandProfilePage() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[12.5px] font-semibold text-text">{c.name}</span>
-                        <span className="block truncate text-[10px] text-text-muted">{c.role ?? c.relation ?? "—"}</span>
+                        <span className="block truncate text-[10px] text-text-muted">{c.role ?? c.relation ?? "-"}</span>
                       </span>
                     </div>
                     <div className="mt-2 space-y-1">
@@ -575,17 +575,17 @@ export default function BrandProfilePage() {
         </h2>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           {[
-            { label: "GSTIN", value: brand.gstin ?? "—", mono: true },
-            { label: "Place of supply", value: brand.place_of_supply ?? "—" },
-            { label: "State code", value: brand.state_code ?? "—" },
-            { label: "Currency", value: brand.currency ?? "—" },
+            { label: "GSTIN", value: brand.gstin ?? "-", mono: true },
+            { label: "Place of supply", value: brand.place_of_supply ?? "-" },
+            { label: "State code", value: brand.state_code ?? "-" },
+            { label: "Currency", value: brand.currency ?? "-" },
             { label: "Export", value: brand.is_export ? "Yes" : "No" },
             { label: "Lifetime revenue", value: moneyShort(brand.lifetime_revenue) },
             {
               label: "Client since",
               value: brand.first_seen
                 ? new Date(brand.first_seen + "T00:00:00").toLocaleDateString("en-GB", { month: "short", year: "numeric" })
-                : "—",
+                : "-",
             },
           ].map((f) => (
             <div key={f.label} className="min-w-0">

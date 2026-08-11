@@ -1,5 +1,5 @@
 -- ARC Agent v0.1 schema
--- New tables only — does NOT touch existing sources / signals / arc_context / saved_signals
+-- New tables only, does NOT touch existing sources / signals / arc_context / saved_signals
 
 -- agent source registry (separate from the Next.js RSS sources table)
 create table if not exists public.arc_sources (

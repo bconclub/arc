@@ -87,7 +87,7 @@ function inSubtree(pathname: string, item: NavItem) {
 }
 
 /**
- * Sits against the logo so the running version is visible at a glance — it used
+ * Sits against the logo so the running version is visible at a glance, it used
  * to be footer text, below the fold on a short viewport, which is no use when
  * the point is knowing what you're looking at.
  */

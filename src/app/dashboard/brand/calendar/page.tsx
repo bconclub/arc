@@ -122,7 +122,7 @@ export default function ContentCalendarPage() {
                 {status} <span className="tabular-nums">({col.length})</span>
               </p>
               <div className="space-y-2">
-                {col.length === 0 && <p className="px-1 pb-2 text-[12px] text-text-muted">—</p>}
+                {col.length === 0 && <p className="px-1 pb-2 text-[12px] text-text-muted">-</p>}
                 {col.map((item) => (
                   <div key={item.id} className="rounded-xl border border-[var(--border)] bg-bg/40 p-3">
                     <p className="text-[13px] font-medium text-text">{item.title}</p>

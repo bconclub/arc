@@ -1,4 +1,4 @@
-// OpenRouter client — one gateway to many models (OpenAI, Anthropic, Google, etc.)
+// OpenRouter client, one gateway to many models (OpenAI, Anthropic, Google, etc.)
 // SERVER-SIDE ONLY. Uses the OpenAI-compatible chat/completions endpoint.
 //
 // Env: OPENROUTER_API_KEY (in .env.local locally, Vercel env in prod).
@@ -7,7 +7,7 @@
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export const OPENROUTER_MODELS = {
-  // Sensible defaults — swap freely, OpenRouter routes to the provider.
+  // Sensible defaults, swap freely, OpenRouter routes to the provider.
   smart: "anthropic/claude-sonnet-4.6",
   fast: "openai/gpt-4o-mini",
   gpt4o: "openai/gpt-4o",
@@ -103,7 +103,7 @@ export async function* openrouterStream(opts: OpenRouterOptions): AsyncGenerator
         const delta = json?.choices?.[0]?.delta?.content;
         if (delta) yield delta;
       } catch {
-        // partial JSON line — ignore, will complete next chunk
+        // partial JSON line, ignore, will complete next chunk
       }
     }
   }

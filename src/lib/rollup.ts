@@ -9,7 +9,7 @@ export const IN_PLAY: Proposal["status"][] = ["sent", "discussing"];
 /**
  * Every spelling a brand answers to: its name plus any `aliases`. The client
  * register keeps aliases like "Laptop Store" / "Laptopstore" / "itel computer"
- * for one brand, and payments were entered with whichever the invoice used — so
+ * for one brand, and payments were entered with whichever the invoice used, so
  * matching on name alone silently drops money from the rollup.
  */
 export function brandKeys(brand: Pick<Brand, "name" | "aliases">): string[] {
@@ -46,7 +46,7 @@ export function brandIndex(brands: Brand[]): (client: string | null) => Brand | 
 /**
  * Contacts for a brand.
  *
- * `people.brand_id` is the real link and is preferred — it is set on most rows
+ * `people.brand_id` is the real link and is preferred, it is set on most rows
  * and catches cases plain text cannot, e.g. an org recorded as
  * "Laptop Store India / proago.in". Rows without the FK fall back to matching
  * `org` against the brand's name/aliases, with compound orgs split on "/" and
@@ -56,7 +56,7 @@ export function contactsFor(brand: Pick<Brand, "id" | "name" | "aliases">, peopl
   const keys = brandKeys(brand);
 
   // Union, not either/or. A person can only carry ONE brand_id, but an org like
-  // "WindChasers / Turquoise" legitimately spans two brands — matching on the FK
+  // "WindChasers / Turquoise" legitimately spans two brands, matching on the FK
   // alone would show that contact under whichever side won the backfill and hide
   // them from the other.
   return people.filter((p) => {
@@ -85,8 +85,8 @@ export function parseChannel(channel: string | null): { emails: string[]; phones
 }
 
 /**
- * Health score, 0–100. A weighted average of whatever signal actually exists for
- * the brand — dimensions with no data are dropped and the remaining weights
+ * Health score, 0-100. A weighted average of whatever signal actually exists for
+ * the brand, dimensions with no data are dropped and the remaining weights
  * renormalise, so a brand with only payments isn't punished for having no tasks.
  *
  *   40  payments on time      (share of invoices not overdue)

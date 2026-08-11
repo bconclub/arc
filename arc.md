@@ -1,6 +1,6 @@
 # ARC
 
-**ARC** is a GTM (Go-To-Market) Command Center — a personal dashboard for solo founders to manage growth operations.
+**ARC** is a GTM (Go-To-Market) Command Center, a personal dashboard for solo founders to manage growth operations.
 
 ---
 
@@ -162,7 +162,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-key
 NEXT_PUBLIC_SITE_URL=https://arc-liard-two.vercel.app   # used as OpenRouter referer
 ```
 
-**OpenRouter** — one key, many models (`openai/*`, `anthropic/*`, `google/*`, …).
+**OpenRouter**, one key, many models (`openai/*`, `anthropic/*`, `google/*`, …).
 Server-side client at `src/lib/openrouter.ts`: `openrouterChat()` and `openrouterStream()`.
 Add `OPENROUTER_API_KEY` to Vercel → Settings → Environment Variables for production.
 
@@ -187,10 +187,10 @@ Solo founders, coaching academies, clinics (dental/skin/physio), real estate age
 
 ## Content Pillars
 
-1. **Pain Points** (red) — Problems ICP faces
-2. **Marketing Tips** (blue) — Actionable tactics
-3. **Build Journey** (green) — Build-in-public content
-4. **Client Results** (orange) — Case studies & social proof
+1. **Pain Points** (red). Problems ICP faces
+2. **Marketing Tips** (blue). Actionable tactics
+3. **Build Journey** (green). Build-in-public content
+4. **Client Results** (orange). Case studies & social proof
 
 ---
 

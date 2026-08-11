@@ -1,6 +1,6 @@
 "use client";
 
-// Minimal inline-SVG sparkline. No chart lib — strokes use ARC CSS vars.
+// Minimal inline-SVG sparkline. No chart lib, strokes use ARC CSS vars.
 export function Sparkline({ values, width = 220, height = 48 }: { values: number[]; width?: number; height?: number }) {
   const pts = values.filter((v) => Number.isFinite(v));
   if (pts.length < 2) {

@@ -18,14 +18,14 @@ export const BCON = {
 
   anti_signals: [
     "pure news with nothing to demo or teach",
-    "no visual payoff — can't be shown on screen",
+    "no visual payoff, can't be shown on screen",
     "off-domain: crypto, hardware, sports, politics",
     "requires enterprise budget or closed beta to test",
     "already oversaturated (every creator posted it)",
   ],
 
   icp:
-    "Solo founders, coaching academies, clinics (dental/skin/physio), real estate agents, tutoring centers in India. 5–15L/month revenue. They lose leads due to slow WhatsApp replies and lack of proper follow-up systems.",
+    "Solo founders, coaching academies, clinics (dental/skin/physio), real estate agents, tutoring centers in India. 5-15L/month revenue. They lose leads due to slow WhatsApp replies and lack of proper follow-up systems.",
 
   hook_patterns: [
     "This [tool] just changed how I [task] forever.",
