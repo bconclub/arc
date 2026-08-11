@@ -1,6 +1,6 @@
 import { dailyTotals } from "@/lib/format";
 import type {
-  Brand, BrandRollup, Payment, Project, Proposal, OpsSignal,
+  Brand, BrandRollup, Payment, Person, Project, Proposal, OpsSignal,
 } from "@/types/ops";
 
 export const UNPAID: Payment["status"][] = ["pending", "invoiced", "overdue"];
@@ -21,6 +21,43 @@ export function brandKeys(brand: Pick<Brand, "name" | "aliases">): string[] {
 function isClient(client: string | null, keys: string[]): boolean {
   if (!client) return false;
   return keys.includes(client.trim().toLowerCase());
+}
+
+/**
+ * Contacts for a brand.
+ *
+ * `people.brand_id` is the real link and is preferred — it is set on most rows
+ * and catches cases plain text cannot, e.g. an org recorded as
+ * "Laptop Store India / proago.in". Rows without the FK fall back to matching
+ * `org` against the brand's name/aliases, with compound orgs split on "/" and
+ * "," so one side still matches.
+ */
+export function contactsFor(brand: Pick<Brand, "id" | "name" | "aliases">, people: Person[]): Person[] {
+  const keys = brandKeys(brand);
+
+  return people.filter((p) => {
+    if (p.brand_id) return p.brand_id === brand.id;
+    if (!p.org) return false;
+    return p.org
+      .split(/[/,]/)
+      .map((part) => part.trim().toLowerCase())
+      .filter(Boolean)
+      .some((part) => keys.includes(part));
+  });
+}
+
+/** Splits the free-text `channel` into things we can turn into links. */
+export function parseChannel(channel: string | null): { emails: string[]; phones: string[]; other: string[] } {
+  const out = { emails: [] as string[], phones: [] as string[], other: [] as string[] };
+  if (!channel) return out;
+  for (const raw of channel.split(/[/,;]/)) {
+    const part = raw.trim();
+    if (!part) continue;
+    if (part.includes("@") && /\S+@\S+\.\S+/.test(part)) out.emails.push(part);
+    else if (/^[+\d][\d\s-]{6,}$/.test(part)) out.phones.push(part.replace(/\s+/g, ""));
+    else out.other.push(part);
+  }
+  return out;
 }
 
 /**

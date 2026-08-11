@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-11 23:10 IST · v0.0.5 — brand contacts
+
+- **Brand profiles now show Contacts.** Linked through `people.brand_id` (populated on 7 of 8 rows) with a fallback that matches the free-text `org` against the brand's name and aliases, splitting compound values on `/` and `,`. That fallback is what catches an org recorded as "Laptop Store India / proago.in".
+- Emails and phone numbers are parsed out of the free-text `channel` field into `mailto:` / `tel:` links; anything unrecognised is still shown as plain text rather than dropped.
+- **Fixed:** the brand profile listed payments/projects/proposals by exact name while the totals above them matched aliases too, so a brand's rows could disagree with its own header figures. Both now use the same keys.
+- Versioning note recorded: the patch counter runs 0.0.1 → 0.0.100, then rolls to 0.1.0.
+- User-facing: a Contacts card per brand, with click-to-mail and click-to-call.
+- `(pending)`
+
 ## 2026-08-11 22:50 IST · v0.0.4 — operations command centre, brands, connectors
 
 - **Dashboard rebuilt as a single-viewport command centre.** Six panels (Radar, Money, Focus, Live Work, Activity, Pipeline) in a fixed 100vh grid on desktop; the page never scrolls, each panel scrolls internally. Below `lg` the grid unlocks and scrolls normally.

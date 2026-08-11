@@ -25,8 +25,11 @@ export type Person = {
   role: string | null;
   org: string | null;
   relation: string | null;
+  /** Free text: email, phone, or both separated by " / ". */
   channel: string | null;
   notes: string | null;
+  /** FK to brands. Populated on most rows and preferred over matching `org`. */
+  brand_id: string | null;
   created_at: string;
 };
 

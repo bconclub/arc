@@ -5,14 +5,19 @@
 // It is NOT semver — patch is a running build counter, so 0.0.47 is normal and
 // 0.0.100 is the last patch in the series before the minor rolls.
 //
-//   0.0.1 · 0.0.2 · … · 0.0.99 · 0.0.100 → next minor
+//   0.0.1 · 0.0.2 · … · 0.0.99 · 0.0.100 → 0.1.0 → 0.1.1 · …
 //
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.4";
+export const VERSION = "0.0.5";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.5",
+    date: "2026-08-11",
+    notes: "Brand profiles gained a Contacts block, linked through people.brand_id with an org-text fallback. Fixed brand rows disagreeing with their own totals by matching aliases everywhere.",
+  },
   {
     version: "0.0.4",
     date: "2026-08-11",

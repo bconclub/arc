@@ -4,14 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  ChevronLeft, Globe, User, GitGraph, GitBranch, CircleDot, Save, ExternalLink,
+  ChevronLeft, Globe, User, GitGraph, GitBranch, CircleDot, Save, ExternalLink, Mail, Phone,
 } from "lucide-react";
-import { money, moneyShort, timeAgo, avatarColor } from "@/lib/format";
-import { rollupBrand, UNPAID, IN_PLAY } from "@/lib/rollup";
+import { money, moneyShort, timeAgo, initials, avatarColor } from "@/lib/format";
+import { rollupBrand, brandKeys, contactsFor, parseChannel, UNPAID, IN_PLAY } from "@/lib/rollup";
 import { HealthRing, TrendLine, Donut } from "@/components/ops/Charts";
 import { BrandMark } from "@/components/ops/BrandMark";
 import type {
-  Brand, Project, Payment, Proposal, OpsSignal, GithubActivity,
+  Brand, Project, Payment, Proposal, OpsSignal, Person, GithubActivity,
 } from "@/types/ops";
 
 // The client register owns this vocabulary ('active', …) and can add values we
@@ -42,6 +42,7 @@ export default function BrandProfilePage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [signals, setSignals] = useState<OpsSignal[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
   const [gh, setGh] = useState<GithubActivity | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -53,9 +54,9 @@ export default function BrandProfilePage() {
 
   const load = useCallback(async () => {
     const j = (url: string) => fetch(url).then((r) => r.json()).catch(() => []);
-    const [br, pr, pay, prop, sig, gha] = await Promise.all([
+    const [br, pr, pay, prop, sig, ppl, gha] = await Promise.all([
       j("/api/ops/brands"), j("/api/ops/projects"), j("/api/ops/payments"),
-      j("/api/ops/proposals"), j("/api/ops/alerts"),
+      j("/api/ops/proposals"), j("/api/ops/alerts"), j("/api/ops/people"),
       fetch("/api/ops/github").then((r) => r.json()).catch(() => null),
     ]);
     const list: Brand[] = Array.isArray(br) ? br : [];
@@ -76,6 +77,7 @@ export default function BrandProfilePage() {
     setPayments(Array.isArray(pay) ? pay : []);
     setProposals(Array.isArray(prop) ? prop : []);
     setSignals(Array.isArray(sig) ? sig : []);
+    setPeople(Array.isArray(ppl) ? ppl : []);
     setGh(gha && typeof gha === "object" ? (gha as GithubActivity) : null);
     setLoaded(true);
   }, [id]);
@@ -116,8 +118,11 @@ export default function BrandProfilePage() {
   );
 
   const mine = useMemo(() => {
-    if (!brand) return { payments: [], projects: [], proposals: [], repos: [], events: [], commits: [] };
-    const match = (c: string | null) => !!c && c.trim().toLowerCase() === brand.name.trim().toLowerCase();
+    if (!brand) return { payments: [], projects: [], proposals: [], repos: [], events: [], commits: [], contacts: [] };
+    // Must use the same name+aliases keys as rollupBrand, or the totals in the
+    // header and the rows listed below them disagree.
+    const keys = brandKeys(brand);
+    const match = (c: string | null) => !!c && keys.includes(c.trim().toLowerCase());
     const slugs = (brand.github_repos ?? []).map((s) => s.toLowerCase());
     return {
       payments: payments.filter((p) => match(p.client)),
@@ -126,8 +131,9 @@ export default function BrandProfilePage() {
       repos: (gh?.repos ?? []).filter((r) => slugs.includes(r.name.toLowerCase())),
       events: (gh?.events ?? []).filter((e) => slugs.includes(e.repo.toLowerCase())),
       commits: (gh?.commits ?? []).filter((c) => slugs.includes(c.repo.toLowerCase())),
+      contacts: contactsFor(brand, people),
     };
-  }, [brand, payments, projects, proposals, gh]);
+  }, [brand, payments, projects, proposals, people, gh]);
 
   if (!loaded) return <p className="px-6 py-16 text-center text-[13px] text-text-muted">Loading…</p>;
 
@@ -344,6 +350,60 @@ export default function BrandProfilePage() {
                 </li>
               )}
             </ul>
+          </div>
+        )}
+      </section>
+
+      {/* ── Contacts ── */}
+      <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
+        <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">
+          Contacts <span className="text-text-muted">({mine.contacts.length})</span>
+        </h2>
+        {mine.contacts.length === 0 ? (
+          <p className="py-4 text-[11.5px] text-text-muted">
+            No contacts linked. Add a person under{" "}
+            <Link href="/dashboard/ops/people" className="text-text underline">People</Link>{" "}
+            and set their brand.
+          </p>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {mine.contacts.map((c) => {
+              const ch = parseChannel(c.channel);
+              return (
+                <div key={c.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface-hover)] p-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                      style={{ background: avatarColor(c.name) }}
+                    >
+                      {initials(c.name)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[12.5px] font-semibold text-text">{c.name}</span>
+                      <span className="block truncate text-[10px] text-text-muted">{c.role ?? c.relation ?? "—"}</span>
+                    </span>
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {ch.emails.map((e) => (
+                      <a key={e} href={`mailto:${e}`} className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text">
+                        <Mail size={11} className="shrink-0" />
+                        <span className="truncate">{e}</span>
+                      </a>
+                    ))}
+                    {ch.phones.map((t) => (
+                      <a key={t} href={`tel:${t}`} className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text">
+                        <Phone size={11} className="shrink-0" />
+                        <span className="truncate">{t}</span>
+                      </a>
+                    ))}
+                    {ch.other.map((o) => (
+                      <span key={o} className="block truncate text-[11px] text-text-muted">{o}</span>
+                    ))}
+                    {!c.channel && <span className="text-[11px] text-text-muted">No contact details</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
