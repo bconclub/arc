@@ -9,7 +9,7 @@
 - `StatStrip` supports a delta chip ("↑18% vs last week") but does not require one. ARC stores current state only, with no history of yesterday's figures, so most stats have nothing honest to compare against; the chip stays off until a snapshot table exists.
 - **Fixed before it shipped: the list/detail layout collapsed wrongly on mobile.** An inline `flexBasis` overrode the mobile full-width class and pinned the list to 380px on a phone. The width now applies from `lg` up, and below that the detail takes the full width with a back control instead of two unusable columns.
 - Not user-visible yet — no screen consumes these. First use is the Money → Invoices rebuild.
-- `(pending)`
+- `(ffa3b2c)`
 
 ## 2026-08-12 09:05 IST · v0.0.9 — invoices read themselves, logo search fixed
 
