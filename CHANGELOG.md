@@ -2,6 +2,15 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 06:20 IST · v0.0.17 — radar ranked by severity
+
+- **Radar is ranked, not just recent.** Sorting by time alone put a fresh trivial warning above yesterday's critical, which is backwards for a panel whose job is to say what needs attention. Severity now dominates and recency breaks ties within a severity.
+- Each row carries its **priority score**, so the ordering is visible rather than implied. Hovering explains how it was reached.
+- The decay has a floor, deliberately. A 30-day-old critical still scores 50 and outranks a warning raised a minute ago at 30: an unresolved critical does not become less critical by being ignored for a month.
+- **Resolved signals leave the radar entirely.** A radar showing things already dealt with teaches you to stop reading it. They remain on the alerts page and in the activity feed.
+- Only the **top six** are shown, with a count of the rest. Past that it stops being something you scan and becomes something you skip.
+- Informational signals no longer appear on the radar at all. They were never actionable and were crowding out things that are.
+
 ## 2026-08-12 05:45 IST · v0.0.16 — Revenue analytics
 
 - **New Revenue page** under Analytics, built on the 47 imported GST invoices: billed history by financial year, by client, and the full invoice table. Financial years run April to March, so grouping by calendar year would split every year's trading in two and make each half look like a bad year.

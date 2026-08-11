@@ -9,6 +9,7 @@ import {
 import { money, moneyShort, shortAgo, avatarColor } from "@/lib/format";
 import { IN_PLAY, brandIndex } from "@/lib/rollup";
 import { dueLabel, receivables } from "@/lib/money";
+import { rankSignals } from "@/lib/signals";
 import { Donut } from "@/components/ops/Charts";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -59,6 +60,10 @@ function Panel({
     </section>
   );
 }
+
+// The radar is a shortlist, not an inbox: past this many rows it stops being
+// something you scan and starts being something you skip.
+const RADAR_TOP = 6;
 
 const emptyCls = "px-4 py-8 text-center text-[12px] text-text-muted";
 const rowCls = "flex items-center gap-2 border-t border-[var(--border)] px-4 py-2 text-[12.5px] transition-colors hover:bg-[var(--glow-white)]";
@@ -119,7 +124,8 @@ export default function DashboardPage() {
   const d = useMemo(() => {
     const open = signals.filter((s) => !s.seen);
     const critical = open.filter((s) => s.severity === "critical");
-    const radar = open.filter((s) => s.severity !== "info").sort((a, b) => (a.ts < b.ts ? 1 : -1));
+    // Ranked by severity first, recency second. See lib/signals.
+    const radar = rankSignals(signals);
 
     const sevCounts = {
       critical: critical.length,
@@ -328,7 +334,7 @@ export default function DashboardPage() {
             <p className={emptyCls}>{loaded ? "Radar is clear." : "Loading."}</p>
           ) : (
             <ul>
-              {d.radar.map((s) => (
+              {d.radar.slice(0, RADAR_TOP).map((s) => (
                 <li key={s.id}>
                   <button onClick={() => setOpenSignal(s)} className={`${rowCls} w-full text-left`}>
                     <span className="mt-1 h-2 w-2 shrink-0 self-start rounded-full" style={{ background: SEV_COLOR[s.severity] }} />
@@ -337,9 +343,21 @@ export default function DashboardPage() {
                       {s.detail && <span className="block truncate text-[11px] text-text-muted">{s.detail}</span>}
                     </span>
                     <span className="shrink-0 whitespace-nowrap text-[10.5px] text-text-muted">{shortAgo(s.ts)}</span>
+                    <span
+                      title={`Priority ${s.score}: ${s.severity}, ${shortAgo(s.ts)}`}
+                      className="w-7 shrink-0 rounded-pill bg-[var(--surface-hover)] text-center text-[10px] font-bold tabular-nums text-text"
+                    >
+                      {s.score}
+                    </span>
                   </button>
                 </li>
               ))}
+              {d.radar.length > RADAR_TOP && (
+                <li className="border-t border-[var(--border)] px-4 py-2 text-[11px] text-text-muted">
+                  {d.radar.length - RADAR_TOP} lower-priority signal
+                  {d.radar.length - RADAR_TOP === 1 ? "" : "s"} not shown
+                </li>
+              )}
             </ul>
           )}
         </Panel>
