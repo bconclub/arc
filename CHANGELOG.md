@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-11 23:40 IST · v0.0.6 — brands become the client register
+
+- **Switched Supabase projects.** `.env.local` pointed at `niypveotxuledkrcikun` while the schema migration had been applied to `rqpjynurdlozjxvzkugy`. That mismatch — not a bad migration and not a PostgREST cache — is why the new columns appeared missing. The new project also carries richer operational data: 10 projects, 11 people, 19 signals against 5/8/8.
+- **Brands are now the clients who pay you.** That project's `brands` table held placeholder rows from an early draft of the migration, and none of the nine real client names matched any of them, so every money-per-brand figure read zero.
+- New migration `20260811010000_brands_as_clients.sql` — additive and non-destructive. Adds the client-register columns (aliases, domains, gstin, place_of_supply, lifetime_revenue) plus `people.brand_id`, folds `KOSH Studio` into `Kosh Studios`, inserts the missing clients, backfills aliases and links contacts. It deletes nothing; BCON Club, PROXe and OUCH! Piercing remain for you to remove by hand if unwanted.
+- Aliases are taken from real strings in the data, so variants resolve to one brand: `Laptop Store` ← Laptop Store India / Laptopstore / itel computer / Proago; `Turquoise` ← Turquoise Holidays / Turquoise Ops; `WOWBUS (Arvin Software LLP)` ← Arvin Software LLP; `Kosh Studios` ← KOSH Studio / Now Media.
+- **Fixed:** a contact whose org spans two brands was hidden from one of them. `people.brand_id` can only point one way, so "WindChasers / Turquoise" resolved to Turquoise alone and WindChasers showed no contacts. Matching is now a union of the FK and the org text, so Sumaiya appears under both.
+- Brand and Person types now mark cross-project columns optional, since the two databases carry different column sets.
+- Verified against live data: every client name on payments/projects/proposals matches a brand, 10 of 11 people link (Alia Tabassum's org "Axlrate R&I" is not a brand), `system_health` seeded with 9 rows.
+- User-facing: brand cards show real money and contacts instead of zeros.
+- `(pending)`
+
 ## 2026-08-11 23:10 IST · v0.0.5 — brand contacts
 
 - **Brand profiles now show Contacts.** Linked through `people.brand_id` (populated on 7 of 8 rows) with a fallback that matches the free-text `org` against the brand's name and aliases, splitting compound values on `/` and `,`. That fallback is what catches an org recorded as "Laptop Store India / proago.in".

@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.5";
+export const VERSION = "0.0.6";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.6",
+    date: "2026-08-11",
+    notes: "Repointed at the rqpj database and made brands the client register there: real clients inserted, aliases backfilled so name variants resolve, people linked. All client names now match a brand.",
+  },
   {
     version: "0.0.5",
     date: "2026-08-11",

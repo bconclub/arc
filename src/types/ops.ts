@@ -29,7 +29,7 @@ export type Person = {
   channel: string | null;
   notes: string | null;
   /** FK to brands. Populated on most rows and preferred over matching `org`. */
-  brand_id: string | null;
+  brand_id?: string | null;
   created_at: string;
 };
 
@@ -82,33 +82,41 @@ export type NowTask = {
 };
 
 /**
- * The live `brands` table is the client register — it carries GST/billing data
- * and its own status vocabulary ('active', …). Status is typed as a plain string
- * because the values are owned by that table, not by this dashboard; never index
- * a lookup map with it without a fallback.
+ * `brands` is the client register. Status is typed as a plain string because the
+ * vocabulary belongs to that table, not this dashboard ('on_track', 'active', …)
+ * — never index a lookup map with it without a fallback.
+ *
+ * Optional fields are genuinely optional: the two Supabase projects this app has
+ * pointed at carry slightly different column sets, so anything not guaranteed on
+ * both is `?` and every read must tolerate `undefined`.
  */
 export type Brand = {
   id: string;
   name: string;
-  aliases: string[] | null;
-  domains: string[] | null;
   status: string;
-  country: string | null;
-  currency: string | null;
-  gstin: string | null;
-  state_code: string | null;
-  place_of_supply: string | null;
-  is_export: boolean | null;
-  first_seen: string | null;
-  last_seen: string | null;
-  lifetime_revenue: number | null;
   notes: string | null;
-  // Added by the ARC dashboard migration — presentation only.
   logo_url: string | null;
   color: string | null;
   github_repos: string[] | null;
   created_at: string;
   updated_at: string;
+
+  // Client-register fields.
+  aliases?: string[] | null;
+  domains?: string[] | null;
+  gstin?: string | null;
+  state_code?: string | null;
+  place_of_supply?: string | null;
+  country?: string | null;
+  currency?: string | null;
+  is_export?: boolean | null;
+  first_seen?: string | null;
+  last_seen?: string | null;
+  lifetime_revenue?: number | null;
+
+  // Present on this project's table, absent on the older one.
+  website?: string | null;
+  owner?: string | null;
 };
 
 export type GithubRepo = {

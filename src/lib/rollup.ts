@@ -35,8 +35,12 @@ function isClient(client: string | null, keys: string[]): boolean {
 export function contactsFor(brand: Pick<Brand, "id" | "name" | "aliases">, people: Person[]): Person[] {
   const keys = brandKeys(brand);
 
+  // Union, not either/or. A person can only carry ONE brand_id, but an org like
+  // "WindChasers / Turquoise" legitimately spans two brands — matching on the FK
+  // alone would show that contact under whichever side won the backfill and hide
+  // them from the other.
   return people.filter((p) => {
-    if (p.brand_id) return p.brand_id === brand.id;
+    if (p.brand_id && p.brand_id === brand.id) return true;
     if (!p.org) return false;
     return p.org
       .split(/[/,]/)
