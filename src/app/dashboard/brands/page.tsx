@@ -31,6 +31,8 @@ const KIND_COLOR: Record<BrandKind, string> = {
  * rather than as work in progress.
  */
 function isLive(b: BrandRollup): boolean {
+  // Money outstanding keeps a brand live even with no work running: an unpaid
+  // invoice still needs chasing.
   return b.openProjects > 0 || b.unpaidCount > 0 || b.openTasks > 0;
 }
 
@@ -43,6 +45,9 @@ function isProposed(b: BrandRollup): boolean {
 function summarise(b: BrandRollup): string {
   const bits: string[] = [];
   if (b.openProjects > 0) bits.push(`${b.openProjects} project${b.openProjects === 1 ? "" : "s"} open`);
+  // Parked is named rather than folded into "open", so a shelved project never
+  // reads as work in progress.
+  if (b.parkedProjects > 0) bits.push(`${b.parkedProjects} parked`);
   if (b.openTasks > 0) bits.push(`${b.openTasks} open task${b.openTasks === 1 ? "" : "s"}`);
   // An invoice with no amount recorded still needs chasing, so say so rather
   // than letting it sum to zero and disappear.

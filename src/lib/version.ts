@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.13";
+export const VERSION = "0.0.14";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.14",
+    date: "2026-08-12",
+    notes: "47 GST invoices imported with their clients created and GST numbers filled in. A parked project no longer counts as work in flight, which is why ISIVIS read as having a project open when nothing had started.",
+  },
   {
     version: "0.0.13",
     date: "2026-08-12",

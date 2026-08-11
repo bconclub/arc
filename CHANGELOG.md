@@ -1,5 +1,17 @@
 # Changelog
 
+Each entry's version is an annotated git tag: `git show v0.0.13`.
+
+## 2026-08-12 04:10 IST · v0.0.14 — GST history imported, parked is not open
+
+- **47 GST invoices imported** covering FY2022-23 to date, ₹29,27,326 billed across 9 clients. Seven clients that existed only in the spreadsheet (CWE, IG3 Infra, OSIYA, Open Mind Consulting, Pearl Ports, Purple Dot, Snackbags) are now brands, and every invoice is linked to one.
+- **GST numbers backfilled** onto IG3 Infra, Open Mind Consulting, Pearl Ports, Purple Dot and Turquoise, taken from the invoices themselves.
+- The importer handles what the sheet actually is rather than what it should be: a header row repeated per financial year, blank spacer rows, three different date formats, and Indian digit grouping that puts a comma inside every amount.
+- One row (Pearl Ports, CRE1054) has its amount columns shifted, with the figure sitting under GST and billed left blank. Recording ₹72,000 as tax on a zero invoice would be wrong, so it is stored as the billed amount and the row carries a note saying why.
+- **Fixed: re-running the importer failed instead of doing nothing.** Uniqueness is a unique index over expressions, which PostgREST cannot use as a conflict target, so ignore-duplicates did not apply and the whole batch raised a duplicate-key error. Rows already present are now filtered client-side, and a second run reports "47 already present" and exits cleanly.
+- **Fixed: a parked project counted as work in flight.** ISIVIS showed "1 project open" for a project with status parked, no dates and no progress. Parked is now counted and reported separately, so the line says "1 parked" instead. The brand stays under Live because it has money outstanding, which is a separate and true reason.
+- Commit history: version entries are now annotated git tags rather than a follow-up commit per release, which was filling the log with "docs: cite vX" noise.
+
 ## 2026-08-12 03:20 IST · v0.0.13 — dashboard rebuilt, dead cron removed
 
 - **Dashboard rebuilt to the reference layout.** Greeting and date, four stat cards with lime icon badges (Critical, Today, Money waiting, Pipeline), ARC Radar and Money/Receivables side by side, a right rail carrying Focus today above the Activity feed, Live work as project cards with progress, and the pipeline funnel with win rate and average deal.
