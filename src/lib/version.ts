@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.19";
+export const VERSION = "0.0.20";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.20",
+    date: "2026-08-12",
+    notes: "Radar rows gain one-click done and not-important. Brand names can be renamed in place without orphaning their invoices. Receivables donut uses the green accent, and the invoice list is wider so due dates stop wrapping. Gmail attachment reading is built and waiting on credentials.",
+  },
   {
     version: "0.0.19",
     date: "2026-08-12",

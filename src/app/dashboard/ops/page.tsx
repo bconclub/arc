@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle, Bell, ChevronRight, Circle, CircleCheck, Clock,
+  AlertTriangle, Bell, Check, ChevronRight, Circle, CircleCheck, Clock, EyeOff,
   IndianRupee, ListChecks, Plus, Search, TrendingUp,
 } from "lucide-react";
-import { money, moneyShort, shortAgo, avatarColor } from "@/lib/format";
+import { money, moneyShort, shortAgo } from "@/lib/format";
 import { IN_PLAY, brandIndex } from "@/lib/rollup";
 import { dueLabel, receivables } from "@/lib/money";
 import { rankSignals } from "@/lib/signals";
@@ -113,6 +113,25 @@ export default function DashboardPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ done: !t.done }),
     });
+    load();
+  }
+
+  /**
+   * Clears a signal off the radar in one click.
+   *
+   * `done` records a resolution and stamps resolved_at. "Not important" only
+   * marks it seen, deliberately: dismissing something is not the same as fixing
+   * it, and filing an unfixed problem under "resolved" would make the record
+   * lie about what happened.
+   */
+  async function resolveSignal(s: OpsSignal, done: boolean) {
+    // Drop it from view immediately; the reload behind it settles the truth.
+    setSignals((prev) => prev.map((x) => (x.id === s.id ? { ...x, seen: true } : x)));
+    await fetch(`/api/ops/alerts/${s.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(done ? { resolved: true, resolution: "Marked done from the radar." } : { seen: true }),
+    }).catch(() => {});
     load();
   }
 
@@ -241,14 +260,14 @@ export default function DashboardPage() {
     },
   ];
 
-  // Money you are still owed is the brand accent, on a lime ramp that darkens as
-  // the due date recedes. Red is kept strictly for overdue, so colour carries one
-  // meaning: anything red is a problem, anything lime is simply outstanding.
+  // Money still owed is the green accent, on a ramp that darkens as the due date
+  // recedes. Red is kept strictly for overdue, so colour carries one meaning:
+  // red is a problem, green is simply outstanding.
   const ageing = [
     { label: "Overdue", value: r.ageing.overdue, color: "#e5484d" },
-    { label: "Due in 7 days", value: r.ageing.soon, color: "#cbfa0a" },
-    { label: "8 to 30 days", value: r.ageing.mid, color: "#a4cc08" },
-    { label: "31 days or more", value: r.ageing.far, color: "#7d9c06" },
+    { label: "Due in 7 days", value: r.ageing.soon, color: "#00d4aa" },
+    { label: "8 to 30 days", value: r.ageing.mid, color: "#00ab89" },
+    { label: "31 days or more", value: r.ageing.far, color: "#00806a" },
     { label: "No due date", value: r.ageing.undated, color: "#6b6b6b" },
   ].filter((s) => s.value > 0);
 
@@ -288,18 +307,6 @@ export default function DashboardPage() {
               </span>
             )}
           </Link>
-          <span className="flex items-center gap-2 rounded-pill border border-[var(--border)] bg-surface py-1 pl-1 pr-3">
-            <span
-              className="flex h-7 w-7 items-center justify-center rounded-pill text-[11px] font-bold text-white"
-              style={{ background: avatarColor(OWNER_NAME) }}
-            >
-              {OWNER_NAME.slice(0, 1)}
-            </span>
-            <span className="hidden leading-tight sm:block">
-              <span className="block text-[11.5px] font-medium text-text">{OWNER_NAME}</span>
-              <span className="block text-[9.5px] text-text-muted">Administrator</span>
-            </span>
-          </span>
         </div>
       </header>
 
@@ -335,21 +342,41 @@ export default function DashboardPage() {
           ) : (
             <ul>
               {d.radar.slice(0, RADAR_TOP).map((s) => (
-                <li key={s.id}>
-                  <button onClick={() => setOpenSignal(s)} className={`${rowCls} w-full text-left`}>
-                    <span className="mt-1 h-2 w-2 shrink-0 self-start rounded-full" style={{ background: SEV_COLOR[s.severity] }} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-text">{s.title}</span>
-                      {s.detail && <span className="block truncate text-[11px] text-text-muted">{s.detail}</span>}
-                    </span>
-                    <span className="shrink-0 whitespace-nowrap text-[10.5px] text-text-muted">{shortAgo(s.ts)}</span>
-                    <span
-                      title={`Priority ${s.score}: ${s.severity}, ${shortAgo(s.ts)}`}
-                      className="w-7 shrink-0 rounded-pill bg-[var(--surface-hover)] text-center text-[10px] font-bold tabular-nums text-text"
-                    >
-                      {s.score}
-                    </span>
+                <li key={s.id} className={`${rowCls} group`}>
+                  <span className="mt-1 h-2 w-2 shrink-0 self-start rounded-full" style={{ background: SEV_COLOR[s.severity] }} />
+                  <button onClick={() => setOpenSignal(s)} className="min-w-0 flex-1 text-left">
+                    <span className="block truncate text-text">{s.title}</span>
+                    {s.detail && <span className="block truncate text-[11px] text-text-muted">{s.detail}</span>}
                   </button>
+                  <span className="shrink-0 whitespace-nowrap text-[10.5px] text-text-muted">{shortAgo(s.ts)}</span>
+
+                  {/* Always tappable on touch, revealed on hover with a pointer.
+                      Hiding them behind hover on a phone makes them unreachable. */}
+                  <span className="flex shrink-0 items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
+                    <button
+                      onClick={() => resolveSignal(s, true)}
+                      title="Mark done"
+                      aria-label={`Mark "${s.title}" done`}
+                      className="rounded-pill p-1 text-text-muted transition-colors hover:bg-[rgba(0,212,170,0.14)] hover:text-accent-green"
+                    >
+                      <Check size={13} />
+                    </button>
+                    <button
+                      onClick={() => resolveSignal(s, false)}
+                      title="Not important"
+                      aria-label={`Dismiss "${s.title}" as not important`}
+                      className="rounded-pill p-1 text-text-muted transition-colors hover:bg-[var(--surface-hover)] hover:text-text"
+                    >
+                      <EyeOff size={13} />
+                    </button>
+                  </span>
+
+                  <span
+                    title={`Priority ${s.score}: ${s.severity}, ${shortAgo(s.ts)}`}
+                    className="w-7 shrink-0 rounded-pill bg-[var(--surface-hover)] text-center text-[10px] font-bold tabular-nums text-text"
+                  >
+                    {s.score}
+                  </span>
                 </li>
               ))}
               {d.radar.length > RADAR_TOP && (

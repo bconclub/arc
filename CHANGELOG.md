@@ -2,6 +2,17 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 08:30 IST . v0.0.20 - radar quick actions, brand rename, Gmail scaffold
+
+- **Radar quick actions.** Each row now has done and not-important without opening anything. They are two different records on purpose: done writes a resolution and a timestamp, not-important only marks it seen. Dismissing something is not the same as fixing it, and filing an unfixed problem under "resolved" would make the history lie.
+- The buttons are always visible on touch and revealed on hover with a pointer. Hiding them behind hover on a phone would put them out of reach entirely.
+- **Brand names can be edited in place** from the brand page. Renaming keeps the old name as an alias, because payments, projects and proposals store the client as free text: a plain rename would orphan every row carrying the old spelling and the money would silently disappear from the page. The page says so after saving rather than leaving it to be discovered.
+- **Receivables donut uses the green accent**, with red still reserved for overdue alone.
+- **Invoice list widened to 440px** and the due label no longer wraps. In a narrow column "No due date" broke across three lines and knocked the row heights out of step.
+- **Gmail attachment reading is built**, waiting only on credentials: an ingest table that records what has already been read, a reader that downloads attachment bytes, and a scan route that parses them into a review queue. Nothing writes to a payment row; the scan produces proposals and a human accepts them, matching how the manual upload already behaves.
+- The ingest table exists so a nightly scan is cheap. Without it every run would re-download and re-parse every invoice it can see, paying for a model call each time to re-read the same July invoices, and re-proposing figures that were already rejected.
+- An OAuth consent screen left in Testing mode expires refresh tokens after seven days and presents as a bare invalid_grant. That case is now named in the error rather than left to be hunted down.
+
 ## 2026-08-12 07:30 IST . v0.0.19 - Meta Ads and Google Analytics connectors
 
 - **Meta Ads connector.** Reads campaign spend, impressions, clicks and results from the ad account. Results are objective-dependent, so a lead campaign counts leads and a traffic campaign counts link clicks, picked per objective from Meta's actions array rather than assumed. Campaign status comes from a second call because insights do not carry it, and "spending now" versus "paused but spent last week" look identical otherwise.

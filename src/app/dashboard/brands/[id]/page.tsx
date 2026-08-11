@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  ChevronLeft, Globe, User, GitGraph, GitBranch, CircleDot, Save, ExternalLink, Mail, Phone,
-  X, Image as ImageIcon,
+  ChevronLeft, CircleDot, ExternalLink, GitBranch, GitGraph, Globe, Image as ImageIcon, Mail, Pencil, Phone, Save, User, X,
 } from "lucide-react";
 import { money, moneyShort, timeAgo, initials, avatarColor } from "@/lib/format";
 import { rollupBrand, brandKeys, contactsFor, parseChannel, UNPAID, IN_PLAY } from "@/lib/rollup";
@@ -55,6 +54,10 @@ export default function BrandProfilePage() {
   const [gh, setGh] = useState<GithubActivity | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [renameNote, setRenameNote] = useState("");
   const [saved, setSaved] = useState(false);
   const [newRepo, setNewRepo] = useState("");
   const [logoBusy, setLogoBusy] = useState(false);
@@ -104,6 +107,35 @@ export default function BrandProfilePage() {
   function toArray(s: string): string[] | null {
     const list = s.split(",").map((x) => x.trim()).filter(Boolean);
     return list.length ? list : null;
+  }
+
+  /**
+   * Renames the brand and keeps its history attached.
+   *
+   * Payments, projects and proposals store the client as free text, so a plain
+   * rename would orphan every row that still carries the old spelling: the money
+   * would silently vanish from this page. The old name is therefore pushed into
+   * `aliases`, which is exactly what the rollup already matches on, so nothing
+   * detaches.
+   */
+  async function renameBrand() {
+    if (!brand) return;
+    const next = draftName.trim();
+    if (!next || next === brand.name) { setRenaming(false); return; }
+
+    setSavingName(true);
+    setRenameNote("");
+    const aliases = Array.from(new Set([...(brand.aliases ?? []), brand.name].filter(Boolean)));
+    const res = await fetch(`/api/ops/brands/${brand.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: next, aliases }),
+    });
+    setSavingName(false);
+    if (!res.ok) { setRenameNote("Could not rename that brand."); return; }
+    setRenaming(false);
+    setRenameNote(`Renamed. "${brand.name}" kept as an alias so existing invoices and projects stay linked.`);
+    load();
   }
 
   async function save() {
@@ -235,7 +267,46 @@ export default function BrandProfilePage() {
       <header className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-surface p-4">
         <BrandMark name={brand.name} logoUrl={brand.logo_url} color={brand.color} size={56} radius="rounded-xl" />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[22px] font-bold tracking-tight text-text">{brand.name}</h1>
+          {renaming ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={draftName}
+                autoFocus
+                onChange={(e) => setDraftName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") renameBrand();
+                  if (e.key === "Escape") { setRenaming(false); setDraftName(brand.name); }
+                }}
+                className="min-w-0 flex-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface-hover)] px-2 py-1 text-[20px] font-bold tracking-tight text-text"
+              />
+              <button
+                onClick={renameBrand}
+                disabled={savingName || !draftName.trim() || draftName.trim() === brand.name}
+                className="rounded-pill bg-[var(--brand)] px-3 py-1.5 text-[12px] font-semibold text-[var(--brand-ink)] disabled:opacity-50"
+              >
+                {savingName ? "Saving" : "Save"}
+              </button>
+              <button
+                onClick={() => { setRenaming(false); setDraftName(brand.name); }}
+                className="rounded-pill px-2 py-1.5 text-[12px] text-text-muted hover:text-text"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <h1 className="group flex min-w-0 items-center gap-2">
+              <span className="truncate text-[22px] font-bold tracking-tight text-text">{brand.name}</span>
+              <button
+                onClick={() => { setDraftName(brand.name); setRenaming(true); }}
+                title="Rename brand"
+                aria-label="Rename brand"
+                className="shrink-0 rounded-lg p-1 text-text-muted opacity-100 transition-colors hover:text-text lg:opacity-0 lg:group-hover:opacity-100"
+              >
+                <Pencil size={14} />
+              </button>
+            </h1>
+          )}
+          {renameNote && <p className="mt-1 text-[11px] text-accent-orange">{renameNote}</p>}
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-text-muted">
             <span
               className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"

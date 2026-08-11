@@ -208,8 +208,13 @@ export default function MoneyPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium text-text">{p.client || "Unnamed"}</span>
                   <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-muted">
-                    <span className={d.tone === "overdue" ? "text-accent-red" : ""}>{d.text}</span>
-                    {p.item && <span className="truncate">· {p.item}</span>}
+                    {/* The due label must not wrap: in a narrow column "No due
+                        date" broke across three lines and pushed the row height
+                        out of step with its neighbours. */}
+                    <span className={`shrink-0 whitespace-nowrap ${d.tone === "overdue" ? "text-accent-red" : ""}`}>
+                      {d.text}
+                    </span>
+                    {p.item && <span className="min-w-0 truncate">· {p.item}</span>}
                   </span>
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-1">
@@ -265,6 +270,7 @@ export default function MoneyPage() {
           hasSelection={!!selected}
           onBack={() => setSelectedId(null)}
           backLabel="All invoices"
+          listWidth="440px"
           list={listPane}
           detail={
             <InvoiceDetail
