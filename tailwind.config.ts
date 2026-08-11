@@ -20,13 +20,26 @@ const config: Config = {
         "accent-red": "var(--accent-red)",
         "accent-orange": "var(--accent-orange)",
         "accent-blue": "var(--accent-blue)",
+        brand: "var(--brand)",
+        "brand-ink": "var(--brand-ink)",
+        "brand-text": "var(--brand-text)",
+        "brand-soft": "var(--brand-soft)",
+        "brand-faint": "var(--brand-faint)",
+        "brand-line": "var(--brand-line)",
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        panel: "var(--shadow-panel)",
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "monospace"],
       },
       borderRadius: {
-        card: "14px",
+        card: "14px",      // kept: existing screens rely on it
+        panel: "var(--r-panel)",
+        soft: "var(--r-card)",
+        pill: "var(--r-pill)",
       },
       maxWidth: {
         dashboard: "1400px",

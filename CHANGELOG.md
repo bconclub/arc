@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-12 01:35 IST · v0.0.10 — design foundation for the dashboard rebuild
+
+- **Shape and elevation are now a scale, not a guess.** Added `--r-card` (16px), `--r-panel` (20px) and `--r-pill`, plus `--shadow-card` / `--shadow-panel`. Dark theme keeps flat surfaces separated by a border — a drop shadow on a near-black surface is invisible — while light theme carries real elevation, which is how the reference screens read.
+- **Fixed before it shipped: lime is unreadable as text on white.** `#CBFA0A` on `#FFF` is roughly 1.4:1, and the sidebar's active nav item uses lime type, so it would have all but disappeared the moment anyone switched to light theme. Added `--brand-text` — the brand lime on dark, a darkened `#4F6A02` (~7:1) on light. The rule is now explicit: `--brand` for fills, `--brand-text` for type.
+- **Shared components** in `src/components/ui/`, built once for all three screens rather than three times: `StatusPill`, `SegmentedTabs`, `StatStrip`, `MasterDetail`, `AvatarCluster`.
+- `StatusPill` replaces three separate inline status-to-colour mappings — on the Money table, the brand card and the dashboard — which had already drifted apart from each other.
+- `StatStrip` supports a delta chip ("↑18% vs last week") but does not require one. ARC stores current state only, with no history of yesterday's figures, so most stats have nothing honest to compare against; the chip stays off until a snapshot table exists.
+- **Fixed before it shipped: the list/detail layout collapsed wrongly on mobile.** An inline `flexBasis` overrode the mobile full-width class and pinned the list to 380px on a phone. The width now applies from `lg` up, and below that the detail takes the full width with a back control instead of two unusable columns.
+- Not user-visible yet — no screen consumes these. First use is the Money → Invoices rebuild.
+- `(pending)`
+
 ## 2026-08-12 09:05 IST · v0.0.9 — invoices read themselves, logo search fixed
 
 - **Invoices can now be read from a PDF or a photo.** Four payment rows carried a null amount because the figure existed only inside an attachment. BCON's invoice template stopped emitting a text layer somewhere after April 2026 — `Invoice_BCON - Windchasers APR25.pdf` still extracts cleanly, while the newer `BCON - YV Homes Invoice.pdf` and `Exam Windchasers Invoice.pdf` are flattened images that text extraction reduces to "Invoice template design". `/api/ops/invoices/parse` reads the pages visually instead, so scanned, image-only and photographed invoices all work.

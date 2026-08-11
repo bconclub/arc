@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.9";
+export const VERSION = "0.0.10";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.10",
+    date: "2026-08-12",
+    notes: "Design foundation for the dashboard rebuild: a radius and elevation scale, lime weights that work on both themes, and the shared pieces the new screens are built from — status pills, tab rows, stat cards, list/detail layout and avatar clusters.",
+  },
   {
     version: "0.0.9",
     date: "2026-08-12",

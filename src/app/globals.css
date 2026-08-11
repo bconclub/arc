@@ -24,6 +24,27 @@
   --glow-white: rgba(255, 255, 255, 0.04);
   --sidebar-width: 200px;
 
+  /* ── Shape ── the reference screens use noticeably softer corners than the
+     14px `rounded-card` this app started with. One scale, used everywhere. */
+  --r-pill: 999px;
+  --r-card: 16px;
+  --r-panel: 20px;
+
+  /* ── Elevation ── dark theme separates surfaces with a border, not a shadow;
+     a drop shadow on a near-black surface is invisible. Light theme overrides
+     both of these with real shadows. */
+  --shadow-card: none;
+  --shadow-panel: none;
+
+  /* Lime at the weights the reference uses for icon badges and active pills.
+     --brand-soft (0.14) already exists; these are its siblings. */
+  --brand-faint: rgba(203, 250, 10, 0.07);
+  --brand-line: rgba(203, 250, 10, 0.28);
+  /* Lime as TEXT. On black the brand value is legible; on white it is not
+     (#CBFA0A on #FFF is about 1.4:1), so the light theme darkens it. Use this
+     for lime type and --brand for lime fills. */
+  --brand-text: #cbfa0a;
+
   /* ── Semantic tokens used across the app (esp. the inline-styled Feed) ── */
   --card-bg: #141414;        /* feed card surface */
   --card-skeleton: #111;
@@ -68,6 +89,17 @@
   --chip-border: rgba(0, 0, 0, 0.15);
   --drawer-bg: #ffffff;
   --overlay: rgba(0, 0, 0, 0.35);
+
+  /* Light theme carries elevation with shadow rather than border weight — the
+     reference's cards float on an off-white page. */
+  --shadow-card: 0 1px 2px rgba(16, 18, 20, 0.04), 0 4px 12px rgba(16, 18, 20, 0.05);
+  --shadow-panel: 0 2px 4px rgba(16, 18, 20, 0.04), 0 12px 32px rgba(16, 18, 20, 0.07);
+
+  /* Lime on white needs more body than lime on black to read as a fill. */
+  --brand-soft: rgba(203, 250, 10, 0.26);
+  --brand-faint: rgba(203, 250, 10, 0.14);
+  --brand-line: rgba(163, 201, 8, 0.45);
+  --brand-text: #4f6a02;   /* ~7:1 on white; the raw lime is ~1.4:1 */
 }
 
 * {
