@@ -12,7 +12,7 @@
 - **Fixed: two theme toggles.** The global TopBar and the dashboard header each rendered one, a row apart.
 - **Brands grouped Live / Proposed / Completed**, then agencies and partners. A brand with only a proposal out is no longer counted as Live — nothing has been won yet, so it reads as a decision pending rather than work in progress.
 - User-facing: upload an invoice and ARC fills in the amount; brand logos actually pull; the sidebar carries the real mark and the running version.
-- `(6b00230)`
+- `(954b592)`
 
 ## 2026-08-12 00:20 IST · v0.0.8 — brands list simplified, logos resolved properly
 
@@ -23,7 +23,7 @@
 - **Logos are resolved once, server-side, and stored.** Guessing a favicon at render time doesn't work: Google answers 200 with a generic grey globe for sites that have none, so the error fallback never fired and cards showed a placeholder worse than initials. `/api/ops/brands/logo` searches any linked repo for a logo file, falls back to a favicon only when the response is big enough to be real, and writes the winner to `logo_url`.
 - **Repos can be linked from the brand page.** Paste `owner/repo` or a GitHub URL, and "Pull logo" fetches the mark straight out of it — verified against `bconclub/windchasers`, which yields `public/icon-192.png`.
 - User-facing: Brands is now a scannable list of what's live; brand pages gain repo linking and logo pulling.
-- `(pending)`
+- `(93b2b6d)`
 
 ## 2026-08-12 00:05 IST · v0.0.7 — brands classified by relationship
 
@@ -34,7 +34,7 @@
 - Classification as shipped: 9 clients, 1 agency (Now Media), 1 partner (Proago), 1 prospect (Axlrate R&I), 3 own (BCON Club, PROXe, OUCH! Piercing).
 - Verified live: every client name on payments/projects/proposals still matches a brand, and all 11 people now attach to one.
 - User-facing: Brands page is grouped by relationship; profiles gain a Type selector and a "work arrives via" field.
-- `(pending)`
+- `(848ed76)`
 
 ## 2026-08-11 23:40 IST · v0.0.6 — brands become the client register
 
@@ -46,7 +46,7 @@
 - Brand and Person types now mark cross-project columns optional, since the two databases carry different column sets.
 - Verified against live data: every client name on payments/projects/proposals matches a brand, 10 of 11 people link (Alia Tabassum's org "Axlrate R&I" is not a brand), `system_health` seeded with 9 rows.
 - User-facing: brand cards show real money and contacts instead of zeros.
-- `(pending)`
+- `(f92a381)`
 
 ## 2026-08-11 23:10 IST · v0.0.5 — brand contacts
 
@@ -55,7 +55,7 @@
 - **Fixed:** the brand profile listed payments/projects/proposals by exact name while the totals above them matched aliases too, so a brand's rows could disagree with its own header figures. Both now use the same keys.
 - Versioning note recorded: the patch counter runs 0.0.1 → 0.0.100, then rolls to 0.1.0.
 - User-facing: a Contacts card per brand, with click-to-mail and click-to-call.
-- `(pending)`
+- `(e888ef2)`
 
 ## 2026-08-11 22:50 IST · v0.0.4 — operations command centre, brands, connectors
 
