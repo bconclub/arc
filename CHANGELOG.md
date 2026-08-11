@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-08-11 22:50 IST · feat: ARC v2 — operations command centre, brands, connectors
+
+- **Dashboard rebuilt as a single-viewport command centre.** Six panels (Radar, Money, Focus, Live Work, Activity, Pipeline) in a fixed 100vh grid on desktop; the page never scrolls, each panel scrolls internally. Below `lg` the grid unlocks and scrolls normally.
+- **Activity no longer duplicates Radar.** They read the same table before, so every open alert rendered twice. Radar = unresolved signals; Activity = things that happened (resolved signals, payments in, proposal moves, completed tasks, project progress), with radar ids excluded outright.
+- **New Operations page** (`/dashboard/operations`) — Gantt-style delivery timeline built from real project dates with a today marker, "lands this week" merging tasks + deadlines + payments, blocked work, and pipeline.
+- **Brands are first-class.** List + editable profile with GST/billing block, aliases, linked repos and commits. Rollups match on brand name *and* aliases, so invoices entered under an alternate spelling still count.
+- **Admin connectors panel** (`/dashboard/admin`) — nine connectors with env-var presence checks and live reachability probes. Secrets stay in env; the server coerces `process.env` to booleans at the module edge so no credential can reach the client.
+- **GitHub activity** — resolves user vs org accounts, reads private repos, and pulls per-repo commits (the events feed no longer carries commit messages). Brand-linked repos may live under a client's account and are marked when unreadable.
+- **Brand identity** — ARC mark traced to theme-aware SVG (the supplied PNGs are near-black and vanish on the dark shell), lime `#CBFA0A` sampled from the source art, new favicon and apple icon, nav accent moved from red to brand lime with red kept for danger.
+- **Mobile navigation fixed** — the bottom bar exposed 5 of 17 destinations and the rest were unreachable; added a full-nav drawer.
+- Schema: additive migration adds `logo_url` / `color` / `github_repos` to `brands`, creates `system_health`, and adds task priority/estimate. `services` is the GST billing catalogue and is left untouched — infrastructure health was moved off it.
+- Builds now honour `NEXT_DIST_DIR` so `next build` can't corrupt a running dev server.
+- User-facing: dashboard, operations, brands and admin are new screens; nav labels and the app icon change.
+- `(pending)`
+
 ## 2026-07-23 17:55 IST · fix: native dropdowns unreadable in dark mode
 
 - `color-scheme: dark` on `:root` (+ `light` under `[data-theme="light"]`) so native form controls — select popups, date-picker calendars, scrollbars — follow the app theme instead of the OS default.

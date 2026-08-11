@@ -38,3 +38,7 @@ next-env.d.ts
 
 # local assistant state
 .claude/state/
+
+# local env backups (may contain real keys)
+.env*.bak
+*.placeholder.bak
