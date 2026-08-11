@@ -42,3 +42,6 @@ next-env.d.ts
 # local env backups (may contain real keys)
 .env*.bak
 *.placeholder.bak
+
+# isolated production build output (NEXT_DIST_DIR)
+.next-build/
