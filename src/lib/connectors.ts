@@ -7,7 +7,7 @@
 
 export type ConnectorCategory =
   | "Repos" | "AI API" | "Database" | "Deployments"
-  | "Workflows" | "Email" | "Messaging" | "Research";
+  | "Workflows" | "Email" | "Messaging" | "Research" | "Ads" | "Analytics";
 
 export type ProbeResult = { ok: boolean; detail: string };
 
@@ -219,6 +219,68 @@ export const CONNECTORS: ConnectorDef[] = [
         return fail(e);
       } finally {
         clearTimeout(timer);
+      }
+    },
+  },
+  {
+    key: "meta_ads",
+    name: "Meta Ads",
+    category: "Ads",
+    envVars: ["META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID"],
+    optionalEnv: ["META_APP_ID", "META_APP_SECRET"],
+    description: "Campaign spend, impressions and results from the ad account.",
+    docsUrl: "https://business.facebook.com/settings/system-users",
+    async probe() {
+      const token = process.env.META_ACCESS_TOKEN;
+      const account = process.env.META_AD_ACCOUNT_ID;
+      if (!token || !account) return { ok: false, detail: "Token or ad account missing" };
+      const act = account.startsWith("act_") ? account : `act_${account}`;
+      try {
+        // Reading the account name is the cheapest call that proves both the
+        // token and the account id, and it consumes no insights quota.
+        const res = await get(
+          `https://graph.facebook.com/v21.0/${act}?fields=name&access_token=${encodeURIComponent(token)}`,
+          {},
+        );
+        const json = await res.json();
+        if (!res.ok) {
+          const msg = json?.error?.message ?? `HTTP ${res.status}`;
+          // A user token silently dies after ~60 days, so name that case rather
+          // than reporting a generic failure.
+          const expired = /expired|session has been invalidated|access token/i.test(msg);
+          return { ok: false, detail: expired ? `${msg} (a System User token does not expire)` : msg };
+        }
+        return { ok: true, detail: `Connected to ${json.name ?? act}` };
+      } catch (e) {
+        return fail(e);
+      }
+    },
+  },
+  {
+    key: "ga4",
+    name: "Google Analytics",
+    category: "Analytics",
+    envVars: ["GA4_PROPERTY_ID"],
+    optionalEnv: ["GA4_SERVICE_ACCOUNT_JSON", "GA4_CLIENT_ID", "GA4_CLIENT_SECRET", "GA4_REFRESH_TOKEN"],
+    description: "Sessions, users and conversions by channel from the GA4 property.",
+    docsUrl: "https://console.cloud.google.com/iam-admin/serviceaccounts",
+    async probe() {
+      const id = (process.env.GA4_PROPERTY_ID ?? "").trim();
+      if (!id) return { ok: false, detail: "No property id" };
+      // The measurement id is the one people have to hand and the API rejects
+      // it, so catch it here rather than letting it fail as an opaque 400.
+      if (/^G-/i.test(id)) {
+        return { ok: false, detail: "That is a measurement id. Use the numeric property id from Admin, Property Settings." };
+      }
+      const hasAuth = !!(process.env.GA4_SERVICE_ACCOUNT_JSON
+        || (process.env.GA4_CLIENT_ID && process.env.GA4_CLIENT_SECRET && process.env.GA4_REFRESH_TOKEN));
+      if (!hasAuth) return { ok: false, detail: "No service account key or OAuth credentials" };
+      try {
+        const { ga4AccessToken } = await import("@/lib/analytics/ga4");
+        await ga4AccessToken();
+        return { ok: true, detail: `Credentials valid for property ${id}` };
+      } catch (e) {
+        return fail(e);
       }
     },
   },

@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.18";
+export const VERSION = "0.0.19";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.19",
+    date: "2026-08-12",
+    notes: "Meta Ads and Google Analytics connectors built and registered, reporting not-connected until credentials are added. Credential files are now gitignored before any key can be downloaded.",
+  },
   {
     version: "0.0.18",
     date: "2026-08-12",

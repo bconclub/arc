@@ -54,3 +54,12 @@ next-env.d.ts
 
 # Stray exports dropped in the repo root
 /ChatGPT Image*.png
+
+# Service account and API key files. These are credentials: a leaked GCP service
+# account key grants whatever the account can do, and unlike a password it is not
+# rotated on login. Never commit one, whatever it is called.
+*-key.json
+*_key.json
+*service-account*.json
+*credentials*.json
+gcloud-*.json

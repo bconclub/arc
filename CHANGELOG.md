@@ -2,6 +2,15 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 07:30 IST . v0.0.19 - Meta Ads and Google Analytics connectors
+
+- **Meta Ads connector.** Reads campaign spend, impressions, clicks and results from the ad account. Results are objective-dependent, so a lead campaign counts leads and a traffic campaign counts link clicks, picked per objective from Meta's actions array rather than assumed. Campaign status comes from a second call because insights do not carry it, and "spending now" versus "paused but spent last week" look identical otherwise.
+- **Google Analytics connector.** Sessions, users and conversions by channel. Accepts either a service account key or the OAuth trio the Gmail connector already uses; the service account is preferred for anything unattended because it has no refresh token to expire. The JWT is signed with Web Crypto rather than pulling googleapis into the server bundle for one signature.
+- Totals are summed from the channel rows rather than fetched as a separate query. A second unfiltered call can disagree with the breakdown printed beneath it, and a total that contradicts its own parts is worse than no total.
+- **Both report "not connected" rather than an error when credentials are absent.** Those are different states with different fixes, and a panel that says "something broke" when nothing is configured sends you debugging the wrong thing.
+- Guards for the mistakes worth catching: the GA4 property id is the numeric one from Admin, not the G-XXXXXXX measurement id everyone has to hand, and an expired Meta token is named as such with a note that a System User token does not expire. All four GA4 failure paths were checked to give an actionable message.
+- **Credential files are gitignored ahead of time**: `*-key.json`, `*service-account*.json`, `*credentials*.json` and similar. A leaked service account key grants whatever that account can do and is not rotated by changing a password, so the pattern belongs in place before the key is ever downloaded.
+
 ## 2026-08-12 06:50 IST . v0.0.18 - em dashes removed everywhere
 
 - **All 294 em and en dashes are gone**, across 68 files: source, comments, migrations, scripts, the changelog and the env example. A previous pass covered only user-facing copy and left the rest.
