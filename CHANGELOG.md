@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-12 00:20 IST · v0.0.8 — brands list simplified, logos resolved properly
+
+- **Fixed: the Money panel counted overdue invoices twice.** Every payment in the database has a null due date, so all of them fell into the "31 days+" bucket while the same rows were also reported as Overdue — ₹70,000 and ₹40,000 describing overlapping money. Buckets are now mutually exclusive, status wins over date, and undated invoices get their own bucket instead of being quietly filed as "31 days+".
+- **Fixed: invoices with no amount were invisible.** Four of six unpaid rows have a null amount, so the "money waiting" headline was an undercount presented as fact. The panel now says how many invoices carry no amount.
+- **Fixed: the donut's centre label overflowed its ring.** A value like ₹70,000 at a fixed 20px spills straight over a 78px donut and reads as a rendering fault. Font size now scales to the ring.
+- **Brands list stripped back.** It was showing a health ring, three money columns and a sparkline per card — detail that belongs on the brand itself. Cards now carry a logo, a name and one line saying what is actually happening, grouped Live / Completed-dormant, then agencies, partners, prospects and own products.
+- **Logos are resolved once, server-side, and stored.** Guessing a favicon at render time doesn't work: Google answers 200 with a generic grey globe for sites that have none, so the error fallback never fired and cards showed a placeholder worse than initials. `/api/ops/brands/logo` searches any linked repo for a logo file, falls back to a favicon only when the response is big enough to be real, and writes the winner to `logo_url`.
+- **Repos can be linked from the brand page.** Paste `owner/repo` or a GitHub URL, and "Pull logo" fetches the mark straight out of it — verified against `bconclub/windchasers`, which yields `public/icon-192.png`.
+- User-facing: Brands is now a scannable list of what's live; brand pages gain repo linking and logo pulling.
+- `(pending)`
+
 ## 2026-08-12 00:05 IST · v0.0.7 — brands classified by relationship
 
 - **Not everything in `brands` is a client.** Added a `kind` column — client / agency / partner / prospect / own — matching the vocabulary already used in `people.relation`. The Brands page groups by it, clients first, so a prospect no longer sits in the same grid as a paying account.

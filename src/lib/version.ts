@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.7";
+export const VERSION = "0.0.8";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.8",
+    date: "2026-08-12",
+    notes: "Brands list stripped to live vs completed. Logos resolved server-side from a linked repo or a verified favicon instead of guessed at render time. Repos can be linked from the brand page. Fixed the money donut counting overdue twice.",
+  },
   {
     version: "0.0.7",
     date: "2026-08-11",

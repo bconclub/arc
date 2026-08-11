@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   ChevronLeft, Globe, User, GitGraph, GitBranch, CircleDot, Save, ExternalLink, Mail, Phone,
+  X, Image as ImageIcon,
 } from "lucide-react";
 import { money, moneyShort, timeAgo, initials, avatarColor } from "@/lib/format";
 import { rollupBrand, brandKeys, contactsFor, parseChannel, UNPAID, IN_PLAY } from "@/lib/rollup";
@@ -55,6 +56,9 @@ export default function BrandProfilePage() {
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [newRepo, setNewRepo] = useState("");
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoNote, setLogoNote] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     aliases: "", domains: "", notes: "", status: "active", logo_url: "", color: "", github_repos: "",
@@ -131,6 +135,52 @@ export default function BrandProfilePage() {
     [brand, allBrands]
   );
 
+  /** Adds owner/repo to this brand without touching the rest of the form. */
+  async function addRepo() {
+    const slug = newRepo.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/$/, "");
+    if (!brand || !slug.includes("/")) return;
+    const next = Array.from(new Set([...(brand.github_repos ?? []), slug]));
+    await fetch(`/api/ops/brands/${brand.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ github_repos: next }),
+    });
+    setNewRepo("");
+    load();
+  }
+
+  async function removeRepo(slug: string) {
+    if (!brand) return;
+    const next = (brand.github_repos ?? []).filter((r) => r !== slug);
+    await fetch(`/api/ops/brands/${brand.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ github_repos: next.length ? next : null }),
+    });
+    load();
+  }
+
+  /** Searches the linked repos, then the site favicon, and stores the winner. */
+  async function pullLogo() {
+    if (!brand) return;
+    setLogoBusy(true);
+    setLogoNote(null);
+    try {
+      const res = await fetch("/api/ops/brands/logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brandId: brand.id }),
+      });
+      const j = await res.json();
+      setLogoNote(j.applied ? `Found ${j.applied.label}` : (j.detail ?? "Nothing found."));
+      if (j.applied) load();
+    } catch {
+      setLogoNote("Lookup failed.");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
   const roll = useMemo(
     () => (brand ? rollupBrand(brand, projects, payments, proposals, signals) : null),
     [brand, projects, payments, proposals, signals]
@@ -183,10 +233,7 @@ export default function BrandProfilePage() {
 
       {/* ── Identity ── */}
       <header className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--border)] bg-surface p-4">
-        <BrandMark
-          name={brand.name} logoUrl={brand.logo_url} domains={brand.domains}
-          color={brand.color} size={56} radius="rounded-xl"
-        />
+        <BrandMark name={brand.name} logoUrl={brand.logo_url} color={brand.color} size={56} radius="rounded-xl" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[22px] font-bold tracking-tight text-text">{brand.name}</h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-text-muted">
@@ -318,9 +365,46 @@ export default function BrandProfilePage() {
           {brand.github_repos?.length ? <span className="text-text-muted">({brand.github_repos.length})</span> : null}
         </h2>
 
+        {/* Add a repo inline — this is how logo and asset folders get pulled in. */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            value={newRepo}
+            onChange={(e) => setNewRepo(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addRepo()}
+            placeholder="owner/repo — or paste a GitHub URL"
+            className={`${inputCls} max-w-xs flex-1`}
+          />
+          <button onClick={addRepo} className="rounded-lg bg-text px-3 py-1.5 text-[12px] font-medium text-bg">
+            Link repo
+          </button>
+          <button
+            onClick={pullLogo}
+            disabled={logoBusy}
+            title="Search the linked repos for a logo file, then fall back to the site favicon"
+            className="flex items-center gap-1.5 rounded-lg border border-[var(--border-strong)] px-3 py-1.5 text-[12px] text-text disabled:opacity-50"
+          >
+            <ImageIcon size={13} /> {logoBusy ? "Looking…" : "Pull logo"}
+          </button>
+          {logoNote && <span className="text-[11px] text-text-muted">{logoNote}</span>}
+        </div>
+
+        {brand.github_repos?.length ? (
+          <ul className="mt-2 flex flex-wrap gap-1.5">
+            {brand.github_repos.map((r) => (
+              <li key={r} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] text-text">
+                <GitBranch size={11} className="text-text-muted" />
+                {r}
+                <button onClick={() => removeRepo(r)} aria-label={`Unlink ${r}`} className="ml-0.5 text-text-muted hover:text-accent-red">
+                  <X size={11} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
         {!brand.github_repos?.length ? (
-          <p className="py-4 text-[11.5px] text-text-muted">
-            No repos linked. Add them to this brand&apos;s <code className="rounded bg-[var(--surface-hover)] px-1">github_repos</code> column as <code className="rounded bg-[var(--surface-hover)] px-1">owner/repo</code> values.
+          <p className="py-3 text-[11.5px] text-text-muted">
+            No repos linked yet. Add one above to pull logos and track commits for this brand.
           </p>
         ) : !gh?.configured ? (
           <p className="py-4 text-[11.5px] text-text-muted">{gh?.error ?? "GitHub not configured."}</p>

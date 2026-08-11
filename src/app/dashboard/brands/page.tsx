@@ -3,25 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Boxes, Plus, ChevronRight } from "lucide-react";
-import { moneyShort, avatarColor } from "@/lib/format";
+import { moneyShort } from "@/lib/format";
 import { rollupAll } from "@/lib/rollup";
-import { HealthRing, TrendLine } from "@/components/ops/Charts";
 import { BrandMark } from "@/components/ops/BrandMark";
-import { BRAND_KIND_LABEL, type Brand, type BrandKind, type Project, type Payment, type Proposal, type OpsSignal } from "@/types/ops";
-
-// Status values come from the client register, which can add its own — always
-// fall through to a neutral colour rather than indexing blind.
-const STATUS_COLOR: Record<string, string> = {
-  active: "#00d4aa",
-  on_track: "#00d4aa",
-  at_risk: "#f59e0b",
-  paused: "#f59e0b",
-  dormant: "#6b6b6b",
-  archived: "#6b6b6b",
-  lost: "#e5484d",
-};
-
-const statusColor = (s: string) => STATUS_COLOR[s] ?? "#6b6b6b";
+import {
+  BRAND_KIND_LABEL,
+  type Brand, type BrandKind, type BrandRollup,
+  type Project, type Payment, type Proposal, type OpsSignal,
+} from "@/types/ops";
 
 // Rows without `kind` predate the classification migration; they were all
 // entered as clients, so that is the safe default.
@@ -35,8 +24,72 @@ const KIND_COLOR: Record<BrandKind, string> = {
   own: "#6b6b6b",
 };
 
-// Clients first — they are the ones with money attached.
-const KIND_ORDER: BrandKind[] = ["client", "agency", "partner", "prospect", "own"];
+/**
+ * "Live" means something is genuinely moving: work in flight, money outstanding,
+ * or a deal in play. Everything else is finished or dormant and belongs below —
+ * this page is for seeing what needs attention, not for browsing an archive.
+ */
+function isLive(b: BrandRollup): boolean {
+  return b.activeProjects > 0 || b.owed > 0 || b.pipeline > 0 || b.openTasks > 0;
+}
+
+/** One line saying what is actually happening, or why nothing is. */
+function summarise(b: BrandRollup): string {
+  const bits: string[] = [];
+  if (b.activeProjects > 0) bits.push(`${b.activeProjects} active project${b.activeProjects === 1 ? "" : "s"}`);
+  if (b.openTasks > 0) bits.push(`${b.openTasks} open task${b.openTasks === 1 ? "" : "s"}`);
+  if (b.owed > 0) bits.push(`${moneyShort(b.owed)} outstanding`);
+  if (b.pipeline > 0) bits.push(`${moneyShort(b.pipeline)} in play`);
+  if (bits.length) return bits.join(" · ");
+  if (b.collected > 0) return `${moneyShort(b.collected)} collected · nothing open`;
+  if (b.projectCount > 0) return "No active work";
+  return "Nothing recorded yet";
+}
+
+function BrandCard({ b }: { b: BrandRollup }) {
+  const live = isLive(b);
+  return (
+    <Link
+      href={`/dashboard/brands/${b.id}`}
+      className="metric-card flex items-center gap-3 rounded-xl border border-[var(--border)] bg-surface p-3"
+    >
+      <BrandMark name={b.name} logoUrl={b.logo_url} color={b.color} size={36} radius="rounded-lg" />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-[13.5px] font-semibold text-text">{b.name}</span>
+          {b.overdue > 0 && (
+            <span className="shrink-0 rounded bg-[rgba(229,72,77,0.14)] px-1 text-[8.5px] font-bold uppercase text-accent-red">
+              overdue
+            </span>
+          )}
+        </span>
+        <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-muted">
+          <span
+            className="h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ background: live ? "#00d4aa" : "#6b6b6b" }}
+          />
+          <span className="truncate">{summarise(b)}</span>
+        </span>
+      </span>
+      <ChevronRight size={14} className="shrink-0 text-text-muted" />
+    </Link>
+  );
+}
+
+function Group({ title, count, color, children }: {
+  title: string; count: number; color: string; children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-2">
+      <h2 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+        <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+        {title}
+        <span>({count})</span>
+      </h2>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">{children}</div>
+    </section>
+  );
+}
 
 export default function BrandsPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -82,21 +135,22 @@ export default function BrandsPage() {
     [brands, projects, payments, proposals, signals]
   );
 
-  /** id -> name, so a card can say "via Now Media" without another fetch. */
-  const viaName = useMemo(
-    () => Object.fromEntries(brands.map((b) => [b.id, b.name])) as Record<string, string>,
-    [brands]
-  );
+  const clients = rolled.filter((b) => kindOf(b) === "client");
+  const live = clients.filter(isLive);
+  const done = clients.filter((b) => !isLive(b));
+  const others = (["agency", "partner", "prospect", "own"] as BrandKind[])
+    .map((k) => ({ kind: k, rows: rolled.filter((b) => kindOf(b) === k) }))
+    .filter((g) => g.rows.length > 0);
 
   return (
-    <div className="space-y-4 px-4 pb-24 pt-4 sm:px-5 lg:px-6">
+    <div className="space-y-5 px-4 pb-24 pt-4 sm:px-5 lg:px-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Boxes size={19} className="text-text-muted" />
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Brands</h1>
             <p className="mt-0.5 text-[12.5px] text-text-muted">
-              Health of every brand across projects, money, pipeline and repos
+              What&apos;s live right now — open one to see everything on it
             </p>
           </div>
         </div>
@@ -128,72 +182,26 @@ export default function BrandsPage() {
         <p className="py-12 text-center text-[13px] text-text-muted">Loading…</p>
       ) : rolled.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[var(--border)] px-6 py-14 text-center">
-          <p className="text-[13px] text-text-muted">
-            No brands yet. Run the <code className="rounded bg-[var(--surface-hover)] px-1">brands_services</code> migration
-            to seed them, or add one above.
-          </p>
+          <p className="text-[13px] text-text-muted">No brands yet. Add one above.</p>
         </div>
       ) : (
-        KIND_ORDER.filter((k) => rolled.some((b) => kindOf(b) === k)).map((kind) => (
-        <section key={kind} className="space-y-2">
-          <h2 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: KIND_COLOR[kind] }} />
-            {BRAND_KIND_LABEL[kind]}
-            <span className="text-text-muted">({rolled.filter((b) => kindOf(b) === kind).length})</span>
-          </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {rolled.filter((b) => kindOf(b) === kind).map((b) => {
-            const accent = b.color ?? avatarColor(b.name);
-            return (
-              <Link
-                key={b.id}
-                href={`/dashboard/brands/${b.id}`}
-                className="metric-card flex flex-col rounded-2xl border border-[var(--border)] bg-surface p-4"
-              >
-                <div className="flex items-center gap-2.5">
-                  <BrandMark
-                    name={b.name} logoUrl={b.logo_url} domains={b.domains}
-                    color={b.color} size={40} radius="rounded-xl"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-semibold text-text">{b.name}</p>
-                    <p className="flex items-center gap-1 text-[11px] text-text-muted">
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusColor(b.status) }} />
-                      {b.status.replace("_", " ")}
-                      {b.via_brand_id && viaName[b.via_brand_id] ? ` · via ${viaName[b.via_brand_id]}` : ""}
-                      {b.github_repos?.length ? ` · ${b.github_repos.length} repo${b.github_repos.length === 1 ? "" : "s"}` : ""}
-                    </p>
-                  </div>
-                  <HealthRing score={b.health} size={44} thickness={4} />
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[var(--border)] pt-3">
-                  <div>
-                    <p className="text-[13.5px] font-semibold tabular-nums text-text">{moneyShort(b.owed)}</p>
-                    <p className="text-[9.5px] text-text-muted">Out there</p>
-                  </div>
-                  <div>
-                    <p className="text-[13.5px] font-semibold tabular-nums text-text">{moneyShort(b.collected)}</p>
-                    <p className="text-[9.5px] text-text-muted">Collected</p>
-                  </div>
-                  <div>
-                    <p className="text-[13.5px] font-semibold tabular-nums text-text">{moneyShort(b.pipeline)}</p>
-                    <p className="text-[9.5px] text-text-muted">Pipeline</p>
-                  </div>
-                </div>
-
-                <TrendLine values={b.moneySeries} color={accent} height={26} />
-
-                <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
-                  <span>{b.activeProjects} active · {b.openTasks} open task{b.openTasks === 1 ? "" : "s"}</span>
-                  <ChevronRight size={13} />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-        </section>
-        ))
+        <>
+          {live.length > 0 && (
+            <Group title="Live" count={live.length} color="#00d4aa">
+              {live.map((b) => <BrandCard key={b.id} b={b} />)}
+            </Group>
+          )}
+          {done.length > 0 && (
+            <Group title="Completed / dormant" count={done.length} color="#6b6b6b">
+              {done.map((b) => <BrandCard key={b.id} b={b} />)}
+            </Group>
+          )}
+          {others.map((g) => (
+            <Group key={g.kind} title={BRAND_KIND_LABEL[g.kind]} count={g.rows.length} color={KIND_COLOR[g.kind]}>
+              {g.rows.map((b) => <BrandCard key={b.id} b={b} />)}
+            </Group>
+          ))}
+        </>
       )}
     </div>
   );

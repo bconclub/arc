@@ -161,24 +161,39 @@ export default function DashboardPage() {
     const inPlay = proposals.filter((p) => IN_PLAY.includes(p.status));
 
     const receivable = unpaid.reduce((s, p) => s + (p.amount ?? 0), 0);
-    const overdueTotal = overdueRows.reduce((s, p) => s + (p.amount ?? 0), 0);
+    // computed below from the exclusive buckets so the donut and the headline agree
     const pipelineTotal = inPlay.reduce((s, p) => s + (p.amount ?? 0), 0);
 
-    // Receivables split by how far out they're due.
-    const ageing = { soon: 0, mid: 0, far: 0 };
+    // Receivables split by how far out they're due. Buckets are mutually
+    // exclusive — an earlier version added overdue rows to BOTH the overdue
+    // total and a due-date bucket, so the same money appeared twice in the
+    // legend. Status wins: an invoice marked overdue is overdue whatever its
+    // date says, and rows with no due date get their own bucket rather than
+    // being silently lumped into "31 days+".
+    const ageing = { overdue: 0, soon: 0, mid: 0, far: 0, undated: 0 };
     const overdueBuckets = { b1: 0, b2: 0, b3: 0, b4: 0 };
+    // Invoices sitting in the total with no amount recorded — the headline
+    // figure is an undercount whenever this is non-zero, so it must be shown.
+    let unpricedCount = 0;
+
     for (const p of unpaid) {
-      const { days } = dueLabel(p.due);
       const amt = p.amount ?? 0;
-      if (days == null) { ageing.far += amt; continue; }
-      if (days < 0) {
-        const od = Math.abs(days);
-        if (od <= 15) overdueBuckets.b1 += amt;
-        else if (od <= 30) overdueBuckets.b2 += amt;
-        else if (od <= 60) overdueBuckets.b3 += amt;
-        else overdueBuckets.b4 += amt;
-        ageing.soon += amt;
-      } else if (days <= 7) ageing.soon += amt;
+      if (p.amount == null) unpricedCount += 1;
+      const { days } = dueLabel(p.due);
+
+      if (p.status === "overdue" || (days != null && days < 0)) {
+        ageing.overdue += amt;
+        if (days != null) {
+          const od = Math.abs(days);
+          if (od <= 15) overdueBuckets.b1 += amt;
+          else if (od <= 30) overdueBuckets.b2 += amt;
+          else if (od <= 60) overdueBuckets.b3 += amt;
+          else overdueBuckets.b4 += amt;
+        }
+        continue;
+      }
+      if (days == null) { ageing.undated += amt; continue; }
+      if (days <= 7) ageing.soon += amt;
       else if (days <= 30) ageing.mid += amt;
       else ageing.far += amt;
     }
@@ -265,8 +280,9 @@ export default function DashboardPage() {
 
     return {
       radar, critical, sevCounts, totalSignals: open.length,
-      unpaid, overdueRows, inPlay, receivable, overdueTotal, pipelineTotal,
-      ageing, overdueBuckets, openTasks, todayCount, funnel, conversion,
+      unpaid, overdueRows, inPlay, receivable, pipelineTotal,
+      overdueTotal: ageing.overdue,
+      ageing, overdueBuckets, unpricedCount, openTasks, todayCount, funnel, conversion,
       critNow, critPrev, dueSoon, activity, live,
       liveValue: live.reduce((s, p) => s + (p.budget ?? 0), 0),
       liveOpenTasks: live.reduce((s, p) => s + p.openTasks, 0),
@@ -420,24 +436,34 @@ export default function DashboardPage() {
                 size={78} thickness={9}
                 center={moneyShort(d.receivable)} sub="open"
                 segments={[
+                  { label: "Overdue", value: d.ageing.overdue, color: "#e5484d" },
                   { label: "0–7 days", value: d.ageing.soon, color: "#00d4aa" },
                   { label: "8–30 days", value: d.ageing.mid, color: "#f59e0b" },
-                  { label: "31+ days", value: d.ageing.far, color: "#e5484d" },
+                  { label: "31+ days", value: d.ageing.far, color: "#3b82f6" },
+                  { label: "No due date", value: d.ageing.undated, color: "#6b6b6b" },
                 ]}
               />
               <ul className="min-w-0 flex-1 space-y-0.5">
                 {[
+                  { l: "Overdue", v: d.ageing.overdue, c: "#e5484d" },
                   { l: "Due 0–7d", v: d.ageing.soon, c: "#00d4aa" },
                   { l: "Due 8–30d", v: d.ageing.mid, c: "#f59e0b" },
-                  { l: "Due 31d+", v: d.ageing.far, c: "#e5484d" },
-                  { l: "Overdue", v: d.overdueTotal, c: "#e5484d" },
-                ].map((x) => (
+                  { l: "Due 31d+", v: d.ageing.far, c: "#3b82f6" },
+                  { l: "No due date", v: d.ageing.undated, c: "#6b6b6b" },
+                ].filter((x) => x.v > 0).map((x) => (
                   <li key={x.l} className="flex items-center gap-1.5 text-[10px] text-text-muted">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: x.c }} />
                     <span className="flex-1 truncate">{x.l}</span>
                     <span className="tabular-nums text-text">{moneyShort(x.v)}</span>
                   </li>
                 ))}
+                {d.unpricedCount > 0 && (
+                  <li className="flex items-center gap-1.5 pt-0.5 text-[10px] text-accent-orange">
+                    <span className="flex-1 truncate">
+                      + {d.unpricedCount} invoice{d.unpricedCount === 1 ? "" : "s"} with no amount
+                    </span>
+                  </li>
+                )}
               </ul>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">

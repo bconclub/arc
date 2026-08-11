@@ -58,16 +58,25 @@ export function Donut({
         ))}
       </svg>
       {(center || sub) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-1">
           {center && (
             <span
-              className="text-[20px] font-bold leading-none tabular-nums"
-              style={{ color: centerColor ?? "var(--text)" }}
+              className="font-bold leading-none tabular-nums"
+              style={{
+                color: centerColor ?? "var(--text)",
+                // Fit the label inside the ring. A value like "₹70,000" at a
+                // fixed 20px spills straight over a 78px donut, which reads as
+                // a rendering fault rather than a number.
+                fontSize: Math.max(
+                  9,
+                  Math.min(20, ((size - thickness * 2) * 1.5) / Math.max(center.length, 1))
+                ),
+              }}
             >
               {center}
             </span>
           )}
-          {sub && <span className="mt-1 text-[9px] text-text-muted">{sub}</span>}
+          {sub && <span className="mt-0.5 text-[8px] text-text-muted">{sub}</span>}
         </div>
       )}
     </div>

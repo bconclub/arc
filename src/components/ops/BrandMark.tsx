@@ -4,33 +4,28 @@ import { useState } from "react";
 import { initials, avatarColor } from "@/lib/format";
 
 /**
- * Resolves a brand's icon from its own website when no logo is stored.
+ * Only ever renders a logo that was explicitly resolved and stored.
  *
- * Only 2 of the 7 client domains currently return a real favicon — the rest
- * answer 404 with Google's generic grey globe, which reads worse than initials.
- * So the <img> is allowed to fail and `onError` swaps in the initials tile;
- * we never render a placeholder globe.
+ * Guessing a favicon at render time doesn't work: Google answers 200 with a
+ * generic grey globe for sites that have none, so `onError` never fires and the
+ * card shows a placeholder that looks worse than initials. Resolution now
+ * happens server-side in /api/ops/brands/logo, which can measure the response
+ * and reject the globe, and the winner is saved to brands.logo_url.
  */
-export function brandIconUrl(logoUrl: string | null, domains: string[] | null): string | null {
-  if (logoUrl) return logoUrl;
-  const raw = domains?.find((d) => d && d.trim());
-  if (!raw) return null;
-  const host = raw.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  if (!host) return null;
-  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128`;
+export function brandIconUrl(logoUrl: string | null): string | null {
+  return logoUrl && logoUrl.trim() ? logoUrl.trim() : null;
 }
 
 export function BrandMark({
-  name, logoUrl, domains, color, size = 32, radius = "rounded-lg",
+  name, logoUrl, color, size = 32, radius = "rounded-lg",
 }: {
   name: string;
   logoUrl?: string | null;
-  domains?: string[] | null;
   color?: string | null;
   size?: number;
   radius?: string;
 }) {
-  const src = brandIconUrl(logoUrl ?? null, domains ?? null);
+  const src = brandIconUrl(logoUrl ?? null);
   const [failed, setFailed] = useState(false);
 
   if (src && !failed) {
