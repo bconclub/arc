@@ -9,23 +9,21 @@ type Ctx = { params: { id: string } };
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   const { id } = ctx.params;
   const body = await req.json();
+  // GST/billing columns (gstin, place_of_supply, currency, lifetime_revenue…)
+  // are owned by the billing side and intentionally not patchable from the dashboard.
   const patch: Record<string, unknown> = {};
-  if ("done" in body) patch.done = Boolean(body.done);
-  if ("text" in body) patch.text = body.text;
-  if ("due" in body) patch.due = body.due || null;
-  if ("priority" in body) patch.priority = body.priority || null;
-  if ("estimate_minutes" in body) {
-    patch.estimate_minutes =
-      body.estimate_minutes === "" || body.estimate_minutes == null ? null : Number(body.estimate_minutes);
+  for (const key of ["name", "logo_url", "color", "status", "notes", "aliases", "domains", "github_repos"]) {
+    if (key in body) patch[key] = body[key] === "" ? null : body[key];
   }
-  const { data, error } = await supabaseAdmin.from("now_tasks").update(patch).eq("id", id).select().single();
+  patch.updated_at = new Date().toISOString();
+  const { data, error } = await supabaseAdmin.from("brands").update(patch).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const { id } = ctx.params;
-  const { error } = await supabaseAdmin.from("now_tasks").delete().eq("id", id);
+  const { error } = await supabaseAdmin.from("brands").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
