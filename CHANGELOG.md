@@ -10,7 +10,7 @@
 - The outstanding stat states how many invoices carry no amount, because the total is an undercount whenever that number is above zero.
 - An empty filtered list now says "No invoices match these filters" rather than looking identical to having no money owed.
 - **Fixed before it shipped: the screen would have overrun the viewport on mobile.** Pinning the height to `100vh - 3.5rem` ignored the 5rem the layout already reserves for the bottom nav. The height is now pinned only from `lg`, where the panes scroll internally.
-- `(pending)`
+- `(c15e707)`
 
 ## 2026-08-12 01:35 IST · v0.0.10 — design foundation for the dashboard rebuild
 
