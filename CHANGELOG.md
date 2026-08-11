@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-08-11 22:50 IST · feat: ARC v2 — operations command centre, brands, connectors
+## 2026-08-11 22:50 IST · v0.0.4 — operations command centre, brands, connectors
 
 - **Dashboard rebuilt as a single-viewport command centre.** Six panels (Radar, Money, Focus, Live Work, Activity, Pipeline) in a fixed 100vh grid on desktop; the page never scrolls, each panel scrolls internally. Below `lg` the grid unlocks and scrolls normally.
 - **Activity no longer duplicates Radar.** They read the same table before, so every open alert rendered twice. Radar = unresolved signals; Activity = things that happened (resolved signals, payments in, proposal moves, completed tasks, project progress), with radar ids excluded outright.
@@ -13,6 +13,7 @@
 - Schema: additive migration adds `logo_url` / `color` / `github_repos` to `brands`, creates `system_health`, and adds task priority/estimate. `services` is the GST billing catalogue and is left untouched — infrastructure health was moved off it.
 - Builds now honour `NEXT_DIST_DIR` so `next build` can't corrupt a running dev server.
 - User-facing: dashboard, operations, brands and admin are new screens; nav labels and the app icon change.
+- Version scheme corrected: patch counts 0.0.1 → 0.0.100 before the minor rolls. An earlier commit in this batch wrongly jumped to 2.1.0 to match a design mockup.
 - `(pending)`
 
 ## 2026-07-23 17:55 IST · fix: native dropdowns unreadable in dark mode

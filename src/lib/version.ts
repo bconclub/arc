@@ -1,17 +1,22 @@
 // ARC version tracking — KEEP IN SYNC WITH package.json "version".
 // Sidebar, changelog and release tags all read from VERSION below.
-// Convention:
-// - Patch (0.0.x): bug fixes, UI tweaks
-// - Minor (0.x.0): new feature shipped  
-// - Major (x.0.0): full system change
+//
+// Scheme: the PATCH number counts up 1 → 100 before the minor moves.
+// It is NOT semver — patch is a running build counter, so 0.0.47 is normal and
+// 0.0.100 is the last patch in the series before the minor rolls.
+//
+//   0.0.1 · 0.0.2 · … · 0.0.99 · 0.0.100 → next minor
+//
+// Every shipped batch bumps the patch by one, regardless of size. Do not jump
+// the number to match a design mockup.
 
-export const VERSION = "2.1.0";
+export const VERSION = "0.0.4";
 
 export const CHANGELOG = [
   {
-    version: "2.1.0",
+    version: "0.0.4",
     date: "2026-08-11",
-    notes: "Mission-control dashboard: severity donut, operations health graph, receivables ageing, brand health scores, proposal funnel, GitHub activity. Brands and services became first-class tables.",
+    notes: "Single-viewport command centre. Operations page with delivery timeline. Brands as client-register profiles with GST block and repo activity. Admin connector panel. ARC brand mark, favicon and lime accent. Mobile nav drawer.",
   },
   {
     version: "0.0.3", 
