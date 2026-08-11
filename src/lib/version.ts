@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.10";
+export const VERSION = "0.0.11";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.11",
+    date: "2026-08-12",
+    notes: "Money is now an Invoices screen: overdue / due-soon / outstanding / collected across the top, status tabs, working client and month filters, and a list beside a detail panel. Upload an invoice PDF or photo and it reads the figures off the page — nothing is saved until you confirm what it read.",
+  },
   {
     version: "0.0.10",
     date: "2026-08-12",

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-12 02:05 IST · v0.0.11 — Money becomes an Invoices screen
+
+- **The invoice reader has a home.** The parser shipped in v0.0.9 worked but nothing called it, so the four blank amounts stayed blank. Selecting an invoice and uploading its PDF or photo now reads the figures off the page and shows them for confirmation. Nothing is written until you press save — the amount, due date and description land on the row only when you accept them.
+- The confirm step re-uses the existing payments endpoint rather than re-posting the file with `apply=true`, which would have re-read the document and billed a second model call for figures already on screen.
+- Warns when the invoice is billed to a different party than the row says, so the wrong file attached to the wrong client is caught before it is saved rather than after.
+- **Receivables maths moved to `lib/money.ts`.** It lived inside the dashboard page while the Invoices screen needed the same numbers, and two copies of a money calculation drift — which is exactly how overdue came to be counted twice. Both screens now read one definition.
+- **Layout**: four stats across the top (overdue / due within a month / total outstanding / collected), status tabs with live counts, client and month filters that actually apply, and a list beside a detail panel instead of a table that opened a modal.
+- The outstanding stat states how many invoices carry no amount, because the total is an undercount whenever that number is above zero.
+- An empty filtered list now says "No invoices match these filters" rather than looking identical to having no money owed.
+- **Fixed before it shipped: the screen would have overrun the viewport on mobile.** Pinning the height to `100vh - 3.5rem` ignored the 5rem the layout already reserves for the bottom nav. The height is now pinned only from `lg`, where the panes scroll internally.
+- `(pending)`
+
 ## 2026-08-12 01:35 IST · v0.0.10 — design foundation for the dashboard rebuild
 
 - **Shape and elevation are now a scale, not a guess.** Added `--r-card` (16px), `--r-panel` (20px) and `--r-pill`, plus `--shadow-card` / `--shadow-panel`. Dark theme keeps flat surfaces separated by a border — a drop shadow on a near-black surface is invisible — while light theme carries real elevation, which is how the reference screens read.
