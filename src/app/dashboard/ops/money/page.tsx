@@ -11,7 +11,9 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { InvoiceDetail } from "@/components/money/InvoiceDetail";
 import { money } from "@/lib/format";
 import { dueLabel, receivables } from "@/lib/money";
-import type { Payment, PaymentStatus } from "@/types/ops";
+import { brandIndex } from "@/lib/rollup";
+import { BrandMark } from "@/components/ops/BrandMark";
+import type { Brand, Payment, PaymentStatus } from "@/types/ops";
 
 type FormState = { id?: string; client: string; item: string; amount: string; due: string; status: PaymentStatus };
 const EMPTY: FormState = { client: "", item: "", amount: "", due: "", status: "pending" };
@@ -22,6 +24,9 @@ const MONTH_FMT = new Intl.DateTimeFormat("en-IN", { month: "short", year: "nume
 
 export default function MoneyPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
+  // Loaded so an invoice can show its client's logo, and so the detail
+  // panel can offer every brand when reassigning one.
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
@@ -34,14 +39,17 @@ export default function MoneyPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const data = await fetch("/api/ops/payments").then((r) => r.json()).catch(() => []);
+    const j = (u: string) => fetch(u).then((r) => r.json()).catch(() => []);
+    const [data, br] = await Promise.all([j("/api/ops/payments"), j("/api/ops/brands")]);
     setPayments(Array.isArray(data) ? data : []);
+    setBrands(Array.isArray(br) ? br : []);
     setLoaded(true);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   const r = useMemo(() => receivables(payments), [payments]);
+  const brandOf = useMemo(() => brandIndex(brands), [brands]);
 
   const stats: Stat[] = useMemo(() => [
     {
@@ -190,6 +198,13 @@ export default function MoneyPage() {
                   active ? "bg-[var(--brand-faint)]" : "hover:bg-[var(--surface-hover)]"
                 }`}
               >
+                <BrandMark
+                  name={p.client || "Unnamed"}
+                  logoUrl={brandOf(p.client)?.logo_url}
+                  color={brandOf(p.client)?.color}
+                  size={28}
+                  radius="rounded-md"
+                />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium text-text">{p.client || "Unnamed"}</span>
                   <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-text-muted">
@@ -254,6 +269,7 @@ export default function MoneyPage() {
           detail={
             <InvoiceDetail
               payment={selected}
+              brands={brands}
               onChanged={load}
               onEdit={(p) => {
                 setError("");

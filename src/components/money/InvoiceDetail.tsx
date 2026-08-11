@@ -5,7 +5,9 @@ import { Check, FileUp, Loader2, Pencil, X } from "lucide-react";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { money } from "@/lib/format";
 import { dueLabel } from "@/lib/money";
-import type { Payment } from "@/types/ops";
+import { brandIndex } from "@/lib/rollup";
+import { BrandMark } from "@/components/ops/BrandMark";
+import type { Brand, Payment } from "@/types/ops";
 
 /** Mirrors ParsedInvoice in lib/invoices/parse.ts. */
 type Parsed = {
@@ -37,9 +39,11 @@ function Row({ label, value, strong }: { label: string; value: React.ReactNode; 
 }
 
 export function InvoiceDetail({
-  payment, onChanged, onEdit,
+  payment, brands, onChanged, onEdit,
 }: {
   payment: Payment | null;
+  /** Every brand, so an invoice can be reassigned to any of them. */
+  brands: Brand[];
   onChanged: () => void;
   onEdit: (p: Payment) => void;
 }) {
@@ -49,6 +53,7 @@ export function InvoiceDetail({
   const [sourceName, setSourceName] = useState("");
   const [error, setError] = useState("");
   const [applying, setApplying] = useState(false);
+  const [savingBrand, setSavingBrand] = useState(false);
 
   if (!payment) {
     return (
@@ -59,6 +64,8 @@ export function InvoiceDetail({
   }
 
   const d = dueLabel(payment.due);
+  const matched = brandIndex(brands)(payment.client);
+  const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
 
   async function upload(file: File) {
     setParsing(true); setError(""); setParsed(null); setSourceName(file.name);
@@ -97,6 +104,22 @@ export function InvoiceDetail({
     setParsed(null); setSourceName(""); onChanged();
   }
 
+  /** Invoices store the client as free text, so "assigning a brand" means
+   *  rewriting that text to the brand's canonical name. Every rollup matches on
+   *  name and aliases, so this is what actually re-links the invoice. */
+  async function assignBrand(name: string) {
+    if (!payment || !name || name === payment.client) return;
+    setSavingBrand(true);
+    const res = await fetch(`/api/ops/payments/${payment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client: name }),
+    });
+    setSavingBrand(false);
+    if (!res.ok) { setError("Could not change the brand."); return; }
+    onChanged();
+  }
+
   async function markPaid() {
     if (!payment) return;
     await fetch(`/api/ops/payments/${payment.id}`, {
@@ -110,12 +133,38 @@ export function InvoiceDetail({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-panel border border-[var(--border)] bg-surface p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="truncate text-[17px] font-semibold tracking-tight text-text">{payment.client || "Unnamed"}</h2>
-          <p className="mt-0.5 truncate text-[12px] text-text-muted">{payment.item || "No description"}</p>
+        <div className="flex min-w-0 items-start gap-2.5">
+          <BrandMark
+            name={payment.client || "Unnamed"}
+            logoUrl={matched?.logo_url}
+            color={matched?.color}
+            size={36}
+            radius="rounded-lg"
+          />
+          <div className="min-w-0">
+            <h2 className="truncate text-[17px] font-semibold tracking-tight text-text">{payment.client || "Unnamed"}</h2>
+            <p className="mt-0.5 truncate text-[12px] text-text-muted">{payment.item || "No description"}</p>
+          </div>
         </div>
         <StatusPill status={payment.status} />
       </div>
+
+      <label className="flex items-center gap-2">
+        <span className="shrink-0 text-[11.5px] text-text-muted">Brand</span>
+        <select
+          value={matched?.name ?? ""}
+          disabled={savingBrand}
+          onChange={(e) => assignBrand(e.target.value)}
+          className="min-w-0 flex-1 rounded-pill border border-[var(--border)] bg-surface px-3 py-1.5 text-[12px] text-text"
+        >
+          {/* An unmatched client name is shown as-is so it is obvious the invoice
+              is not linked to any brand yet. */}
+          {!matched && <option value="">{payment.client ? `${payment.client} (not linked)` : "Not set"}</option>}
+          {sortedBrands.map((b) => (
+            <option key={b.id} value={b.name}>{b.name}</option>
+          ))}
+        </select>
+      </label>
 
       <div className="rounded-soft bg-[var(--surface-hover)] px-3 py-2">
         <Row label="Amount" strong value={payment.amount == null

@@ -2,6 +2,15 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 05:00 IST · v0.0.15 — brand logos everywhere, radar opens up
+
+- **Brand logos appear wherever a brand does.** Projects, payments and proposals store the client as free text, so every screen except Brands had only a name and fell back to coloured initials. A shared `brandIndex` resolves that text back to the brand row, aliases included, so the real logo shows on the dashboard's live work cards, the receivables list, and every invoice row and detail header.
+- **Radar signals open.** Clicking one shows the full detail and source link, and gives you somewhere to write what was actually done about it before marking it solved. Marking something solved previously flipped a boolean and discarded the only part worth keeping, so a recurring alert had no history to read against.
+- Reopening a signal clears its resolution and timestamp together, so the record can never say solved and open at once.
+- **Invoices can be reassigned to any brand** from the detail panel, with the full brand list. An invoice whose client name matches no brand says so explicitly rather than looking linked.
+- **Fixed: the active nav item was invisible in light theme.** It used the raw brand lime as text, which is 1.22:1 against white. It now uses `--brand-text`, at 6.19:1. Dark theme is unchanged at 16.23:1. This is exactly the failure `--brand-text` was added for in v0.0.10, and the sidebar was simply never switched over to it.
+- Signal resolution needs `20260812110000_signal_resolution.sql`. Until it runs, marking solved still works and the note is skipped with a message saying why, rather than the action failing.
+
 ## 2026-08-12 04:10 IST · v0.0.14 — GST history imported, parked is not open
 
 - **47 GST invoices imported** covering FY2022-23 to date, ₹29,27,326 billed across 9 clients. Seven clients that existed only in the spreadsheet (CWE, IG3 Infra, OSIYA, Open Mind Consulting, Pearl Ports, Purple Dot, Snackbags) are now brands, and every invoice is linked to one.

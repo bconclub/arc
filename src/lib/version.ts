@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.14";
+export const VERSION = "0.0.15";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.15",
+    date: "2026-08-12",
+    notes: "Brand logos now appear wherever a brand does, not just on the Brands page. Radar signals open up so you can record what was done and mark them solved. Invoices can be reassigned to any brand. Fixed the active nav item being invisible in light theme.",
+  },
   {
     version: "0.0.14",
     date: "2026-08-12",

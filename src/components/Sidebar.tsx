@@ -106,7 +106,7 @@ function rowCls(active: boolean, depth = 0) {
     "flex items-center gap-3 rounded-xl py-2 text-[13px] transition-colors duration-150",
     depth > 0 ? "pl-9 pr-3" : "px-3",
     active
-      ? "bg-[var(--brand-soft)] font-semibold text-[var(--brand)]"
+      ? "bg-[var(--brand-soft)] font-semibold text-[var(--brand-text)]"
       : "text-text-muted hover:bg-[var(--glow-white)] hover:text-text",
   ].join(" ");
 }
@@ -277,7 +277,7 @@ export function Sidebar() {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1 transition-colors duration-150 ${
-                active ? "text-[var(--brand)]" : "text-text-muted"
+                active ? "text-[var(--brand-text)]" : "text-text-muted"
               }`}
             >
               <span className={`rounded-xl p-1.5 transition-colors duration-150 ${active ? "bg-[var(--brand-soft)]" : ""}`}>

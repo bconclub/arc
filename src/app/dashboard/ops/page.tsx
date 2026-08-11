@@ -6,14 +6,15 @@ import {
   AlertTriangle, Bell, ChevronRight, Circle, CircleCheck, Clock,
   IndianRupee, ListChecks, Plus, Search, TrendingUp,
 } from "lucide-react";
-import { money, moneyShort, shortAgo, initials, avatarColor } from "@/lib/format";
-import { IN_PLAY } from "@/lib/rollup";
+import { money, moneyShort, shortAgo, avatarColor } from "@/lib/format";
+import { IN_PLAY, brandIndex } from "@/lib/rollup";
 import { dueLabel, receivables } from "@/lib/money";
 import { Donut } from "@/components/ops/Charts";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { BrandMark } from "@/components/ops/BrandMark";
-import type { Project, Payment, Proposal, OpsSignal, NowTask } from "@/types/ops";
+import { SignalDetail } from "@/components/ops/SignalDetail";
+import type { Brand, Project, Payment, Proposal, OpsSignal, NowTask } from "@/types/ops";
 
 const OWNER_NAME = "Z";
 
@@ -79,19 +80,23 @@ export default function DashboardPage() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [signals, setSignals] = useState<OpsSignal[]>([]);
   const [nowTasks, setNowTasks] = useState<NowTask[]>([]);
+  // Loaded purely so a client name can be resolved back to its brand logo.
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [openSignal, setOpenSignal] = useState<OpsSignal | null>(null);
 
   const load = useCallback(async () => {
     const j = (url: string) => fetch(url).then((r) => r.json()).catch(() => []);
-    const [pr, pay, prop, sig, now] = await Promise.all([
+    const [pr, pay, prop, sig, now, br] = await Promise.all([
       j("/api/ops/projects"), j("/api/ops/payments"), j("/api/ops/proposals"),
-      j("/api/ops/alerts"), j("/api/ops/now-tasks"),
+      j("/api/ops/alerts"), j("/api/ops/now-tasks"), j("/api/ops/brands"),
     ]);
     setProjects(Array.isArray(pr) ? pr : []);
     setPayments(Array.isArray(pay) ? pay : []);
     setProposals(Array.isArray(prop) ? prop : []);
     setSignals(Array.isArray(sig) ? sig : []);
     setNowTasks(Array.isArray(now) ? now : []);
+    setBrands(Array.isArray(br) ? br : []);
     setLoaded(true);
   }, []);
 
@@ -109,6 +114,7 @@ export default function DashboardPage() {
   // Receivables come from lib/money, so this screen and Invoices can never
   // disagree about what is overdue.
   const r = useMemo(() => receivables(payments), [payments]);
+  const brandOf = useMemo(() => brandIndex(brands), [brands]);
 
   const d = useMemo(() => {
     const open = signals.filter((s) => !s.seen);
@@ -320,13 +326,15 @@ export default function DashboardPage() {
           ) : (
             <ul>
               {d.radar.map((s) => (
-                <li key={s.id} className={rowCls}>
-                  <span className="mt-1 h-2 w-2 shrink-0 self-start rounded-full" style={{ background: SEV_COLOR[s.severity] }} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-text">{s.title}</span>
-                    {s.detail && <span className="block truncate text-[11px] text-text-muted">{s.detail}</span>}
-                  </span>
-                  <span className="shrink-0 whitespace-nowrap text-[10.5px] text-text-muted">{shortAgo(s.ts)}</span>
+                <li key={s.id}>
+                  <button onClick={() => setOpenSignal(s)} className={`${rowCls} w-full text-left`}>
+                    <span className="mt-1 h-2 w-2 shrink-0 self-start rounded-full" style={{ background: SEV_COLOR[s.severity] }} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-text">{s.title}</span>
+                      {s.detail && <span className="block truncate text-[11px] text-text-muted">{s.detail}</span>}
+                    </span>
+                    <span className="shrink-0 whitespace-nowrap text-[10.5px] text-text-muted">{shortAgo(s.ts)}</span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -366,12 +374,13 @@ export default function DashboardPage() {
                   const due = dueLabel(p.due);
                   return (
                     <li key={p.id} className={rowCls}>
-                      <span
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[9px] font-bold text-white"
-                        style={{ background: avatarColor(p.client) }}
-                      >
-                        {initials(p.client)}
-                      </span>
+                      <BrandMark
+                        name={p.client ?? "Unnamed"}
+                        logoUrl={brandOf(p.client)?.logo_url}
+                        color={brandOf(p.client)?.color}
+                        size={24}
+                        radius="rounded-md"
+                      />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[12px] font-medium text-text">{p.client ?? "Unnamed"}</span>
                         <span className="block truncate text-[9.5px] text-text-muted">{p.item ?? "No description"}</span>
@@ -486,7 +495,13 @@ export default function DashboardPage() {
                 return (
                   <div key={p.id} className="rounded-soft border border-[var(--border)] p-2.5">
                     <div className="flex items-start gap-2">
-                      <BrandMark name={p.client ?? p.name} size={22} radius="rounded-md" />
+                      <BrandMark
+                        name={p.client ?? p.name}
+                        logoUrl={brandOf(p.client)?.logo_url}
+                        color={brandOf(p.client)?.color}
+                        size={22}
+                        radius="rounded-md"
+                      />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[12.5px] font-medium text-text">{p.name}</span>
                         <span className="block truncate text-[10.5px] text-text-muted">{p.client ?? "No client"}</span>
@@ -567,6 +582,14 @@ export default function DashboardPage() {
           </div>
         </Panel>
       </div>
+
+      {openSignal && (
+        <SignalDetail
+          signal={openSignal}
+          onClose={() => setOpenSignal(null)}
+          onChanged={load}
+        />
+      )}
     </div>
   );
 }

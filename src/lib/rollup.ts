@@ -24,6 +24,26 @@ function isClient(client: string | null, keys: string[]): boolean {
 }
 
 /**
+ * Resolves a free-text client name to its brand.
+ *
+ * Projects, payments and proposals all store the client as text, so any screen
+ * showing them has only a name and would otherwise fall back to coloured
+ * initials. This maps that text back to the brand row, aliases included, so the
+ * real logo can be shown wherever a brand appears.
+ */
+export function brandIndex(brands: Brand[]): (client: string | null) => Brand | null {
+  const byKey = new Map<string, Brand>();
+  for (const b of brands) {
+    for (const k of brandKeys(b)) {
+      // First writer wins: aliases are shared in a couple of places, and the
+      // brand listed first is the one the register treats as canonical.
+      if (!byKey.has(k)) byKey.set(k, b);
+    }
+  }
+  return (client) => (client ? byKey.get(client.trim().toLowerCase()) ?? null : null);
+}
+
+/**
  * Contacts for a brand.
  *
  * `people.brand_id` is the real link and is preferred — it is set on most rows
