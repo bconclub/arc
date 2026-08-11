@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.20";
+export const VERSION = "0.0.21";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.21",
+    date: "2026-08-12",
+    notes: "Invoices read from email now have a review queue on the Invoices page: scan, see what was read with its confidence, then accept onto an existing blank invoice or create a new row. Nothing is written until accepted.",
+  },
   {
     version: "0.0.20",
     date: "2026-08-12",

@@ -2,6 +2,16 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 09:15 IST . v0.0.21 - review queue for invoices read from email
+
+- **Review queue on the Invoices page.** Scan reads invoice attachments out of email, shows what it found with the confidence level and the parser's own notes, and waits. Accepting either fills in an existing blank invoice or creates a new row; rejecting keeps the record so the same attachment is never offered again.
+- **Attaching to an existing row is offered first**, because that is the common case: the invoice row already exists and it is only the amount that is missing. Creating a new row is the fallback, not the default.
+- Accepting a reading with no total is blocked rather than allowed through. It would write nothing useful while marking the attachment handled, which would hide it from view permanently.
+- Rejecting sets a status instead of deleting the row. Deleting would put the same invoice straight back in the queue on the next scan.
+- The scan reports what actually happened, how many were read, queued, unreadable and still outstanding, because "nothing new" and "read three, all failed" look identical if you only refresh a list.
+- The panel renders nothing at all until there is something to review or say, so the Invoices page is unchanged when the queue is empty.
+- Both outstanding migrations are applied and verified with a real write and read-back on the resolution columns, with the test row restored afterwards.
+
 ## 2026-08-12 08:30 IST . v0.0.20 - radar quick actions, brand rename, Gmail scaffold
 
 - **Radar quick actions.** Each row now has done and not-important without opening anything. They are two different records on purpose: done writes a resolution and a timestamp, not-important only marks it seen. Dismissing something is not the same as fixing it, and filing an unfixed problem under "resolved" would make the history lie.
