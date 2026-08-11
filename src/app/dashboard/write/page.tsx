@@ -136,7 +136,7 @@ function WritePageContent() {
 
   if (!topic) {
     return (
-      <div className="min-h-[calc(100vh-120px)] flex flex-col items-center justify-center">
+      <div className="page flex flex-col items-center justify-center">
         <div className="text-center">
           <p className="text-text-muted mb-4">No topic selected</p>
           <button
@@ -151,7 +151,7 @@ function WritePageContent() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-120px)]">
+    <div className="page">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
@@ -329,7 +329,7 @@ export default function WritePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[calc(100vh-120px)] flex items-center justify-center">
+        <div className="page flex items-center justify-center">
           <div className="animate-pulse text-text-muted">Loading...</div>
         </div>
       }

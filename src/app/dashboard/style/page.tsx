@@ -30,9 +30,9 @@ interface StyleAnalysis {
 // Hardcoded identity — ARC knows who this is. Not editable.
 const IDENTITY = `Thanzeel Ashruf (Z). Founder of PROXe (goproxe.com) and BCON Club (bconclub.com).
 
-I've spent 7 years in marketing, building brands across retail, services, hospitality, real estate, and healthcare — obsessed with how brands grow, why some win, and why great ones still lose customers they should have kept.
+I've spent 7 years in marketing, building brands across retail, services, hospitality, real estate, and healthcare, obsessed with how brands grow, why some win, and why great ones still lose customers they should have kept.
 
-That obsession led here: the same problem showed up everywhere — leads lost not to better competitors, but to slow replies and forgotten follow-ups. So I built the fix.
+That obsession led here: the same problem showed up everywhere: leads lost not to better competitors, but to slow replies and forgotten follow-ups. So I built the fix.
 
 What we do: help businesses go AI-native in marketing, two ways. Done-for-you → PROXe: enterprise-grade conversational AI for SMBs that listens across every channel (website, WhatsApp, Instagram, email, SMS, voice), warms leads, books calls, and never forgets a follow-up, with a founder dashboard. Build-your-own → BCON Club: helping businesses learn to build with AI.
 
@@ -178,19 +178,19 @@ export default function StylePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-120px)] flex items-center justify-center">
+      <div className="page flex items-center justify-center">
         <Loader2 size={24} className="animate-spin text-text-muted" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-120px)] px-6 py-4 pb-24 max-w-4xl">
+    <div className="page px-6 py-4 pb-24 max-w-4xl">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold tracking-tight text-text">Style</h1>
         <p className="text-[13px] text-text-muted mt-0.5">
-          How we write. Feed it posts you like — it learns and proposes changes you approve.
+          How we write. Feed it posts you like. It learns and proposes changes you approve.
         </p>
       </div>
 

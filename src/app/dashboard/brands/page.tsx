@@ -172,14 +172,14 @@ export default function BrandsPage() {
   ].filter((g) => g.rows.length > 0);
 
   return (
-    <div className="space-y-5 px-4 pb-24 pt-4 sm:px-5 lg:px-6">
+    <div className="page space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Boxes size={19} className="text-text-muted" />
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Brands</h1>
             <p className="mt-0.5 text-[12.5px] text-text-muted">
-              What&apos;s live right now — open one to see everything on it
+              What&apos;s live right now. Open one to see everything on it
             </p>
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function BrandsPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addBrand()}
-            placeholder="Brand name — must match the client name used on projects & payments"
+            placeholder="Brand name (must match the client name used on projects and payments)"
             className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-2.5 py-1.5 text-[12.5px] text-text placeholder:text-text-muted"
           />
           <button onClick={addBrand} className="rounded-lg bg-text px-3 py-1.5 text-[12px] font-medium text-bg">

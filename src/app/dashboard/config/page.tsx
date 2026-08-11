@@ -44,7 +44,7 @@ export default function ConfigPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-120px)] space-y-8 px-1 pb-24">
+    <div className="page space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

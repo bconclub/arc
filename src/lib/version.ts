@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.11";
+export const VERSION = "0.0.12";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.12",
+    date: "2026-08-12",
+    notes: "Top header and the sprite are gone, so pages own the full height and the theme toggle moved into the sidebar. Every page now shares one padding scale instead of three, which is why some screens sat flush against the sidebar. Transparent logos get a backdrop chosen from their own artwork so they stay visible in either theme.",
+  },
   {
     version: "0.0.11",
     date: "2026-08-12",

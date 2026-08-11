@@ -90,7 +90,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="space-y-6 px-1 pb-24">
+    <div className="page space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <FolderKanban size={18} className="text-text-muted" />
@@ -184,7 +184,7 @@ export default function ProjectsPage() {
               </select>
             </Field>
           </div>
-          <Field label={`Progress — ${editing.progress}%`}>
+          <Field label={`Progress: ${editing.progress}%`}>
             <input type="range" min={0} max={100} className="w-full accent-[var(--text)]" value={editing.progress}
               onChange={(e) => setEditing({ ...editing, progress: Number(e.target.value) })} />
           </Field>

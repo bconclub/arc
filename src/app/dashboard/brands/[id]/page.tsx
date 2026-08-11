@@ -371,7 +371,7 @@ export default function BrandProfilePage() {
             value={newRepo}
             onChange={(e) => setNewRepo(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addRepo()}
-            placeholder="owner/repo — or paste a GitHub URL"
+            placeholder="owner/repo, or paste a GitHub URL"
             className={`${inputCls} max-w-xs flex-1`}
           />
           <button onClick={addRepo} className="rounded-lg bg-text px-3 py-1.5 text-[12px] font-medium text-bg">
@@ -609,7 +609,7 @@ export default function BrandProfilePage() {
         <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           <label className="block sm:col-span-2">
             <span className="mb-1 block text-[10px] text-text-muted">
-              Aliases <span className="opacity-70">— other spellings used on invoices, comma separated</span>
+              Aliases <span className="opacity-70">other spellings used on invoices, comma separated</span>
             </span>
             <input
               className={inputCls} value={form.aliases}
@@ -618,11 +618,11 @@ export default function BrandProfilePage() {
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-[10px] text-text-muted">Domains — comma separated</span>
+            <span className="mb-1 block text-[10px] text-text-muted">Domains, comma separated</span>
             <input className={inputCls} value={form.domains} placeholder="example.com" onChange={(e) => setForm({ ...form, domains: e.target.value })} />
           </label>
           <label className="block sm:col-span-2">
-            <span className="mb-1 block text-[10px] text-text-muted">GitHub repos — owner/repo, comma separated</span>
+            <span className="mb-1 block text-[10px] text-text-muted">GitHub repos: owner/repo, comma separated</span>
             <input
               className={inputCls} value={form.github_repos}
               placeholder="bconclub/proxe, bconclub/goproxe.com"
@@ -639,10 +639,10 @@ export default function BrandProfilePage() {
           </label>
           <label className="block">
             <span className="mb-1 block text-[10px] text-text-muted">
-              Work arrives via <span className="opacity-70">— agency or partner</span>
+              Work arrives via <span className="opacity-70">agency or partner</span>
             </span>
             <select className={inputCls} value={form.via_brand_id} onChange={(e) => setForm({ ...form, via_brand_id: e.target.value })}>
-              <option value="">Direct — no intermediary</option>
+              <option value="">Direct, no intermediary</option>
               {allBrands
                 .filter((b) => b.id !== brand.id && ["agency", "partner"].includes(b.kind ?? ""))
                 .map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}

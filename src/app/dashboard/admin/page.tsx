@@ -122,7 +122,7 @@ export default function AdminPage() {
         <ShieldCheck size={15} className="mt-0.5 shrink-0 text-accent-green" />
         <p className="text-[11.5px] leading-relaxed text-text-muted">
           <strong className="text-text">Secrets never touch the database.</strong> ARC only checks whether each
-          environment variable is <em>present</em> and whether the service answers — the values stay on the server and
+          environment variable is <em>present</em> and whether the service answers. The values stay on the server and
           are never sent to this page. To add a connector, put its variable in{" "}
           <code className="rounded bg-[var(--surface-hover)] px-1">.env.local</code> (or Vercel project settings) and
           restart.
@@ -134,7 +134,7 @@ export default function AdminPage() {
         <div className="px-4 pb-2 pt-3.5">
           <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">Operations health</h2>
           <p className="mt-0.5 text-[10.5px] text-text-muted">
-            System &amp; service status — updated by “Test all connections”
+            System &amp; service status, updated by “Test all connections”
           </p>
         </div>
         <OperationsHealth services={services} />

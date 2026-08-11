@@ -402,6 +402,23 @@ select option {
   color: var(--text);
 }
 
+/* ─── Page shell ───────────────────────────────────────────────
+   Every dashboard page uses this for its outer padding. Pages had drifted into
+   three different conventions: `px-1` (4px, which read as stuck to the sidebar),
+   `min-h-[calc(100vh-120px)]` (sized against a header that no longer exists),
+   and a correct responsive scale on only four pages. One class, one definition.
+   Bottom padding clears the mobile bottom nav; from lg that nav is gone. */
+.page {
+  min-height: 100%;
+  padding: 1rem 1rem 6rem;
+}
+@media (min-width: 640px) {
+  .page { padding-left: 1.25rem; padding-right: 1.25rem; }
+}
+@media (min-width: 1024px) {
+  .page { padding: 1.25rem 1.5rem 1.5rem; }
+}
+
 /* ─── Brand mark: swap the logo's ink with the theme ─── */
 /* The letterform is baked into the PNG, so the theme picks a file rather than
    recolouring one — a filter would shift the lime wedge along with it. */

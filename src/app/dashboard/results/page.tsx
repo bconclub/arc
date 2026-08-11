@@ -77,7 +77,7 @@ export default function ResultsPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-120px)]">
+    <div className="page">
       <div className="mb-6">
         <h1 className="text-xl font-semibold tracking-tight">Results</h1>
         <p className="text-[13px] text-text-muted mt-0.5">What landed</p>

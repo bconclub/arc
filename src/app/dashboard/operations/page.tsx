@@ -233,7 +233,7 @@ export default function OperationsPage() {
         <Panel title="Pipeline building" sub="Proposal funnel" href="/dashboard/ops/proposals">
           <div className="px-4 pb-4">
             {/* Proportional bars, not a funnel shape. Won can exceed Sent here
-                because historical wins predate the current pipeline — a funnel
+                because historical wins predate the current pipeline. A funnel
                 polygon renders that as a bowtie and reads as broken. */}
             <ul className="space-y-1.5">
               {d.funnel.map((s) => {
@@ -279,7 +279,7 @@ export default function OperationsPage() {
         <div className="px-4 py-8 text-center">
           <Megaphone size={20} className="mx-auto mb-2 text-text-muted" />
           <p className="text-[12px] text-text-muted">
-            No ad data yet — Meta and Google Ads connectors aren&apos;t built.
+            No ad data yet. Meta and Google Ads connectors aren&apos;t built.
           </p>
           <Link href="/dashboard/admin" className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium text-accent-red hover:underline">
             Set up connectors <ChevronRight size={12} />

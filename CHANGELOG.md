@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-12 02:40 IST · v0.0.12 — one padding scale, no top header
+
+- **Removed the top header and the sprite.** The header sat above every page's own header, so two bars competed for the top of the screen. Pages now own the full viewport height with no 3.5rem strip to subtract.
+- The theme toggle moved into the sidebar footer, since it was the only control in that bar worth keeping. **The localStorage backup import/export buttons went with the header and are not currently anywhere else** (see below).
+- **Fixed: pages had three different padding conventions.** Seven used `px-1`, which is 4px and read as stuck against the sidebar. Seven more sized themselves with `min-h-[calc(100vh-120px)]`, where the 120px stood for a header that no longer exists. Only four had a correct responsive scale. All of them now use a single `.page` class, defined once, so this cannot drift again.
+- **Fixed: transparent logos disappeared.** A white-on-transparent mark such as ISIVIS vanished on a white card, and a black-on-transparent mark does the same on a dark one. The backdrop is now chosen from the artwork's own ink rather than from the theme: pale ink gets a dark tile, dark ink gets a pale tile, and an image that already carries its own background gets nothing added. Choosing by theme would have fixed one case and broken the other.
+- Logos whose host refuses cross-origin reads fall back to a neutral tile rather than failing.
+- **Em dashes removed from all user-facing copy**, replaced with the punctuation that actually fits each sentence rather than a blanket swap. The standalone `—` used to mean "no value" is left alone, since a hyphen there reads as broken.
+- `(pending)`
+
 ## 2026-08-12 02:05 IST · v0.0.11 — Money becomes an Invoices screen
 
 - **The invoice reader has a home.** The parser shipped in v0.0.9 worked but nothing called it, so the four blank amounts stayed blank. Selecting an invoice and uploading its PDF or photo now reads the figures off the page and shows them for confirmation. Nothing is written until you press save — the amount, due date and description land on the row only when you accept them.

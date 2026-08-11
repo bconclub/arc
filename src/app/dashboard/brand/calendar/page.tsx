@@ -81,14 +81,14 @@ export default function ContentCalendarPage() {
   }
 
   return (
-    <div className="space-y-6 px-1 pb-24">
+    <div className="page space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <CalendarDays size={18} className="text-text-muted" />
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Content calendar</h1>
             <p className="mt-0.5 text-[13px] text-text-muted">
-              Planning overlay — content itself lives in <Link href="/dashboard/arc" className="underline">ARC Agent</Link> and{" "}
+              Planning overlay. Content itself lives in <Link href="/dashboard/arc" className="underline">ARC Agent</Link> and{" "}
               <Link href="/dashboard/write" className="underline">Write</Link>
             </p>
           </div>

@@ -153,7 +153,7 @@ export function InvoiceDetail({
 
       {parsing && (
         <p className="text-[11.5px] text-text-muted">
-          Reading {sourceName} — scanned invoices take about 15 seconds.
+          Reading {sourceName} · scanned invoices take about 15 seconds.
         </p>
       )}
 

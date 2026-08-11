@@ -50,7 +50,7 @@ export default function ProposalsPage() {
   }
 
   return (
-    <div className="space-y-6 px-1 pb-24">
+    <div className="page space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <FileText size={18} className="text-text-muted" />

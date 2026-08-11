@@ -90,7 +90,7 @@ export default function ARCPage() {
   const approved = ideas.filter(i => i.status === "approved");
 
   return (
-    <div className="min-h-[calc(100vh-120px)] space-y-8">
+    <div className="page space-y-8">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -134,7 +134,7 @@ export default function ARCPage() {
           </div>
         ) : proposed.length === 0 ? (
           <div className="card p-8 text-center text-text-muted text-[13px]">
-            No ideas yet — click <span className="text-text font-medium">Generate Top Ideas</span> to pull the best from your feed.
+            No ideas yet. Click <span className="text-text font-medium">Generate Top Ideas</span> to pull the best from your feed.
           </div>
         ) : (
           <div className="space-y-3">
@@ -156,7 +156,7 @@ export default function ARCPage() {
       {approved.length > 0 && (
         <section>
           <h2 className="text-[11px] uppercase tracking-wider text-text-muted mb-3">
-            Approved — In Pipeline ({approved.length})
+            Approved and in pipeline ({approved.length})
           </h2>
           <div className="space-y-3">
             {approved.map(idea => (
@@ -261,7 +261,7 @@ function IdeaCard({
 
       {/* Angle */}
       <div className="bg-surface rounded-xl px-3 py-2">
-        <span className="text-[10px] uppercase tracking-wider text-text-muted">Angle — </span>
+        <span className="text-[10px] uppercase tracking-wider text-text-muted">Angle: </span>
         <span className="text-[13px] text-text">{idea.angle}</span>
       </div>
 

@@ -69,13 +69,13 @@ export default function BrandMetricsPage() {
   }
 
   return (
-    <div className="space-y-6 px-1 pb-24">
+    <div className="page space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <TrendingUp size={18} className="text-text-muted" />
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Brand metrics</h1>
-            <p className="mt-0.5 text-[13px] text-text-muted">Manual snapshots per platform — one entry per day</p>
+            <p className="mt-0.5 text-[13px] text-text-muted">Manual snapshots per platform, one entry per day</p>
           </div>
         </div>
         <button className={`${btnPrimaryCls} flex items-center gap-1.5`} onClick={() => { setError(""); setAdding({ ...EMPTY }); }}>

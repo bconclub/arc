@@ -197,10 +197,10 @@ export default function MoneyPage() {
   );
 
   return (
-    // Height is pinned only from `lg`, where the panes scroll internally. On
-    // mobile the layout already reserves pb-20 for the bottom nav, so a flat
-    // 100vh-3.5rem would overrun the viewport by that much.
-    <div className="flex flex-col gap-3 px-4 pb-4 pt-4 sm:px-5 lg:h-[calc(100vh-3.5rem)] lg:px-6">
+    // Height is pinned only from `lg`, where the panes scroll internally. Below
+    // that the page scrolls normally, since the layout already reserves pb-20
+    // for the bottom nav and two panes side by side are unusable on a phone.
+    <div className="flex flex-col gap-3 px-4 pb-4 pt-4 sm:px-5 lg:h-[100dvh] lg:px-6">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Wallet size={19} className="text-text-muted" />

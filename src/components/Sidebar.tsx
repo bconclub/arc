@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { VERSION } from "@/lib/version";
 import { ArcLogo, ArcMark } from "@/components/ArcLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type NavItem = {
   label: string;
@@ -190,6 +191,9 @@ export function Sidebar() {
         <span className="block truncate text-[13px] font-medium text-text">Z</span>
         <span className="block truncate text-[10px] text-text-muted">Administrator</span>
       </span>
+      {/* Theme toggle lives here now the TopBar is gone; it was the only control
+          in that bar worth keeping. */}
+      <ThemeToggle />
       <button
         onClick={logout}
         title="Log out"

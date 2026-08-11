@@ -245,18 +245,18 @@ export default function DashboardPage() {
         .map((s) => ({
           key: `s-${s.id}`,
           color: s.seen ? "#6b6b6b" : SEV_COLOR[s.severity],
-          text: s.seen ? `Resolved — ${s.title}` : s.title,
+          text: s.seen ? `Resolved: ${s.title}` : s.title,
           ts: s.ts,
           kind: "signal" as const,
         })),
       ...paidRows.map((p) => ({
         key: `p-${p.id}`, color: "#00d4aa",
-        text: `Payment received — ${money(p.amount)} from ${p.client ?? "client"}`,
+        text: `Payment received: ${money(p.amount)} from ${p.client ?? "client"}`,
         ts: p.created_at, kind: "money" as const,
       })),
       ...proposals.map((p) => ({
         key: `pr-${p.id}`, color: "#8b5cf6",
-        text: `${p.name} — ${p.status}`,
+        text: `${p.name}: ${p.status}`,
         ts: p.sent ?? p.created_at, kind: "proposal" as const,
       })),
       // Completed focus tasks are genuine "this happened" events.
@@ -264,12 +264,12 @@ export default function DashboardPage() {
         .filter((t) => t.done)
         .map((t) => ({
           key: `nt-${t.id}`, color: "#00d4aa",
-          text: `Done — ${t.text}`, ts: t.created_at, kind: "task" as const,
+          text: `Done: ${t.text}`, ts: t.created_at, kind: "task" as const,
         })),
       // Project movement, from the row's own updated_at.
       ...projects.map((p) => ({
         key: `pj-${p.id}`, color: "#3b82f6",
-        text: `${p.name} — ${p.progress ?? 0}% · ${p.status}`,
+        text: `${p.name}: ${p.progress ?? 0}% · ${p.status}`,
         ts: p.updated_at, kind: "project" as const,
       })),
     ]
@@ -341,7 +341,7 @@ export default function DashboardPage() {
           <Link
             href="/dashboard/ops/alerts"
             className="relative rounded-lg border border-[var(--border-strong)] p-1.5 text-text-muted transition-colors hover:text-text"
-            aria-label={`Alerts${d.radar.length ? ` — ${d.radar.length} open` : ""}`}
+            aria-label={`Alerts${d.radar.length ? `: ${d.radar.length} open` : ""}`}
           >
             <Bell size={15} />
             {d.radar.length > 0 && (

@@ -57,7 +57,7 @@ export default function AlertsPage() {
   }
 
   return (
-    <div className="space-y-6 px-1 pb-24">
+    <div className="page space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <BellRing size={18} className="text-text-muted" />
@@ -70,7 +70,7 @@ export default function AlertsPage() {
 
       {signals.length === 0 ? (
         <div className="rounded-card border border-dashed border-[var(--border)] px-6 py-10 text-center text-[13px] text-text-muted">
-          No alerts yet. Any source can write here — a report, a webhook, a manual note.
+          No alerts yet. Any source can write here: a report, a webhook, a manual note.
         </div>
       ) : (
         <ul className="overflow-hidden rounded-card border border-[var(--border)] bg-surface">

@@ -78,7 +78,7 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-120px)]">
+    <div className="page">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Schedule</h1>
