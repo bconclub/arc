@@ -12,13 +12,17 @@
   --border-strong: rgba(255, 255, 255, 0.12);
   --text: #ededed;
   --text-muted: #6b6b6b;
+  /* Brand lime, sampled from public/ARC Icon.png. Identity only —
+     red/amber/green stay semantic (danger / warning / success). */
+  --brand: #cbfa0a;
+  --brand-ink: #0a0a0a;        /* text that sits on top of the lime */
+  --brand-soft: rgba(203, 250, 10, 0.14);
   --accent-green: #00d4aa;
   --accent-red: #ff4444;
   --accent-orange: #f59e0b;
   --accent-blue: #3b82f6;
   --glow-white: rgba(255, 255, 255, 0.04);
-  --sidebar-width: 64px;
-  --sidebar-expanded: 220px;
+  --sidebar-width: 200px;
 
   /* ── Semantic tokens used across the app (esp. the inline-styled Feed) ── */
   --card-bg: #141414;        /* feed card surface */
@@ -279,44 +283,9 @@ body {
   display: none;
 }
 
-/* ─── Sidebar (collapsed icon rail, expands on hover — Supabase/Vercel style) ─── */
+/* ─── Sidebar (fixed-width labelled rail) ─── */
 .sidebar {
   width: var(--sidebar-width);
-  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.sidebar:hover {
-  width: var(--sidebar-expanded);
-}
-.sidebar .nav-label {
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-  white-space: nowrap;
-  overflow: hidden;
-}
-.sidebar:hover .nav-label {
-  opacity: 1;
-  transform: translateX(0);
-}
-.sidebar .logo-full {
-  opacity: 0;
-  transition: opacity 0.18s ease;
-  white-space: nowrap;
-  pointer-events: none;
-}
-.sidebar:hover .logo-full {
-  opacity: 1;
-  pointer-events: auto;
-}
-/* Bottom user block: hide the name/plan text when collapsed */
-.sidebar .user-text {
-  opacity: 0;
-  transition: opacity 0.18s ease;
-  white-space: nowrap;
-  overflow: hidden;
-}
-.sidebar:hover .user-text {
-  opacity: 1;
 }
 
 /* ─── Table row styling ─── */

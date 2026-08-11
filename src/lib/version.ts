@@ -1,13 +1,19 @@
-// ARC Version tracking
+// ARC version tracking — KEEP IN SYNC WITH package.json "version".
+// Sidebar, changelog and release tags all read from VERSION below.
 // Convention:
 // - Patch (0.0.x): bug fixes, UI tweaks
 // - Minor (0.x.0): new feature shipped  
 // - Major (x.0.0): full system change
 
-export const VERSION = "0.0.3";
+export const VERSION = "2.1.0";
 
 export const CHANGELOG = [
-  { 
+  {
+    version: "2.1.0",
+    date: "2026-08-11",
+    notes: "Mission-control dashboard: severity donut, operations health graph, receivables ageing, brand health scores, proposal funnel, GitHub activity. Brands and services became first-class tables.",
+  },
+  {
     version: "0.0.3", 
     date: "2026-04-05", 
     notes: "Fixed production blank screen. Removed Anthropic SDK from client bundle. Fixed Supabase type errors. Build passing." 

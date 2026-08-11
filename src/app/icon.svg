@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -60 1026 762">
+  <style>
+    .ink { fill: #15171A; stroke: #15171A; }
+    @media (prefers-color-scheme: dark) { .ink { fill: #EDEDED; stroke: #EDEDED; } }
+  </style>
+  <path class="ink" d="M391 4 L516 4 L906 642 L755 642 L454 149 L149 642 L0 642 Z"
+        stroke-width="18" stroke-linejoin="round"/>
+  <path d="M716 338 L241 491 L150 642 L190 642 Z"
+        fill="#CBFA0A" stroke="#CBFA0A" stroke-width="6" stroke-linejoin="round"/>
+</svg>
