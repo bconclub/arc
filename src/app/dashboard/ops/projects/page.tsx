@@ -3,16 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FolderKanban, Plus, X } from "lucide-react";
 import { Modal, Field, ModalActions, inputCls, btnCls, btnPrimaryCls } from "@/components/ops/Modal";
-import { money } from "@/lib/format";
-import type { Project, ProjectStatus, ProjectSize, OpsTask } from "@/types/ops";
+import { money, deliverableOf } from "@/lib/format";
+import { dueLabel } from "@/lib/money";
+import { BrandMark } from "@/components/ops/BrandMark";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { ProjectTimeline } from "@/components/ops/ProjectTimeline";
+import type { Brand, Person, Project, ProjectStatus, ProjectSize, OpsTask } from "@/types/ops";
 
 const STATUS_ORDER: ProjectStatus[] = ["active", "waiting", "parked", "done"];
-const STATUS_COLOR: Record<ProjectStatus, string> = {
-  active: "text-accent-green",
-  waiting: "text-accent-orange",
-  parked: "text-text-muted",
-  done: "text-text-muted",
-};
 
 type FormState = {
   id?: string;
@@ -35,11 +33,19 @@ const EMPTY: FormState = {
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
   const [editing, setEditing] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
+    const [b, pl] = await Promise.all([
+      fetch("/api/ops/brands").then((r) => r.json()).catch(() => []),
+      fetch("/api/ops/people").then((r) => r.json()).catch(() => []),
+    ]);
+    setBrands(Array.isArray(b) ? b : []);
+    setPeople(Array.isArray(pl) ? pl : []);
     const data = await fetch("/api/ops/projects").then((r) => r.json());
     setProjects(Array.isArray(data) ? data : []);
   }, []);
@@ -84,6 +90,18 @@ export default function ProjectsPage() {
     setEditing(null); load();
   }
 
+  // Projects hold the client as free text, so the brand has to be resolved by
+  // name to get a logo and its contacts.
+  const brandOf = useMemo(() => {
+    const key = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const m = new Map<string, Brand>();
+    for (const b of brands) {
+      m.set(key(b.name), b);
+      for (const a of b.aliases ?? []) m.set(key(a), b);
+    }
+    return (client: string | null) => (client ? m.get(key(client)) : undefined);
+  }, [brands]);
+
   function setTask(i: number, patch: Partial<OpsTask>) {
     if (!editing) return;
     setEditing({ ...editing, tasks: editing.tasks.map((t, idx) => (idx === i ? { ...t, ...patch } : t)) });
@@ -101,6 +119,9 @@ export default function ProjectsPage() {
         </button>
       </div>
 
+      {/* What is running now and what lands soon, before the detail below. */}
+      <ProjectTimeline projects={projects} brands={brands} onOpen={openEdit} />
+
       {sorted.length === 0 ? (
         <div className="rounded-card border border-dashed border-[var(--border)] px-6 py-10 text-center text-[13px] text-text-muted">
           No projects yet.
@@ -110,37 +131,78 @@ export default function ProjectsPage() {
           {sorted.map((p) => {
             const open = (p.tasks ?? []).filter((t) => !t.done).length;
             const done = (p.tasks ?? []).filter((t) => t.done).length;
+            const total = open + done;
+            const brand = brandOf(p.client);
+            const contacts = people.filter((x) => (brand && x.brand_id === brand.id));
+            const end = dueLabel(p.end_date);
+            const progress = Math.max(0, Math.min(100, p.progress ?? 0));
+            const late = end.days != null && end.days < 0 && p.status !== "done";
             return (
               <button
                 key={p.id}
                 onClick={() => openEdit(p)}
-                className="rounded-card border border-[var(--border)] bg-surface p-4 text-left transition-all hover:border-[var(--border-strong)] hover:bg-surface-hover"
+                className="metric-card flex flex-col rounded-card border border-[var(--border)] bg-surface p-3.5 text-left"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[14px] font-semibold text-text">{p.name}</span>
-                  {p.client && (
-                    <span className="whitespace-nowrap rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] text-text-muted">
-                      {p.client}
+                <div className="flex items-start gap-2.5">
+                  <BrandMark
+                    name={p.client ?? p.name}
+                    logoUrl={brand?.logo_url}
+                    color={brand?.color}
+                    size={40}
+                    radius="rounded-lg"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13.5px] font-semibold leading-tight text-text" title={p.name}>
+                      {deliverableOf(p.name, p.client)}
                     </span>
-                  )}
+                    <span className="block truncate text-[11px] text-text-muted">{p.client ?? "No client"}</span>
+                    <StatusPill status={late ? "overdue" : p.status} className="mt-1" />
+                  </span>
                 </div>
-                <p className="mt-1.5 text-[12px] text-text-muted">
-                  next: <span className="text-text">{p.next || "-"}</span>
-                </p>
-                <p className="mt-0.5 text-[12px] text-text-muted">
-                  {open} open · {done} done
-                  {p.size && ` · ${p.size}`}
-                  {p.budget != null && ` · ${money(p.budget)}`}
-                </p>
-                {(p.start_date || p.end_date) && (
-                  <p className="mt-0.5 text-[12px] tabular-nums text-text-muted">
-                    {p.start_date || "?"} → {p.end_date || "?"}
+
+                {p.next && (
+                  <p className="mt-2.5 line-clamp-2 text-[11.5px] leading-snug text-text">
+                    <span className="text-text-muted">Next: </span>{p.next}
                   </p>
                 )}
-                <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-[var(--border)]">
-                  <div className="h-full rounded-full bg-text" style={{ width: `${Math.max(0, Math.min(100, p.progress))}%` }} />
+
+                <div className="mt-2.5 h-1.5 overflow-hidden rounded-pill bg-[var(--surface-hover)]">
+                  <div
+                    className="h-full rounded-pill transition-all"
+                    style={{ width: `${progress}%`, background: late ? "#e5484d" : "var(--brand)" }}
+                  />
                 </div>
-                <p className={`mt-2 text-[12px] font-medium ${STATUS_COLOR[p.status]}`}>● {p.status}</p>
+                <div className="mt-1.5 flex items-center justify-between text-[10.5px] text-text-muted">
+                  <span className="tabular-nums">
+                    {progress}%{total > 0 && ` · ${open}/${total} tasks`}
+                  </span>
+                  {/* An absent end date is said plainly rather than left blank,
+                      where it reads as a date that failed to load. */}
+                  <span className={late ? "font-medium text-accent-red" : ""}>
+                    {p.end_date ? end.text : "No end date"}
+                  </span>
+                </div>
+
+                {(contacts.length > 0 || p.budget != null || p.size) && (
+                  <div className="mt-2.5 flex items-center gap-2 border-t border-[var(--border)] pt-2">
+                    {contacts.slice(0, 3).map((c, i) => (
+                      <span
+                        key={c.id}
+                        title={`${c.name}${c.role ? ` · ${c.role}` : ""}`}
+                        className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[8.5px] font-semibold text-text-muted"
+                        style={{ marginLeft: i ? -8 : 0 }}
+                      >
+                        {c.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
+                      </span>
+                    ))}
+                    {contacts.length > 3 && (
+                      <span className="text-[10px] text-text-muted">+{contacts.length - 3}</span>
+                    )}
+                    <span className="ml-auto text-[10.5px] tabular-nums text-text-muted">
+                      {p.budget != null ? money(p.budget) : p.size ?? ""}
+                    </span>
+                  </div>
+                )}
               </button>
             );
           })}
