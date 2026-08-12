@@ -116,8 +116,11 @@ function summarise(b: BrandRollup): string {
   // lifetime_revenue comes off the billing vault, so a brand billed in 2022
   // reports what it was worth instead of claiming nothing was ever recorded.
   if (b.lifetime_revenue) {
-    const when = b.last_seen ? ` · last billed ${monthYear(b.last_seen)}` : "";
-    return `${moneyShort(b.lifetime_revenue)} billed${when}`;
+    const when = b.last_seen ? ` ${monthYear(b.last_seen)}` : "";
+    // A brand whose only document was a quote was never billed, so it says
+    // quoted. Reporting it as revenue would count work that never happened.
+    const verb = kindOf(b) === "prospect" ? "quoted" : "billed";
+    return `${moneyShort(b.lifetime_revenue)} ${verb}${when ? ` · last ${when.trim()}` : ""}`;
   }
   if (b.projectCount > 0) return "No active work";
   return "Nothing recorded yet";
@@ -129,7 +132,7 @@ function BrandCard({ b }: { b: BrandRollup }) {
   const dot = isOverdue(b) ? "#e5484d"
     : isLive(b) ? "#00d4aa"
     : notStarted(b) ? "#3b82f6"
-    : isProposed(b) || kindOf(b) === "prospect" ? "#f59e0b"
+    : isProposed(b) || (kindOf(b) === "prospect" && b.pipeline > 0) ? "#f59e0b"
     : "#6b6b6b";
   return (
     <Link
@@ -221,7 +224,13 @@ export default function BrandsPage() {
   // Order is deliberate: what's running, then what's pending a decision, then
   // the archive, then everyone who isn't a client at all.
   const clients = rolled.filter((b) => kindOf(b) === "client");
-  const prospects = rolled.filter((b) => kindOf(b) === "prospect");
+  // A prospect is only pipeline while money is actually quoted and waiting.
+  // Swiftlearnings was quoted in 2021 and Venture Out in 2022; neither is a
+  // live opportunity, and showing them as Proposed put five-year-old history
+  // in the place reserved for decisions still pending. With no pipeline they
+  // fall through to Completed, where the year headings file them correctly.
+  const prospects = rolled.filter((b) => kindOf(b) === "prospect" && b.pipeline > 0);
+  const archivedProspects = rolled.filter((b) => kindOf(b) === "prospect" && b.pipeline <= 0);
 
   const overdue = clients.filter(isOverdue);
   const live = clients.filter(isLive);
@@ -229,7 +238,10 @@ export default function BrandsPage() {
   // A prospect is a proposal by definition, so it sits here rather than in a
   // group of its own, the distinction is bookkeeping, not something to act on.
   const proposed = [...clients.filter(isProposed), ...prospects];
-  const done = clients.filter((b) => !isOverdue(b) && !isLive(b) && !notStarted(b) && !isProposed(b));
+  const done = [
+    ...clients.filter((b) => !isOverdue(b) && !isLive(b) && !notStarted(b) && !isProposed(b)),
+    ...archivedProspects,
+  ];
 
   const groups: { key: string; title: string; color: string; rows: BrandRollup[] }[] = [
     { key: "overdue", title: "Overdue", color: "#e5484d", rows: overdue },
