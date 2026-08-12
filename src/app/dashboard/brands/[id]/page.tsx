@@ -11,6 +11,8 @@ import { rollupBrand, brandKeys, contactsFor, parseChannel, UNPAID, IN_PLAY } fr
 import { HealthRing, TrendLine, Donut } from "@/components/ops/Charts";
 import { BrandMark } from "@/components/ops/BrandMark";
 import { InvoiceQueue } from "@/components/money/InvoiceQueue";
+import { SitePreview } from "@/components/ops/SitePreview";
+import { BrandTimeline } from "@/components/ops/BrandTimeline";
 import {
   BRAND_KIND_LABEL,
   type Brand, type BrandKind, type Project, type Payment, type Proposal,
@@ -33,6 +35,16 @@ const STATUS_LABEL: Record<string, { text: string; color: string }> = {
   archived: { text: "Archived", color: "#6b6b6b" },
   lost: { text: "Lost", color: "#e5484d" },
 };
+
+type TabKey = "overview" | "money" | "work" | "people" | "profile";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "money", label: "Money" },
+  { key: "work", label: "Work" },
+  { key: "people", label: "People" },
+  { key: "profile", label: "Profile" },
+];
 
 function statusOf(status: string): { text: string; color: string } {
   return STATUS_LABEL[status] ?? { text: status.replace(/_/g, " "), color: "#6b6b6b" };
@@ -68,6 +80,10 @@ export default function BrandProfilePage() {
     aliases: "", domains: "", notes: "", status: "active", logo_url: "", color: "", github_repos: "",
     kind: "client", via_brand_id: "",
   });
+
+  // Overview answers "what is this brand and what have we done for them".
+  // Everything else is one click away rather than stacked below it.
+  const [tab, setTab] = useState<TabKey>("overview");
 
   const load = useCallback(async () => {
     const j = (url: string) => fetch(url).then((r) => r.json()).catch(() => []);
@@ -253,6 +269,17 @@ export default function BrandProfilePage() {
     );
   }
 
+  // website is on the newer table; domains is what the client register fills
+  // in. Either is a real address for this brand, so both are accepted.
+  const site = brand.website || brand.domains?.[0] || null;
+
+  // Signals naming this brand. Matched on the title and detail text, since
+  // signals carry no brand column.
+  const brandSignals = signals.filter((sg) => {
+    const hay = `${sg.title} ${sg.detail ?? ""}`.toLowerCase();
+    return brandKeys(brand).some((k) => k.length > 2 && hay.includes(k));
+  });
+
   const accent = brand.color ?? avatarColor(brand.name);
   const st = statusOf(brand.status);
   const kind = (brand.kind ?? "client") as BrandKind;
@@ -368,6 +395,75 @@ export default function BrandProfilePage() {
         ))}
       </div>
 
+      <div className="scrollbar-hide flex gap-1.5 overflow-x-auto">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`shrink-0 rounded-pill border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
+              tab === t.key
+                ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                : "border-[var(--border)] text-text-muted hover:text-text"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "overview" && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="space-y-3">
+            {/* The site as it stands today, if there is one. */}
+            {site ? (
+              <SitePreview website={site} />
+            ) : (
+              <p className="rounded-card border border-dashed border-[var(--border)] px-3 py-4 text-center text-[11.5px] text-text-muted">
+                No website recorded.
+              </p>
+            )}
+
+            {brand.notes && (
+              <section className="rounded-card border border-[var(--border)] bg-surface p-3">
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.09em] text-text-muted">Notes</h2>
+                <p className="mt-1.5 whitespace-pre-wrap text-[12px] leading-relaxed text-text">{brand.notes}</p>
+              </section>
+            )}
+
+            <section className="rounded-card border border-[var(--border)] bg-surface p-3">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.09em] text-text-muted">At a glance</h2>
+              <dl className="mt-2 space-y-1.5 text-[11.5px]">
+                {[
+                  { k: "Projects", v: `${roll.projectCount} total, ${roll.openProjects} in flight` },
+                  { k: "Invoices", v: `${mine.payments.length} raised` },
+                  { k: "Proposals", v: `${mine.proposals.length} sent` },
+                  { k: "Contacts", v: String(mine.contacts.length + mine.viaContacts.length) },
+                  ...(brand.first_seen ? [{ k: "First seen", v: brand.first_seen }] : []),
+                ].map((r) => (
+                  <div key={r.k} className="flex items-baseline justify-between gap-2">
+                    <dt className="shrink-0 text-text-muted">{r.k}</dt>
+                    <dd className="min-w-0 truncate text-right text-text">{r.v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          </div>
+
+          <section>
+            <h2 className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">
+              What we have done
+            </h2>
+            <BrandTimeline
+              projects={mine.projects}
+              payments={mine.payments}
+              proposals={mine.proposals}
+              signals={brandSignals}
+            />
+          </section>
+        </div>
+      )}
+
+      {tab === "money" && (<>
       {/* Reads this brand's invoices straight out of email. Scoped to the
           brand name so it does not trawl the whole mailbox. */}
       <InvoiceQueue
@@ -376,7 +472,9 @@ export default function BrandProfilePage() {
         title={`Invoices in email for ${brand.name}`}
         onChanged={load}
       />
+      </>)}
 
+      {tab === "money" && (<>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         {/* ── Receivables ── */}
         <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
@@ -447,7 +545,9 @@ export default function BrandProfilePage() {
           </ul>
         </section>
       </div>
+      </>)}
 
+      {tab === "work" && (<>
       {/* ── GitHub ── */}
       <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
         <h2 className="flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">
@@ -562,7 +662,9 @@ export default function BrandProfilePage() {
           </div>
         )}
       </section>
+      </>)}
 
+      {tab === "people" && (<>
       {/* ── Contacts ── */}
       <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
         <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">
@@ -657,7 +759,9 @@ export default function BrandProfilePage() {
           </div>
         )}
       </section>
+      </>)}
 
+      {tab === "profile" && (<>
       {/* ── Billing (read-only: owned by the client register, not the dashboard) ── */}
       <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
         <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">
@@ -692,7 +796,9 @@ export default function BrandProfilePage() {
           </p>
         ) : null}
       </section>
+      </>)}
 
+      {tab === "profile" && (<>
       {/* ── Editable profile ── */}
       <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
         <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">Profile</h2>
@@ -772,6 +878,7 @@ export default function BrandProfilePage() {
           {saved && <span className="text-[11.5px] text-accent-green">Saved</span>}
         </div>
       </section>
+      </>)}
     </div>
   );
 }
