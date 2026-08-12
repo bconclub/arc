@@ -37,6 +37,39 @@ function isLive(b: BrandRollup): boolean {
 }
 
 /** Money quoted and waiting on their answer, with nothing running yet. */
+function monthYear(iso: string) {
+  return new Date(iso.slice(0, 10) + "T00:00:00")
+    .toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+}
+
+/** The date a completed brand was last worked with, for the year headings. */
+function lastActive(b: BrandRollup): string | null {
+  return b.last_seen ?? b.first_seen ?? null;
+}
+
+/**
+ * Completed brands grouped by year, newest first, the way a photo library
+ * groups by date. Thirty-two cards in one alphabetical block tell you who you
+ * have worked with and nothing about when, which is the question that list is
+ * usually being asked.
+ */
+function byYear(rows: BrandRollup[]) {
+  const map = new Map<string, BrandRollup[]>();
+  for (const b of rows) {
+    const d = lastActive(b);
+    const key = d ? d.slice(0, 4) : "undated";
+    const list = map.get(key);
+    if (list) list.push(b); else map.set(key, [b]);
+  }
+  return Array.from(map.entries())
+    // Undated last: it is not a year and must not sort among them.
+    .sort((a, b) => (a[0] === "undated" ? 1 : b[0] === "undated" ? -1 : b[0].localeCompare(a[0])))
+    .map(([year, list]) => ({
+      year,
+      rows: list.sort((x, y) => (lastActive(y) ?? "").localeCompare(lastActive(x) ?? "")),
+    }));
+}
+
 function isProposed(b: BrandRollup): boolean {
   return !isLive(b) && b.pipeline > 0;
 }
@@ -58,6 +91,12 @@ function summarise(b: BrandRollup): string {
   if (b.pipeline > 0) bits.push(`${moneyShort(b.pipeline)} in play`);
   if (bits.length) return bits.join(" · ");
   if (b.collected > 0) return `${moneyShort(b.collected)} collected · nothing open`;
+  // lifetime_revenue comes off the billing vault, so a brand billed in 2022
+  // reports what it was worth instead of claiming nothing was ever recorded.
+  if (b.lifetime_revenue) {
+    const when = b.last_seen ? ` · last billed ${monthYear(b.last_seen)}` : "";
+    return `${moneyShort(b.lifetime_revenue)} billed${when}`;
+  }
   if (b.projectCount > 0) return "No active work";
   return "Nothing recorded yet";
 }
@@ -221,9 +260,33 @@ export default function BrandsPage() {
       ) : (
         <>
           {groups.map((g) => (
-            <Group key={g.key} title={g.title} count={g.rows.length} color={g.color}>
-              {g.rows.map((b) => <BrandCard key={b.id} b={b} />)}
-            </Group>
+            g.key === "done" ? (
+              <section key={g.key} className="space-y-3">
+                <h2 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: g.color }} />
+                  {g.title}
+                  <span>({g.rows.length})</span>
+                </h2>
+                {byYear(g.rows).map((yr) => (
+                  <div key={yr.year} className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <h3 className="shrink-0 text-[13px] font-semibold text-text">
+                        {yr.year === "undated" ? "No date recorded" : yr.year}
+                      </h3>
+                      <span className="h-px flex-1 bg-[var(--border)]" />
+                      <span className="shrink-0 text-[10.5px] tabular-nums text-text-muted">{yr.rows.length}</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {yr.rows.map((b) => <BrandCard key={b.id} b={b} />)}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            ) : (
+              <Group key={g.key} title={g.title} count={g.rows.length} color={g.color}>
+                {g.rows.map((b) => <BrandCard key={b.id} b={b} />)}
+              </Group>
+            )
           ))}
         </>
       )}
