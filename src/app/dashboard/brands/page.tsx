@@ -25,15 +25,34 @@ const KIND_COLOR: Record<BrandKind, string> = {
 };
 
 /**
- * "Live" means work is actually moving: a project open, an invoice out, tasks
- * outstanding. A proposal in play is deliberately NOT live, nothing has been
- * won yet, so it belongs in Proposed where it reads as a decision pending
- * rather than as work in progress.
+ * Money past its due date. Its own group, ahead of everything else.
+ *
+ * Overdue was a red badge on a card sitting inside Live, so the one state that
+ * needs acting on today was mixed in with work that is merely fine. A brand
+ * owing you late money is not in the same situation as one quietly delivering.
+ */
+function isOverdue(b: BrandRollup): boolean {
+  return b.overdue > 0;
+}
+
+/**
+ * "Live" means work is actually moving: a project under way, tasks outstanding,
+ * or an invoice out. A project marked active with no start date and no progress
+ * is agreed, not running, so it belongs in Not started.
+ *
+ * A proposal in play is deliberately NOT live, nothing has been won yet, so it
+ * belongs in Proposed where it reads as a decision pending.
  */
 function isLive(b: BrandRollup): boolean {
+  if (isOverdue(b)) return false;
   // Money outstanding keeps a brand live even with no work running: an unpaid
   // invoice still needs chasing.
-  return b.openProjects > 0 || b.unpaidCount > 0 || b.openTasks > 0;
+  return b.runningProjects > 0 || b.unpaidCount > 0 || b.openTasks > 0;
+}
+
+/** Agreed and waiting to begin: a project open with nothing started on it. */
+function notStarted(b: BrandRollup): boolean {
+  return !isOverdue(b) && !isLive(b) && b.notStartedProjects > 0;
 }
 
 /** Money quoted and waiting on their answer, with nothing running yet. */
@@ -77,7 +96,10 @@ function isProposed(b: BrandRollup): boolean {
 /** One line saying what is actually happening, or why nothing is. */
 function summarise(b: BrandRollup): string {
   const bits: string[] = [];
-  if (b.openProjects > 0) bits.push(`${b.openProjects} project${b.openProjects === 1 ? "" : "s"} open`);
+  // Running and not-started are named apart, so "1 project open" never covers
+  // for work nobody has begun.
+  if (b.runningProjects > 0) bits.push(`${b.runningProjects} project${b.runningProjects === 1 ? "" : "s"} running`);
+  if (b.notStartedProjects > 0) bits.push(`${b.notStartedProjects} not started`);
   // Parked is named rather than folded into "open", so a shelved project never
   // reads as work in progress.
   if (b.parkedProjects > 0) bits.push(`${b.parkedProjects} parked`);
@@ -104,7 +126,11 @@ function summarise(b: BrandRollup): string {
 function BrandCard({ b }: { b: BrandRollup }) {
   // Dot matches the group the card sits in, so a proposed brand doesn't read as
   // dormant just because no work has started.
-  const dot = isLive(b) ? "#00d4aa" : isProposed(b) || kindOf(b) === "prospect" ? "#f59e0b" : "#6b6b6b";
+  const dot = isOverdue(b) ? "#e5484d"
+    : isLive(b) ? "#00d4aa"
+    : notStarted(b) ? "#3b82f6"
+    : isProposed(b) || kindOf(b) === "prospect" ? "#f59e0b"
+    : "#6b6b6b";
   return (
     <Link
       href={`/dashboard/brands/${b.id}`}
@@ -197,14 +223,18 @@ export default function BrandsPage() {
   const clients = rolled.filter((b) => kindOf(b) === "client");
   const prospects = rolled.filter((b) => kindOf(b) === "prospect");
 
+  const overdue = clients.filter(isOverdue);
   const live = clients.filter(isLive);
+  const upcoming = clients.filter(notStarted);
   // A prospect is a proposal by definition, so it sits here rather than in a
   // group of its own, the distinction is bookkeeping, not something to act on.
   const proposed = [...clients.filter(isProposed), ...prospects];
-  const done = clients.filter((b) => !isLive(b) && !isProposed(b));
+  const done = clients.filter((b) => !isOverdue(b) && !isLive(b) && !notStarted(b) && !isProposed(b));
 
   const groups: { key: string; title: string; color: string; rows: BrandRollup[] }[] = [
+    { key: "overdue", title: "Overdue", color: "#e5484d", rows: overdue },
     { key: "live", title: "Live", color: "#00d4aa", rows: live },
+    { key: "upcoming", title: "Not started yet", color: "#3b82f6", rows: upcoming },
     { key: "proposed", title: "Proposed", color: "#f59e0b", rows: proposed },
     { key: "done", title: "Completed", color: "#6b6b6b", rows: done },
     ...(["agency", "partner", "own"] as BrandKind[]).map((k) => ({

@@ -218,6 +218,10 @@ export type BrandRollup = Brand & {
   openProjects: number;
   /** On hold. Counted apart from openProjects so 'parked' is never reported as work in flight. */
   parkedProjects: number;
+  /** Open AND under way: a start date that has passed, or some progress recorded. */
+  runningProjects: number;
+  /** Open but not begun: agreed, no start date, no progress. */
+  notStartedProjects: number;
   /** Unpaid invoices by count, so ones with no amount recorded still register. */
   unpaidCount: number;
   unpricedCount: number;

@@ -140,8 +140,19 @@ export function rollupBrand(
   // 'done', which swept parked work in and made a brand with a shelved project
   // and no activity report "1 project open". Parked is reported separately so
   // the line says what is true.
-  const openProjects = myProjects.filter((p) => p.status === "active" || p.status === "waiting").length;
+  const openProjectRows = myProjects.filter((p) => p.status === "active" || p.status === "waiting");
+  const openProjects = openProjectRows.length;
   const parkedProjects = myProjects.filter((p) => p.status === "parked").length;
+
+  // Open is not the same as under way. A project can be marked active while
+  // carrying no start date and no progress, which means it is agreed and has
+  // not begun. Counting those as running put five brands on the Live board
+  // that nobody had started work on.
+  const today = new Date().toISOString().slice(0, 10);
+  const runningProjects = openProjectRows.filter(
+    (p) => (p.start_date != null && p.start_date <= today) || (p.progress ?? 0) > 0,
+  ).length;
+  const notStartedProjects = openProjects - runningProjects;
 
   // Count, not sum. Several invoices are issued with no amount recorded, so a
   // brand with money genuinely outstanding was summing to zero and looking settled.
@@ -176,7 +187,7 @@ export function rollupBrand(
     owed, collected, overdue, pipeline,
     openTasks, totalTasks: allTasks.length,
     activeProjects: myProjects.filter((p) => p.status === "active").length,
-    openProjects, parkedProjects, unpaidCount, unpricedCount,
+    openProjects, parkedProjects, runningProjects, notStartedProjects, unpaidCount, unpricedCount,
     projectCount: myProjects.length,
     avgProgress: Math.round(avgProgress),
     criticalSignals,
