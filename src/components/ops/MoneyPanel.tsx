@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Clock, FileText } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { deliverableOf, money, moneyShort } from "@/lib/format";
 import {
@@ -20,10 +20,10 @@ import type { Brand, Payment, Proposal } from "@/types/ops";
  * against each other instead of each being a full circle that means nothing.
  */
 function Ring({
-  value, total, label, count, countLabel, href, color, icon: Icon,
+  value, total, label, count, countLabel, caption, href, color, icon: Icon,
 }: {
   value: number; total: number; label: string; count: number;
-  countLabel: string; href: string; color: string; icon: LucideIcon;
+  countLabel: string; caption: string; href: string; color: string; icon: LucideIcon;
 }) {
   const size = 148, stroke = 9;
   const r = (size - stroke) / 2;
@@ -54,6 +54,9 @@ function Ring({
       </div>
       <Link href={href} className="flex flex-col items-center gap-0.5 text-center">
         <span className="text-[12px] font-medium" style={{ color }}>{count} {countLabel}</span>
+        {/* The arc is a proportion, and an unlabelled proportion invites the
+            reader to invent their own denominator. */}
+        <span className="text-[10.5px] leading-tight text-text-muted opacity-80">{caption}</span>
         <span className="flex items-center gap-1 text-[11px] text-text-muted transition-colors hover:text-text">
           View all <ArrowRight size={11} />
         </span>
@@ -70,17 +73,82 @@ type Row = {
 
 type TabKey = "proposed" | "overdue" | "severe";
 
+type PeriodKey = "7" | "14" | "28" | "custom" | "all";
+
+const PERIODS: { key: PeriodKey; label: string }[] = [
+  { key: "7", label: "7D" },
+  { key: "14", label: "14D" },
+  { key: "28", label: "28D" },
+  { key: "custom", label: "Custom" },
+  { key: "all", label: "All" },
+];
+
+const DAY_MS = 86_400_000;
+
+/** The document's own date: when an invoice was raised, when a proposal went out. */
+function dateOf(iso: string | null | undefined) {
+  if (!iso) return null;
+  const t = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso).getTime();
+  return Number.isFinite(t) ? t : null;
+}
+
 export function MoneyPanel({
   payments, proposals, brands,
 }: {
   payments: Payment[]; proposals: Proposal[]; brands: Brand[];
 }) {
   const [tab, setTab] = useState<TabKey>("proposed");
-  const r = useMemo(() => receivables(payments), [payments]);
+  // All time by default: this business has invoices going back to 2021, and a
+  // panel that opens on the last 7 days would open empty most days.
+  const [period, setPeriod] = useState<PeriodKey>("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  const window = useMemo(() => {
+    if (period === "all") return null;
+    if (period === "custom") {
+      // An incomplete custom range filters nothing rather than everything,
+      // which would look like the data had vanished while you were typing.
+      const a = dateOf(from), b = dateOf(to);
+      if (a == null && b == null) return null;
+      return { from: a ?? -Infinity, to: (b ?? Infinity) + (b == null ? 0 : DAY_MS) };
+    }
+    return { from: Date.now() - Number(period) * DAY_MS, to: Infinity };
+  }, [period, from, to]);
+
+  const inWindow = useMemo(() => {
+    if (!window) return () => true;
+    return (iso: string | null | undefined) => {
+      const t = dateOf(iso);
+      // Undated rows stay visible. Hiding them would quietly shrink the totals
+      // with no way to tell that it had happened.
+      if (t == null) return true;
+      return t >= window.from && t <= window.to;
+    };
+  }, [window]);
+
+  const scoped = useMemo(() => ({
+    payments: payments.filter((p) => inWindow(p.status === "paid" ? (p.paid_at ?? p.created_at) : p.created_at)),
+    proposals: proposals.filter((p) => inWindow(p.sent ?? p.created_at)),
+  }), [payments, proposals, inWindow]);
+
+  const r = useMemo(() => receivables(scoped.payments), [scoped.payments]);
   const brandOf = useMemo(() => brandIndex(brands), [brands]);
 
-  const inPlay = useMemo(() => proposals.filter((p) => IN_PLAY.includes(p.status)), [proposals]);
-  const proposed = inPlay.reduce((s, p) => s + (p.amount ?? 0), 0);
+  const inPlay = useMemo(() => scoped.proposals.filter((p) => IN_PLAY.includes(p.status)), [scoped.proposals]);
+
+  // The three headline figures.
+  //   collected  money actually received
+  //   contracted the value agreed across every proposal
+  //   pending    billed and still to come in
+  // Collected and pending are the two halves of what has been billed, so each
+  // ring is drawn as its share of that. Contracted is a different axis: its arc
+  // is how much of the agreed value has been billed so far.
+  const collected = r.collected;
+  const pending = r.total;
+  const billed = collected + pending;
+  const contracted = scoped.proposals.reduce((s, p) => s + (p.amount ?? 0), 0);
+  const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
 
   const rows: Record<TabKey, Row[]> = useMemo(() => {
     const fromPayment = (p: Payment): Row => {
@@ -123,7 +191,6 @@ export function MoneyPanel({
     };
   }, [r, inPlay]);
 
-  const combined = proposed + r.overdueByTerms.total + r.severelyOverdue.total;
 
   const tabs: { key: TabKey; label: string; color: string }[] = [
     { key: "proposed", label: "Proposed", color: "#f59e0b" },
@@ -135,9 +202,37 @@ export function MoneyPanel({
   return (
     <section className="overflow-hidden rounded-panel border border-[var(--border)] bg-surface shadow-card">
       <div className="px-4 pt-4">
-        <h2 className="text-[17px] font-semibold tracking-tight text-text">Money / Receivables</h2>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h2 className="text-[17px] font-semibold tracking-tight text-text">Money / Receivables</h2>
+          <div className="flex flex-wrap items-center gap-1">
+            {PERIODS.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => setPeriod(p.key)}
+                className={`rounded-pill border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                  period === p.key
+                    ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                    : "border-[var(--border)] text-text-muted hover:text-text"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {period === "custom" && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-text-muted">
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
+              className="rounded-soft border border-[var(--border)] bg-[var(--surface-hover)] px-2 py-1 text-text outline-none" />
+            <span>to</span>
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
+              className="rounded-soft border border-[var(--border)] bg-[var(--surface-hover)] px-2 py-1 text-text outline-none" />
+            {!from && !to && <span className="opacity-70">Pick a date to narrow this down.</span>}
+          </div>
+        )}
         <p className="mt-0.5 text-[11.5px] leading-relaxed text-text-muted">
           All amounts in INR
+          {window && <> · {period === "custom" ? "custom range" : `last ${period} days`}, undated rows always shown</>}
           {/* Both of these change what the figures mean, so neither is left to
               be discovered. */}
           {r.assumedDueCount > 0 && (
@@ -154,19 +249,30 @@ export function MoneyPanel({
 
       <div className="flex flex-wrap items-start justify-center gap-y-5 px-2 py-4 lg:flex-nowrap lg:divide-x lg:divide-[var(--border)]">
         <Ring
-          value={proposed} total={combined} label="Proposed"
-          count={inPlay.length} countLabel={`proposal${inPlay.length === 1 ? "" : "s"} out`}
-          href="/dashboard/ops/proposals" color="#f59e0b" icon={FileText}
+          value={collected} total={billed} label="Collected"
+          count={r.paidRows.length} countLabel={`invoice${r.paidRows.length === 1 ? "" : "s"} settled`}
+          caption={`${pct(collected, billed)}% of what you have billed`}
+          href="/dashboard/ops/money" color="#00d4aa" icon={CheckCircle2}
         />
         <Ring
-          value={r.overdueByTerms.total} total={combined} label="Overdue"
-          count={r.overdueByTerms.count} countLabel={`invoice${r.overdueByTerms.count === 1 ? "" : "s"} past due`}
-          href="/dashboard/ops/money" color="#e5484d" icon={Clock}
+          value={contracted} total={contracted} label="Contracted"
+          count={scoped.proposals.length} countLabel={`proposal${scoped.proposals.length === 1 ? "" : "s"}`}
+          caption={
+            contracted <= 0 ? "No proposals recorded"
+            // Billing beyond the agreed value is real and worth saying, but as
+            // a figure rather than a percentage over 100, which reads as a bug.
+            : billed > contracted ? `${moneyShort(billed - contracted)} billed beyond it`
+            : `${pct(billed, contracted)}% of it billed so far`
+          }
+          href="/dashboard/ops/proposals" color="#3b82f6" icon={FileText}
         />
         <Ring
-          value={r.severelyOverdue.total} total={combined} label={`${SEVERE_DAYS}+ days late`}
-          count={r.severelyOverdue.count} countLabel={r.severelyOverdue.count === 1 ? "needs chasing" : "need chasing"}
-          href="/dashboard/ops/money" color="#b4243f" icon={AlertTriangle}
+          value={pending} total={billed} label="Pending"
+          count={r.unpaid.length} countLabel={`invoice${r.unpaid.length === 1 ? "" : "s"} unpaid`}
+          caption={r.overdueByTerms.count > 0
+            ? `${r.overdueByTerms.count} of them past due`
+            : "None past due"}
+          href="/dashboard/ops/money" color="#f59e0b" icon={Clock}
         />
       </div>
 
