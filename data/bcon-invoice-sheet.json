@@ -57,7 +57,7 @@
   "client_id": "GM11PC",
   "date": "02-08-2025",
   "client": "Purple Dot Games LLP",
-  "gst_pct": null,
+  "gst_pct": "18",
   "total": "118000",
   "entity": "BCON Club",
   "description": "Invoice No:",
@@ -478,7 +478,7 @@
   "entity": null,
   "description": "Product Packaging Design. Areca Eco - S.Naidu",
   "gross": 5500.0,
-  "advance": null
+  "advance": 3000.0
  },
  {
   "kind": "invoice",
@@ -491,7 +491,7 @@
   "entity": null,
   "description": "Product Packaging Design. CloudFoam - S.Naidu",
   "gross": 8000.0,
-  "advance": null
+  "advance": 4000.0
  },
  {
   "kind": "quote",

@@ -11,6 +11,10 @@
  * Settlement stays 'unknown'. The sheet records what was billed and says
  * nothing about what was paid, so marking any of these paid would be invention.
  *
+ * Every document reconciles: work value plus GST less any advance equals the
+ * amount due, across all 37 invoices. Three carry an advance and ten carry GST
+ * at 18%.
+ *
  * Re-running is safe. Existing keys are read first and matching rows filtered
  * out client-side, because the uniqueness rule is an index over expressions and
  * PostgREST cannot infer that as a conflict target for on-conflict handling.
