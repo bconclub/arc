@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Settings2, FileText, Boxes, FolderKanban, Wallet, Radio,
   Megaphone, BarChart3, Users, Radar, LayoutGrid, Rss, CalendarDays, PenLine,
-  Palette, Bot, TrendingUp, Plug, Settings, LogOut, X, IndianRupee,
+  Palette, Bot, TrendingUp, Plug, Settings, LogOut, X, IndianRupee, Mail,
 } from "lucide-react";
 import { VERSION } from "@/lib/version";
 import { ArcLogo, ArcMark } from "@/components/ArcLogo";
@@ -29,6 +29,7 @@ const nav: NavItem[] = [
   {
     label: "Operations", href: "/dashboard/operations", icon: Settings2,
     children: [
+      { label: "Mail", href: "/dashboard/mail", icon: Mail },
       { label: "People", href: "/dashboard/ops/people", icon: Users },
       { label: "Radar", href: "/dashboard/ops/alerts", icon: Radar },
     ],

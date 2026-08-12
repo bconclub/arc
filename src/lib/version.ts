@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.23";
+export const VERSION = "0.0.24";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.24",
+    date: "2026-08-12",
+    notes: "Mail page with one-button sync: read the mail, parse anything new, and show what turned up. Attachments open in place. A one-time script handles the Gmail authorisation, since Google will not issue a Gmail token to gcloud's own client.",
+  },
   {
     version: "0.0.23",
     date: "2026-08-12",

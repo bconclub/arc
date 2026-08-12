@@ -2,6 +2,14 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 12:05 IST . v0.0.24 - Mail page and one-button sync
+
+- **Mail page** under Operations. Search with Gmail's own syntax, or use a preset, read a message, and open its attachments in place. A PDF renders in the browser's own viewer rather than being downloaded and discarded.
+- **One button: Sync and read new.** It reads the mail matching whatever query is on screen, parses anything it has not seen before, and says what turned up. It parses against the visible query on purpose, since a hidden second query would quietly be reading a different mailbox from the one you are looking at.
+- The result is stated plainly rather than implied by a list refresh: how many were read, how many were new, how many could not be read, and how many are still to do.
+- Attachments are streamed through ARC because Gmail will not serve bytes to a browser, every request needs the OAuth token. The viewer is an iframe over the browser's built-in PDF reader; shipping a rendering library to duplicate paging, zoom and search would be a large dependency for no gain.
+- **`scripts/gmail-auth.mjs` handles authorisation in one command.** Google refuses to issue a Gmail refresh token to gcloud's built-in client, since gmail.readonly is a restricted scope: `gcloud auth application-default login --scopes=...gmail...` fails with "you must provide your own client ID". The script runs the installed-app flow against your own OAuth client, catches the redirect on localhost, writes the three variables into .env.local, and confirms the connection by reading the account profile rather than leaving the first real scan to discover a problem.
+
 ## 2026-08-12 11:20 IST . v0.0.23 - visible rename, honest zeros, mail routes
 
 - **Rename is a visible, labelled button** on the brand page. It shipped two releases ago behind a hover-only pencil, which on something you are actively looking for is the same as not existing.
