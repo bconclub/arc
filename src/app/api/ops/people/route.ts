@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
       org: body.org || null,
       relation: body.relation || null,
       channel: body.channel || null,
+      avatar_url: body.avatar_url || null,
       notes: body.notes || null,
     })
     .select()

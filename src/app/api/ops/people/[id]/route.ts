@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   const { id } = ctx.params;
   const body = await req.json();
   const patch: Record<string, unknown> = {};
-  for (const key of ["name", "role", "org", "relation", "channel", "notes"]) {
+  for (const key of ["name", "role", "org", "relation", "channel", "notes", "avatar_url"]) {
     if (key in body) patch[key] = body[key] === "" ? null : body[key];
   }
   const { data, error } = await supabaseAdmin.from("people").update(patch).eq("id", id).select().single();

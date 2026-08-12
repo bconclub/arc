@@ -3,25 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Users, Plus, Search } from "lucide-react";
 import { Modal, Field, ModalActions, inputCls, btnPrimaryCls } from "@/components/ops/Modal";
-import { PersonCard, channelParts } from "@/components/ops/PersonCard";
+import { PersonRow, Avatar, channelParts } from "@/components/ops/PersonCard";
 import type { Brand, Person } from "@/types/ops";
 
-type FormState = { id?: string; name: string; role: string; org: string; relation: string; channel: string; notes: string };
-const EMPTY: FormState = { name: "", role: "", org: "", relation: "", channel: "", notes: "" };
-
-/**
- * The columns, in the order they matter. Anything with a relation outside this
- * list gets a column of its own rather than being hidden, since the field is
- * free text and a typo must not make a person disappear from the board.
- */
-const KNOWN = ["client", "prospect", "partner", "vendor"];
-
-const COLUMN_COLOR: Record<string, string> = {
-  client: "#00d4aa",
-  prospect: "#f59e0b",
-  partner: "#8b5cf6",
-  vendor: "#3b82f6",
+type FormState = {
+  id?: string; name: string; role: string; org: string;
+  relation: string; channel: string; notes: string; avatar_url: string;
 };
+const EMPTY: FormState = { name: "", role: "", org: "", relation: "", channel: "", notes: "", avatar_url: "" };
+
+/** Offered in the editor. Relation is free text, so other values still work. */
+const KNOWN = ["client", "prospect", "partner", "vendor"];
 
 function titleCase(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -34,7 +26,7 @@ export default function PeoplePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
-  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [relFilter, setRelFilter] = useState("");
 
   const load = useCallback(async () => {
     const [p, b] = await Promise.all([
@@ -55,49 +47,26 @@ export default function PeoplePage() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return people;
-    return people.filter((p) =>
-      [p.name, p.role, p.org, p.relation, p.channel].some((f) => (f ?? "").toLowerCase().includes(needle)),
-    );
-  }, [people, q]);
+    return people.filter((p) => {
+      if (relFilter && (p.relation ?? "").trim().toLowerCase() !== relFilter) return false;
+      if (!needle) return true;
+      return [p.name, p.role, p.org, p.relation, p.channel]
+        .some((f) => (f ?? "").toLowerCase().includes(needle));
+    });
+  }, [people, q, relFilter]);
 
-  // Known relations first in a fixed order, then anything else the data holds,
-  // then the people carrying no relation at all.
-  const columns = useMemo(() => {
-    const extra = Array.from(new Set(
-      filtered.map((p) => (p.relation ?? "").trim().toLowerCase()).filter((r) => r && !KNOWN.includes(r)),
-    )).sort();
-    const keys = [...KNOWN, ...extra];
-    const cols = keys.map((key) => ({
-      key,
-      label: titleCase(key),
-      color: COLUMN_COLOR[key] ?? "#6b6b6b",
-      people: filtered.filter((p) => (p.relation ?? "").trim().toLowerCase() === key),
-    }));
-    const unset = filtered.filter((p) => !(p.relation ?? "").trim());
-    if (unset.length) cols.push({ key: "", label: "No relation set", color: "#6b6b6b", people: unset });
-    // An empty known column still shows, so dragging somebody into it is possible.
-    return cols.filter((c) => c.people.length > 0 || KNOWN.includes(c.key));
-  }, [filtered]);
+  /** Every relation the data actually holds, so a typo is still reachable. */
+  const relations = useMemo(() => Array.from(new Set(
+    people.map((p) => (p.relation ?? "").trim().toLowerCase()).filter(Boolean),
+  )).sort(), [people]);
 
   function openPerson(p: Person) {
     setError("");
     setEditing({
       id: p.id, name: p.name, role: p.role ?? "", org: p.org ?? "",
       relation: p.relation ?? "", channel: p.channel ?? "", notes: p.notes ?? "",
+      avatar_url: p.avatar_url ?? "",
     });
-  }
-
-  /** Dropping onto a column is the same edit as retyping the relation field. */
-  async function moveTo(id: string, relation: string) {
-    const before = people;
-    setPeople((prev) => prev.map((p) => (p.id === id ? { ...p, relation: relation || null } : p)));
-    const res = await fetch(`/api/ops/people/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ relation: relation || null }),
-    });
-    if (!res.ok) { setPeople(before); setError("That move did not save."); }
   }
 
   async function save() {
@@ -156,6 +125,26 @@ export default function PeoplePage() {
         </div>
       </div>
 
+      {relations.length > 1 && (
+        <div className="scrollbar-hide flex gap-1.5 overflow-x-auto">
+          {[{ key: "", label: `All ${people.length}` },
+            ...relations.map((r) => ({ key: r, label: `${titleCase(r)} ${people.filter((p) => (p.relation ?? "").trim().toLowerCase() === r).length}` }))
+          ].map((t) => (
+            <button
+              key={t.key || "all"}
+              onClick={() => setRelFilter(t.key)}
+              className={`shrink-0 rounded-pill border px-3 py-1 text-[11.5px] font-medium transition-colors ${
+                relFilter === t.key
+                  ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                  : "border-[var(--border)] text-text-muted hover:text-text"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {error && <p className="text-[12px] text-accent-red">{error}</p>}
 
       {people.length === 0 ? (
@@ -167,45 +156,14 @@ export default function PeoplePage() {
           Nobody matches &ldquo;{q}&rdquo;.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {columns.map((col) => (
-            <section
-              key={col.key || "unset"}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(col.key); }}
-              onDragLeave={() => setDragOver((k) => (k === col.key ? null : k))}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(null);
-                const id = e.dataTransfer.getData("text/plain");
-                if (id) moveTo(id, col.key);
-              }}
-              className={`flex min-h-[120px] flex-col gap-2 rounded-panel border p-2.5 transition-colors ${
-                dragOver === col.key
-                  ? "border-[var(--brand)] bg-[var(--brand-soft)]"
-                  : "border-[var(--border)] bg-[var(--surface-hover)]"
-              }`}
-            >
-              <div className="flex items-center gap-2 px-1">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: col.color }} />
-                <h2 className="min-w-0 flex-1 truncate text-[12px] font-semibold text-text">{col.label}</h2>
-                <span className="shrink-0 text-[11px] tabular-nums text-text-muted">{col.people.length}</span>
-              </div>
-
-              {col.people.map((p) => (
-                <PersonCard
-                  key={p.id}
-                  person={p}
-                  brand={p.brand_id ? brandById.get(p.brand_id) : undefined}
-                  onOpen={() => openPerson(p)}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData("text/plain", p.id)}
-                />
-              ))}
-
-              {col.people.length === 0 && (
-                <p className="px-1 py-4 text-center text-[11px] text-text-muted">Drop somebody here.</p>
-              )}
-            </section>
+        <div className="overflow-hidden rounded-card border border-[var(--border)] bg-surface">
+          {filtered.map((p) => (
+            <PersonRow
+              key={p.id}
+              person={p}
+              brand={p.brand_id ? brandById.get(p.brand_id) : undefined}
+              onOpen={() => openPerson(p)}
+            />
           ))}
         </div>
       )}
@@ -236,10 +194,46 @@ export default function PeoplePage() {
               <input className={inputCls} value={editing.channel} onChange={(e) => setEditing({ ...editing, channel: e.target.value })} />
             </Field>
           </div>
+          <Field label="Photo URL">
+            <div className="flex items-center gap-2.5">
+              {/* Previewed against the same fallback the list uses, so a URL
+                  that does not load is obvious here rather than later. */}
+              <Avatar
+                person={{ name: editing.name || "?", avatar_url: editing.avatar_url || null } as Person}
+                size={38}
+              />
+              <input
+                className={inputCls}
+                placeholder="https://..."
+                value={editing.avatar_url}
+                onChange={(e) => setEditing({ ...editing, avatar_url: e.target.value })}
+              />
+            </div>
+          </Field>
           <Field label="Notes">
             <textarea rows={3} className={inputCls} value={editing.notes} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} />
           </Field>
-          {error && <p className="text-[12px] text-accent-red">{error}</p>}
+          {relations.length > 1 && (
+        <div className="scrollbar-hide flex gap-1.5 overflow-x-auto">
+          {[{ key: "", label: `All ${people.length}` },
+            ...relations.map((r) => ({ key: r, label: `${titleCase(r)} ${people.filter((p) => (p.relation ?? "").trim().toLowerCase() === r).length}` }))
+          ].map((t) => (
+            <button
+              key={t.key || "all"}
+              onClick={() => setRelFilter(t.key)}
+              className={`shrink-0 rounded-pill border px-3 py-1 text-[11.5px] font-medium transition-colors ${
+                relFilter === t.key
+                  ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                  : "border-[var(--border)] text-text-muted hover:text-text"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="text-[12px] text-accent-red">{error}</p>}
           <ModalActions onDelete={remove} onCancel={() => setEditing(null)} onSave={save} saving={saving} canDelete={!!editing.id} />
         </Modal>
       )}

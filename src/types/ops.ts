@@ -44,6 +44,8 @@ export type Person = {
   relation: string | null;
   /** Free text: email, phone, or both separated by " / ". */
   channel: string | null;
+  /** URL of a photo of the person. Falls back to initials when absent. */
+  avatar_url: string | null;
   notes: string | null;
   /** FK to brands. Populated on most rows and preferred over matching `org`. */
   brand_id?: string | null;
