@@ -144,15 +144,17 @@ export function rollupBrand(
   const openProjects = openProjectRows.length;
   const parkedProjects = myProjects.filter((p) => p.status === "parked").length;
 
-  // Open is not the same as under way. A project can be marked active while
-  // carrying no start date and no progress, which means it is agreed and has
-  // not begun. Counting those as running put five brands on the Live board
-  // that nobody had started work on.
+  // Only a start date in the future means work has not begun. A missing date
+  // means nobody filled the field in, which is the normal case here and says
+  // nothing about whether work is happening: Jamaican Kitchen has mail going
+  // back and forth on a project carrying no dates at all. Treating absence as
+  // "not started" moved live work off the Live board, so absence now defaults
+  // to running and only a real future date counts as due to start.
   const today = new Date().toISOString().slice(0, 10);
-  const runningProjects = openProjectRows.filter(
-    (p) => (p.start_date != null && p.start_date <= today) || (p.progress ?? 0) > 0,
+  const notStartedProjects = openProjectRows.filter(
+    (p) => p.start_date != null && p.start_date > today && (p.progress ?? 0) === 0,
   ).length;
-  const notStartedProjects = openProjects - runningProjects;
+  const runningProjects = openProjects - notStartedProjects;
 
   // Count, not sum. Several invoices are issued with no amount recorded, so a
   // brand with money genuinely outstanding was summing to zero and looking settled.

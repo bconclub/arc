@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.24";
+export const VERSION = "0.0.25";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.25",
+    date: "2026-08-13",
+    notes: "Money reads collected, contracted and pending over a chosen period. Every invoice ever issued is now in a billing vault, 40 documents back to 2021, which brought in 25 client brands that were missing entirely. Brands separate overdue from live and agreed-but-not-started from running, with completed grouped by year. Projects open on an 18-day calendar. People is a list with real photos. Focus tasks no longer need a project to exist. The mail browser is gone, replaced by one sync button on the dashboard.",
+  },
   {
     version: "0.0.24",
     date: "2026-08-12",

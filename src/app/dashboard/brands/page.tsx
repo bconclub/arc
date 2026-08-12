@@ -50,7 +50,7 @@ function isLive(b: BrandRollup): boolean {
   return b.runningProjects > 0 || b.unpaidCount > 0 || b.openTasks > 0;
 }
 
-/** Agreed and waiting to begin: a project open with nothing started on it. */
+/** Agreed with a start date still ahead of it. */
 function notStarted(b: BrandRollup): boolean {
   return !isOverdue(b) && !isLive(b) && b.notStartedProjects > 0;
 }
@@ -99,7 +99,7 @@ function summarise(b: BrandRollup): string {
   // Running and not-started are named apart, so "1 project open" never covers
   // for work nobody has begun.
   if (b.runningProjects > 0) bits.push(`${b.runningProjects} project${b.runningProjects === 1 ? "" : "s"} running`);
-  if (b.notStartedProjects > 0) bits.push(`${b.notStartedProjects} not started`);
+  if (b.notStartedProjects > 0) bits.push(`${b.notStartedProjects} due to start`);
   // Parked is named rather than folded into "open", so a shelved project never
   // reads as work in progress.
   if (b.parkedProjects > 0) bits.push(`${b.parkedProjects} parked`);
@@ -234,7 +234,7 @@ export default function BrandsPage() {
   const groups: { key: string; title: string; color: string; rows: BrandRollup[] }[] = [
     { key: "overdue", title: "Overdue", color: "#e5484d", rows: overdue },
     { key: "live", title: "Live", color: "#00d4aa", rows: live },
-    { key: "upcoming", title: "Not started yet", color: "#3b82f6", rows: upcoming },
+    { key: "upcoming", title: "Due to start", color: "#3b82f6", rows: upcoming },
     { key: "proposed", title: "Proposed", color: "#f59e0b", rows: proposed },
     { key: "done", title: "Completed", color: "#6b6b6b", rows: done },
     ...(["agency", "partner", "own"] as BrandKind[]).map((k) => ({

@@ -2,6 +2,21 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-13 01:15 IST . v0.0.25 - Billing vault, period money, calendar projects
+
+Versioning was missed for thirteen commits. This entry covers all of them rather
+than minting eight retroactive releases with invented dates. `package.json` had
+also drifted to 0.0.8 while `src/lib/version.ts` read 0.0.24; both now say 0.0.25.
+
+- **Billing vault.** Every document ever issued, 40 of them back to 2021, reconciled to the rupee: Rs 20,19,061 of work plus Rs 1,00,018 GST less Rs 47,000 of advances equals Rs 20,72,079 billed. It is deliberately not the payments table, which drives receivables; loading historical invoices there would have reported roughly Rs 20 lakh outstanding that was collected years ago. Settlement reads unknown on every row because the source says what was billed and is silent on what was paid.
+- **25 client brands were missing.** The earlier importer only ever read the GST tab, and 30 of the 40 documents carry no GST, which is where Paint My Walls, Wash O Wash and eighteen others lived. The GST split turns out to be structural: GST invoices are billed as BCON Club into HDFC, the rest personally into ICICI.
+- **Money reads collected, contracted and pending** over 7, 14, 28 days, a custom range, or all time. Work value is stored apart from amount due, since an invoice is often one instalment and on a GST invoice the amount carries tax that was never work.
+- **Brands**: overdue is its own group rather than a badge inside Live, a project marked active with no start date and no progress counts as not started rather than running, completed is grouped by year, and a brand can be removed with what it is attached to stated first.
+- **Projects** open on an 18-day calendar. Undated projects are listed beneath it rather than drawn on it, because giving them bars would put deadlines on screen that nobody agreed.
+- **People** is a list carrying real photos, with contact details as links.
+- **Focus tasks** exist on their own. Writing one down no longer means inventing a project to hang it off.
+- **The mail browser is gone**, replaced by one Sync email button on the dashboard: read the mail, parse the invoices, flag what is new.
+
 ## 2026-08-12 12:05 IST . v0.0.24 - Mail page and one-button sync
 
 - **Mail page** under Operations. Search with Gmail's own syntax, or use a preset, read a message, and open its attachments in place. A PDF renders in the browser's own viewer rather than being downloaded and discarded.
