@@ -3,6 +3,23 @@ export type ProjectSize = "S" | "M" | "L" | "XL";
 
 export type OpsTask = { text: string; done: boolean; due: string | null };
 
+/**
+ * A task that exists on its own. `project_id` and `brand_id` are both optional,
+ * unlike `OpsTask` which only ever lives inside a project's JSON column.
+ */
+export type FocusTask = {
+  id: string;
+  text: string;
+  done: boolean;
+  due: string | null;
+  project_id: string | null;
+  brand_id: string | null;
+  priority: number;
+  done_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Project = {
   id: string;
   name: string;

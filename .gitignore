@@ -68,3 +68,10 @@ gcloud-*.json
 # current directory, and answering its prompt with "yes" creates ./yes.
 /yes/
 google-cloud-sdk/
+
+# Google service account keys. These are private keys; they belong in
+# .env.local (or a secret manager), never in the repository.
+*.json.key
+bcon-arc-*.json
+*-service-account*.json
+gcp-*.json

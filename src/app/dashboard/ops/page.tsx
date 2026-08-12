@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle, Bell, Check, ChevronRight, Circle, CircleCheck, Clock, EyeOff,
-  IndianRupee, ListChecks, Plus, Search, TrendingUp,
+  AlertTriangle, Bell, Check, ChevronRight, EyeOff,
+  IndianRupee, ListChecks, Search, TrendingUp,
 } from "lucide-react";
-import { money, moneyShort, shortAgo } from "@/lib/format";
+import { money, moneyShort, shortAgo , deliverableOf} from "@/lib/format";
 import { IN_PLAY, brandIndex } from "@/lib/rollup";
 import { dueLabel, receivables } from "@/lib/money";
 import { rankSignals } from "@/lib/signals";
-import { Donut } from "@/components/ops/Charts";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
+import { MoneyPanel } from "@/components/ops/MoneyPanel";
+import { FocusToday } from "@/components/ops/FocusToday";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { BrandMark } from "@/components/ops/BrandMark";
 import { SignalDetail } from "@/components/ops/SignalDetail";
@@ -68,17 +69,6 @@ const RADAR_TOP = 6;
 const emptyCls = "px-4 py-8 text-center text-[12px] text-text-muted";
 const rowCls = "flex items-center gap-2 border-t border-[var(--border)] px-4 py-2 text-[12.5px] transition-colors hover:bg-[var(--glow-white)]";
 
-function Chip({ text, color }: { text: string; color: string }) {
-  return (
-    <span
-      className="shrink-0 rounded-pill px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide"
-      style={{ background: `${color}22`, color }}
-    >
-      {text}
-    </span>
-  );
-}
-
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -106,15 +96,6 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  async function toggleTask(t: NowTask) {
-    await fetch(`/api/ops/now-tasks/${t.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: !t.done }),
-    });
-    load();
-  }
 
   /**
    * Clears a signal off the radar in one click.
@@ -260,16 +241,6 @@ export default function DashboardPage() {
     },
   ];
 
-  // Money still owed is the green accent, on a ramp that darkens as the due date
-  // recedes. Red is kept strictly for overdue, so colour carries one meaning:
-  // red is a problem, green is simply outstanding.
-  const ageing = [
-    { label: "Overdue", value: r.ageing.overdue, color: "#e5484d" },
-    { label: "Due in 7 days", value: r.ageing.soon, color: "#00d4aa" },
-    { label: "8 to 30 days", value: r.ageing.mid, color: "#00ab89" },
-    { label: "31 days or more", value: r.ageing.far, color: "#00806a" },
-    { label: "No due date", value: r.ageing.undated, color: "#6b6b6b" },
-  ].filter((s) => s.value > 0);
 
   const dateLine = new Date().toLocaleDateString("en-GB", {
     weekday: "short", day: "numeric", month: "short", year: "numeric",
@@ -312,13 +283,17 @@ export default function DashboardPage() {
 
       <StatStrip stats={stats} />
 
+      {/* Money is its own full-width block: three rings and a table do not fit
+          a third of a row. */}
+      <MoneyPanel payments={payments} proposals={proposals} brands={brands} />
+
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Panel
           title="ARC Radar"
           sub="Live signal from operations"
           href="/dashboard/ops/alerts"
           hrefLabel="View all signals"
-          className="lg:max-h-[420px]"
+          className="lg:col-span-2 lg:max-h-[420px]"
           footer={
             <div className="flex items-center justify-between text-[10px]">
               <span className="text-text-muted">{d.totalSignals} items</span>
@@ -389,108 +364,10 @@ export default function DashboardPage() {
           )}
         </Panel>
 
-        <Panel
-          title="Money / Receivables"
-          sub={`${r.unpaid.length} unpaid`}
-          href="/dashboard/ops/money"
-          hrefLabel="View all invoices"
-          className="lg:max-h-[420px]"
-        >
-          {ageing.length === 0 ? (
-            <p className={emptyCls}>{loaded ? "Nothing outstanding." : "Loading."}</p>
-          ) : (
-            <>
-              <div className="flex items-center gap-4 px-4 pb-3">
-                <Donut segments={ageing} size={104} thickness={12} center={moneyShort(r.total)} sub="Total O/S" />
-                <ul className="min-w-0 flex-1 space-y-1">
-                  {ageing.map((x) => (
-                    <li key={x.label} className="flex items-center gap-2 text-[10.5px]">
-                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: x.color }} />
-                      <span className="min-w-0 flex-1 truncate text-text-muted">{x.label}</span>
-                      <span className="shrink-0 tabular-nums text-text">{moneyShort(x.value)}</span>
-                    </li>
-                  ))}
-                  {r.unpricedCount > 0 && (
-                    <li className="pt-0.5 text-[10px] text-accent-orange">
-                      + {r.unpricedCount} invoice{r.unpricedCount === 1 ? "" : "s"} with no amount
-                    </li>
-                  )}
-                </ul>
-              </div>
-              <ul>
-                {r.unpaid.map((p) => {
-                  const due = dueLabel(p.due);
-                  return (
-                    <li key={p.id} className={rowCls}>
-                      <BrandMark
-                        name={p.client ?? "Unnamed"}
-                        logoUrl={brandOf(p.client)?.logo_url}
-                        color={brandOf(p.client)?.color}
-                        size={24}
-                        radius="rounded-md"
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[12px] font-medium text-text">{p.client ?? "Unnamed"}</span>
-                        <span className="block truncate text-[9.5px] text-text-muted">{p.item ?? "No description"}</span>
-                      </span>
-                      <span className={`shrink-0 whitespace-nowrap text-[11.5px] tabular-nums ${p.amount == null ? "text-accent-orange" : "text-text"}`}>
-                        {p.amount == null ? "No amount" : money(p.amount)}
-                      </span>
-                      <span className={`w-20 shrink-0 text-right text-[10px] ${due.tone === "overdue" ? "font-medium text-accent-red" : "text-text-muted"}`}>
-                        {due.text}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          )}
-        </Panel>
 
         {/* Rail: what to do now, then what just happened. */}
         <div className="flex min-w-0 flex-col gap-3 lg:row-span-2">
-          <Panel title="Focus today" sub={`${d.openTasks.length} priority task${d.openTasks.length === 1 ? "" : "s"}`}>
-            {d.openTasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
-                <span className="flex h-14 w-14 items-center justify-center rounded-pill border border-dashed border-[var(--border-strong)]">
-                  <CircleCheck size={22} className="text-text-muted" />
-                </span>
-                <p className="mt-3 text-[13px] font-medium text-text">{loaded ? "All clear for now" : "Loading."}</p>
-                <Link
-                  href="/dashboard/ops/projects"
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-pill border border-[var(--border-strong)] px-3 py-1.5 text-[11.5px] font-medium text-text transition-colors hover:bg-[var(--glow-white)]"
-                >
-                  <Plus size={13} /> Add a focus task
-                </Link>
-              </div>
-            ) : (
-              <ul>
-                {d.openTasks.map((t) => {
-                  const { tone } = dueLabel(t.due);
-                  const priority = t.priority ?? (tone === "overdue" ? "high" : tone === "soon" ? "medium" : "low");
-                  const pColor = priority === "high" ? "#e5484d" : priority === "medium" ? "#f59e0b" : "#6b6b6b";
-                  return (
-                    <li key={t.id} className={rowCls}>
-                      <button
-                        onClick={() => toggleTask(t)}
-                        className="shrink-0 text-text-muted transition-colors hover:text-accent-green"
-                        aria-label={`Mark "${t.text}" done`}
-                      >
-                        <Circle size={14} />
-                      </button>
-                      <span className="min-w-0 flex-1 truncate text-text">{t.text}</span>
-                      <Chip text={priority} color={pColor} />
-                      {t.estimate_minutes != null && (
-                        <span className="flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[10px] text-text-muted">
-                          <Clock size={10} /> {t.estimate_minutes}m
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Panel>
+          <FocusToday projects={projects} />
 
           <Panel title="Activity feed" sub="Latest across operations" className="lg:max-h-[520px]">
             {d.activity.length === 0 ? (
@@ -542,19 +419,24 @@ export default function DashboardPage() {
                 const late = p.daysLeft != null && p.daysLeft < 0;
                 return (
                   <div key={p.id} className="rounded-soft border border-[var(--border)] p-2.5">
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-center gap-2.5">
                       <BrandMark
                         name={p.client ?? p.name}
                         logoUrl={brandOf(p.client)?.logo_url}
                         color={brandOf(p.client)?.color}
-                        size={22}
-                        radius="rounded-md"
+                        size={44}
+                        radius="rounded-lg"
                       />
+                      {/* Status sits under the name rather than beside it, so the
+                          name gets the full width instead of losing a third of it
+                          to a pill that is two words long. */}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[12.5px] font-medium text-text">{p.name}</span>
+                        <span className="block truncate text-[12.5px] font-medium leading-snug text-text" title={p.name}>
+                          {deliverableOf(p.name, p.client)}
+                        </span>
                         <span className="block truncate text-[10.5px] text-text-muted">{p.client ?? "No client"}</span>
+                        <StatusPill status={late ? "overdue" : p.status} className="mt-1" />
                       </span>
-                      <StatusPill status={late ? "overdue" : p.status} className="shrink-0" />
                     </div>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-[var(--surface-hover)]">
                       <div

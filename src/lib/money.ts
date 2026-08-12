@@ -10,6 +10,35 @@ import type { Payment } from "@/types/ops";
 
 const DAY = 86_400_000;
 
+/**
+ * Payment terms assumed when an invoice carries no due date.
+ *
+ * Every payment row in this database has a null due date, so "overdue" was
+ * coming only from a status somebody typed by hand. Treating an undated invoice
+ * as due 15 days after it was issued turns that into something computed from a
+ * stated convention. It is an assumption, so anywhere it is used must say so.
+ */
+export const DEFAULT_TERMS_DAYS = 15;
+
+/** How far past due an invoice has to be before it stops being a nudge. */
+export const SEVERE_DAYS = 15;
+
+/** The due date to reason with: the printed one, or issue date plus terms. */
+export function effectiveDue(p: Pick<Payment, "due" | "created_at">): { date: string; assumed: boolean } {
+  if (p.due) return { date: p.due, assumed: false };
+  const issued = new Date(p.created_at).getTime();
+  const d = new Date((Number.isFinite(issued) ? issued : Date.now()) + DEFAULT_TERMS_DAYS * DAY);
+  return { date: d.toISOString().slice(0, 10), assumed: true };
+}
+
+/** Days past due. Negative means not yet due. */
+export function daysPastDue(p: Pick<Payment, "due" | "created_at">): number {
+  const { date } = effectiveDue(p);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((today.getTime() - new Date(date + "T00:00:00").getTime()) / DAY);
+}
+
 export type DueTone = "overdue" | "soon" | "normal";
 export type DueInfo = { text: string; tone: DueTone; days: number | null };
 
@@ -52,6 +81,16 @@ export type Receivables = {
    * never presented as covering more than it actually does.
    */
   daysToPay: { average: number | null; measured: number; missing: number };
+
+  /**
+   * Overdue judged on the effective due date, so undated invoices are included
+   * rather than sitting in a bucket of their own forever.
+   */
+  overdueByTerms: { total: number; count: number };
+  /** More than SEVERE_DAYS past due. The ones that need chasing, not nudging. */
+  severelyOverdue: { total: number; count: number; rows: Payment[] };
+  /** How many of the figures above rest on the assumed due date. */
+  assumedDueCount: number;
 };
 
 export function receivables(payments: Payment[]): Receivables {
@@ -113,8 +152,23 @@ export function receivables(payments: Payment[]): Receivables {
     spans.push(days);
   }
 
+  // Overdue recomputed against the effective due date. The status column still
+  // wins when it says overdue, since somebody asserting it outranks a guess.
+  const overdueTerms = unpaid.filter((p) => p.status === "overdue" || daysPastDue(p) > 0);
+  const severeRows = unpaid.filter((p) => daysPastDue(p) > SEVERE_DAYS);
+
   return {
     unpaid, overdueRows, paidRows,
+    overdueByTerms: {
+      total: overdueTerms.reduce((s, p) => s + (p.amount ?? 0), 0),
+      count: overdueTerms.length,
+    },
+    severelyOverdue: {
+      total: severeRows.reduce((s, p) => s + (p.amount ?? 0), 0),
+      count: severeRows.length,
+      rows: severeRows,
+    },
+    assumedDueCount: unpaid.filter((p) => !p.due).length,
     daysToPay: {
       average: spans.length ? Math.round(spans.reduce((s, x) => s + x, 0) / spans.length) : null,
       measured: spans.length,

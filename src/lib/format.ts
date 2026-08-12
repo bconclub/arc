@@ -135,3 +135,31 @@ export function dailyTotals(rows: { ts: string | null; amount: number | null }[]
   for (let i = 0; i < days; i++) { run += out[i]; out[i] = run; }
   return out;
 }
+
+/**
+ * The deliverable, without the client name in front of it.
+ *
+ * Project names are stored as "WindChasers — exam platform", and cards show the
+ * client on the line underneath, so the prefix was costing the width that the
+ * actual deliverable needed: "WindChasers — exam..." told you nothing the second
+ * line did not already say. Strips a leading client name and its separator, and
+ * keeps the whole name whenever removing it would leave nothing behind.
+ */
+export function deliverableOf(name: string, client: string | null | undefined): string {
+  const full = (name ?? "").trim();
+  const owner = (client ?? "").trim();
+  if (!owner || !full) return full;
+
+  const lower = full.toLowerCase();
+  // Try the full client name first, then its first word, which covers
+  // "Turquoise Ops" being stored under the client "Turquoise" and vice versa.
+  const candidates = [owner, owner.split(/\s+/)[0]].filter(Boolean);
+  for (const c of candidates) {
+    if (!lower.startsWith(c.toLowerCase())) continue;
+    const rest = full.slice(c.length).replace(/^\s*[-–—:|/]+\s*/, "").trim();
+    // Bare "WindChasers" with no deliverable after it stays as it is; an empty
+    // title is worse than a repeated one.
+    if (rest) return rest.charAt(0).toUpperCase() + rest.slice(1);
+  }
+  return full;
+}
