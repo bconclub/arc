@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ChevronLeft, CircleDot, ExternalLink, GitBranch, GitGraph, Globe, Image as ImageIcon, Mail, Pencil, Phone, Save, User, X,
 } from "lucide-react";
@@ -83,7 +83,11 @@ export default function BrandProfilePage() {
 
   // Overview answers "what is this brand and what have we done for them".
   // Everything else is one click away rather than stacked below it.
+  const router = useRouter();
   const [tab, setTab] = useState<TabKey>("overview");
+  const [deleteInfo, setDeleteInfo] = useState<{ total: number; counts: Record<string, number> } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const load = useCallback(async () => {
     const j = (url: string) => fetch(url).then((r) => r.json()).catch(() => []);
@@ -255,6 +259,33 @@ export default function BrandProfilePage() {
       viaContacts: viaBrand ? contactsFor(viaBrand, people) : [],
     };
   }, [brand, viaBrand, payments, projects, proposals, people, gh]);
+
+  // Counts are fetched when the tab opens so the warning is specific rather
+  // than a generic "are you sure".
+  useEffect(() => {
+    if (tab !== "profile" || !brand) return;
+    let live = true;
+    fetch(`/api/ops/brands/${brand.id}`)
+      .then((r) => r.json())
+      .then((d) => { if (live && d?.counts) setDeleteInfo({ total: d.total, counts: d.counts }); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [tab, brand]);
+
+  async function removeBrand() {
+    if (!brand) return;
+    const attached = deleteInfo && deleteInfo.total > 0;
+    const warning = attached
+      ? `Remove "${brand.name}"? ${deleteInfo!.total} attached record(s) will be left with nothing to roll up to.`
+      : `Remove "${brand.name}"?`;
+    if (!confirm(warning)) return;
+    setDeleting(true); setDeleteError("");
+    const res = await fetch(`/api/ops/brands/${brand.id}${attached ? "?force=1" : ""}`, { method: "DELETE" });
+    const body = await res.json().catch(() => null);
+    setDeleting(false);
+    if (!res.ok) { setDeleteError(body?.error ?? "Could not remove that brand."); return; }
+    router.push("/dashboard/brands");
+  }
 
   if (!loaded) return <p className="px-6 py-16 text-center text-[13px] text-text-muted">Loading…</p>;
 
@@ -878,6 +909,32 @@ export default function BrandProfilePage() {
           {saved && <span className="text-[11.5px] text-accent-green">Saved</span>}
         </div>
       </section>
+
+      <section className="rounded-2xl border border-[var(--accent-red,#e5484d)] border-opacity-40 bg-surface p-4">
+        <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-accent-red">Remove this brand</h2>
+        <p className="mt-1.5 text-[11.5px] leading-relaxed text-text-muted">
+          {deleteInfo == null
+            ? "Checking what is attached."
+            : deleteInfo.total === 0
+              ? "Nothing is attached to this brand. Removing it affects nothing else."
+              : `Attached: ${[
+                  deleteInfo.counts.payments && `${deleteInfo.counts.payments} invoice${deleteInfo.counts.payments === 1 ? "" : "s"}`,
+                  deleteInfo.counts.documents && `${deleteInfo.counts.documents} vault document${deleteInfo.counts.documents === 1 ? "" : "s"}`,
+                  deleteInfo.counts.projects && `${deleteInfo.counts.projects} project${deleteInfo.counts.projects === 1 ? "" : "s"}`,
+                  deleteInfo.counts.proposals && `${deleteInfo.counts.proposals} proposal${deleteInfo.counts.proposals === 1 ? "" : "s"}`,
+                  deleteInfo.counts.people && `${deleteInfo.counts.people} contact${deleteInfo.counts.people === 1 ? "" : "s"}`,
+                ].filter(Boolean).join(", ")}. Invoices and projects store the client as text, so they are not deleted with the brand. They stay in the database with nothing to roll them up to, which means the money vanishes from every screen without being gone.`}
+        </p>
+        {deleteError && <p className="mt-2 text-[11.5px] text-accent-red">{deleteError}</p>}
+        <button
+          onClick={removeBrand}
+          disabled={deleting}
+          className="mt-3 rounded-pill border border-accent-red px-3.5 py-1.5 text-[12px] font-medium text-accent-red transition-colors hover:bg-accent-red hover:text-white disabled:opacity-50"
+        >
+          {deleting ? "Removing." : deleteInfo && deleteInfo.total > 0 ? "Remove anyway" : "Remove brand"}
+        </button>
+      </section>
+
       </>)}
     </div>
   );

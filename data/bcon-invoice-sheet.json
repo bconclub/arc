@@ -61,7 +61,7 @@
   "total": "118000",
   "entity": "BCON Club",
   "description": "Invoice No:",
-  "gross": 118000.0,
+  "gross": 100000.0,
   "advance": null
  },
  {
@@ -109,9 +109,9 @@
   "client_id": "GMBIB",
   "date": "05-06-2024",
   "client": "IG3 Infra Ltd",
-  "gst_pct": null,
+  "gst_pct": "18",
   "total": "196819",
-  "entity": null,
+  "entity": "BCON Club",
   "description": "Invoice No:",
   "gross": 166796.0,
   "advance": null
@@ -163,9 +163,9 @@
   "client": "DIGILEUM TECHNOLOGIES PRIVATE LIMITED",
   "gst_pct": "18",
   "total": "59000",
-  "entity": null,
+  "entity": "BCON Club",
   "description": "Invoice No:",
-  "gross": 59000.0,
+  "gross": 50000.0,
   "advance": null
  },
  {
@@ -477,7 +477,7 @@
   "total": "2500",
   "entity": null,
   "description": "Product Packaging Design. Areca Eco - S.Naidu",
-  "gross": 2500.0,
+  "gross": 5500.0,
   "advance": null
  },
  {
@@ -490,7 +490,7 @@
   "total": "4000",
   "entity": null,
   "description": "Product Packaging Design. CloudFoam - S.Naidu",
-  "gross": 4000.0,
+  "gross": 8000.0,
   "advance": null
  },
  {
