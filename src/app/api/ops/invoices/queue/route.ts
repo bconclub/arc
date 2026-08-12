@@ -4,9 +4,10 @@ import { supabaseAdmin } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-/** GET /api/ops/invoices/queue?status=pending */
+/** GET /api/ops/invoices/queue?status=pending&brand=Name */
 export async function GET(req: NextRequest) {
   const status = req.nextUrl.searchParams.get("status") ?? "pending";
+  const brand = (req.nextUrl.searchParams.get("brand") ?? "").trim();
   let q = supabaseAdmin
     .from("email_ingest")
     .select("*")
@@ -23,5 +24,26 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ items: data ?? [] });
+  let items = data ?? [];
+
+  // Scoped to one brand, the list has to be about that brand. It was showing
+  // every unparsed attachment in the mailbox on every brand page, so an
+  // ElevenLabs receipt sat under Felicia Products as though it were theirs.
+  // Matching is done here rather than in SQL because the only reliable signal
+  // is inside the parsed JSON.
+  if (brand) {
+    const needle = brand.toLowerCase();
+    const words = needle.split(/\s+/).filter((w) => w.length > 3);
+    items = items.filter((row) => {
+      const parsed = (row.parsed ?? {}) as Record<string, unknown>;
+      const billed = String(parsed.billed_to ?? parsed.client ?? "").toLowerCase();
+      if (billed && (billed.includes(needle) || needle.includes(billed))) return true;
+      // Fall back to the mail itself, but only on a distinctive word, so a
+      // brand called "The Tech Jobs" does not match every mail saying "tech".
+      const hay = `${row.subject ?? ""} ${row.from_address ?? ""} ${row.filename ?? ""}`.toLowerCase();
+      return words.length > 0 && words.every((w) => hay.includes(w));
+    });
+  }
+
+  return NextResponse.json({ items });
 }

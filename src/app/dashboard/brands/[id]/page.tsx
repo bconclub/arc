@@ -63,6 +63,9 @@ export default function BrandProfilePage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [signals, setSignals] = useState<OpsSignal[]>([]);
+  // The billing vault holds everything ever invoiced, back to 2021. Without it
+  // a brand billed Rs 23,289 in 2022 reported zeros across every card.
+  const [vault, setVault] = useState<{ brand_id: string | null; client_name: string; kind: string; gross_amount: number | null; amount: number | null; issued_on: string | null; gst_pct: number | null; doc_no: string | null }[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
   const [gh, setGh] = useState<GithubActivity | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -91,11 +94,13 @@ export default function BrandProfilePage() {
 
   const load = useCallback(async () => {
     const j = (url: string) => fetch(url).then((r) => r.json()).catch(() => []);
-    const [br, pr, pay, prop, sig, ppl, gha] = await Promise.all([
+    const [br, pr, pay, prop, sig, ppl, gha, vlt] = await Promise.all([
       j("/api/ops/brands"), j("/api/ops/projects"), j("/api/ops/payments"),
       j("/api/ops/proposals"), j("/api/ops/alerts"), j("/api/ops/people"),
       fetch("/api/ops/github").then((r) => r.json()).catch(() => null),
+      j("/api/ops/billing"),
     ]);
+    setVault(Array.isArray(vlt) ? vlt : []);
     const list: Brand[] = Array.isArray(br) ? br : [];
     setAllBrands(list);
     const found = list.find((b) => b.id === id) ?? null;
@@ -311,6 +316,16 @@ export default function BrandProfilePage() {
     return brandKeys(brand).some((k) => k.length > 2 && hay.includes(k));
   });
 
+  // Matched on brand_id where the import linked it, falling back to the name
+  // for anything added by hand.
+  const myDocs = vault.filter((d) =>
+    d.brand_id === brand.id ||
+    brandKeys(brand).includes((d.client_name ?? "").trim().toLowerCase()),
+  );
+  const billedEver = myDocs
+    .filter((d) => d.kind === "invoice")
+    .reduce((s, d) => s + Number(d.gross_amount ?? d.amount ?? 0), 0);
+
   const accent = brand.color ?? avatarColor(brand.name);
   const st = statusOf(brand.status);
   const kind = (brand.kind ?? "client") as BrandKind;
@@ -414,6 +429,9 @@ export default function BrandProfilePage() {
             color: roll.unpricedCount > 0 && roll.owed === 0 ? "#f59e0b" : "#e5484d",
           },
           { label: "Overdue", value: moneyShort(roll.overdue), color: "#f59e0b" },
+          // Everything ever invoiced, from the vault. Collected below counts
+          // only what a payment row confirms, which is a smaller thing.
+          { label: "Billed ever", value: billedEver > 0 ? moneyShort(billedEver) : "-", color: "#8b5cf6" },
           { label: "Collected", value: moneyShort(roll.collected), color: "#00d4aa" },
           { label: "Pipeline", value: moneyShort(roll.pipeline), color: "#8b5cf6" },
           { label: "Open tasks", value: String(roll.openTasks), color: "#3b82f6" },
@@ -492,6 +510,47 @@ export default function BrandProfilePage() {
             />
           </section>
         </div>
+      )}
+
+      {tab === "money" && myDocs.length > 0 && (
+        <section className="rounded-2xl border border-[var(--border)] bg-surface p-4">
+          <h2 className="text-[11.5px] font-bold uppercase tracking-[0.09em] text-text">
+            Billing history <span className="ml-1 font-normal text-text-muted">{myDocs.length} document{myDocs.length === 1 ? "" : "s"}</span>
+          </h2>
+          <p className="mt-1 text-[11px] text-text-muted">
+            Everything ever issued. Whether each was settled is not recorded, so none is shown as paid.
+          </p>
+          <div className="mt-2.5 overflow-x-auto">
+            <table className="w-full min-w-[520px] text-[12px]">
+              <thead>
+                <tr className="text-left text-[9.5px] uppercase tracking-wider text-text-muted">
+                  {["Date", "Number", "Work value", "GST", "Amount due"].map((h) => (
+                    <th key={h} className="py-1.5 pr-3 font-semibold">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {myDocs.map((d, i) => (
+                  <tr key={`${d.doc_no}-${i}`} className="border-t border-[var(--border)]">
+                    <td className="whitespace-nowrap py-2 pr-3 tabular-nums text-text-muted">{d.issued_on ?? "-"}</td>
+                    <td className="whitespace-nowrap py-2 pr-3 text-text-muted">
+                      {d.doc_no ?? "-"}
+                      {/* A quote is not revenue and must never read as one. */}
+                      {d.kind !== "invoice" && (
+                        <span className="ml-1.5 rounded px-1 py-0.5 text-[9px] font-bold uppercase text-accent-orange">
+                          {d.kind}
+                        </span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap py-2 pr-3 tabular-nums text-text">{money(Number(d.gross_amount ?? 0))}</td>
+                    <td className="whitespace-nowrap py-2 pr-3 tabular-nums text-text-muted">{d.gst_pct ? `${d.gst_pct}%` : "-"}</td>
+                    <td className="whitespace-nowrap py-2 pr-3 font-medium tabular-nums text-text">{money(Number(d.amount ?? 0))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {tab === "money" && (<>

@@ -60,7 +60,8 @@ export function InvoiceQueue({
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/ops/invoices/queue?status=pending").then((r) => r.json()).catch(() => ({}));
+    const scope = brand ? `&brand=${encodeURIComponent(brand)}` : "";
+    const res = await fetch(`/api/ops/invoices/queue?status=pending${scope}`).then((r) => r.json()).catch(() => ({}));
     setItems(Array.isArray(res.items) ? res.items : []);
     setDetail(res.detail ?? "");
     setLoading(false);
