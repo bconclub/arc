@@ -12,6 +12,7 @@ import { dueLabel, receivables } from "@/lib/money";
 import { rankSignals } from "@/lib/signals";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
 import { MoneyPanel } from "@/components/ops/MoneyPanel";
+import { SyncButton } from "@/components/ops/SyncButton";
 import { FocusToday } from "@/components/ops/FocusToday";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { BrandMark } from "@/components/ops/BrandMark";
@@ -280,6 +281,11 @@ export default function DashboardPage() {
           </Link>
         </div>
       </header>
+
+      {/* One button reads the mail, parses the invoices and flags what is new.
+          There is no mail browser to go with it: mail is read in a mail client,
+          and what ARC wants out of it is the invoices. */}
+      <SyncButton onDone={load} />
 
       <StatStrip stats={stats} />
 

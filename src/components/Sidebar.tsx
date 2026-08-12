@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, Settings2, FileText, Boxes, FolderKanban, Wallet, Radio,
-  Megaphone, BarChart3, Users, Radar, LayoutGrid, Rss, CalendarDays, PenLine,
-  Palette, Bot, TrendingUp, Plug, Settings, LogOut, X, IndianRupee, Mail,
+  LayoutDashboard, FileText, Boxes, FolderKanban, Wallet, Radio,
+  BarChart3, Users, Radar, Rss, CalendarDays, PenLine,
+  Palette, Bot, TrendingUp, Plug, Settings, LogOut, X, IndianRupee,
 } from "lucide-react";
 import { VERSION } from "@/lib/version";
 import { ArcLogo, ArcMark } from "@/components/ArcLogo";
@@ -17,37 +17,48 @@ type NavItem = {
   href: string;
   icon: typeof Radar;
   exact?: boolean;
-  /** Revealed when this item's subtree is the current page. */
-  children?: NavItem[];
 };
 
-// Top level follows the agreed order. Anything that would otherwise be a
-// 17-item flat list is nested under the section it belongs to, so nothing in
-// the app is unreachable but the rail stays short.
-const nav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard/ops", icon: LayoutDashboard, exact: true },
+/**
+ * A heading with its items. The heading is a label, not a link.
+ *
+ * Operations used to be a clickable parent that revealed its children only once
+ * you were already inside it, so the way to find People was to guess that it
+ * lived under Operations and click through. Sections are always open now: the
+ * rail is longer and everything in it is visible at once, which is the trade
+ * worth making on a list this size.
+ */
+type NavSection = { heading?: string; items: NavItem[] };
+
+const nav: NavSection[] = [
+  { items: [{ label: "Dashboard", href: "/dashboard/ops", icon: LayoutDashboard, exact: true }] },
   {
-    label: "Operations", href: "/dashboard/operations", icon: Settings2,
-    children: [
-      { label: "Mail", href: "/dashboard/mail", icon: Mail },
+    heading: "Operations",
+    items: [
+      { label: "Brands", href: "/dashboard/brands", icon: Boxes },
+      { label: "Projects", href: "/dashboard/ops/projects", icon: FolderKanban },
       { label: "People", href: "/dashboard/ops/people", icon: Users },
-      { label: "Radar", href: "/dashboard/ops/alerts", icon: Radar },
+      { label: "Proposals", href: "/dashboard/ops/proposals", icon: FileText },
     ],
   },
-  { label: "Proposals", href: "/dashboard/ops/proposals", icon: FileText },
-  { label: "Brands", href: "/dashboard/brands", icon: Boxes },
-  { label: "Projects", href: "/dashboard/ops/projects", icon: FolderKanban },
-  { label: "Money", href: "/dashboard/ops/money", icon: Wallet },
   {
-    label: "Signals", href: "/dashboard/feed", icon: Radio,
-    children: [
-      { label: "Feed", href: "/dashboard/feed", icon: LayoutGrid },
+    heading: "Money",
+    items: [
+      { label: "Invoices", href: "/dashboard/ops/money", icon: Wallet },
+      { label: "Revenue", href: "/dashboard/analytics", icon: IndianRupee },
+    ],
+  },
+  {
+    heading: "Signals",
+    items: [
+      { label: "Radar", href: "/dashboard/ops/alerts", icon: Radar },
+      { label: "Feed", href: "/dashboard/feed", icon: Radio },
       { label: "Sources", href: "/dashboard/sources", icon: Rss },
     ],
   },
   {
-    label: "Content", href: "/dashboard/schedule", icon: Megaphone,
-    children: [
+    heading: "Content",
+    items: [
       { label: "Content running", href: "/dashboard/schedule", icon: CalendarDays },
       { label: "Our content", href: "/dashboard/write", icon: PenLine },
       { label: "Style", href: "/dashboard/style", icon: Palette },
@@ -55,9 +66,8 @@ const nav: NavItem[] = [
     ],
   },
   {
-    label: "Analytics", href: "/dashboard/results", icon: BarChart3,
-    children: [
-      { label: "Revenue", href: "/dashboard/analytics", icon: IndianRupee },
+    heading: "Analytics",
+    items: [
       { label: "Results", href: "/dashboard/results", icon: BarChart3 },
       { label: "Brand metrics", href: "/dashboard/brand/metrics", icon: TrendingUp },
       { label: "Calendar", href: "/dashboard/brand/calendar", icon: CalendarDays },
@@ -82,11 +92,6 @@ function isActive(pathname: string, item: NavItem) {
   return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-/** A parent counts as active if it or any of its children matches. */
-function inSubtree(pathname: string, item: NavItem) {
-  return isActive(pathname, item) || (item.children ?? []).some((c) => isActive(pathname, c));
-}
-
 /**
  * Sits against the logo so the running version is visible at a glance, it used
  * to be footer text, below the fold on a short viewport, which is no use when
@@ -103,10 +108,9 @@ function VersionTag() {
   );
 }
 
-function rowCls(active: boolean, depth = 0) {
+function rowCls(active: boolean) {
   return [
-    "flex items-center gap-3 rounded-xl py-2 text-[13px] transition-colors duration-150",
-    depth > 0 ? "pl-9 pr-3" : "px-3",
+    "flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] transition-colors duration-150",
     active
       ? "bg-[var(--brand-soft)] font-semibold text-[var(--brand-text)]"
       : "text-text-muted hover:bg-[var(--glow-white)] hover:text-text",
@@ -119,38 +123,41 @@ function NavRows({ items, pathname, onNavigate }: {
   return (
     <>
       {items.map((item) => {
-        const open = inSubtree(pathname, item);
-        const selfActive = isActive(pathname, item) && !(item.children ?? []).some((c) => isActive(pathname, c));
+        const active = isActive(pathname, item);
         return (
-          <div key={item.href + item.label}>
-            <Link
-              href={item.href}
-              onClick={onNavigate}
-              aria-current={selfActive ? "page" : undefined}
-              className={rowCls(open)}
-            >
-              <item.icon size={17} strokeWidth={open ? 2.2 : 1.7} className="shrink-0" />
-              <span className="truncate">{item.label}</span>
-            </Link>
-            {open && item.children && (
-              <div className="mt-0.5 space-y-0.5">
-                {item.children.map((child) => (
-                  <Link
-                    key={child.href}
-                    href={child.href}
-                    onClick={onNavigate}
-                    aria-current={isActive(pathname, child) ? "page" : undefined}
-                    className={rowCls(isActive(pathname, child), 1) + " text-[12.5px]"}
-                  >
-                    <child.icon size={14} strokeWidth={1.7} className="shrink-0" />
-                    <span className="truncate">{child.label}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <Link
+            key={item.href + item.label}
+            href={item.href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+            className={rowCls(active)}
+          >
+            <item.icon size={17} strokeWidth={active ? 2.2 : 1.7} className="shrink-0" />
+            <span className="truncate">{item.label}</span>
+          </Link>
         );
       })}
+    </>
+  );
+}
+
+function NavSections({ sections, pathname, onNavigate }: {
+  sections: NavSection[]; pathname: string; onNavigate?: () => void;
+}) {
+  return (
+    <>
+      {sections.map((section, i) => (
+        <div key={section.heading ?? `section-${i}`} className={section.heading ? "pt-4 first:pt-0" : ""}>
+          {section.heading && (
+            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted opacity-70">
+              {section.heading}
+            </p>
+          )}
+          <div className="space-y-0.5">
+            <NavRows items={section.items} pathname={pathname} onNavigate={onNavigate} />
+          </div>
+        </div>
+      ))}
     </>
   );
 }
@@ -218,8 +225,8 @@ export function Sidebar() {
           <VersionTag />
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
-          <NavRows items={nav} pathname={pathname} />
+        <nav className="flex-1 overflow-y-auto px-3 pb-2">
+          <NavSections sections={nav} pathname={pathname} />
         </nav>
 
         <div className="shrink-0 space-y-0.5 border-t border-[var(--border)] px-3 pb-2 pt-3">
@@ -257,8 +264,8 @@ export function Sidebar() {
               </button>
             </div>
 
-            <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
-              <NavRows items={nav} pathname={pathname} onNavigate={() => setMenuOpen(false)} />
+            <nav className="flex-1 overflow-y-auto px-3 pb-4">
+              <NavSections sections={nav} pathname={pathname} onNavigate={() => setMenuOpen(false)} />
               <div className="my-2 border-t border-[var(--border)] pt-2 space-y-0.5">
                 <NavRows items={footerNav} pathname={pathname} onNavigate={() => setMenuOpen(false)} />
               </div>
