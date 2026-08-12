@@ -79,6 +79,11 @@ async function main() {
     client_name: d.client,
     brand_id: brandFor(d.client),
     amount: d.total ? Number(d.total) : null,
+    // The work taken on, before GST and before any advance. This is the figure
+    // contracted value must be read from; `amount` is only what this one
+    // document asks for.
+    gross_amount: d.gross ? Number(d.gross) : (d.total ? Number(d.total) : null),
+    advance_paid: d.advance ? Number(d.advance) : null,
     gst_pct: d.gst_pct ? Number(d.gst_pct) : null,
     billed_as: d.entity || null,
     description: d.description || null,

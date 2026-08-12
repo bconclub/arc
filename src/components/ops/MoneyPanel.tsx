@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2, Clock, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { deliverableOf, money, moneyShort } from "@/lib/format";
 import {
-  DEFAULT_TERMS_DAYS, SEVERE_DAYS, daysPastDue, effectiveDue, receivables,
+  SEVERE_DAYS, daysPastDue, effectiveDue, receivables,
 } from "@/lib/money";
 import { IN_PLAY, brandIndex } from "@/lib/rollup";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
@@ -230,21 +230,6 @@ export function MoneyPanel({
             {!from && !to && <span className="opacity-70">Pick a date to narrow this down.</span>}
           </div>
         )}
-        <p className="mt-0.5 text-[11.5px] leading-relaxed text-text-muted">
-          All amounts in INR
-          {window && <> · {period === "custom" ? "custom range" : `last ${period} days`}, undated rows always shown</>}
-          {/* Both of these change what the figures mean, so neither is left to
-              be discovered. */}
-          {r.assumedDueCount > 0 && (
-            <> · {r.assumedDueCount} invoice{r.assumedDueCount === 1 ? "" : "s"} carry no due date, counted as due{" "}
-              {DEFAULT_TERMS_DAYS} days after issue</>
-          )}
-          {r.unpricedCount > 0 && (
-            <span className="text-accent-orange">
-              {" "}· {r.unpricedCount} with no amount recorded, so the totals are short
-            </span>
-          )}
-        </p>
       </div>
 
       <div className="flex flex-wrap items-start justify-center gap-y-5 px-2 py-4 lg:flex-nowrap lg:divide-x lg:divide-[var(--border)]">
@@ -269,9 +254,10 @@ export function MoneyPanel({
         <Ring
           value={pending} total={billed} label="Pending"
           count={r.unpaid.length} countLabel={`invoice${r.unpaid.length === 1 ? "" : "s"} unpaid`}
-          caption={r.overdueByTerms.count > 0
-            ? `${r.overdueByTerms.count} of them past due`
-            : "None past due"}
+          caption={[
+            r.overdueByTerms.count > 0 ? `${r.overdueByTerms.count} past due` : null,
+            r.unpricedCount > 0 ? `${r.unpricedCount} with no amount` : null,
+          ].filter(Boolean).join(" · ") || "None past due"}
           href="/dashboard/ops/money" color="#f59e0b" icon={Clock}
         />
       </div>

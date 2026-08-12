@@ -8,7 +8,9 @@
   "gst_pct": null,
   "total": "45000",
   "entity": "BCON Club",
-  "description": "Creative & Digital Retainer + Ads"
+  "description": "Creative & Digital Retainer + Ads",
+  "gross": 45000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -19,7 +21,9 @@
   "gst_pct": null,
   "total": "50000",
   "entity": "BCON Club",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 50000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -30,7 +34,9 @@
   "gst_pct": null,
   "total": "100000",
   "entity": "BCON Club",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 100000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -41,7 +47,9 @@
   "gst_pct": null,
   "total": "100000",
   "entity": "BCON Club",
-  "description": null
+  "description": null,
+  "gross": 100000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -52,7 +60,9 @@
   "gst_pct": null,
   "total": "118000",
   "entity": "BCON Club",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 118000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -63,7 +73,9 @@
   "gst_pct": null,
   "total": "100000",
   "entity": "Thanzeel Ashruf",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 100000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -74,7 +86,9 @@
   "gst_pct": null,
   "total": "115000",
   "entity": "Thanzeel Ashruf",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 115000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -85,7 +99,9 @@
   "gst_pct": null,
   "total": "80000",
   "entity": "Thanzeel Ashruf",
-  "description": null
+  "description": null,
+  "gross": 80000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -96,7 +112,9 @@
   "gst_pct": null,
   "total": "196819",
   "entity": null,
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 166796.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -107,7 +125,9 @@
   "gst_pct": null,
   "total": "85000",
   "entity": "Thanzeel Ashruf",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 85000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -118,7 +138,9 @@
   "gst_pct": null,
   "total": "35000",
   "entity": "Thanzeel Ashruf",
-  "description": "Website Development"
+  "description": "Website Development",
+  "gross": 35000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -129,7 +151,9 @@
   "gst_pct": null,
   "total": "40000",
   "entity": "Thanzeel Ashruf",
-  "description": "Web Development https://drpalsnewme.com/"
+  "description": "Web Development https://drpalsnewme.com/",
+  "gross": 80000.0,
+  "advance": 40000.0
  },
  {
   "kind": "invoice",
@@ -140,7 +164,9 @@
   "gst_pct": "18",
   "total": "59000",
   "entity": null,
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 59000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -151,7 +177,9 @@
   "gst_pct": null,
   "total": "15000",
   "entity": "Thanzeel Ashruf",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 15000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -162,7 +190,9 @@
   "gst_pct": null,
   "total": "50000",
   "entity": "Thanzeel Ashruf",
-  "description": null
+  "description": null,
+  "gross": 50000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -173,7 +203,9 @@
   "gst_pct": "18",
   "total": "51755",
   "entity": "BCON Club",
-  "description": null
+  "description": null,
+  "gross": 43860.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -184,7 +216,9 @@
   "gst_pct": "18",
   "total": "59000",
   "entity": "BCON Club",
-  "description": "Retainer"
+  "description": "Retainer",
+  "gross": 50000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -195,7 +229,9 @@
   "gst_pct": null,
   "total": "40000",
   "entity": "Thanzeel Ashruf",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 40000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -206,7 +242,9 @@
   "gst_pct": null,
   "total": "100000",
   "entity": "Thanzeel Ashruf",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 100000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -217,7 +255,9 @@
   "gst_pct": null,
   "total": "35000",
   "entity": "Thanzeel Ashruf",
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 35000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -228,7 +268,9 @@
   "gst_pct": null,
   "total": "98920",
   "entity": "BCON Club",
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 98920.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -239,7 +281,9 @@
   "gst_pct": "18",
   "total": "47200",
   "entity": "BCON Club",
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 40000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -250,7 +294,9 @@
   "gst_pct": null,
   "total": "40000",
   "entity": "BCON Club",
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 40000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -261,7 +307,9 @@
   "gst_pct": "18",
   "total": "47200",
   "entity": "BCON Club",
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 40000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -272,7 +320,9 @@
   "gst_pct": null,
   "total": "29758",
   "entity": null,
-  "description": "Media Buying 15% on Ad spends(total Spends: \u20b91,98,388)"
+  "description": "Media Buying 15% on Ad spends(total Spends: \u20b91,98,388)",
+  "gross": 29758.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -283,7 +333,9 @@
   "gst_pct": "18",
   "total": "17700",
   "entity": "BCON Club",
-  "description": "Invoice No:"
+  "description": "Invoice No:",
+  "gross": 15000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -294,7 +346,9 @@
   "gst_pct": "18",
   "total": "41300",
   "entity": "BCON Club",
-  "description": null
+  "description": null,
+  "gross": 35000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -305,7 +359,9 @@
   "gst_pct": "18",
   "total": "17700",
   "entity": "BCON Club",
-  "description": "Integration & Setup, Form setup Webhoot to CRM integration"
+  "description": "Integration & Setup, Form setup Webhoot to CRM integration",
+  "gross": 15000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -316,7 +372,9 @@
   "gst_pct": null,
   "total": "75000",
   "entity": null,
-  "description": "Webiste Development"
+  "description": "Webiste Development",
+  "gross": 75000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -327,7 +385,9 @@
   "gst_pct": null,
   "total": "42938",
   "entity": null,
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 42938.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -338,7 +398,9 @@
   "gst_pct": null,
   "total": "30000",
   "entity": null,
-  "description": null
+  "description": null,
+  "gross": 30000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -349,7 +411,9 @@
   "gst_pct": null,
   "total": "25000",
   "entity": null,
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 25000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -360,7 +424,9 @@
   "gst_pct": null,
   "total": "40000",
   "entity": null,
-  "description": "Creative & Digital Retainer"
+  "description": "Creative & Digital Retainer",
+  "gross": 40000.0,
+  "advance": null
  },
  {
   "kind": "unclear",
@@ -371,7 +437,9 @@
   "gst_pct": null,
   "total": "180000",
   "entity": null,
-  "description": "Website Development  https://edunati.com/"
+  "description": "Website Development  https://edunati.com/",
+  "gross": 180000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -382,7 +450,9 @@
   "gst_pct": null,
   "total": "23289",
   "entity": null,
-  "description": "Creative & Digital Retainer + Developer Support"
+  "description": "Creative & Digital Retainer + Developer Support",
+  "gross": 23289.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -393,7 +463,9 @@
   "gst_pct": null,
   "total": "15000",
   "entity": null,
-  "description": "Social Accounts Handling"
+  "description": "Social Accounts Handling",
+  "gross": 15000.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -404,7 +476,9 @@
   "gst_pct": null,
   "total": "2500",
   "entity": null,
-  "description": "Product Packaging Design. Areca Eco - S.Naidu"
+  "description": "Product Packaging Design. Areca Eco - S.Naidu",
+  "gross": 2500.0,
+  "advance": null
  },
  {
   "kind": "invoice",
@@ -415,7 +489,9 @@
   "gst_pct": null,
   "total": "4000",
   "entity": null,
-  "description": "Product Packaging Design. CloudFoam - S.Naidu"
+  "description": "Product Packaging Design. CloudFoam - S.Naidu",
+  "gross": 4000.0,
+  "advance": null
  },
  {
   "kind": "quote",
@@ -426,7 +502,9 @@
   "gst_pct": null,
   "total": "3000",
   "entity": null,
-  "description": "Brochure Design- Inventory Management"
+  "description": "Brochure Design- Inventory Management",
+  "gross": 3000.0,
+  "advance": null
  },
  {
   "kind": "quote",
@@ -437,6 +515,8 @@
   "gst_pct": null,
   "total": "15000",
   "entity": null,
-  "description": "Creative Retainer - Upto 20 Creatives"
+  "description": "Creative Retainer - Upto 20 Creatives",
+  "gross": 15000.0,
+  "advance": null
  }
 ]
