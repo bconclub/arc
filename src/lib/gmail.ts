@@ -148,3 +148,117 @@ export async function downloadAttachment(messageId: string, attachmentId: string
   // padding wrong on lengths that are not a multiple of four.
   return new Uint8Array(Buffer.from(data, "base64url"));
 }
+
+// ── Browsing ────────────────────────────────────────────────
+//
+// The scan above is a machine reading mail. What follows is a person reading
+// mail: the same account, but shaped for looking rather than parsing, so the
+// document a figure came from can actually be opened and checked.
+
+export type MailSummary = {
+  id: string;
+  threadId: string;
+  subject: string;
+  from: string;
+  to: string;
+  date: string | null;
+  snippet: string;
+  attachments: { attachmentId: string; filename: string; mimeType: string; sizeBytes: number }[];
+};
+
+export type MailDetail = MailSummary & {
+  /** Plain text where the message has it, otherwise text recovered from HTML. */
+  body: string;
+};
+
+/** Gmail encodes part bodies as base64url. */
+function decodePart(data?: string): string {
+  if (!data) return "";
+  try {
+    return Buffer.from(data, "base64url").toString("utf8");
+  } catch {
+    return "";
+  }
+}
+
+type FullPart = Part & { body?: { data?: string; attachmentId?: string; size?: number } };
+
+/** Prefers text/plain. Falls back to stripping tags from text/html, because a
+ *  raw HTML dump is unreadable and many invoice mails are HTML only. */
+function extractBody(payload: FullPart | undefined): string {
+  const flat: FullPart[] = [];
+  const walk = (p: FullPart | undefined) => {
+    if (!p) return;
+    flat.push(p);
+    for (const c of (p.parts ?? []) as FullPart[]) walk(c);
+  };
+  walk(payload);
+
+  const plain = flat.find((p) => p.mimeType === "text/plain" && p.body?.data);
+  if (plain) return decodePart(plain.body!.data).trim();
+
+  const html = flat.find((p) => p.mimeType === "text/html" && p.body?.data);
+  if (html) {
+    return decodePart(html.body!.data)
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|tr|h[1-6])>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+  return "";
+}
+
+function summarise(msg: Record<string, unknown>): MailSummary {
+  const payload = msg.payload as FullPart | undefined;
+  const headers = ((payload?.["headers" as keyof FullPart] as unknown) ?? []) as { name: string; value: string }[];
+
+  const parts: Part[] = [];
+  walkParts(payload as Part, parts);
+
+  return {
+    id: String(msg.id ?? ""),
+    threadId: String(msg.threadId ?? ""),
+    subject: header(headers, "Subject"),
+    from: header(headers, "From"),
+    to: header(headers, "To"),
+    date: msg.internalDate ? new Date(Number(msg.internalDate)).toISOString() : null,
+    snippet: String(msg.snippet ?? ""),
+    attachments: parts
+      .filter((p) => p.filename && p.body?.attachmentId)
+      .map((p) => ({
+        attachmentId: p.body!.attachmentId!,
+        filename: p.filename!,
+        mimeType: p.mimeType ?? "application/octet-stream",
+        sizeBytes: p.body?.size ?? 0,
+      })),
+  };
+}
+
+/** Newest first. `q` is Gmail search syntax, exactly as typed in Gmail. */
+export async function listMail(q: string, max = 25): Promise<MailSummary[]> {
+  const token = await gmailAccessToken();
+  const list = await call("messages", token, { q, maxResults: String(Math.min(50, max)) });
+  const ids: string[] = (list.messages ?? []).map((m: { id: string }) => m.id);
+
+  const out: MailSummary[] = [];
+  for (const id of ids) {
+    // `full` rather than `metadata`: attachment parts are only present on the
+    // full payload, and the list is useless without knowing what is attached.
+    const msg = await call(`messages/${id}`, token, { format: "full" });
+    out.push(summarise(msg));
+  }
+  return out;
+}
+
+export async function getMail(id: string): Promise<MailDetail> {
+  const token = await gmailAccessToken();
+  const msg = await call(`messages/${id}`, token, { format: "full" });
+  return { ...summarise(msg), body: extractBody(msg.payload as FullPart) };
+}

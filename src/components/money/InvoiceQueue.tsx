@@ -41,7 +41,15 @@ const CONFIDENCE_TONE: Record<string, Tone> = { high: "good", medium: "warn", lo
  * than a blank one. Rejecting keeps the record so the same attachment is not
  * offered again on the next scan.
  */
-export function InvoiceQueue({ payments, onChanged }: { payments: Payment[]; onChanged: () => void }) {
+export function InvoiceQueue({
+  payments, onChanged, brand, title = "From email",
+}: {
+  payments: Payment[];
+  onChanged: () => void;
+  /** Scopes the Gmail search to one brand, for use on a brand page. */
+  brand?: string;
+  title?: string;
+}) {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [detail, setDetail] = useState("");
   const [loading, setLoading] = useState(true);
@@ -62,7 +70,12 @@ export function InvoiceQueue({ payments, onChanged }: { payments: Payment[]; onC
 
   async function scan() {
     setScanning(true); setError("");
-    const res = await fetch("/api/ops/invoices/scan", { method: "POST", body: "{}" })
+    // Quoting the brand keeps a multi-word name from matching each word
+    // separately, which would pull in half the mailbox.
+    const body = brand
+      ? JSON.stringify({ query: `has:attachment filename:pdf "${brand.replace(/"/g, "")}"` })
+      : "{}";
+    const res = await fetch("/api/ops/invoices/scan", { method: "POST", body })
       .then((r) => r.json()).catch(() => ({ error: "Scan failed." }));
     setScanning(false);
     if (res.configured === false) { setDetail(res.detail ?? ""); return; }
@@ -100,7 +113,7 @@ export function InvoiceQueue({ payments, onChanged }: { payments: Payment[]; onC
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-[13px] font-semibold text-text">
           <Mail size={15} className="text-text-muted" />
-          From email
+          {title}
           {items.length > 0 && (
             <span className="rounded-pill bg-[var(--brand-soft)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--brand-text)]">
               {items.length}
@@ -113,7 +126,7 @@ export function InvoiceQueue({ payments, onChanged }: { payments: Payment[]; onC
           className="flex items-center gap-1.5 rounded-pill border border-[var(--border-strong)] px-3 py-1.5 text-[12px] text-text-muted transition-colors hover:text-text disabled:opacity-60"
         >
           {scanning ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-          {scanning ? "Reading mail" : "Scan email"}
+          {scanning ? "Reading mail" : brand ? "Find invoices in email" : "Scan email"}
         </button>
       </div>
 

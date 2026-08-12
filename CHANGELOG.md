@@ -2,6 +2,14 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-12 11:20 IST . v0.0.23 - visible rename, honest zeros, mail routes
+
+- **Rename is a visible, labelled button** on the brand page. It shipped two releases ago behind a hover-only pencil, which on something you are actively looking for is the same as not existing.
+- **Fixed: a brand could report a confident zero for money owed** while carrying an invoice whose amount was never recorded. WOWBUS showed "0 Out there" when the truth was "one invoice out, amount unknown". The card now says that instead of stating a figure it cannot support.
+- **Invoice scanning is available per brand**, scoped to that brand's name so it reads the mail for that client rather than trawling the whole mailbox. The brand name is quoted in the search, since an unquoted multi-word name matches each word separately.
+- **Mail routes added**: list messages, read one with its body, and stream an attachment. The attachment route exists because Gmail will not serve bytes to a browser directly, every request needs the OAuth token, so a PDF can now be opened in place rather than downloaded and discarded. Content-Disposition follows the file type, and the filename is stripped of quotes and newlines because it is a mail header and therefore untrusted.
+- HTML-only mail bodies are converted to readable text rather than dumped as markup, since many invoice mails carry no plain-text part.
+
 ## 2026-08-12 10:10 IST . v0.0.22 - ads and traffic on screen
 
 - **Ads panel on Operations**, replacing a placeholder that claimed the Meta and Google connectors were not built. They were built in v0.0.19, so the page was stating something untrue about its own capabilities.

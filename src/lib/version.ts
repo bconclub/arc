@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.22";
+export const VERSION = "0.0.23";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.23",
+    date: "2026-08-12",
+    notes: "Rename is now a visible button on the brand page rather than hidden behind hover. A brand showing zero owed when its invoice has no amount recorded now says so instead. Mail and attachment routes added so a PDF can be opened in place.",
+  },
   {
     version: "0.0.22",
     date: "2026-08-12",

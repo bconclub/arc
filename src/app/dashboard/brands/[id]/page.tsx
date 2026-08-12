@@ -10,6 +10,7 @@ import { money, moneyShort, timeAgo, initials, avatarColor } from "@/lib/format"
 import { rollupBrand, brandKeys, contactsFor, parseChannel, UNPAID, IN_PLAY } from "@/lib/rollup";
 import { HealthRing, TrendLine, Donut } from "@/components/ops/Charts";
 import { BrandMark } from "@/components/ops/BrandMark";
+import { InvoiceQueue } from "@/components/money/InvoiceQueue";
 import {
   BRAND_KIND_LABEL,
   type Brand, type BrandKind, type Project, type Payment, type Proposal,
@@ -296,13 +297,14 @@ export default function BrandProfilePage() {
           ) : (
             <h1 className="group flex min-w-0 items-center gap-2">
               <span className="truncate text-[22px] font-bold tracking-tight text-text">{brand.name}</span>
+              {/* Always visible and labelled. Hidden behind hover it was
+                  undiscoverable, which is the same as not existing. */}
               <button
                 onClick={() => { setDraftName(brand.name); setRenaming(true); }}
-                title="Rename brand"
                 aria-label="Rename brand"
-                className="shrink-0 rounded-lg p-1 text-text-muted opacity-100 transition-colors hover:text-text lg:opacity-0 lg:group-hover:opacity-100"
+                className="flex shrink-0 items-center gap-1 rounded-pill border border-[var(--border-strong)] px-2 py-1 text-[11px] text-text-muted transition-colors hover:text-text"
               >
-                <Pencil size={14} />
+                <Pencil size={12} /> Rename
               </button>
             </h1>
           )}
@@ -344,7 +346,15 @@ export default function BrandProfilePage() {
       {/* ── Money + work ── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {[
-          { label: "Out there", value: moneyShort(roll.owed), color: "#e5484d" },
+          // "Out there" reads as a confident zero when every unpaid invoice on the
+          // brand has no amount recorded, which is the opposite of the truth.
+          {
+            label: roll.unpricedCount > 0 && roll.owed === 0
+              ? `${roll.unpricedCount} invoice${roll.unpricedCount === 1 ? "" : "s"}, no amount`
+              : "Out there",
+            value: roll.unpricedCount > 0 && roll.owed === 0 ? "Not recorded" : moneyShort(roll.owed),
+            color: roll.unpricedCount > 0 && roll.owed === 0 ? "#f59e0b" : "#e5484d",
+          },
           { label: "Overdue", value: moneyShort(roll.overdue), color: "#f59e0b" },
           { label: "Collected", value: moneyShort(roll.collected), color: "#00d4aa" },
           { label: "Pipeline", value: moneyShort(roll.pipeline), color: "#8b5cf6" },
@@ -357,6 +367,15 @@ export default function BrandProfilePage() {
           </div>
         ))}
       </div>
+
+      {/* Reads this brand's invoices straight out of email. Scoped to the
+          brand name so it does not trawl the whole mailbox. */}
+      <InvoiceQueue
+        payments={payments}
+        brand={brand.name}
+        title={`Invoices in email for ${brand.name}`}
+        onChanged={load}
+      />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         {/* ── Receivables ── */}
