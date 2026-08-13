@@ -13,6 +13,7 @@ import { rankSignals } from "@/lib/signals";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
 import { MoneyPanel } from "@/components/ops/MoneyPanel";
 import { SyncButton } from "@/components/ops/SyncButton";
+import { PeriodSummary } from "@/components/ops/PeriodSummary";
 import { FocusToday } from "@/components/ops/FocusToday";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { BrandMark } from "@/components/ops/BrandMark";
@@ -288,6 +289,9 @@ export default function DashboardPage() {
       <SyncButton onDone={load} />
 
       <StatStrip stats={stats} />
+
+      {/* What actually moved recently, counted from each record's own date. */}
+      <PeriodSummary payments={payments} proposals={proposals} projects={projects} />
 
       {/* Money is its own full-width block: three rings and a table do not fit
           a third of a row. */}

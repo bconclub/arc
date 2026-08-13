@@ -10,6 +10,7 @@ import { MasterDetail } from "@/components/ui/MasterDetail";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { InvoiceDetail } from "@/components/money/InvoiceDetail";
 import { InvoiceQueue } from "@/components/money/InvoiceQueue";
+import { BillingVault } from "@/components/money/BillingVault";
 import { money } from "@/lib/format";
 import { dueLabel, receivables } from "@/lib/money";
 import { brandIndex } from "@/lib/rollup";
@@ -257,6 +258,10 @@ export default function MoneyPage() {
 
       {/* Renders nothing until there is something to review or say. */}
       <InvoiceQueue payments={payments} onChanged={load} />
+
+      {/* History, kept apart from the working set above: these are documents
+          from 2021 onward and none is claimed as settled. */}
+      <BillingVault brands={brands} />
 
       <FilterBar
         className="shrink-0"

@@ -25,7 +25,31 @@ export const maxDuration = 300;
 /** Bounded per run so one invocation cannot spend an unbounded amount. */
 const MAX_PER_RUN = 10;
 
+/**
+ * Vercel Cron sends GET, so the nightly run comes through here.
+ *
+ * Protected by CRON_SECRET when it is set. This route spends money on model
+ * calls, one per attachment, so leaving it open to anyone who finds the URL
+ * would let a stranger run up the API bill.
+ */
+export async function GET(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    const auth = req.headers.get("authorization");
+    const given = req.nextUrl.searchParams.get("secret");
+    if (auth !== `Bearer ${secret}` && given !== secret) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+  }
+  return runScan(undefined, MAX_PER_RUN);
+}
+
 export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  return runScan(body.query, Math.min(MAX_PER_RUN, Math.max(1, Number(body.limit) || MAX_PER_RUN)));
+}
+
+async function runScan(query: string | undefined, limit: number) {
   if (!gmailConfigured()) {
     return NextResponse.json({
       configured: false,
@@ -33,10 +57,6 @@ export async function POST(req: NextRequest) {
       scanned: 0, queued: 0, skipped: 0, failed: 0, items: [],
     });
   }
-
-  const body = await req.json().catch(() => ({}));
-  const query: string | undefined = body.query;
-  const limit = Math.min(MAX_PER_RUN, Math.max(1, Number(body.limit) || MAX_PER_RUN));
 
   let candidates;
   try {

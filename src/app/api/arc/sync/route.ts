@@ -30,13 +30,26 @@ async function runSync() {
 
   // Auto-generate top ideas from the fresh signals (cheap Haiku call).
   let ideas = 0;
+  let ideasError: string | null = null;
   try {
     ideas = await regenerateProposedIdeas(8);
   } catch (e) {
+    // Swallowing this made a dead API key look like a healthy cron: signals
+    // kept writing nightly while ideas silently stopped for two days. The feed
+    // sync still succeeds, since fresh signals are worth having on their own,
+    // but the failure is now recorded where it will actually be seen.
+    ideasError = e instanceof Error ? e.message : "Idea generation failed.";
     console.error("[sync] idea generation failed:", e);
+    await supabaseAdmin.from("ops_signals").insert({
+      source: "arc-sync",
+      title: "Nightly idea generation is failing",
+      detail: ideasError,
+      severity: "high",
+      seen: false,
+    }).then(({ error }) => { if (error) console.error("[sync] could not record the failure:", error.message); });
   }
 
-  return { ok: true, sources: urls.length, fetched: items.length, cached, ideas };
+  return { ok: true, sources: urls.length, fetched: items.length, cached, ideas, ideasError };
 }
 
 // Vercel Cron sends GET. Optionally protect with CRON_SECRET if set.
