@@ -33,13 +33,17 @@ const MAX_PER_RUN = 10;
  * would let a stranger run up the API bill.
  */
 export async function GET(req: NextRequest) {
+  // Fail closed. An unset secret means nobody can run this, which beats
+  // letting a stranger who finds the URL spend the API budget.
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    const given = req.nextUrl.searchParams.get("secret");
-    if (auth !== `Bearer ${secret}` && given !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  if (!secret) {
+    return NextResponse.json(
+      { error: "CRON_SECRET is not set, so the scheduled scan is disabled." },
+      { status: 503 },
+    );
+  }
+  if (req.headers.get("authorization") !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   return runScan(undefined, MAX_PER_RUN);
 }

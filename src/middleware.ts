@@ -7,7 +7,28 @@ export const config = {
   ],
 };
 
+/**
+ * Paths Vercel Cron calls. A cron request carries no session cookie, so it is
+ * let through on a shared secret instead. GET only: the dashboard's own Sync
+ * button posts to the same route and must keep needing a real session.
+ *
+ * Fail-closed on purpose. With CRON_SECRET unset nothing gets through, which is
+ * the right failure for a route that spends money on model calls per
+ * attachment: an open URL would let anyone run up the API bill.
+ */
+const CRON_PATHS = ["/api/ops/invoices/scan"];
+
+function isAuthorisedCron(req: NextRequest): boolean {
+  if (req.method !== "GET") return false;
+  if (!CRON_PATHS.includes(req.nextUrl.pathname)) return false;
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  return req.headers.get("authorization") === `Bearer ${secret}`;
+}
+
 export async function middleware(req: NextRequest) {
+  if (isAuthorisedCron(req)) return NextResponse.next();
+
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const valid = await verifySessionToken(token);
   if (valid) return NextResponse.next();
