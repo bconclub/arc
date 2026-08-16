@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.25";
+export const VERSION = "0.0.26";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.26",
+    date: "2026-08-16",
+    notes: "Tell ARC: a chat strip on the dashboard that turns 'ISIVIS project is done' into a confirmed record change and answers 'what's going on with WindChasers' from the same rollups the panels use. Invoice parsing no longer needs a paid model: the PDF's own text and template rules read BCON's layouts free, with OCR for photos and Haiku only as fallback. Brands attach to mail by their registered domains. Accepting an invoice keeps the GST split and invoice number instead of dropping them. paid_at is finally writable, so collected money has a date. Client fields became a brand picker. GTM, PROXe, the agent queue and the services catalogue re-ported from the Windows branch.",
+  },
   {
     version: "0.0.25",
     date: "2026-08-13",

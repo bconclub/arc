@@ -2,6 +2,22 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-16 . v0.0.26 - Tell ARC, free invoice parsing, the two branches rejoined
+
+The Windows and Mac lines of this repo had diverged 5 commits against 53. This
+release rejoins them: the Mac line's schema and UI stand, and the Windows-only
+work is re-ported on top rather than merged, because the two sides had written
+incompatible `brands` schemas and two different `Brand` types.
+
+- **Tell ARC.** A chat strip on the dashboard. State an update ("Laptop Store M2 payment came in") and it answers with what it understood and a confirm card; nothing touches a record until the card is confirmed, the same propose-accept rule the invoice queue follows. Ask a question and it answers from `rollupBrand`, the same function every panel reads, so the chat cannot disagree with the screen it sits on. A follow-up refines the pending card; superseded intents are kept, because an audit trail that rewrites itself is not one. Deterministic rules parse the common phrasings with no model call; Haiku fills in only when the rules come up empty, one Sonnet escalation for genuinely tangled turns, never Opus.
+- **Invoice parsing without a paid model.** The parser is a ladder: the PDF's own text layer, then template rules encoding BCON's own layout quirks (Already Paid vs Paid, bare Total vs Net Total, TAX meaning GST, the 18% stated arithmetically when no label does), then tesseract OCR for photographed invoices, then Haiku, only with a funded key. The old parser was one rung, Opus on every attachment, and died with the key's credit on 12 August.
+- **`ops_events`.** Chat confirmations, invoice accepts and notes write one durable history row each, so "what updates did we give" has a table to answer from instead of being reconstructed from four tables' timestamps.
+- **Brand attribution by domain.** `brands.domains` was stored and edited but never read; the scan now stamps each attachment with its brand by sender domain first, alias match second, and the queue scopes by that stamp.
+- **Accept keeps the whole reading.** Invoice number, dates, GSTIN and the tax split now land on the payment row instead of being parsed and discarded.
+- **`paid_at` is writable.** It was on the schema, on the type and in the money maths, but in neither payments whitelist, so the day money landed could never be recorded and "average time to get paid" was null by construction. One shared writable-field map now serves every ops route; unknown fields return a 400 naming them instead of being silently dropped.
+- **Brand picker.** Proposals, projects and invoices select a brand instead of typing one; an unmatched name offers Create brand once, which is the end of duplicate spellings.
+- **Re-ported from the Windows branch:** GTM wing, PROXe briefs, the agent job queue with heartbeats, the services catalogue and Indian tax columns (rewritten against the text[] brands schema), project kind and payment types, and the BCON_OP history seed.
+
 ## 2026-08-13 01:15 IST . v0.0.25 - Billing vault, period money, calendar projects
 
 Versioning was missed for thirteen commits. This entry covers all of them rather
