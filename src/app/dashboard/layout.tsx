@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/Sidebar";
+import { OpsChat } from "@/components/ops/OpsChat";
 
 /**
  * The shell is the sidebar and the page, nothing else.
@@ -20,6 +21,9 @@ export default function DashboardLayout({
       <main className="flex min-h-screen flex-col pb-20 lg:ml-[200px] lg:pb-0">
         <div className="flex-1 animate-fade-in">{children}</div>
       </main>
+      {/* Floating on every page: click the bubble, talk to ARC. Confirmed
+          changes broadcast arc:data-changed for the page behind to reload. */}
+      <OpsChat />
     </div>
   );
 }

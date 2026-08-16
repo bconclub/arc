@@ -26,6 +26,8 @@ export type Intent = {
   status: string | null;
   /** rupees, decoded from 80k / 1.2L / 1,20,000 forms */
   amount: number | null;
+  /** "50% advance came in" — the share, when the words give one instead of rupees */
+  pct: number | null;
   /** free text that should name the brand and/or the work */
   subject: string;
   raw: string;
@@ -54,7 +56,9 @@ const QUESTION_RE =
   /^(?:what|how|when|where|who|which|why|is|are|do|does|did|show|tell|any|status of|what's|whats|how's|hows)\b|\?\s*$/i;
 
 const DONE_RE = /\b(?:is done|are done|done|completed?|finished|delivered|shipped|wrapped(?:\s+up)?|closed out|went live|launched)\b/i;
-const PAID_RE = /\b(?:paid|payment (?:came|come|received|landed|cleared|confirmed|in)|received (?:the )?(?:payment|money|amount|advance)|money (?:came|landed|received|in)|transferred|credited)\b/i;
+// "came in" / "landed" with no other verb is money in this domain — updates
+// are dictated shorthand ("kosh 50% came in"), not full sentences.
+const PAID_RE = /\b(?:paid|payment (?:came|come|received|landed|cleared|confirmed|in)|received (?:the )?(?:payment|money|amount|advance)|money (?:came|landed|received|in)|transferred|credited|came in|come in|landed|cleared)\b/i;
 const HOLD_RE = /\b(?:on hold|hold|park(?:ed)?|pause[d]?|stop work)\b/i;
 const RESUME_RE = /\b(?:resume[d]?|go ahead|green ?light|start work|kick(?:ed)? off|activate[d]?|un ?park(?:ed)?)\b/i;
 const WAITING_RE = /\b(?:waiting|blocked|stuck|held up)\b/i;
@@ -63,10 +67,20 @@ const SENT_RE = /\b(?:sent|shared|mailed|submitted)\b/i;
 const NOTE_RE = /^note[:\s]/i;
 const INVOICE_RE = /\b(?:invoice[d]?|billed|raise[d]? (?:an? )?invoice)\b/i;
 
+/** "50%" → 50. Distinct from parseAmount so 50 never reads as ₹50. */
+export function parsePct(text: string): number | null {
+  const m = text.match(/\b(\d{1,2}(?:\.\d+)?)\s*%/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return n > 0 && n <= 100 ? n : null;
+}
+
 export function parseWithRules(text: string): Intent {
   const raw = text.trim();
-  const amount = parseAmount(raw);
-  const base = { amount, subject: raw, raw, status: null as string | null };
+  const pct = parsePct(raw);
+  // A number that was a percentage must not also be read as rupees.
+  const amount = pct !== null ? parseAmount(raw.replace(/\d{1,2}(?:\.\d+)?\s*%/, "")) : parseAmount(raw);
+  const base = { amount, pct, subject: raw, raw, status: null as string | null };
 
   if (NOTE_RE.test(raw)) {
     return { ...base, action: "add_note", target: null, subject: raw.replace(NOTE_RE, "").trim() };

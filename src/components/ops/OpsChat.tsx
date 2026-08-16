@@ -36,7 +36,12 @@ type Msg = {
   created_at?: string;
 };
 
-export function OpsChat({ onChanged }: { onChanged?: () => void }) {
+/**
+ * Floating on every dashboard page: a round button bottom-right, a slide-over
+ * thread when opened. Confirmed changes broadcast "arc:data-changed" so
+ * whichever page is behind can reload its own data.
+ */
+export function OpsChat() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -47,14 +52,17 @@ export function OpsChat({ onChanged }: { onChanged?: () => void }) {
   const [detail, setDetail] = useState("");
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
+  const [unseen, setUnseen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/ops/chat").then((r) => r.json()).catch(() => ({}));
     if (res.session) setSessionId(res.session.id);
     if (Array.isArray(res.messages)) {
       setMessages(res.messages);
-      if (res.messages.length) setOpen(true);
+      // A pending card left from last time is worth a dot on the button.
+      if (res.pending) setUnseen(true);
     }
     setDetail(res.detail ?? "");
     // Anything not pending anymore renders as settled.
@@ -73,7 +81,7 @@ export function OpsChat({ onChanged }: { onChanged?: () => void }) {
   async function send() {
     const text = input.trim();
     if (!text || busy) return;
-    setBusy(true); setError(""); setOpen(true);
+    setBusy(true); setError("");
     setMessages((prev) => [...prev, { id: `local-${Date.now()}`, role: "user", content: text }]);
     setInput("");
     const res = await fetch("/api/ops/chat", {
@@ -99,7 +107,8 @@ export function OpsChat({ onChanged }: { onChanged?: () => void }) {
     if (res.error) { setError(res.error); return; }
     setResolved((prev) => ({ ...prev, [intentId]: res.status }));
     if (res.message) setMessages((prev) => [...prev, res.message]);
-    if (action === "confirm") onChanged?.();
+    // Whichever page is behind the panel reloads its own data.
+    if (action === "confirm") window.dispatchEvent(new CustomEvent("arc:data-changed"));
   }
 
   function renderCard(m: Msg) {
@@ -180,56 +189,94 @@ export function OpsChat({ onChanged }: { onChanged?: () => void }) {
     return null;
   }
 
+  function openPanel() {
+    setOpen(true);
+    setUnseen(false);
+    setTimeout(() => inputRef.current?.focus(), 60);
+  }
+
   return (
-    <section className="rounded-panel border border-[var(--border)] bg-surface p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <MessageSquare size={15} className="text-text-muted" />
-        <h2 className="text-[13px] font-semibold text-text">Tell ARC</h2>
-        <span className="text-[10.5px] text-text-muted">
-          {"“ISIVIS project is done” · “Laptop Store payment came in” · “what's going on with WindChasers?”"}
-        </span>
-      </div>
-
-      {detail && <p className="mt-2 text-[11px] text-accent-orange">{detail}</p>}
-
-      {open && messages.length > 0 && (
-        <div className="mt-3 max-h-[320px] space-y-2 overflow-y-auto border-t border-[var(--border)] pt-3">
-          {messages.map((m) => (
-            <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-              <div className={
-                m.role === "user"
-                  ? "max-w-[85%] rounded-xl bg-[var(--brand-soft)] px-3 py-1.5 text-[12.5px] text-[var(--brand-text)]"
-                  : "max-w-[85%] rounded-xl px-3 py-1.5 text-[12.5px] text-text"
-              }>
-                <p>{m.content}</p>
-                {renderCard(m)}
-              </div>
-            </div>
-          ))}
-          {busy && <Loader2 size={14} className="animate-spin text-text-muted" />}
-          <div ref={endRef} />
-        </div>
+    <>
+      {/* The launcher. Sits clear of the mobile bottom bar. */}
+      {!open && (
+        <button
+          onClick={openPanel}
+          aria-label="Open Tell ARC"
+          className="fixed bottom-20 right-4 z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-soft)] text-[var(--brand-text)] shadow-2xl ring-1 ring-[var(--border-strong)] transition-transform hover:scale-105 lg:bottom-6 lg:right-6"
+        >
+          <MessageSquare size={19} />
+          {unseen && (
+            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-accent-orange ring-2 ring-[var(--bg)]" />
+          )}
+        </button>
       )}
 
-      {error && <p className="mt-2 text-[11px] text-accent-red">{error}</p>}
-
-      <div className="mt-3 flex gap-2">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder="Drop an update or ask a question…"
-          className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-transparent px-3 py-2 text-[13px] text-text placeholder:text-text-muted focus:border-[var(--border-strong)]"
-        />
-        <button
-          onClick={send}
-          disabled={busy || !input.trim()}
-          aria-label="Send"
-          className="rounded-xl border border-[var(--border)] px-3 text-text-muted transition-colors hover:text-text disabled:opacity-40"
+      {open && (
+        <section
+          role="dialog"
+          aria-label="Tell ARC"
+          className="fixed bottom-20 right-4 z-[70] flex max-h-[min(72vh,640px)] w-[min(94vw,400px)] flex-col rounded-panel border border-[var(--border)] bg-surface shadow-2xl lg:bottom-6 lg:right-6"
         >
-          <Send size={15} />
-        </button>
-      </div>
-    </section>
+          <div className="flex shrink-0 items-center gap-2 border-b border-[var(--border)] px-4 py-3">
+            <MessageSquare size={15} className="text-[var(--brand-text)]" />
+            <h2 className="text-[13px] font-semibold text-text">Tell ARC</h2>
+            <span className="min-w-0 flex-1 truncate text-[10px] text-text-muted">
+              updates in, answers out
+            </span>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close"
+              className="rounded-lg p-1 text-text-muted transition-colors hover:text-text"
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3">
+            {detail && <p className="text-[11px] text-accent-orange">{detail}</p>}
+            {messages.length === 0 && !detail && (
+              <p className="text-[11.5px] leading-relaxed text-text-muted">
+                {"“ISIVIS project is done” · “Laptop Store payment came in” · “what's going on with WindChasers?”"}
+              </p>
+            )}
+            {messages.map((m) => (
+              <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                <div className={
+                  m.role === "user"
+                    ? "max-w-[88%] rounded-xl bg-[var(--brand-soft)] px-3 py-1.5 text-[12.5px] text-[var(--brand-text)]"
+                    : "max-w-[88%] rounded-xl px-3 py-1.5 text-[12.5px] text-text"
+                }>
+                  <p>{m.content}</p>
+                  {renderCard(m)}
+                </div>
+              </div>
+            ))}
+            {busy && <Loader2 size={14} className="animate-spin text-text-muted" />}
+            <div ref={endRef} />
+          </div>
+
+          {error && <p className="px-4 pb-1 text-[11px] text-accent-red">{error}</p>}
+
+          <div className="flex shrink-0 gap-2 border-t border-[var(--border)] p-3">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder="Drop an update or ask a question…"
+              className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-transparent px-3 py-2 text-[13px] text-text placeholder:text-text-muted focus:border-[var(--border-strong)]"
+            />
+            <button
+              onClick={send}
+              disabled={busy || !input.trim()}
+              aria-label="Send"
+              className="rounded-xl border border-[var(--border)] px-3 text-text-muted transition-colors hover:text-text disabled:opacity-40"
+            >
+              <Send size={15} />
+            </button>
+          </div>
+        </section>
+      )}
+    </>
   );
 }

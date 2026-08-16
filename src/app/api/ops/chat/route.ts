@@ -125,6 +125,7 @@ export async function POST(req: NextRequest) {
         target: modelRead.target,
         status: modelRead.status,
         amount: modelRead.amount ?? intent.amount,
+        pct: intent.pct,
         subject: [modelRead.brand, modelRead.subject].filter(Boolean).join(" ") || text,
         raw: text,
       };

@@ -146,6 +146,22 @@ export async function resolveIntent(intent: Intent): Promise<Resolution> {
     }
     // Nothing open — record the money anyway rather than losing the fact.
     if (brand || intent.amount != null) {
+      // "50% advance came in": with no rupee figure, the share is computed
+      // from the one deal it can only mean — a single open project with a
+      // budget, or failing that a single won/sent proposal with an amount.
+      let amount = intent.amount;
+      let basis = "";
+      if (amount == null && intent.pct != null && brand) {
+        const { data: projRows } = await supabaseAdmin
+          .from("projects").select("*").neq("status", "done");
+        const scoped = ((projRows ?? []) as Project[]).filter(
+          (p) => (p.brand_id === brand.id || (p.client ?? "").toLowerCase().includes(brand.name.toLowerCase())) && p.budget != null,
+        );
+        if (scoped.length === 1) {
+          amount = Math.round((scoped[0].budget ?? 0) * intent.pct / 100);
+          basis = ` (${intent.pct}% of ${scoped[0].name}'s ₹${(scoped[0].budget ?? 0).toLocaleString("en-IN")})`;
+        }
+      }
       return {
         brand, candidates: [],
         mutations: [{
@@ -153,15 +169,15 @@ export async function resolveIntent(intent: Intent): Promise<Resolution> {
           set: {
             client: brand?.name ?? null,
             brand_id: brand?.id ?? null,
-            amount: intent.amount,
+            amount,
             status: "paid",
             paid_at: new Date().toISOString(),
             item: intent.subject.slice(0, 120),
             source: "chat",
           },
-          label: `New payment: ${brand?.name ?? "unknown"}${intent.amount != null ? ` ₹${intent.amount.toLocaleString("en-IN")}` : ""} — paid today`,
+          label: `New payment: ${brand?.name ?? "unknown"}${amount != null ? ` ₹${amount.toLocaleString("en-IN")}` : ""}${basis} — paid today`,
         }],
-        say: `No open invoice matches, so I'll record it as a new received payment${brand ? ` for ${brand.name}` : ""}. Confirm?`,
+        say: `No open invoice matches, so I'll record it as a new received payment${brand ? ` for ${brand.name}` : ""}${basis}. Confirm?`,
         confidence: "medium",
       };
     }

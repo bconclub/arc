@@ -50,5 +50,26 @@ export function brandForText(text: string | null | undefined, brands: Brand[]): 
       if (hay.includes(key)) { best = b; bestLen = key.length; }
     }
   }
-  return best;
+  if (best) return best;
+
+  // Word-level fallback: "kosh" should find Kosh Studios even though the full
+  // key never appears. A word only counts when exactly one brand owns it —
+  // an ambiguous word is a question for the human, not a guess.
+  const owners = new Map<string, Brand | null>();
+  for (const b of brands) {
+    for (const key of brandKeys(b)) {
+      for (const word of key.split(/\s+/)) {
+        if (word.length < 4) continue;
+        const prev = owners.get(word);
+        if (prev === undefined) owners.set(word, b);
+        else if (prev !== null && prev.id !== b.id) owners.set(word, null);
+      }
+    }
+  }
+  for (const token of hay.split(/[^a-z0-9]+/)) {
+    if (token.length < 4) continue;
+    const owner = owners.get(token);
+    if (owner) return owner;
+  }
+  return null;
 }

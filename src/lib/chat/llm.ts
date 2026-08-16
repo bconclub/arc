@@ -70,8 +70,8 @@ async function call(model: string, prompt: string): Promise<LlmIntent | null> {
   if (response.stop_reason === "refusal") return null;
   const text = response.content.find((b) => b.type === "text");
   if (!text || text.type !== "text") return null;
-  const parsed = JSON.parse(text.text) as Omit<LlmIntent, "raw">;
-  return { ...parsed, raw: "" };
+  const parsed = JSON.parse(text.text) as Omit<LlmIntent, "raw" | "pct">;
+  return { ...parsed, pct: null, raw: "" };
 }
 
 export async function parseWithModel(
