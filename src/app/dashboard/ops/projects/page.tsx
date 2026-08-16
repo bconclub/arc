@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FolderKanban, Plus, X } from "lucide-react";
 import { Modal, Field, ModalActions, inputCls, btnCls, btnPrimaryCls } from "@/components/ops/Modal";
+import { BrandPicker } from "@/components/ops/BrandPicker";
 import { money, deliverableOf } from "@/lib/format";
 import { dueLabel } from "@/lib/money";
 import { BrandMark } from "@/components/ops/BrandMark";
@@ -16,6 +17,7 @@ type FormState = {
   id?: string;
   name: string;
   client: string;
+  brand_id: string | null;
   status: ProjectStatus;
   next: string;
   start_date: string;
@@ -27,7 +29,7 @@ type FormState = {
 };
 
 const EMPTY: FormState = {
-  name: "", client: "", status: "active", next: "", start_date: "", end_date: "",
+  name: "", client: "", brand_id: null, status: "active", next: "", start_date: "", end_date: "",
   budget: "", size: "", progress: 0, tasks: [],
 };
 
@@ -60,7 +62,7 @@ export default function ProjectsPage() {
   function openEdit(p: Project) {
     setError("");
     setEditing({
-      id: p.id, name: p.name, client: p.client ?? "", status: p.status, next: p.next ?? "",
+      id: p.id, name: p.name, client: p.client ?? "", brand_id: p.brand_id ?? null, status: p.status, next: p.next ?? "",
       start_date: p.start_date ?? "", end_date: p.end_date ?? "",
       budget: p.budget == null ? "" : String(p.budget), size: p.size ?? "",
       progress: p.progress ?? 0, tasks: p.tasks ?? [],
@@ -216,7 +218,7 @@ export default function ProjectsPage() {
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Client">
-              <input className={inputCls} value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} />
+              <BrandPicker value={editing.client} onChange={(v) => setEditing({ ...editing, client: v.client, brand_id: v.brand_id })} />
             </Field>
             <Field label="Status">
               <select className={inputCls} value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value as ProjectStatus })}>

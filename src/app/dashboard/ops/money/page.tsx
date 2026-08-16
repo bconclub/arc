@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarClock, CheckCircle2, Clock, Plus, Wallet } from "lucide-react";
 import { Modal, Field, ModalActions, inputCls, btnPrimaryCls } from "@/components/ops/Modal";
+import { BrandPicker } from "@/components/ops/BrandPicker";
 import { SegmentedTabs, type Tab } from "@/components/ui/SegmentedTabs";
 import { FilterBar, countActive, type SelectFilter } from "@/components/ui/FilterBar";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
@@ -17,8 +18,8 @@ import { brandIndex } from "@/lib/rollup";
 import { BrandMark } from "@/components/ops/BrandMark";
 import type { Brand, Payment, PaymentStatus } from "@/types/ops";
 
-type FormState = { id?: string; client: string; item: string; amount: string; due: string; status: PaymentStatus };
-const EMPTY: FormState = { client: "", item: "", amount: "", due: "", status: "pending" };
+type FormState = { id?: string; client: string; brand_id: string | null; item: string; amount: string; due: string; status: PaymentStatus };
+const EMPTY: FormState = { client: "", brand_id: null, item: "", amount: "", due: "", status: "pending" };
 
 type TabKey = "all" | PaymentStatus;
 
@@ -289,7 +290,7 @@ export default function MoneyPage() {
               onEdit={(p) => {
                 setError("");
                 setEditing({
-                  id: p.id, client: p.client ?? "", item: p.item ?? "",
+                  id: p.id, client: p.client ?? "", brand_id: p.brand_id ?? null, item: p.item ?? "",
                   amount: p.amount == null ? "" : String(p.amount),
                   due: p.due ?? "", status: p.status,
                 });
@@ -303,7 +304,7 @@ export default function MoneyPage() {
         <Modal title={editing.id ? "Edit invoice" : "New invoice"} onClose={() => setEditing(null)}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Client">
-              <input className={inputCls} value={editing.client} autoFocus onChange={(e) => setEditing({ ...editing, client: e.target.value })} />
+              <BrandPicker value={editing.client} onChange={(v) => setEditing({ ...editing, client: v.client, brand_id: v.brand_id })} />
             </Field>
             <Field label="Item">
               <input className={inputCls} value={editing.item} onChange={(e) => setEditing({ ...editing, item: e.target.value })} />

@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FileText, Plus } from "lucide-react";
 import { Modal, Field, ModalActions, inputCls, btnPrimaryCls } from "@/components/ops/Modal";
+import { BrandPicker } from "@/components/ops/BrandPicker";
 import { money, daysAgo } from "@/lib/format";
 import type { Proposal, ProposalStatus } from "@/types/ops";
 
 const ORDER: ProposalStatus[] = ["discussing", "sent", "draft", "won", "lost"];
 
-type FormState = { id?: string; name: string; client: string; amount: string; status: ProposalStatus; sent: string; notes: string };
-const EMPTY: FormState = { name: "", client: "", amount: "", status: "draft", sent: "", notes: "" };
+type FormState = { id?: string; name: string; client: string; brand_id: string | null; amount: string; status: ProposalStatus; sent: string; notes: string };
+const EMPTY: FormState = { name: "", client: "", brand_id: null, amount: "", status: "draft", sent: "", notes: "" };
 
 export default function ProposalsPage() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -78,7 +79,7 @@ export default function ProposalsPage() {
             <tbody>
               {sorted.map((p) => (
                 <tr key={p.id} className="cursor-pointer border-t border-[var(--border)] transition-colors hover:bg-surface-hover"
-                  onClick={() => { setError(""); setEditing({ id: p.id, name: p.name, client: p.client ?? "", amount: p.amount == null ? "" : String(p.amount), status: p.status, sent: p.sent ?? "", notes: p.notes ?? "" }); }}>
+                  onClick={() => { setError(""); setEditing({ id: p.id, name: p.name, client: p.client ?? "", brand_id: p.brand_id ?? null, amount: p.amount == null ? "" : String(p.amount), status: p.status, sent: p.sent ?? "", notes: p.notes ?? "" }); }}>
                   <td className="px-4 py-2.5 font-medium text-text">{p.name}</td>
                   <td className="px-4 py-2.5 text-text-muted">{p.client || "-"}</td>
                   <td className="px-4 py-2.5 tabular-nums text-text">{money(p.amount)}</td>
@@ -98,7 +99,7 @@ export default function ProposalsPage() {
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Client">
-              <input className={inputCls} value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} />
+              <BrandPicker value={editing.client} onChange={(v) => setEditing({ ...editing, client: v.client, brand_id: v.brand_id })} />
             </Field>
             <Field label="Amount (₹)">
               <input type="number" className={inputCls} value={editing.amount} onChange={(e) => setEditing({ ...editing, amount: e.target.value })} />
