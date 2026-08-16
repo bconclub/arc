@@ -1,7 +1,10 @@
 export type ProjectStatus = "active" | "waiting" | "parked" | "done";
 export type ProjectSize = "S" | "M" | "L" | "XL";
+export type ProjectKind = "one-time" | "ongoing";
 
 export type OpsTask = { text: string; done: boolean; due: string | null };
+export type ProjectLink = { label: string; url: string };
+export type PaymentMilestone = { label: string; amount: number | null; due: string | null; paid: boolean };
 
 /**
  * A task that exists on its own. `project_id` and `brand_id` are both optional,
@@ -32,6 +35,15 @@ export type Project = {
   size: ProjectSize | null;
   progress: number;
   tasks: OpsTask[];
+  // Optional until 20260724/20260726 run: the columns may be absent on prod.
+  kind?: ProjectKind | null;
+  category?: string | null;
+  notes?: string | null;
+  links?: ProjectLink[] | null;
+  payment_schedule?: PaymentMilestone[] | null;
+  /** links to the parent brand + the service line (20260815000000_services_tax_port) */
+  brand_id?: string | null;
+  service_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -66,6 +78,8 @@ export type Proposal = {
 };
 
 export type PaymentStatus = "pending" | "invoiced" | "overdue" | "paid";
+export type PaymentType = "full" | "advance" | "partial";
+export type PaymentStage = "advance" | "partial" | "balance" | "due" | "full";
 
 export type Payment = {
   id: string;
@@ -81,6 +95,35 @@ export type Payment = {
    * treats that the same as "not recorded".
    */
   paid_at?: string | null;
+  // From 20260724000000: how this payment relates to the whole deal.
+  payment_type?: PaymentType | null;
+  deal_total?: number | null;
+  // Links + Indian tax fields (20260815000000_services_tax_port). All optional:
+  // absent from responses until the migration runs on prod.
+  brand_id?: string | null;
+  project_id?: string | null;
+  service_id?: string | null;
+  fy?: string | null;
+  received_on?: string | null;
+  stage?: PaymentStage | null;
+  invoice_no?: string | null;
+  invoice_date?: string | null;
+  sac_code?: string | null;
+  taxable_value?: number | null;
+  gst_rate?: number | null;
+  cgst?: number | null;
+  sgst?: number | null;
+  igst?: number | null;
+  total_invoiced?: number | null;
+  tds_section?: string | null;
+  tds_amount?: number | null;
+  net_received?: number | null;
+  currency?: string;
+  /** false until an invoice is attached — this is the CA worklist flag */
+  reconciled?: boolean;
+  source?: string | null;
+  /** the invoice's stated GSTIN, captured by the parser */
+  gstin?: string | null;
   created_at: string;
 };
 
@@ -279,3 +322,46 @@ export type ContentPlanItem = {
 };
 
 export type PetState = "fire" | "alert" | "happy" | "sleeping";
+
+// ── Ported from the local branch: service catalogue + GTM wing ──
+
+export type Service = {
+  id: string;
+  name: string;
+  aliases: string[];
+  scope_md: string | null;
+  sac_code: string | null;
+  default_gst_rate: number;
+  median_amount: number | null;
+  p25_amount: number | null;
+  p75_amount: number | null;
+  txns: number;
+  lifetime_revenue: number;
+  active: boolean;
+};
+
+export type BrandFyRevenue = {
+  brand_id: string;
+  name: string;
+  fy: string;
+  txns: number;
+  received: number;
+  invoiced: number;
+  tds: number;
+  unreconciled: number;
+};
+
+export type GtmStatus = "not_started" | "in_progress" | "defined" | "validated";
+export type GtmItem = { name: string; status: GtmStatus };
+
+export type GtmArea = {
+  id: string;
+  slug: string;
+  title: string;
+  ord: number;
+  what: string | null;
+  stand: string | null;
+  status: GtmStatus;
+  items: GtmItem[];
+  updated_at: string;
+};

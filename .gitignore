@@ -75,3 +75,7 @@ google-cloud-sdk/
 bcon-arc-*.json
 *-service-account*.json
 gcp-*.json
+
+# local assistant/backup artifacts (from local branch)
+scripts/arc_context.backup.json
+.agents/

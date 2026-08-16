@@ -1,0 +1,15 @@
+services:
+  arc-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    container_name: arc-agent
+    restart: "no"          # cron starts it; it exits when done
+    env_file: .env.local
+    volumes:
+      - ./arc/logs:/app/arc/logs   # persist logs across runs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -25,7 +25,8 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-card border border-[var(--border)] bg-surface p-6 shadow-2xl"
+        className="w-full max-w-lg rounded-card bg-surface p-6"
+        style={{ boxShadow: "0 24px 64px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-5 text-[15px] font-semibold text-text">{title}</h2>

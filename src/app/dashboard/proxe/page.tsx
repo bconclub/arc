@@ -1,0 +1,165 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ShieldCheck, RefreshCw } from "lucide-react";
+
+type Brief = {
+  id: string;
+  kind: string;
+  brand: string;
+  brief_date: string;
+  title: string;
+  body_md: string;
+  totals: Record<string, number>;
+  source: string;
+  created_at: string;
+};
+
+const BRANDS = ["all", "bcon", "windchasers", "lokazen", "pop", "proxe"] as const;
+
+const BRAND_DOT: Record<string, string> = {
+  bcon: "bg-accent-blue",
+  windchasers: "bg-accent-green",
+  lokazen: "bg-accent-orange",
+  pop: "bg-accent-red",
+  proxe: "bg-text-muted",
+};
+
+// Minimal markdown -> HTML. Briefs use a known, small subset (##, **, -, ---).
+// Kept inline so we don't pull a markdown dependency into ARC.
+function renderMd(md: string): string {
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const inline = (s: string) =>
+    esc(s)
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+)`/g, '<code class="px-1 rounded bg-surface-hover text-[0.85em]">$1</code>');
+  const lines = md.replace(/\r/g, "").split("\n");
+  const out: string[] = [];
+  let inList = false;
+  const closeList = () => { if (inList) { out.push("</ul>"); inList = false; } };
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (/^---+$/.test(line)) { closeList(); out.push('<hr class="my-3 border-border"/>'); continue; }
+    if (/^###\s+/.test(line)) { closeList(); out.push(`<h4 class="mt-4 mb-1 font-semibold text-sm">${inline(line.replace(/^###\s+/, ""))}</h4>`); continue; }
+    if (/^##\s+/.test(line)) { closeList(); out.push(`<h3 class="mt-5 mb-1.5 font-semibold text-[0.95rem] text-text">${inline(line.replace(/^##\s+/, ""))}</h3>`); continue; }
+    if (/^#\s+/.test(line)) { closeList(); out.push(`<h2 class="mt-2 mb-2 font-bold text-lg">${inline(line.replace(/^#\s+/, ""))}</h2>`); continue; }
+    if (/^[-*]\s+/.test(line)) {
+      if (!inList) { out.push('<ul class="list-disc pl-5 space-y-1 my-1.5">'); inList = true; }
+      out.push(`<li>${inline(line.replace(/^[-*]\s+/, ""))}</li>`);
+      continue;
+    }
+    if (line === "") { closeList(); continue; }
+    closeList();
+    out.push(`<p class="my-1.5 leading-relaxed">${inline(line)}</p>`);
+  }
+  closeList();
+  return out.join("");
+}
+
+export default function ProxeBriefsPage() {
+  const [briefs, setBriefs] = useState<Brief[]>([]);
+  const [brand, setBrand] = useState<(typeof BRANDS)[number]>("all");
+  const [loading, setLoading] = useState(true);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const qs = brand === "all" ? "" : `?brand=${brand}`;
+    const data = await fetch(`/api/proxe/briefs${qs}`).then((r) => r.json()).catch(() => []);
+    setBriefs(Array.isArray(data) ? data : []);
+    setLoading(false);
+  }, [brand]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const byDate = useMemo(() => {
+    const m = new Map<string, Brief[]>();
+    for (const b of briefs) {
+      if (!m.has(b.brief_date)) m.set(b.brief_date, []);
+      m.get(b.brief_date)!.push(b);
+    }
+    return Array.from(m.entries());
+  }, [briefs]);
+
+  return (
+    <div className="max-w-dashboard mx-auto px-5 py-6">
+      <div className="flex items-center gap-3 mb-1">
+        <ShieldCheck className="w-5 h-5 text-text-muted" />
+        <h1 className="text-xl font-bold text-text">PROXe Briefs</h1>
+        <button
+          onClick={load}
+          className="ml-auto flex items-center gap-2 text-sm text-text-muted hover:text-text transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </button>
+      </div>
+      <p className="text-sm text-text-muted mb-5">
+        Daily conversation patterns across every brand, generated from the live dashboards.
+      </p>
+
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {BRANDS.map((b) => (
+          <button
+            key={b}
+            onClick={() => setBrand(b)}
+            className={`px-3 py-1.5 rounded-full text-sm capitalize transition-all ${
+              brand === b ? "bg-text text-bg font-medium" : "bg-surface text-text-muted hover:bg-surface-hover"
+            }`}
+          >
+            {b}
+          </button>
+        ))}
+      </div>
+
+      {loading && briefs.length === 0 && (
+        <div className="text-sm text-text-muted py-10 text-center">Loading briefs…</div>
+      )}
+
+      {!loading && briefs.length === 0 && (
+        <div className="border border-border rounded-card p-8 text-center">
+          <p className="text-text-muted text-sm">
+            No briefs yet. Once the daily generator runs, patterns land here every morning.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {byDate.map(([date, items]) => (
+          <div key={date}>
+            <div className="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">{date}</div>
+            <div className="grid gap-3">
+              {items.map((b) => {
+                const open = openId === b.id;
+                return (
+                  <div key={b.id} className="border border-border rounded-card overflow-hidden bg-surface">
+                    <button
+                      onClick={() => setOpenId(open ? null : b.id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${BRAND_DOT[b.brand] || "bg-text-muted"}`} />
+                      <span className="font-medium text-sm capitalize text-text">{b.brand}</span>
+                      <span className="text-sm text-text-muted truncate">{b.title}</span>
+                      <span className="ml-auto flex items-center gap-2 text-xs text-text-muted shrink-0">
+                        {typeof b.totals?.new_leads === "number" && <span>{b.totals.new_leads} leads</span>}
+                        {typeof b.totals?.conversations_with_summary === "number" && (
+                          <span>· {b.totals.conversations_with_summary} convos</span>
+                        )}
+                      </span>
+                    </button>
+                    {open && (
+                      <div
+                        className="px-4 pb-4 pt-1 text-sm text-text border-t border-border"
+                        dangerouslySetInnerHTML={{ __html: renderMd(b.body_md) }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

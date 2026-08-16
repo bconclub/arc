@@ -1,0 +1,4626 @@
+{
+ "generated_from": "BCON_OP sheet · Payin tab",
+ "brands": [
+  {
+   "name": "Paint My Walls",
+   "aliases": [
+    "Paint My Walls",
+    "Pint My Walls",
+    "PaintMy Walls",
+    "PaintMyWalls"
+   ],
+   "domains": [],
+   "lifetime_revenue": 3487006,
+   "first_seen": "2020-07-01",
+   "last_seen": "2024-07-01",
+   "status": "dormant",
+   "services": [
+    "Marketing/Lead Generation",
+    "Marketing Retainer"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Wind Chasers",
+   "aliases": [
+    "Wind Chasers",
+    "Windchasers",
+    "Windhcasers"
+   ],
+   "domains": [
+    "windchasers.in"
+   ],
+   "lifetime_revenue": 2198320,
+   "first_seen": "2024-05-01",
+   "last_seen": "2026-07-01",
+   "status": "active",
+   "services": [
+    "Marketing/Lead Generation",
+    "Platform Build"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "LaptopStore",
+   "aliases": [
+    "LaptopStore",
+    "Laptopstore"
+   ],
+   "domains": [],
+   "lifetime_revenue": 1331954,
+   "first_seen": "2022-10-01",
+   "last_seen": "2026-07-01",
+   "status": "active",
+   "services": [
+    "Marketing Retainer",
+    "Marketing/Lead Generation",
+    "Platform Build"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "RLTR",
+   "aliases": [
+    "RLTR"
+   ],
+   "domains": [],
+   "lifetime_revenue": 1024500,
+   "first_seen": "2021-08-01",
+   "last_seen": "2023-05-01",
+   "status": "archive",
+   "services": [
+    "Marketing Retainer",
+    "Adjustment/Other"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Birdbox",
+   "aliases": [
+    "Birdbox"
+   ],
+   "domains": [],
+   "lifetime_revenue": 840283,
+   "first_seen": "2024-04-01",
+   "last_seen": "2024-09-01",
+   "status": "dormant",
+   "services": [
+    "Website Retainer",
+    "Marketing/Lead Generation"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "11point club",
+   "aliases": [
+    "11point club"
+   ],
+   "domains": [
+    "11pc.bconclub.com"
+   ],
+   "lifetime_revenue": 800000,
+   "first_seen": "2025-01-01",
+   "last_seen": "2025-09-01",
+   "status": "recent",
+   "services": [
+    "Brand Management"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Felicia Products",
+   "aliases": [
+    "Felicia Products"
+   ],
+   "domains": [],
+   "lifetime_revenue": 340872,
+   "first_seen": "2021-06-01",
+   "last_seen": "2022-02-01",
+   "status": "archive",
+   "services": [
+    "Creative Retainer",
+    "Website Development",
+    "Marketing/Lead Generation",
+    "Marketing Retainer",
+    "Adjustment/Other"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Wash-O-Wash",
+   "aliases": [
+    "Wash-O-Wash",
+    "Wash O Wash"
+   ],
+   "domains": [],
+   "lifetime_revenue": 336156,
+   "first_seen": "2024-06-01",
+   "last_seen": "2025-05-01",
+   "status": "dormant",
+   "services": [
+    "Marketing/Lead Generation",
+    "Brand Management"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Now Media",
+   "aliases": [
+    "Now Media",
+    "NOW Media"
+   ],
+   "domains": [],
+   "lifetime_revenue": 334000,
+   "first_seen": "2021-05-01",
+   "last_seen": "2026-05-01",
+   "status": "active",
+   "services": [
+    "Marketing/Lead Generation",
+    "Website Development",
+    "Adjustment/Other"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Isivis Group",
+   "aliases": [
+    "Isivis Group",
+    "ISIVIS"
+   ],
+   "domains": [],
+   "lifetime_revenue": 305000,
+   "first_seen": "2024-02-01",
+   "last_seen": "2026-07-01",
+   "status": "active",
+   "services": [
+    "Website Development",
+    "Video Production",
+    "Branding/Identity",
+    "Branding + Website"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Osiya Group",
+   "aliases": [
+    "Osiya Group",
+    "Osiya"
+   ],
+   "domains": [],
+   "lifetime_revenue": 297500,
+   "first_seen": "2023-07-01",
+   "last_seen": "2024-06-01",
+   "status": "dormant",
+   "services": [
+    "Website Development",
+    "Marketing Retainer",
+    "Adjustment/Other",
+    "Marketing/Lead Generation"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Mr Boil",
+   "aliases": [
+    "Mr Boil"
+   ],
+   "domains": [],
+   "lifetime_revenue": 290824,
+   "first_seen": "2024-08-01",
+   "last_seen": "2024-08-01",
+   "status": "dormant",
+   "services": [
+    "Branding/Identity"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "GV Group",
+   "aliases": [
+    "GV Group"
+   ],
+   "domains": [],
+   "lifetime_revenue": 231500,
+   "first_seen": "2022-07-01",
+   "last_seen": "2023-01-01",
+   "status": "archive",
+   "services": [
+    "Adjustment/Other",
+    "Marketing Retainer"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Livastu",
+   "aliases": [
+    "Livastu"
+   ],
+   "domains": [],
+   "lifetime_revenue": 180000,
+   "first_seen": "2023-05-01",
+   "last_seen": "2024-08-01",
+   "status": "dormant",
+   "services": [
+    "Website Development",
+    "Marketing/Lead Generation",
+    "Marketing Retainer"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Organix.Rosa",
+   "aliases": [
+    "Organix.Rosa"
+   ],
+   "domains": [],
+   "lifetime_revenue": 160000,
+   "first_seen": "2023-01-01",
+   "last_seen": "2023-05-01",
+   "status": "archive",
+   "services": [
+    "Marketing Retainer"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "SICC",
+   "aliases": [
+    "SICC"
+   ],
+   "domains": [
+    "sicc.bconclub.com",
+    "southindiacivilcontractor.com"
+   ],
+   "lifetime_revenue": 150000,
+   "first_seen": "2025-11-01",
+   "last_seen": "2026-01-01",
+   "status": "recent",
+   "services": [
+    "Website Development",
+    "Website + Marketing",
+    "Marketing/Lead Generation"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "INC",
+   "aliases": [
+    "INC"
+   ],
+   "domains": [],
+   "lifetime_revenue": 127000,
+   "first_seen": "2025-08-01",
+   "last_seen": "2025-08-01",
+   "status": "recent",
+   "services": [
+    "Video Production"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Turquoise Holidays",
+   "aliases": [
+    "Turquoise Holidays"
+   ],
+   "domains": [
+    "turquoiseholidays.in"
+   ],
+   "lifetime_revenue": 115000,
+   "first_seen": "2025-02-01",
+   "last_seen": "2025-04-01",
+   "status": "dormant",
+   "services": [
+    "Branding + Website",
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Annonet",
+   "aliases": [
+    "Annonet"
+   ],
+   "domains": [],
+   "lifetime_revenue": 113213,
+   "first_seen": "2025-07-01",
+   "last_seen": "2025-08-01",
+   "status": "recent",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "SBGI",
+   "aliases": [
+    "SBGI"
+   ],
+   "domains": [],
+   "lifetime_revenue": 110000,
+   "first_seen": "2022-08-01",
+   "last_seen": "2025-05-01",
+   "status": "dormant",
+   "services": [
+    "Marketing/Lead Generation",
+    "Ads/Lead Setup"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Global Pride",
+   "aliases": [
+    "Global Pride"
+   ],
+   "domains": [],
+   "lifetime_revenue": 100000,
+   "first_seen": "2023-03-01",
+   "last_seen": "2023-03-01",
+   "status": "archive",
+   "services": [
+    "Marketing/Lead Generation"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "WOW Bus",
+   "aliases": [
+    "WOW Bus"
+   ],
+   "domains": [],
+   "lifetime_revenue": 100000,
+   "first_seen": "2026-05-01",
+   "last_seen": "2026-07-01",
+   "status": "active",
+   "services": [
+    "Branding/Identity"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Digilium",
+   "aliases": [
+    "Digilium"
+   ],
+   "domains": [],
+   "lifetime_revenue": 97963,
+   "first_seen": "2024-07-01",
+   "last_seen": "2026-02-01",
+   "status": "recent",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Hostinger",
+   "aliases": [
+    "Hostinger"
+   ],
+   "domains": [],
+   "lifetime_revenue": 90684,
+   "first_seen": "2020-12-01",
+   "last_seen": "2023-10-01",
+   "status": "dormant",
+   "services": [
+    "Affiliate Income"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "CWE",
+   "aliases": [
+    "CWE"
+   ],
+   "domains": [],
+   "lifetime_revenue": 89500,
+   "first_seen": "2023-01-01",
+   "last_seen": "2024-02-01",
+   "status": "dormant",
+   "services": [
+    "Website Development",
+    "Branding + Website"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Craftworld Events",
+   "aliases": [
+    "Craftworld Events",
+    "Craftsworld",
+    "Craftworld"
+   ],
+   "domains": [],
+   "lifetime_revenue": 84600,
+   "first_seen": "2022-11-01",
+   "last_seen": "2024-06-01",
+   "status": "dormant",
+   "services": [
+    "Website Development",
+    "Adjustment/Other",
+    "Marketing/Lead Generation"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "SRE",
+   "aliases": [
+    "SRE"
+   ],
+   "domains": [],
+   "lifetime_revenue": 80000,
+   "first_seen": "2022-05-01",
+   "last_seen": "2022-06-01",
+   "status": "archive",
+   "services": [
+    "Marketing Retainer"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Rehvamp",
+   "aliases": [
+    "Rehvamp"
+   ],
+   "domains": [],
+   "lifetime_revenue": 65384,
+   "first_seen": "2023-08-01",
+   "last_seen": "2026-06-01",
+   "status": "active",
+   "services": [
+    "Website Development",
+    "Platform Build"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Newrizon Space",
+   "aliases": [
+    "Newrizon Space"
+   ],
+   "domains": [],
+   "lifetime_revenue": 60000,
+   "first_seen": "2024-09-01",
+   "last_seen": "2024-11-01",
+   "status": "dormant",
+   "services": [
+    "Branding/Identity"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Adipoli Affairs",
+   "aliases": [
+    "Adipoli Affairs"
+   ],
+   "domains": [],
+   "lifetime_revenue": 60000,
+   "first_seen": "2025-10-01",
+   "last_seen": "2025-12-01",
+   "status": "recent",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "New Haus",
+   "aliases": [
+    "New Haus"
+   ],
+   "domains": [
+    "newhaus.in"
+   ],
+   "lifetime_revenue": 60000,
+   "first_seen": "2025-11-01",
+   "last_seen": "2026-01-01",
+   "status": "recent",
+   "services": [
+    "Marketing/Lead Generation"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "AIChat GPT",
+   "aliases": [
+    "AIChat GPT"
+   ],
+   "domains": [],
+   "lifetime_revenue": 55000,
+   "first_seen": "2023-10-01",
+   "last_seen": "2023-11-01",
+   "status": "dormant",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "In Sync",
+   "aliases": [
+    "In Sync"
+   ],
+   "domains": [],
+   "lifetime_revenue": 54000,
+   "first_seen": "2025-03-01",
+   "last_seen": "2025-03-01",
+   "status": "dormant",
+   "services": [
+    "Design/Creative"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Zangos",
+   "aliases": [
+    "Zangos"
+   ],
+   "domains": [],
+   "lifetime_revenue": 50000,
+   "first_seen": "2021-02-01",
+   "last_seen": "2021-08-01",
+   "status": "archive",
+   "services": [
+    "Franchise Development",
+    "Social Media"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Edunati",
+   "aliases": [
+    "Edunati"
+   ],
+   "domains": [],
+   "lifetime_revenue": 50000,
+   "first_seen": "2022-01-01",
+   "last_seen": "2022-01-01",
+   "status": "archive",
+   "services": [
+    "Branding + Website"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Sports Hedge",
+   "aliases": [
+    "Sports Hedge"
+   ],
+   "domains": [],
+   "lifetime_revenue": 50000,
+   "first_seen": "2023-12-01",
+   "last_seen": "2023-12-01",
+   "status": "dormant",
+   "services": [
+    "Website Retainer"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Rhaya",
+   "aliases": [
+    "Rhaya"
+   ],
+   "domains": [],
+   "lifetime_revenue": 48500,
+   "first_seen": "2023-01-01",
+   "last_seen": "2023-01-01",
+   "status": "archive",
+   "services": [
+    "Branding/Identity"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "KNU",
+   "aliases": [
+    "KNU"
+   ],
+   "domains": [],
+   "lifetime_revenue": 45000,
+   "first_seen": "2023-06-01",
+   "last_seen": "2023-07-01",
+   "status": "dormant",
+   "services": [
+    "Website Development",
+    "Ads/Lead Setup"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "The Sofa Makers",
+   "aliases": [
+    "The Sofa Makers",
+    "Sofa Makers"
+   ],
+   "domains": [],
+   "lifetime_revenue": 42000,
+   "first_seen": "2019-12-01",
+   "last_seen": "2025-12-01",
+   "status": "recent",
+   "services": [
+    "Branding + Website",
+    "Website Development",
+    "Ads/Lead Setup"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Finate",
+   "aliases": [
+    "Finate"
+   ],
+   "domains": [],
+   "lifetime_revenue": 40000,
+   "first_seen": "2022-11-01",
+   "last_seen": "2022-11-01",
+   "status": "archive",
+   "services": [
+    "Branding + Website"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "SpyNet Systems",
+   "aliases": [
+    "SpyNet Systems"
+   ],
+   "domains": [],
+   "lifetime_revenue": 40000,
+   "first_seen": "2023-07-01",
+   "last_seen": "2023-08-01",
+   "status": "dormant",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Shredd",
+   "aliases": [
+    "Shredd"
+   ],
+   "domains": [],
+   "lifetime_revenue": 40000,
+   "first_seen": "2025-04-01",
+   "last_seen": "2025-04-01",
+   "status": "dormant",
+   "services": [
+    "Branding/Identity"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "MSC Dubai",
+   "aliases": [
+    "MSC Dubai"
+   ],
+   "domains": [],
+   "lifetime_revenue": 37800,
+   "first_seen": "2024-02-01",
+   "last_seen": "2024-03-01",
+   "status": "dormant",
+   "services": [
+    "Website Development"
+   ],
+   "country": "",
+   "currency": "INR",
+   "is_export": true
+  },
+  {
+   "name": "YV Homes",
+   "aliases": [
+    "YV Homes"
+   ],
+   "domains": [
+    "vyjayanthi.bconclub.com"
+   ],
+   "lifetime_revenue": 36000,
+   "first_seen": "2026-07-01",
+   "last_seen": "2026-07-01",
+   "status": "active",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Sofalplus",
+   "aliases": [
+    "Sofalplus",
+    "Sofaplus"
+   ],
+   "domains": [],
+   "lifetime_revenue": 35000,
+   "first_seen": "2022-09-01",
+   "last_seen": "2022-12-01",
+   "status": "archive",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "SnackBags",
+   "aliases": [
+    "SnackBags"
+   ],
+   "domains": [],
+   "lifetime_revenue": 35000,
+   "first_seen": "2023-03-01",
+   "last_seen": "2023-03-01",
+   "status": "archive",
+   "services": [
+    "Ads/Lead Setup"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "House Of Concepts",
+   "aliases": [
+    "House Of Concepts"
+   ],
+   "domains": [],
+   "lifetime_revenue": 35000,
+   "first_seen": "2024-03-01",
+   "last_seen": "2024-04-01",
+   "status": "dormant",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "GVS",
+   "aliases": [
+    "GVS"
+   ],
+   "domains": [],
+   "lifetime_revenue": 35000,
+   "first_seen": "2025-05-01",
+   "last_seen": "2025-09-01",
+   "status": "recent",
+   "services": [
+    "Platform Build",
+    "Video Production"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Qatalytic Events",
+   "aliases": [
+    "Qatalytic Events",
+    "Qatalytic"
+   ],
+   "domains": [],
+   "lifetime_revenue": 32500,
+   "first_seen": "2023-11-01",
+   "last_seen": "2026-01-01",
+   "status": "recent",
+   "services": [
+    "Website Development",
+    "Design/Creative"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "RPGS",
+   "aliases": [
+    "RPGS"
+   ],
+   "domains": [],
+   "lifetime_revenue": 30000,
+   "first_seen": "2020-08-01",
+   "last_seen": "2021-01-01",
+   "status": "archive",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "A Million Words",
+   "aliases": [
+    "A Million Words"
+   ],
+   "domains": [
+    "amillionwords.bconclub.com"
+   ],
+   "lifetime_revenue": 30000,
+   "first_seen": "2025-02-01",
+   "last_seen": "2025-02-01",
+   "status": "dormant",
+   "services": [
+    "Ads/Lead Setup"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "ACS",
+   "aliases": [
+    "ACS"
+   ],
+   "domains": [],
+   "lifetime_revenue": 25000,
+   "first_seen": "2022-08-01",
+   "last_seen": "2022-08-01",
+   "status": "archive",
+   "services": [
+    "Marketing/Lead Generation"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Trippink",
+   "aliases": [
+    "Trippink"
+   ],
+   "domains": [],
+   "lifetime_revenue": 25000,
+   "first_seen": "2022-10-01",
+   "last_seen": "2022-10-01",
+   "status": "archive",
+   "services": [
+    "Ads/Lead Setup"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Jamaican Kitchen",
+   "aliases": [
+    "Jamaican Kitchen"
+   ],
+   "domains": [],
+   "lifetime_revenue": 25000,
+   "first_seen": "2026-07-01",
+   "last_seen": "2026-07-01",
+   "status": "active",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Kunafa_World",
+   "aliases": [
+    "Kunafa_World"
+   ],
+   "domains": [],
+   "lifetime_revenue": 20000,
+   "first_seen": "2019-11-01",
+   "last_seen": "2019-11-01",
+   "status": "archive",
+   "services": [
+    "Franchise Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Baby Sutra",
+   "aliases": [
+    "Baby Sutra"
+   ],
+   "domains": [],
+   "lifetime_revenue": 20000,
+   "first_seen": "2020-04-01",
+   "last_seen": "2020-04-01",
+   "status": "archive",
+   "services": [
+    "Franchise Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Housie@9",
+   "aliases": [
+    "Housie@9"
+   ],
+   "domains": [],
+   "lifetime_revenue": 20000,
+   "first_seen": "2021-01-01",
+   "last_seen": "2021-05-01",
+   "status": "archive",
+   "services": [
+    "Social Media"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "WOW",
+   "aliases": [
+    "WOW"
+   ],
+   "domains": [],
+   "lifetime_revenue": 20000,
+   "first_seen": "2024-04-01",
+   "last_seen": "2024-04-01",
+   "status": "dormant",
+   "services": [
+    "Ads/Lead Setup"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Open Mind Consultants",
+   "aliases": [
+    "Open Mind Consultants"
+   ],
+   "domains": [],
+   "lifetime_revenue": 20000,
+   "first_seen": "2024-10-01",
+   "last_seen": "2024-10-01",
+   "status": "dormant",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Placement Institute",
+   "aliases": [
+    "Placement Institute"
+   ],
+   "domains": [
+    "placement.bconclub.com"
+   ],
+   "lifetime_revenue": 20000,
+   "first_seen": "2024-11-01",
+   "last_seen": "2024-11-01",
+   "status": "dormant",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Mind Group",
+   "aliases": [
+    "Mind Group"
+   ],
+   "domains": [
+    "mind.bconclub.com"
+   ],
+   "lifetime_revenue": 20000,
+   "first_seen": "2025-08-01",
+   "last_seen": "2025-08-01",
+   "status": "recent",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "S.Naidu",
+   "aliases": [
+    "S.Naidu",
+    "S Naidu"
+   ],
+   "domains": [],
+   "lifetime_revenue": 18000,
+   "first_seen": "2021-01-01",
+   "last_seen": "2021-07-01",
+   "status": "archive",
+   "services": [
+    "Branding/Identity",
+    "Design/Creative",
+    "Adjustment/Other"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "The UK Lanchpad",
+   "aliases": [
+    "The UK Lanchpad"
+   ],
+   "domains": [],
+   "lifetime_revenue": 15032,
+   "first_seen": "2022-09-01",
+   "last_seen": "2022-09-01",
+   "status": "archive",
+   "services": [
+    "Ads/Lead Setup"
+   ],
+   "country": "",
+   "currency": "INR",
+   "is_export": true
+  },
+  {
+   "name": "Venture Out",
+   "aliases": [
+    "Venture Out"
+   ],
+   "domains": [],
+   "lifetime_revenue": 15000,
+   "first_seen": "2022-03-01",
+   "last_seen": "2022-03-01",
+   "status": "archive",
+   "services": [
+    "Social Media"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Bhagvati Enterprise",
+   "aliases": [
+    "Bhagvati Enterprise"
+   ],
+   "domains": [
+    "bhagvatienterprise.com"
+   ],
+   "lifetime_revenue": 15000,
+   "first_seen": "2024-04-01",
+   "last_seen": "2024-04-01",
+   "status": "dormant",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Catch My Crowd",
+   "aliases": [
+    "Catch My Crowd"
+   ],
+   "domains": [],
+   "lifetime_revenue": 15000,
+   "first_seen": "2025-04-01",
+   "last_seen": "2025-04-01",
+   "status": "dormant",
+   "services": [
+    "Design/Creative"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Kippwell",
+   "aliases": [
+    "Kippwell"
+   ],
+   "domains": [],
+   "lifetime_revenue": 15000,
+   "first_seen": "2026-07-01",
+   "last_seen": "2026-07-01",
+   "status": "active",
+   "services": [
+    "Website Development"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "MarkXchange",
+   "aliases": [
+    "MarkXchange"
+   ],
+   "domains": [
+    "markx.bconclub.com"
+   ],
+   "lifetime_revenue": 11098,
+   "first_seen": "2024-01-01",
+   "last_seen": "2024-03-01",
+   "status": "dormant",
+   "services": [
+    "Adjustment/Other"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Lokazen",
+   "aliases": [
+    "Lokazen"
+   ],
+   "domains": [],
+   "lifetime_revenue": 10000,
+   "first_seen": "2026-06-01",
+   "last_seen": "2026-06-01",
+   "status": "active",
+   "services": [
+    "Platform Build"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "APX Fitness",
+   "aliases": [
+    "APX Fitness"
+   ],
+   "domains": [],
+   "lifetime_revenue": 7826,
+   "first_seen": "2024-05-01",
+   "last_seen": "2024-05-01",
+   "status": "dormant",
+   "services": [
+    "Branding/Identity"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Zams Mall",
+   "aliases": [
+    "Zams Mall"
+   ],
+   "domains": [],
+   "lifetime_revenue": 7500,
+   "first_seen": "2020-09-01",
+   "last_seen": "2020-11-01",
+   "status": "archive",
+   "services": [
+    "Design/Creative"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  },
+  {
+   "name": "Swift Learning",
+   "aliases": [
+    "Swift Learning"
+   ],
+   "domains": [],
+   "lifetime_revenue": 3500,
+   "first_seen": "2021-06-01",
+   "last_seen": "2021-06-01",
+   "status": "archive",
+   "services": [
+    "Design/Creative"
+   ],
+   "country": "IN",
+   "currency": "INR"
+  }
+ ],
+ "services": [
+  {
+   "name": "Marketing/Lead Generation",
+   "txns": 102,
+   "lifetime_revenue": 7095229,
+   "median": 70000,
+   "p25": 51755,
+   "p75": 87200
+  },
+  {
+   "name": "Marketing Retainer",
+   "txns": 60,
+   "lifetime_revenue": 2790381,
+   "median": 40000,
+   "p25": 40000,
+   "p75": 50446
+  },
+  {
+   "name": "Website Development",
+   "txns": 73,
+   "lifetime_revenue": 1631639,
+   "median": 20000,
+   "p25": 12500,
+   "p75": 25000
+  },
+  {
+   "name": "Brand Management",
+   "txns": 13,
+   "lifetime_revenue": 1029500,
+   "median": 90000,
+   "p25": 78750,
+   "p75": 90000
+  },
+  {
+   "name": "Branding/Identity",
+   "txns": 10,
+   "lifetime_revenue": 566150,
+   "median": 40000,
+   "p25": 15000,
+   "p75": 50000
+  },
+  {
+   "name": "Adjustment/Other",
+   "txns": 14,
+   "lifetime_revenue": 254698,
+   "median": 15000,
+   "p25": 5600,
+   "p75": 29500
+  },
+  {
+   "name": "Website Retainer",
+   "txns": 2,
+   "lifetime_revenue": 247952,
+   "median": 197952,
+   "p25": 50000,
+   "p75": 197952
+  },
+  {
+   "name": "Branding + Website",
+   "txns": 6,
+   "lifetime_revenue": 227250,
+   "median": 40000,
+   "p25": 24750,
+   "p75": 50000
+  },
+  {
+   "name": "Ads/Lead Setup",
+   "txns": 9,
+   "lifetime_revenue": 217032,
+   "median": 25000,
+   "p25": 15032,
+   "p75": 30000
+  },
+  {
+   "name": "Platform Build",
+   "txns": 6,
+   "lifetime_revenue": 205000,
+   "median": 30000,
+   "p25": 10000,
+   "p75": 30000
+  },
+  {
+   "name": "Video Production",
+   "txns": 4,
+   "lifetime_revenue": 172000,
+   "median": 25000,
+   "p25": 15000,
+   "p75": 127000
+  },
+  {
+   "name": "Design/Creative",
+   "txns": 9,
+   "lifetime_revenue": 92500,
+   "median": 3500,
+   "p25": 3000,
+   "p75": 4000
+  },
+  {
+   "name": "Affiliate Income",
+   "txns": 4,
+   "lifetime_revenue": 90684,
+   "median": 18618,
+   "p25": 18236,
+   "p75": 45335
+  },
+  {
+   "name": "Franchise Development",
+   "txns": 4,
+   "lifetime_revenue": 70000,
+   "median": 20000,
+   "p25": 20000,
+   "p75": 20000
+  },
+  {
+   "name": "Social Media",
+   "txns": 7,
+   "lifetime_revenue": 55000,
+   "median": 5000,
+   "p25": 5000,
+   "p75": 10000
+  },
+  {
+   "name": "Website + Marketing",
+   "txns": 1,
+   "lifetime_revenue": 50000,
+   "median": 50000,
+   "p25": 50000,
+   "p75": 50000
+  },
+  {
+   "name": "Creative Retainer",
+   "txns": 1,
+   "lifetime_revenue": 35000,
+   "median": 35000,
+   "p25": 35000,
+   "p75": 35000
+  }
+ ],
+ "receipts": [
+  {
+   "brand": "kunafaworld",
+   "received_on": "2019-11-01",
+   "fy": "2019-20",
+   "service_line": "Franchise Development",
+   "stage": "full",
+   "raw_service": "Franchise Dev",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "thesofamakers",
+   "received_on": "2019-12-01",
+   "fy": "2019-20",
+   "service_line": "Branding + Website",
+   "stage": "full",
+   "raw_service": "Logo/Website Development",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "babysutra",
+   "received_on": "2020-04-01",
+   "fy": "2020-21",
+   "service_line": "Franchise Development",
+   "stage": "full",
+   "raw_service": "Franchise Dev",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2020-07-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2020-08-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 57585,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rpgs",
+   "received_on": "2020-08-01",
+   "fy": "2020-21",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Development",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2020-09-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 64472,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rpgs",
+   "received_on": "2020-09-01",
+   "fy": "2020-21",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Development",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "zamsmall",
+   "received_on": "2020-09-01",
+   "fy": "2020-21",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Launch Designs",
+   "amount": 4000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2020-10-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 55664,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "zamsmall",
+   "received_on": "2020-11-01",
+   "fy": "2020-21",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Launch Designs",
+   "amount": 3500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2020-11-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 55620,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2020-12-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 61139,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rpgs",
+   "received_on": "2020-12-01",
+   "fy": "2020-21",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Development",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "hostinger",
+   "received_on": "2020-12-01",
+   "fy": "2020-21",
+   "service_line": "Affiliate Income",
+   "stage": "full",
+   "raw_service": "Affiliate Payout",
+   "amount": 8495,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "housie9",
+   "received_on": "2021-01-01",
+   "fy": "2020-21",
+   "service_line": "Social Media",
+   "stage": "full",
+   "raw_service": "Social Designs",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-01-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 73990,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "hostinger",
+   "received_on": "2021-01-01",
+   "fy": "2020-21",
+   "service_line": "Affiliate Income",
+   "stage": "full",
+   "raw_service": "Affiliate Payout",
+   "amount": 18618,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rpgs",
+   "received_on": "2021-01-01",
+   "fy": "2020-21",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Development",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "snaidu",
+   "received_on": "2021-01-01",
+   "fy": "2020-21",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "Logo Development",
+   "amount": 4000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "zangos",
+   "received_on": "2021-02-01",
+   "fy": "2020-21",
+   "service_line": "Franchise Development",
+   "stage": "full",
+   "raw_service": "Franchise Dev",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-02-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 68117,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-03-01",
+   "fy": "2020-21",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 64618,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "zangos",
+   "received_on": "2021-03-01",
+   "fy": "2020-21",
+   "service_line": "Franchise Development",
+   "stage": "full",
+   "raw_service": "Marketing/Franchise Development",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-04-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 58796,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "housie9",
+   "received_on": "2021-04-01",
+   "fy": "2021-22",
+   "service_line": "Social Media",
+   "stage": "full",
+   "raw_service": "Social Designs",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "zangos",
+   "received_on": "2021-04-01",
+   "fy": "2021-22",
+   "service_line": "Social Media",
+   "stage": "full",
+   "raw_service": "Social Media Handling",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "snaidu",
+   "received_on": "2021-04-01",
+   "fy": "2021-22",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Packaging Design",
+   "amount": 4000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-05-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "housie9",
+   "received_on": "2021-05-01",
+   "fy": "2021-22",
+   "service_line": "Social Media",
+   "stage": "full",
+   "raw_service": "Social Designs",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "zangos",
+   "received_on": "2021-05-01",
+   "fy": "2021-22",
+   "service_line": "Social Media",
+   "stage": "full",
+   "raw_service": "Social Media Handling",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2021-05-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Web Dev + PPC",
+   "amount": 23000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2021-06-01",
+   "fy": "2021-22",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Sinequanon Web Dev Adv",
+   "amount": 12500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-06-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 31400,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-06-01",
+   "fy": "2021-22",
+   "service_line": "Creative Retainer",
+   "stage": "full",
+   "raw_service": "Creative Retainer",
+   "amount": 35000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "swiftlearning",
+   "received_on": "2021-06-01",
+   "fy": "2021-22",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Brochure Design",
+   "amount": 3500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "snaidu",
+   "received_on": "2021-06-01",
+   "fy": "2021-22",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Product Design",
+   "amount": 3000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2021-07-01",
+   "fy": "2021-22",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "WhatsVegan Web Dev Adv",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-07-01",
+   "fy": "2021-22",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "SG4U Website Design",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-07-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 33530,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "snaidu",
+   "received_on": "2021-07-01",
+   "fy": "2021-22",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Areca Eco Product Design",
+   "amount": 3000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "snaidu",
+   "received_on": "2021-07-01",
+   "fy": "2021-22",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Cloud Foam",
+   "amount": 4000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2021-07-01",
+   "fy": "2021-22",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "Website Partial Pay",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-08-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Design +Web+Ads",
+   "amount": 58775,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-08-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 56480,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2021-08-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2021-08-01",
+   "fy": "2021-22",
+   "service_line": "Website Development",
+   "stage": "due",
+   "raw_service": "Website Due",
+   "amount": 4500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "zangos",
+   "received_on": "2021-08-01",
+   "fy": "2021-22",
+   "service_line": "Social Media",
+   "stage": "due",
+   "raw_service": "Social Handling Due",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2021-09-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-09-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Design +Web+Ads",
+   "amount": 62000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-09-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 56480,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-09-01",
+   "fy": "2021-22",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "NewWebsites  Partial",
+   "amount": 22137,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2021-10-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-10-01",
+   "fy": "2021-22",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "NewWebsites  Partial",
+   "amount": 23542,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-10-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Design +Web+Ads",
+   "amount": 21274,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-10-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Design +Web+Ads",
+   "amount": 23974,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-10-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 60489,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2021-10-01",
+   "fy": "2021-22",
+   "service_line": "Adjustment/Other",
+   "stage": "balance",
+   "raw_service": "SQN final Payment",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2021-11-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2021-11-01",
+   "fy": "2021-22",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Percentage",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-11-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Design +Web+Ads",
+   "amount": 26711,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-11-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 76630,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2021-12-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2021-12-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 72171,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2021-12-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Design +Web+Ads",
+   "amount": 26859,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-01-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-01-01",
+   "fy": "2021-22",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Percentage",
+   "amount": 24000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-01-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "due",
+   "raw_service": "Marketing Retainer+ Due",
+   "amount": 93383,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "edunati",
+   "received_on": "2022-01-01",
+   "fy": "2021-22",
+   "service_line": "Branding + Website",
+   "stage": "full",
+   "raw_service": "Webiste + Logo",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2022-01-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Retainer",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-02-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "feliciaproducts",
+   "received_on": "2022-02-01",
+   "fy": "2021-22",
+   "service_line": "Adjustment/Other",
+   "stage": "due",
+   "raw_service": "Due",
+   "amount": 5600,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-02-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "due",
+   "raw_service": "Marketing Retainer+ Due",
+   "amount": 85431,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-02-01",
+   "fy": "2021-22",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Percentage",
+   "amount": 39500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-03-01",
+   "fy": "2021-22",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-03-01",
+   "fy": "2021-22",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 65652,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "ventureout",
+   "received_on": "2022-03-01",
+   "fy": "2021-22",
+   "service_line": "Social Media",
+   "stage": "full",
+   "raw_service": "Social Designs",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-04-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-04-01",
+   "fy": "2022-23",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Cut",
+   "amount": 41000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "hostinger",
+   "received_on": "2022-04-01",
+   "fy": "2022-23",
+   "service_line": "Affiliate Income",
+   "stage": "full",
+   "raw_service": "Affiliate",
+   "amount": 18236,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-04-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 61998,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-05-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-05-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 64269,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sre",
+   "received_on": "2022-05-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Retainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-06-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-06-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 64119,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sre",
+   "received_on": "2022-06-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Retainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-07-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-07-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 64225,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2022-07-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Greenfinch Website",
+   "amount": 27000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvgroup",
+   "received_on": "2022-07-01",
+   "fy": "2022-23",
+   "service_line": "Adjustment/Other",
+   "stage": "advance",
+   "raw_service": "GlobalPride Advance",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-08-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-08-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 82978,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "acs",
+   "received_on": "2022-08-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvgroup",
+   "received_on": "2022-08-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Retainer",
+   "amount": 45000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sbgi",
+   "received_on": "2022-08-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Websie & Ads",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-09-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-09-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 85704,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sbgi",
+   "received_on": "2022-09-01",
+   "fy": "2022-23",
+   "service_line": "Ads/Lead Setup",
+   "stage": "full",
+   "raw_service": "Website + Ads Setup",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sofaplus",
+   "received_on": "2022-09-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Advance",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "theuklanchpad",
+   "received_on": "2022-09-01",
+   "fy": "2022-23",
+   "service_line": "Ads/Lead Setup",
+   "stage": "full",
+   "raw_service": "Ads Setup One time",
+   "amount": 15032,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-10-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-10-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 75938,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvgroup",
+   "received_on": "2022-10-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Retainer",
+   "amount": 45000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "trippink",
+   "received_on": "2022-10-01",
+   "fy": "2022-23",
+   "service_line": "Ads/Lead Setup",
+   "stage": "advance",
+   "raw_service": "Ads Setup One time, Advance",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2022-10-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-11-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-11-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 87200,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvgroup",
+   "received_on": "2022-11-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Retainer",
+   "amount": 45000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sofaplus",
+   "received_on": "2022-11-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "craftworldevents",
+   "received_on": "2022-11-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "finate",
+   "received_on": "2022-11-01",
+   "fy": "2022-23",
+   "service_line": "Branding + Website",
+   "stage": "full",
+   "raw_service": "Webiste and Brand Identitiy",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2022-12-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2022-12-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 86017,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvgroup",
+   "received_on": "2022-12-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Retainer",
+   "amount": 41000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2022-12-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 42906,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sofaplus",
+   "received_on": "2022-12-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "webiste",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2022-12-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "hellowiz webiste",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 80000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvgroup",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Retainer",
+   "amount": 40500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "organixrosa",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "hellowiz webiste",
+   "amount": 7000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rhaya",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "Branding",
+   "amount": 48500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "cwe",
+   "received_on": "2023-01-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Advance Glam Awards",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2023-02-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-02-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 87000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "cwe",
+   "received_on": "2023-02-01",
+   "fy": "2022-23",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste 2nd Payment",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-02-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 57141,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "organixrosa",
+   "received_on": "2023-02-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 0,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2023-03-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-03-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 81254,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "globalpride",
+   "received_on": "2023-03-01",
+   "fy": "2022-23",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-03-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 56869,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "snackbags",
+   "received_on": "2023-03-01",
+   "fy": "2022-23",
+   "service_line": "Ads/Lead Setup",
+   "stage": "full",
+   "raw_service": "Peformance One-time Setup",
+   "amount": 35000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "organixrosa",
+   "received_on": "2023-03-01",
+   "fy": "2022-23",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2023-04-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2023-04-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Kind Website",
+   "amount": 12500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-04-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 77777,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-04-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 79539,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2023-04-01",
+   "fy": "2023-24",
+   "service_line": "Adjustment/Other",
+   "stage": "advance",
+   "raw_service": "The Kind Advance",
+   "amount": 12500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "organixrosa",
+   "received_on": "2023-04-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 55878,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 79572,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "organixrosa",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "thesofamakers",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Website Final Payout",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rltr",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Retainer",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sbgi",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Ads",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste Advancve",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2023-05-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webisite",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "knu",
+   "received_on": "2023-06-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website",
+   "amount": 35000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-06-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 98920,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2023-06-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "Webiste Partial",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-06-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 57465,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "knu",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Ads/Lead Setup",
+   "stage": "full",
+   "raw_service": "Ads Setup",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 97888,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "Website Partial",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "cwe",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Branding + Website",
+   "stage": "full",
+   "raw_service": "Logo + Website DKFW",
+   "amount": 24750,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Website Final",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 55783,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "spynetsystems",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "osiyagroup",
+   "received_on": "2023-07-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-08-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 94525,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-08-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 52878,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "spynetsystems",
+   "received_on": "2023-08-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Website Balance",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rehvamp",
+   "received_on": "2023-08-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Advance",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "osiyagroup",
+   "received_on": "2023-08-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Retainer",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2023-08-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Ad Running",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-09-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 97498,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-09-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 52388,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "aichatgpt",
+   "received_on": "2023-10-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-10-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 91432,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-10-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 79832,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rehvamp",
+   "received_on": "2023-10-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste Balance",
+   "amount": 25384,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "hostinger",
+   "received_on": "2023-10-01",
+   "fy": "2023-24",
+   "service_line": "Affiliate Income",
+   "stage": "full",
+   "raw_service": "Affiliate",
+   "amount": 45335,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "qatalyticevents",
+   "received_on": "2023-11-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Advance",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-11-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 98638,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2023-11-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 35000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-11-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 51748,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "aichatgpt",
+   "received_on": "2023-11-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "craftworldevents",
+   "received_on": "2023-11-01",
+   "fy": "2023-24",
+   "service_line": "Adjustment/Other",
+   "stage": "balance",
+   "raw_service": "Women Fun Festival Balance",
+   "amount": 29500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sportshedge",
+   "received_on": "2023-12-01",
+   "fy": "2023-24",
+   "service_line": "Website Retainer",
+   "stage": "full",
+   "raw_service": "Webiste Retainer",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2023-12-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 80957,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2023-12-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 47200,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "osiyagroup",
+   "received_on": "2023-12-01",
+   "fy": "2023-24",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "GST Payment",
+   "amount": 22500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "qatalyticevents",
+   "received_on": "2024-01-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Website Full",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "osiyagroup",
+   "received_on": "2024-01-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Retainer",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2024-01-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 84713,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-01-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 48674,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "markxchange",
+   "received_on": "2024-01-01",
+   "fy": "2023-24",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Sales",
+   "amount": 2499,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 82737,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 47200,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "markxchange",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Sales",
+   "amount": 2399,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "BLVD Adance",
+   "amount": 22500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "mscdubai",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste Advancve",
+   "amount": 20650,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "osiyagroup",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Retainer",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "cwe",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste Balance",
+   "amount": 24750,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2024-02-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Brand + Website",
+   "amount": 60000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2024-03-01",
+   "fy": "2023-24",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-03-01",
+   "fy": "2023-24",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 47200,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "mscdubai",
+   "received_on": "2024-03-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste Balance",
+   "amount": 17150,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "houseofconcepts",
+   "received_on": "2024-03-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Webisite Advance",
+   "amount": 17500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "markxchange",
+   "received_on": "2024-03-01",
+   "fy": "2023-24",
+   "service_line": "Adjustment/Other",
+   "stage": "full",
+   "raw_service": "Sales",
+   "amount": 6200,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "craftworldevents",
+   "received_on": "2024-03-01",
+   "fy": "2023-24",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste Advancve",
+   "amount": 14850,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2024-04-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-04-01",
+   "fy": "2024-25",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 51920,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2024-04-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "partial",
+   "raw_service": "Marketing Partial",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "wow",
+   "received_on": "2024-04-01",
+   "fy": "2024-25",
+   "service_line": "Ads/Lead Setup",
+   "stage": "advance",
+   "raw_service": "Lead Setup Advance",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "houseofconcepts",
+   "received_on": "2024-04-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste Balance",
+   "amount": 17500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "birdbox",
+   "received_on": "2024-04-01",
+   "fy": "2024-25",
+   "service_line": "Website Retainer",
+   "stage": "advance",
+   "raw_service": "Website Adv + Social Retainer",
+   "amount": 197952,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "bhagvatienterprise",
+   "received_on": "2024-04-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Adv",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-05-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-05-01",
+   "fy": "2024-25",
+   "service_line": "Marketing Retainer",
+   "stage": "full",
+   "raw_service": "Marketing Rertainer",
+   "amount": 50446,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2024-05-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2024-05-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 35000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "apxfitness",
+   "received_on": "2024-05-01",
+   "fy": "2024-25",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "LOGO",
+   "amount": 7826,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "birdbox",
+   "received_on": "2024-06-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 212487,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-06-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 51404,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2024-06-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "osiyagroup",
+   "received_on": "2024-06-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "craftworldevents",
+   "received_on": "2024-06-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "balance",
+   "raw_service": "Setup Balance and April Ads",
+   "amount": 20250,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "washowash",
+   "received_on": "2024-06-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "balance",
+   "raw_service": "Setup Balance and April Ads",
+   "amount": 29656,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-06-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 68672,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2024-07-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Image Genration Advance",
+   "amount": 12500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "paintmywalls",
+   "received_on": "2024-07-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 0,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-07-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 51395,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-07-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 67476,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "birdbox",
+   "received_on": "2024-07-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 161735,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "digilium",
+   "received_on": "2024-07-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Transfer",
+   "amount": 16200,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "birdbox",
+   "received_on": "2024-08-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 115035,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "mrboil",
+   "received_on": "2024-08-01",
+   "fy": "2024-25",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "Branding",
+   "amount": 290824,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-08-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 72653,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-08-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 52333,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "livastu",
+   "received_on": "2024-08-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 35000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "birdbox",
+   "received_on": "2024-09-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 153074,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-09-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 81191,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2024-09-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 51755,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "newrizonspace",
+   "received_on": "2024-09-01",
+   "fy": "2024-25",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "Website Development/Branding",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-10-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 70082,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "openmindconsultants",
+   "received_on": "2024-10-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Advance",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2024-10-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "BLVD Club Final Payment",
+   "amount": 22500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "newrizonspace",
+   "received_on": "2024-11-01",
+   "fy": "2024-25",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "Website Development/Branding",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-11-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 79015,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "placementinstitute",
+   "received_on": "2024-11-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Website Advance",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2024-12-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 70000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "washowash",
+   "received_on": "2024-12-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 77000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2024-12-01",
+   "fy": "2024-25",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Aureum Web Advance",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-01-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 88000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-01-01",
+   "fy": "2024-25",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "washowash",
+   "received_on": "2025-01-01",
+   "fy": "2024-25",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Brand Management, Performance",
+   "amount": 74250,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-02-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 85130,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-02-01",
+   "fy": "2024-25",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 45000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "washowash",
+   "received_on": "2025-02-01",
+   "fy": "2024-25",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Brand Management, Performance",
+   "amount": 0,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "amillionwords",
+   "received_on": "2025-02-01",
+   "fy": "2024-25",
+   "service_line": "Ads/Lead Setup",
+   "stage": "advance",
+   "raw_service": "Lead Setup, Website Advance",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "turquoiseholidays",
+   "received_on": "2025-02-01",
+   "fy": "2024-25",
+   "service_line": "Branding + Website",
+   "stage": "full",
+   "raw_service": "Branding, Webiste",
+   "amount": 57500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-03-01",
+   "fy": "2024-25",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 64493,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-03-01",
+   "fy": "2024-25",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "washowash",
+   "received_on": "2025-03-01",
+   "fy": "2024-25",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Brand Management, Performance",
+   "amount": 78750,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "insync",
+   "received_on": "2025-03-01",
+   "fy": "2024-25",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Creatives",
+   "amount": 54000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-04-01",
+   "fy": "2025-26",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "catchmycrowd",
+   "received_on": "2025-04-01",
+   "fy": "2025-26",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Deck Design",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-04-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 69900,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "shredd",
+   "received_on": "2025-04-01",
+   "fy": "2025-26",
+   "service_line": "Branding/Identity",
+   "stage": "advance",
+   "raw_service": "Brand Setup Advance",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "turquoiseholidays",
+   "received_on": "2025-04-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Website 2nd Payment",
+   "amount": 57500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-05-01",
+   "fy": "2025-26",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-05-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 70208,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "washowash",
+   "received_on": "2025-05-01",
+   "fy": "2025-26",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Brand Management, Performance",
+   "amount": 76500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvs",
+   "received_on": "2025-05-01",
+   "fy": "2025-26",
+   "service_line": "Platform Build",
+   "stage": "full",
+   "raw_service": "PROXE",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sbgi",
+   "received_on": "2025-05-01",
+   "fy": "2025-26",
+   "service_line": "Ads/Lead Setup",
+   "stage": "full",
+   "raw_service": "Ad account setup",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-06-01",
+   "fy": "2025-26",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-06-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 71500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2025-06-01",
+   "fy": "2025-26",
+   "service_line": "Video Production",
+   "stage": "full",
+   "raw_service": "Video Edit",
+   "amount": 5000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-07-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 130000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-07-01",
+   "fy": "2025-26",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 125000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2025-07-01",
+   "fy": "2025-26",
+   "service_line": "Video Production",
+   "stage": "full",
+   "raw_service": "Video Edit",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "annonet",
+   "received_on": "2025-07-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Developemnt",
+   "amount": 49732,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-08-01",
+   "fy": "2025-26",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "mindgroup",
+   "received_on": "2025-08-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Developemnt",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "inc",
+   "received_on": "2025-08-01",
+   "fy": "2025-26",
+   "service_line": "Video Production",
+   "stage": "full",
+   "raw_service": "Video Editing",
+   "amount": 127000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "annonet",
+   "received_on": "2025-08-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Website Developemnt Final",
+   "amount": 63481,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2025-08-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Website Developemnt",
+   "amount": 12500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "11pointclub",
+   "received_on": "2025-09-01",
+   "fy": "2025-26",
+   "service_line": "Brand Management",
+   "stage": "full",
+   "raw_service": "Marketing, Brand Management",
+   "amount": 90000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-09-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "gvs",
+   "received_on": "2025-09-01",
+   "fy": "2025-26",
+   "service_line": "Video Production",
+   "stage": "full",
+   "raw_service": "Video Shoot/Creatives",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2025-09-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Website Developemnt Final",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2025-10-01",
+   "fy": "2025-26",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "Rebrand",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "adipoliaffairs",
+   "received_on": "2025-10-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste + Menu Design",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "digilium",
+   "received_on": "2025-10-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste",
+   "amount": 45763,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-11-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 120000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "newhaus",
+   "received_on": "2025-11-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Website + Ads",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sicc",
+   "received_on": "2025-11-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "full",
+   "raw_service": "Webiste Build",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sicc",
+   "received_on": "2025-12-01",
+   "fy": "2025-26",
+   "service_line": "Website + Marketing",
+   "stage": "full",
+   "raw_service": "Webiste Build + Marketing",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2025-12-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 70000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "thesofamakers",
+   "received_on": "2025-12-01",
+   "fy": "2025-26",
+   "service_line": "Ads/Lead Setup",
+   "stage": "full",
+   "raw_service": "Ads setup",
+   "amount": 12000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "adipoliaffairs",
+   "received_on": "2025-12-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste + Menu Design Final",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2025-12-01",
+   "fy": "2025-26",
+   "service_line": "Branding + Website",
+   "stage": "balance",
+   "raw_service": "Webiste + Rebrand Final",
+   "amount": 35000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "digilium",
+   "received_on": "2026-01-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Webiste Advance",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-01-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 70000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "sicc",
+   "received_on": "2026-01-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "newhaus",
+   "received_on": "2026-01-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Website + Ads",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "qatalyticevents",
+   "received_on": "2026-01-01",
+   "fy": "2025-26",
+   "service_line": "Design/Creative",
+   "stage": "full",
+   "raw_service": "Design",
+   "amount": 2500,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "digilium",
+   "received_on": "2026-02-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste Final",
+   "amount": 11000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-02-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2026-02-01",
+   "fy": "2025-26",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Wbsite Advance",
+   "amount": 56000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-03-01",
+   "fy": "2025-26",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-04-01",
+   "fy": "2026-27",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2026-04-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "Webiste Partial",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-05-01",
+   "fy": "2026-27",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-05-01",
+   "fy": "2026-27",
+   "service_line": "Platform Build",
+   "stage": "partial",
+   "raw_service": "Flight School Platform Partial",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "wowbus",
+   "received_on": "2026-05-01",
+   "fy": "2026-27",
+   "service_line": "Branding/Identity",
+   "stage": "partial",
+   "raw_service": "Branding Partial",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "nowmedia",
+   "received_on": "2026-05-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "Webiste Partial",
+   "amount": 40000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2026-05-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "partial",
+   "raw_service": "Wbsite Partial",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2026-06-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Wbsite Advance",
+   "amount": 39000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-06-01",
+   "fy": "2026-27",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "lokazen",
+   "received_on": "2026-06-01",
+   "fy": "2026-27",
+   "service_line": "Platform Build",
+   "stage": "full",
+   "raw_service": "PROXe",
+   "amount": 10000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-06-01",
+   "fy": "2026-27",
+   "service_line": "Platform Build",
+   "stage": "partial",
+   "raw_service": "Flight School Platform Partial",
+   "amount": 30000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "rehvamp",
+   "received_on": "2026-06-01",
+   "fy": "2026-27",
+   "service_line": "Platform Build",
+   "stage": "full",
+   "raw_service": "Stack Update/Redesign",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "jamaicankitchen",
+   "received_on": "2026-07-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Wbsite Advance",
+   "amount": 25000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "windchasers",
+   "received_on": "2026-07-01",
+   "fy": "2026-27",
+   "service_line": "Marketing/Lead Generation",
+   "stage": "full",
+   "raw_service": "Marketing/Lead Generation",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "yvhomes",
+   "received_on": "2026-07-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Webiste Advance",
+   "amount": 36000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "kippwell",
+   "received_on": "2026-07-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "balance",
+   "raw_service": "Webiste Full",
+   "amount": 15000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "laptopstore",
+   "received_on": "2026-07-01",
+   "fy": "2026-27",
+   "service_line": "Platform Build",
+   "stage": "advance",
+   "raw_service": "System Build Advance",
+   "amount": 100000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "isivis",
+   "received_on": "2026-07-01",
+   "fy": "2026-27",
+   "service_line": "Website Development",
+   "stage": "advance",
+   "raw_service": "Webiste Advance",
+   "amount": 20000,
+   "source": "BCON_OP/Payin"
+  },
+  {
+   "brand": "wowbus",
+   "received_on": "2026-07-01",
+   "fy": "2026-27",
+   "service_line": "Branding/Identity",
+   "stage": "full",
+   "raw_service": "Branding",
+   "amount": 50000,
+   "source": "BCON_OP/Payin"
+  }
+ ]
+}
