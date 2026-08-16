@@ -58,22 +58,49 @@ export async function POST(req: NextRequest) {
   if (!text) return NextResponse.json({ error: "Say something first." }, { status: 400 });
 
   // ── session ──
+  // Stateless mode: with the chat tables not yet migrated, questions still get
+  // answered — they only read. Statements need the intent ledger, so they say so.
+  let stateless = false;
   let sessionId: string | null = body.sessionId ?? null;
   if (!sessionId) {
     const { data, error } = await supabaseAdmin
       .from("chat_sessions").insert({ title: text.slice(0, 60) }).select("id").single();
     if (error) {
-      return NextResponse.json(
-        { error: missingTables(error.message) ? MIGRATION_NOTE : error.message },
-        { status: 500 },
-      );
+      if (!missingTables(error.message)) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      stateless = true;
+    } else {
+      sessionId = data.id;
     }
-    sessionId = data.id;
   }
 
-  await supabaseAdmin.from("chat_messages").insert({ session_id: sessionId, role: "user", content: text });
+  if (!stateless) {
+    await supabaseAdmin.from("chat_messages").insert({ session_id: sessionId, role: "user", content: text });
+  }
 
   // ── context: recent turns + any pending intent this may refine ──
+  if (stateless) {
+    const intent = parseWithRules(text);
+    if (intent.action === "question") {
+      const { say, card } = await answerQuestion(text);
+      return NextResponse.json({
+        sessionId: null,
+        message: { id: `stateless-${Date.now()}`, role: "assistant", content: say, card },
+        intent: null,
+      });
+    }
+    return NextResponse.json({
+      sessionId: null,
+      message: {
+        id: `stateless-${Date.now()}`,
+        role: "assistant",
+        content: `I can answer questions, but recording updates needs the intent ledger — ${MIGRATION_NOTE}`,
+      },
+      intent: null,
+    });
+  }
+
   const { data: recent } = await supabaseAdmin
     .from("chat_messages").select("role,content").eq("session_id", sessionId)
     .order("created_at", { ascending: false }).limit(10);
