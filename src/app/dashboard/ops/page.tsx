@@ -15,6 +15,7 @@ import { MoneyPanel } from "@/components/ops/MoneyPanel";
 import { SyncButton } from "@/components/ops/SyncButton";
 import { PeriodSummary } from "@/components/ops/PeriodSummary";
 import { FocusToday } from "@/components/ops/FocusToday";
+import { OpsChat } from "@/components/ops/OpsChat";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { BrandMark } from "@/components/ops/BrandMark";
 import { SignalDetail } from "@/components/ops/SignalDetail";
@@ -287,6 +288,10 @@ export default function DashboardPage() {
           There is no mail browser to go with it: mail is read in a mail client,
           and what ARC wants out of it is the invoices. */}
       <SyncButton onDone={load} />
+
+      {/* Updates in, answers out. Confirmed changes reload the whole page so
+          every panel below reflects them immediately. */}
+      <OpsChat onChanged={load} />
 
       <StatStrip stats={stats} />
 

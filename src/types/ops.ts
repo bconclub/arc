@@ -74,6 +74,9 @@ export type Proposal = {
   status: ProposalStatus;
   sent: string | null;
   notes: string | null;
+  /** links to the parent brand + the service line (20260815000000_services_tax_port) */
+  brand_id?: string | null;
+  service_id?: string | null;
   created_at: string;
 };
 
