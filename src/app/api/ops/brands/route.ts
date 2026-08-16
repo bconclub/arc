@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { buildPatch, patchError } from "@/lib/ops-fields";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-// Columns the dashboard is allowed to write. The `brands` table is the client
-// register and also holds GST/billing fields (gstin, place_of_supply, currency,
-// lifetime_revenue…), those are owned by the billing side and are deliberately
-// NOT writable from here.
-const WRITABLE = ["name", "logo_url", "color", "notes", "status", "kind", "via_brand_id", "aliases", "domains", "github_repos"];
+// The writable-column list lives in lib/ops-fields.ts, shared with the PATCH
+// route — it used to exist twice with different contents, which is how lists
+// drift. GST/billing columns stay deliberately unwritable from the dashboard.
 
 export async function GET() {
   const { data, error } = await supabaseAdmin.from("brands").select("*").order("name");
@@ -21,12 +20,9 @@ export async function POST(req: NextRequest) {
   if (!body.name || !String(body.name).trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
-
-  const row: Record<string, unknown> = { name: String(body.name).trim() };
-  for (const key of WRITABLE) {
-    if (key !== "name" && key in body && body[key] !== "") row[key] = body[key];
-  }
-
+  const res = buildPatch("brands", body);
+  if (!res.ok) return NextResponse.json(patchError(res), { status: 400 });
+  const row = { ...res.patch, name: String(body.name).trim() };
   const { data, error } = await supabaseAdmin.from("brands").insert(row).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { buildPatch, patchError } from "@/lib/ops-fields";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -12,22 +13,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { data, error } = await supabaseAdmin
-    .from("projects")
-    .insert({
-      name: body.name,
-      client: body.client || null,
-      status: body.status || "active",
-      next: body.next || null,
-      start_date: body.start_date || null,
-      end_date: body.end_date || null,
-      budget: body.budget === "" || body.budget == null ? null : Number(body.budget),
-      size: body.size || null,
-      progress: body.progress == null ? 0 : Number(body.progress),
-      tasks: body.tasks || [],
-    })
-    .select()
-    .single();
+  if (!body.name || !String(body.name).trim()) {
+    return NextResponse.json({ error: "name is required" }, { status: 400 });
+  }
+  const res = buildPatch("projects", body);
+  if (!res.ok) return NextResponse.json(patchError(res), { status: 400 });
+  const row = { status: "active", progress: 0, tasks: [], ...res.patch };
+  const { data, error } = await supabaseAdmin.from("projects").insert(row).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
