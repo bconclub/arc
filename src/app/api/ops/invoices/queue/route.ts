@@ -29,12 +29,18 @@ export async function GET(req: NextRequest) {
   // Scoped to one brand, the list has to be about that brand. It was showing
   // every unparsed attachment in the mailbox on every brand page, so an
   // ElevenLabs receipt sat under Felicia Products as though it were theirs.
-  // Matching is done here rather than in SQL because the only reliable signal
-  // is inside the parsed JSON.
   if (brand) {
     const needle = brand.toLowerCase();
+
+    // A row the scan attributed by domain or alias is scoped by that id —
+    // definitive either way. Only unattributed rows fall through to the
+    // word-matching heuristic.
+    const { data: brandRow } = await supabaseAdmin
+      .from("brands").select("id,name,aliases").ilike("name", brand).maybeSingle();
+
     const words = needle.split(/\s+/).filter((w) => w.length > 3);
     items = items.filter((row) => {
+      if (brandRow && row.brand_id) return row.brand_id === brandRow.id;
       const parsed = (row.parsed ?? {}) as Record<string, unknown>;
       const billed = String(parsed.billed_to ?? parsed.client ?? "").toLowerCase();
       if (billed && (billed.includes(needle) || needle.includes(billed))) return true;

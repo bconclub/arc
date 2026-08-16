@@ -125,7 +125,9 @@ export function InvoiceDetail({
     await fetch(`/api/ops/payments/${payment.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "paid" }),
+      // The date money landed, not just the fact of it — "average time to get
+      // paid" is computed from paid_at and was null forever without this.
+      body: JSON.stringify({ status: "paid", paid_at: new Date().toISOString() }),
     });
     onChanged();
   }

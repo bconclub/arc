@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { findInvoiceAttachments, downloadAttachment, gmailConfigured } from "@/lib/gmail";
 import { parseInvoice } from "@/lib/invoices/parse";
+import { brandForEmail, brandForText } from "@/lib/brand-match";
+import type { Brand } from "@/types/ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,6 +84,12 @@ async function runScan(query: string | undefined, limit: number) {
   const fresh = candidates.filter((c) => !seen.has(`${c.messageId}:${c.attachmentId}`));
   const batch = fresh.slice(0, limit);
 
+  // Loaded once per run so each attachment can be stamped with the brand it
+  // belongs to — by the sender's registered domain first, then by name or
+  // alias in what was parsed or in the mail headers.
+  const { data: brandRows } = await supabaseAdmin.from("brands").select("*");
+  const brands = (brandRows ?? []) as Brand[];
+
   const items: Record<string, unknown>[] = [];
   let queued = 0;
   let failed = 0;
@@ -102,6 +110,10 @@ async function runScan(query: string | undefined, limit: number) {
       row.parsed = parsed;
       row.confidence = parsed.confidence;
       row.status = "pending";
+      const brand =
+        brandForEmail(c.from, brands) ??
+        brandForText(`${parsed.client ?? ""} ${c.subject ?? ""} ${c.filename ?? ""}`, brands);
+      if (brand) row.brand_id = brand.id;
       queued += 1;
       items.push({ ...c, parsed });
     } catch (e) {
@@ -113,7 +125,14 @@ async function runScan(query: string | undefined, limit: number) {
       items.push({ ...c, error: row.error });
     }
 
-    await supabaseAdmin.from("email_ingest").upsert(row, { onConflict: "message_id,attachment_id" });
+    const { error: upsertErr } = await supabaseAdmin
+      .from("email_ingest").upsert(row, { onConflict: "message_id,attachment_id" });
+    // Until 20260816000000 runs, email_ingest has no brand_id — losing the
+    // whole reading over the stamp would be backwards, so retry without it.
+    if (upsertErr && /brand_id/.test(upsertErr.message) && "brand_id" in row) {
+      delete row.brand_id;
+      await supabaseAdmin.from("email_ingest").upsert(row, { onConflict: "message_id,attachment_id" });
+    }
   }
 
   return NextResponse.json({
