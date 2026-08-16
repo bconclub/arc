@@ -65,7 +65,9 @@ export function InvoiceQueue({
     setItems(Array.isArray(res.items) ? res.items : []);
     setDetail(res.detail ?? "");
     setLoading(false);
-  }, []);
+    // `brand` must be a dependency: with [] the callback closes over the first
+    // brand forever and a brand-scoped queue never reloads for another brand.
+  }, [brand]);
 
   useEffect(() => { load(); }, [load]);
 
