@@ -6,8 +6,9 @@
  * download call, and the invoice figures live only inside those PDFs, so ARC has
  * to fetch them itself.
  *
- * Scope is `gmail.readonly` throughout. ARC reads invoices; it never sends,
- * labels, moves or deletes mail.
+ * Scopes: `gmail.readonly` for everything above, plus `gmail.compose` for the
+ * Outreach wing, which writes DRAFTS only. ARC never sends, labels, moves or
+ * deletes mail; sending is always a human action taken in Gmail itself.
  */
 
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
@@ -261,4 +262,64 @@ export async function getMail(id: string): Promise<MailDetail> {
   const token = await gmailAccessToken();
   const msg = await call(`messages/${id}`, token, { format: "full" });
   return { ...summarise(msg), body: extractBody(msg.payload as FullPart) };
+}
+
+// ── Drafting ────────────────────────────────────────────────
+//
+// The Outreach wing writes drafts into Gmail's Drafts folder and stops there.
+// Needs the `gmail.compose` scope (re-run scripts/gmail-auth.mjs after adding
+// it). Deliberately no send function in this file: review-then-send in Gmail
+// is the safety model, and code that cannot send cannot mis-send.
+
+export type GmailDraftRef = { draftId: string; messageId: string; threadId: string };
+
+/** RFC 2822 requires header values without raw non-ASCII; encode when needed. */
+function encodeHeaderWord(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  if (/^[\x00-\x7F]*$/.test(value)) return value;
+  return `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`;
+}
+
+export async function createDraft({ to, subject, body }: {
+  to: string; subject: string; body: string;
+}): Promise<GmailDraftRef> {
+  const token = await gmailAccessToken();
+
+  const raw = Buffer.from(
+    [
+      `To: ${to}`,
+      `Subject: ${encodeHeaderWord(subject)}`,
+      `Content-Type: text/plain; charset="UTF-8"`,
+      `Content-Transfer-Encoding: 8bit`,
+      ``,
+      body,
+    ].join("\r\n"),
+    "utf8",
+  ).toString("base64url");
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API}/drafts`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ message: { raw } }),
+      signal: ctrl.signal,
+      cache: "no-store",
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      const hint = res.status === 403
+        ? " The refresh token likely lacks the gmail.compose scope; re-run scripts/gmail-auth.mjs and paste the new token."
+        : "";
+      throw new Error((json?.error?.message ?? `HTTP ${res.status}`) + hint);
+    }
+    return {
+      draftId: String(json.id ?? ""),
+      messageId: String(json.message?.id ?? ""),
+      threadId: String(json.message?.threadId ?? ""),
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }

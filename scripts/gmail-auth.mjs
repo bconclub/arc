@@ -15,14 +15,18 @@
  * flow against it: open the consent page, catch the redirect on localhost,
  * exchange the code, and write the refresh token back into .env.local.
  *
- * Read-only scope. ARC never sends, labels, moves or deletes mail.
+ * Scopes: readonly (invoice scan) + compose (Outreach wing writes DRAFTS).
+ * ARC never sends, labels, moves or deletes mail; sending stays human.
  */
 import fs from "node:fs";
 import http from "node:http";
 import { spawn } from "node:child_process";
 
 const ENV_PATH = new URL("../.env.local", import.meta.url);
-const SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
+const SCOPE = [
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/gmail.compose",
+].join(" ");
 const PORT = 4571;
 const REDIRECT = `http://localhost:${PORT}`;
 
@@ -94,7 +98,11 @@ async function main() {
     });
     server.listen(PORT, () => {
       console.log(`\nOpening the consent page. If nothing opens, paste this:\n\n${url}\n`);
-      spawn("open", [url], { stdio: "ignore", detached: true }).unref();
+      // "open" is macOS; Windows wants "start" via cmd, Linux xdg-open.
+      const opener = process.platform === "win32"
+        ? ["cmd", ["/c", "start", "", url]]
+        : process.platform === "darwin" ? ["open", [url]] : ["xdg-open", [url]];
+      spawn(opener[0], opener[1], { stdio: "ignore", detached: true }).unref();
     });
     // Without a timeout an abandoned flow leaves the port held open forever.
     setTimeout(() => { server.close(); reject(new Error("Timed out after 5 minutes.")); }, 300_000);

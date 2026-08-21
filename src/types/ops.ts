@@ -368,3 +368,48 @@ export type GtmArea = {
   items: GtmItem[];
   updated_at: string;
 };
+
+// ── Outreach wing ──────────────────────────────────────────────
+// One pipeline, four kinds: business (10/day founder emails), investor,
+// grant (Raise track), citation (AEO placements). Drafts land in Gmail
+// Drafts; sending is always a human action, so "sent" is set by hand.
+
+export type OutreachKind = "business" | "investor" | "grant" | "citation";
+export type OutreachStatus =
+  | "identified" | "researched" | "drafted" | "sent"
+  | "replied" | "meeting" | "won" | "lost" | "no_reply";
+
+export type OutreachTarget = {
+  id: string;
+  kind: OutreachKind;
+  name: string;
+  org: string | null;
+  segment: string | null;
+  city: string | null;
+  email: string | null;
+  phone: string | null;
+  linkedin: string | null;
+  website: string | null;
+  why_them: string | null;
+  research: string | null;
+  status: OutreachStatus;
+  source: string | null;
+  notes: string | null;
+  next_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OutreachMessage = {
+  id: string;
+  target_id: string;
+  direction: "out" | "in";
+  channel: "email" | "linkedin" | "whatsapp" | "call";
+  subject: string | null;
+  body: string | null;
+  gmail_draft_id: string | null;
+  gmail_message_id: string | null;
+  gmail_thread_id: string | null;
+  sent_at: string | null;
+  created_at: string;
+};

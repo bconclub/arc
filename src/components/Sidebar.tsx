@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FileText, Boxes, FolderKanban, Wallet, Radio,
   BarChart3, Users, Radar, Rss, CalendarDays, PenLine,
   Palette, Bot, TrendingUp, Plug, Settings, LogOut, X, IndianRupee,
-  Target, ShieldCheck, AlertTriangle, Rocket,
+  Target, ShieldCheck, AlertTriangle, Rocket, Send,
 } from "lucide-react";
 import { VERSION } from "@/lib/version";
 import { ArcLogo, ArcMark } from "@/components/ArcLogo";
@@ -76,7 +76,10 @@ const nav: NavSection[] = [
   },
   {
     heading: "Strategy",
-    items: [{ label: "GTM", href: "/dashboard/gtm", icon: Target, exact: true }],
+    items: [
+      { label: "GTM", href: "/dashboard/gtm", icon: Target, exact: true },
+      { label: "Outreach", href: "/dashboard/outreach", icon: Send, exact: true },
+    ],
   },
   {
     heading: "PROXe",
