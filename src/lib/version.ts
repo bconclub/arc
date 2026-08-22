@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.27";
+export const VERSION = "0.0.28";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.28",
+    date: "2026-08-22",
+    notes: "Outreach board is a dense lead table like PROXe.",
+  },
   {
     version: "0.0.27",
     date: "2026-08-22",
