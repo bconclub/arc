@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.26";
+export const VERSION = "0.0.27";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.27",
+    date: "2026-08-22",
+    notes: "Outreach now defaults to showing the full active board. Today's 10 only appears when explicitly collapsed.",
+  },
   {
     version: "0.0.26",
     date: "2026-08-16",
