@@ -200,22 +200,62 @@ export default function OutreachPage() {
     load();
   }
 
-  function Row({ t }: { t: OutreachTarget }) {
+  function TargetsTable({ targets }: { targets: OutreachTarget[] }) {
+    if (targets.length === 0) return null;
+    
     return (
-      <button
-        onClick={() => openTarget(t)}
-        className="flex w-full items-center gap-3 rounded-card border border-[var(--border)] bg-surface px-3.5 py-2.5 text-left transition-all hover:border-[var(--border-strong)] hover:bg-surface-hover"
-      >
-        <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_META[t.status].dot}`} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-medium text-text">{t.name}</span>
-          <span className="block truncate text-[11px] text-text-muted">
-            {[t.segment, t.city, t.phone].filter(Boolean).join(" · ") || t.why_them || "—"}
-          </span>
-        </span>
-        <span className="shrink-0 text-[10.5px] uppercase tracking-wide text-text-muted">{t.kind}</span>
-        <span className="shrink-0 text-[11px] text-text-muted">{STATUS_META[t.status].label}</span>
-      </button>
+      <div className="overflow-hidden rounded-card border border-[var(--border)] bg-surface">
+        <table className="min-w-full divide-y divide-[var(--border)]">
+          <thead className="bg-surface">
+            <tr className="text-left text-[10px] uppercase tracking-wider text-text-muted">
+              <th className="px-3 py-2 font-semibold">Name</th>
+              <th className="px-3 py-2 font-semibold">Segment</th>
+              <th className="px-3 py-2 font-semibold">City</th>
+              <th className="px-3 py-2 font-semibold">Phone</th>
+              <th className="px-3 py-2 font-semibold">Website</th>
+              <th className="px-3 py-2 font-semibold">Status</th>
+              <th className="px-3 py-2 font-semibold">Kind</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--border)]">
+            {targets.map((t) => (
+              <tr
+                key={t.id}
+                onClick={() => openTarget(t)}
+                className="cursor-pointer transition-colors hover:bg-surface-hover"
+              >
+                <td className="px-3 py-1.5 text-[12.5px] font-medium text-text">{t.name}</td>
+                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.segment || "—"}</td>
+                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.city || "—"}</td>
+                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.phone || "—"}</td>
+                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">
+                  {t.website ? (
+                    <a
+                      href={t.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex max-w-[180px] items-center gap-1 truncate text-text hover:underline"
+                    >
+                      {t.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      <ExternalLink size={10} className="shrink-0" />
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td className="px-3 py-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-hover px-2 py-0.5 text-[10.5px] font-medium text-text-muted">
+                    <span className={`h-1.5 w-1.5 rounded-full ${STATUS_META[t.status].dot}`} />
+                    {STATUS_META[t.status].label}
+                  </span>
+                </td>
+                <td className="px-3 py-1.5 text-[10.5px] uppercase tracking-wide text-text-muted">{t.kind}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   }
 
@@ -315,14 +355,13 @@ export default function OutreachPage() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
             Today — research, draft, send ({today.length}/10)
           </p>
-          <div className="space-y-1.5">
-            {today.map((t) => <Row key={t.id} t={t} />)}
-            {today.length === 0 && (
-              <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
-                No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
-              </p>
-            )}
-          </div>
+          {today.length === 0 ? (
+            <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
+              No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
+            </p>
+          ) : (
+            <TargetsTable targets={today} />
+          )}
           {allProspects.length > 10 && (
             <button
               onClick={() => setShowAllProspects(true)}
@@ -348,9 +387,7 @@ export default function OutreachPage() {
               Back to Today&apos;s 10
             </button>
           </div>
-          <div className="space-y-1.5">
-            {allProspects.map((t) => <Row key={t.id} t={t} />)}
-          </div>
+          <TargetsTable targets={allProspects} />
         </div>
       )}
 
@@ -359,9 +396,7 @@ export default function OutreachPage() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
             Pipeline ({rest.length})
           </p>
-          <div className="space-y-1.5">
-            {rest.map((t) => <Row key={t.id} t={t} />)}
-          </div>
+          <TargetsTable targets={rest} />
         </div>
       )}
 
