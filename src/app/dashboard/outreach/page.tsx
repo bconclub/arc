@@ -51,7 +51,7 @@ export default function OutreachPage() {
   const [city, setCity] = useState("Bangalore");
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
   const [statusFilter, setStatusFilter] = useState<OutreachStatus | "active" | null>(null);
-  const [showAllProspects, setShowAllProspects] = useState(false);
+  const [preferToday, setPreferToday] = useState(false);
 
   const load = useCallback(async () => {
     const data = await fetch("/api/outreach").then((r) => r.json()).catch(() => []);
@@ -92,12 +92,8 @@ export default function OutreachPage() {
     [filtered],
   );
 
-  // Auto-expand to show all prospects when there are more than 10
-  useEffect(() => {
-    if (allProspects.length > 10) {
-      setShowAllProspects(true);
-    }
-  }, [allProspects.length]);
+  // Derive display mode: when >10 active prospects, default to expanded view unless user explicitly collapsed
+  const showAllProspects = allProspects.length > 10 ? !preferToday : false;
 
   const counts = useMemo(() => {
     const c: Partial<Record<OutreachStatus, number>> = {};
@@ -332,7 +328,7 @@ export default function OutreachPage() {
           </div>
           {allProspects.length > 10 && (
             <button
-              onClick={() => setShowAllProspects(true)}
+              onClick={() => setPreferToday(false)}
               className="mt-3 w-full rounded-card border border-[var(--border)] bg-surface px-3.5 py-2 text-[12px] text-text-muted transition-all hover:border-[var(--border-strong)] hover:bg-surface-hover hover:text-text"
             >
               Show all {allProspects.length} prospects (identified, researched, drafted)
@@ -349,7 +345,7 @@ export default function OutreachPage() {
               All prospects — {allProspects.length} active
             </p>
             <button
-              onClick={() => setShowAllProspects(false)}
+              onClick={() => setPreferToday(true)}
               className="text-[11px] text-text-muted hover:text-text"
             >
               Back to Today&apos;s 10
