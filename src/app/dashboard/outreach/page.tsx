@@ -92,8 +92,8 @@ export default function OutreachPage() {
     [filtered],
   );
 
-  // Derive display mode: when >10 active prospects, default to expanded view unless user explicitly collapsed
-  const showAllProspects = allProspects.length > 10 ? !preferToday : false;
+  // Derive display mode: ALWAYS show expanded unless user explicitly collapsed
+  const showAllProspects = !preferToday;
 
   const counts = useMemo(() => {
     const c: Partial<Record<OutreachStatus, number>> = {};
@@ -338,21 +338,29 @@ export default function OutreachPage() {
       )}
 
       {/* All prospects board - shows everything without the 10 cap */}
-      {showAllProspects && allProspects.length > 0 && (
+      {showAllProspects && (
         <div>
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
               All prospects — {allProspects.length} active
             </p>
-            <button
-              onClick={() => setPreferToday(true)}
-              className="text-[11px] text-text-muted hover:text-text"
-            >
-              Back to Today&apos;s 10
-            </button>
+            {showAllProspects && allProspects.length > 10 && (
+              <button
+                onClick={() => setPreferToday(true)}
+                className="text-[11px] text-text-muted hover:text-text"
+              >
+                Back to Today&apos;s 10
+              </button>
+            )}
           </div>
           <div className="space-y-1.5">
-            {allProspects.map((t) => <Row key={t.id} t={t} />)}
+            {allProspects.length > 0 ? (
+              allProspects.map((t) => <Row key={t.id} t={t} />)
+            ) : (
+              <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
+                No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
+              </p>
+            )}
           </div>
         </div>
       )}
