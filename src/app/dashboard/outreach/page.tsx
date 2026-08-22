@@ -59,6 +59,13 @@ export default function OutreachPage() {
   }, []);
   useEffect(() => { load(); }, [load]);
 
+  // Auto-expand to show all prospects when there are more than 10
+  useEffect(() => {
+    if (allProspects.length > 10) {
+      setShowAllProspects(true);
+    }
+  }, [allProspects.length]);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     let result = targets.filter((t) => {
