@@ -345,7 +345,7 @@ export default function OutreachPage() {
               onClick={() => setShowAllProspects(false)}
               className="text-[11px] text-text-muted hover:text-text"
             >
-              Back to Today's 10
+              Back to Today&apos;s 10
             </button>
           </div>
           <div className="space-y-1.5">
