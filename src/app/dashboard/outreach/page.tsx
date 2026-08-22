@@ -92,6 +92,13 @@ export default function OutreachPage() {
     [filtered],
   );
 
+  // Auto-expand to show all prospects when there are more than 10
+  useEffect(() => {
+    if (allProspects.length > 10) {
+      setShowAllProspects(true);
+    }
+  }, [allProspects.length]);
+
   const counts = useMemo(() => {
     const c: Partial<Record<OutreachStatus, number>> = {};
     for (const t of targets) c[t.status] = (c[t.status] ?? 0) + 1;
