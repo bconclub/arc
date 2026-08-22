@@ -50,6 +50,8 @@ export default function OutreachPage() {
   const [segment, setSegment] = useState("");
   const [city, setCity] = useState("Bangalore");
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
+  const [statusFilter, setStatusFilter] = useState<OutreachStatus | "active" | null>(null);
+  const [showAllProspects, setShowAllProspects] = useState(false);
 
   const load = useCallback(async () => {
     const data = await fetch("/api/outreach").then((r) => r.json()).catch(() => []);
@@ -59,16 +61,30 @@ export default function OutreachPage() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return targets.filter((t) => {
+    let result = targets.filter((t) => {
       if (tab !== "all" && t.kind !== tab) return false;
       if (!needle) return true;
       return [t.name, t.org, t.segment, t.city, t.email, t.status]
         .some((f) => (f ?? "").toLowerCase().includes(needle));
     });
-  }, [targets, tab, q]);
+
+    if (statusFilter) {
+      if (statusFilter === "active") {
+        result = result.filter((t) => ACTIVE.includes(t.status));
+      } else {
+        result = result.filter((t) => t.status === statusFilter);
+      }
+    }
+
+    return result;
+  }, [targets, tab, q, statusFilter]);
 
   const today = useMemo(
     () => filtered.filter((t) => ACTIVE.includes(t.status)).slice(0, 10),
+    [filtered],
+  );
+  const allProspects = useMemo(
+    () => filtered.filter((t) => ACTIVE.includes(t.status)),
     [filtered],
   );
   const rest = useMemo(
@@ -234,38 +250,111 @@ export default function OutreachPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {KIND_TABS.map((k) => (
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-1.5">
+          {KIND_TABS.map((k) => (
+            <button
+              key={k.key}
+              onClick={() => setTab(k.key)}
+              className={`rounded-full border px-3 py-1 text-[12px] transition-all ${
+                tab === k.key
+                  ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
+                  : "border-[var(--border)] text-text-muted hover:text-text"
+              }`}
+            >
+              {k.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-medium text-text-muted">Status:</span>
           <button
-            key={k.key}
-            onClick={() => setTab(k.key)}
-            className={`rounded-full border px-3 py-1 text-[12px] transition-all ${
-              tab === k.key
+            onClick={() => setStatusFilter(null)}
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-all ${
+              statusFilter === null
                 ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
                 : "border-[var(--border)] text-text-muted hover:text-text"
             }`}
           >
-            {k.label}
+            All
           </button>
-        ))}
-      </div>
-
-      {/* Today: the working set, capped at 10 by design (10/day is the motion) */}
-      <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-          Today — research, draft, send ({today.length}/10)
-        </p>
-        <div className="space-y-1.5">
-          {today.map((t) => <Row key={t.id} t={t} />)}
-          {today.length === 0 && (
-            <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
-              No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
-            </p>
-          )}
+          <button
+            onClick={() => setStatusFilter("active")}
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-all ${
+              statusFilter === "active"
+                ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
+                : "border-[var(--border)] text-text-muted hover:text-text"
+            }`}
+          >
+            Active (prospecting)
+          </button>
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-all ${
+                statusFilter === s
+                  ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
+                  : "border-[var(--border)] text-text-muted hover:text-text"
+              }`}
+            >
+              <span className="flex items-center gap-1">
+                <span className={`h-1.5 w-1.5 rounded-full ${STATUS_META[s].dot}`} />
+                {STATUS_META[s].label}
+                {counts[s] ? ` (${counts[s]})` : ""}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {rest.length > 0 && (
+      {/* Today: the working set, capped at 10 by design (10/day is the motion) */}
+      {!showAllProspects && (
+        <div>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+            Today — research, draft, send ({today.length}/10)
+          </p>
+          <div className="space-y-1.5">
+            {today.map((t) => <Row key={t.id} t={t} />)}
+            {today.length === 0 && (
+              <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
+                No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
+              </p>
+            )}
+          </div>
+          {allProspects.length > 10 && (
+            <button
+              onClick={() => setShowAllProspects(true)}
+              className="mt-3 w-full rounded-card border border-[var(--border)] bg-surface px-3.5 py-2 text-[12px] text-text-muted transition-all hover:border-[var(--border-strong)] hover:bg-surface-hover hover:text-text"
+            >
+              Show all {allProspects.length} prospects (identified, researched, drafted)
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* All prospects board - shows everything without the 10 cap */}
+      {showAllProspects && allProspects.length > 0 && (
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+              All prospects — {allProspects.length} active
+            </p>
+            <button
+              onClick={() => setShowAllProspects(false)}
+              className="text-[11px] text-text-muted hover:text-text"
+            >
+              Back to Today&apos;s 10
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            {allProspects.map((t) => <Row key={t.id} t={t} />)}
+          </div>
+        </div>
+      )}
+
+      {!showAllProspects && rest.length > 0 && (
         <div>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
             Pipeline ({rest.length})
