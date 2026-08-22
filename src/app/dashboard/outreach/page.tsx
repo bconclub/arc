@@ -210,7 +210,7 @@ export default function OutreachPage() {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13px] font-medium text-text">{t.name}</span>
           <span className="block truncate text-[11px] text-text-muted">
-            {[t.segment, t.city, t.email].filter(Boolean).join(" · ") || t.why_them || "—"}
+            {[t.segment, t.city, t.phone].filter(Boolean).join(" · ") || t.why_them || "—"}
           </span>
         </span>
         <span className="shrink-0 text-[10.5px] uppercase tracking-wide text-text-muted">{t.kind}</span>
@@ -393,6 +393,9 @@ export default function OutreachPage() {
             </Field>
             <Field label="Email">
               <input className={inputCls} value={editing.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value })} />
+            </Field>
+            <Field label="Phone">
+              <input className={inputCls} value={editing.phone ?? ""} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} />
             </Field>
             <Field label="Website">
               <input className={inputCls} value={editing.website ?? ""} onChange={(e) => setEditing({ ...editing, website: e.target.value })} />
