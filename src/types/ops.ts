@@ -141,6 +141,8 @@ export type OpsSignal = {
   url: string | null;
   seen: boolean;
   ts: string;
+  /** Optional: absent until the 20260815000000 brand_id migration runs. */
+  brand_id?: string | null;
 };
 
 export type NowTask = {
