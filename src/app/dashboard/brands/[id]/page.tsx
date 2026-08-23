@@ -11,6 +11,7 @@ import { rollupBrand, brandKeys, contactsFor, parseChannel, UNPAID, IN_PLAY } fr
 import { HealthRing, TrendLine, Donut } from "@/components/ops/Charts";
 import { BrandMark } from "@/components/ops/BrandMark";
 import { InvoiceQueue } from "@/components/money/InvoiceQueue";
+import { MailSyncButton } from "@/components/ops/MailSyncButton";
 import { SitePreview } from "@/components/ops/SitePreview";
 import { BrandTimeline } from "@/components/ops/BrandTimeline";
 import {
@@ -563,6 +564,11 @@ export default function BrandProfilePage() {
         title={`Invoices in email for ${brand.name}`}
         onChanged={load}
       />
+      {/* The other half of the same mailbox: mail that carries no invoice but
+          still says where this client stands, filed onto the timeline. */}
+      <div className="flex justify-end">
+        <MailSyncButton brand={brand.name} onDone={load} />
+      </div>
       </>)}
 
       {tab === "money" && (<>
