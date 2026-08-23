@@ -253,7 +253,8 @@ export default function BrandProfilePage() {
     const slugs = (brand.github_repos ?? []).map((s) => s.toLowerCase());
     return {
       payments: payments.filter((p) => match(p.client)),
-      projects: projects.filter((p) => match(p.client)),
+      // Same union rollupBrand uses: the brand_id FK first, client text second.
+      projects: projects.filter((p) => p.brand_id === brand.id || match(p.client)),
       proposals: proposals.filter((p) => match(p.client)),
       repos: (gh?.repos ?? []).filter((r) => slugs.includes(r.name.toLowerCase())),
       events: (gh?.events ?? []).filter((e) => slugs.includes(e.repo.toLowerCase())),

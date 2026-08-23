@@ -122,7 +122,11 @@ export function rollupBrand(
 ): BrandRollup {
   const keys = brandKeys(brand);
   const myPayments = payments.filter((p) => isClient(p.client, keys));
-  const myProjects = projects.filter((p) => isClient(p.client, keys));
+  // Projects are the one thing that carries a real FK. Seeded delivery rows set
+  // brand_id and a canonical `client`, but rows entered by hand carry only the
+  // text — so match on either. Name-only matching dropped every project whose
+  // client string had since been edited away from the brand's spellings.
+  const myProjects = projects.filter((p) => p.brand_id === brand.id || isClient(p.client, keys));
   const myProposals = proposals.filter((p) => isClient(p.client, keys));
 
   const unpaid = myPayments.filter((p) => UNPAID.includes(p.status));

@@ -1,0 +1,168 @@
+{
+  "as_of": "2026-08-23",
+  "source": "CEO mail SoT in BCON OPS. CMO owns corrections after.",
+  "brands": [
+    {
+      "canonical": "Laptop Store",
+      "aliases_add": [
+        "LaptopStore",
+        "Laptopstore",
+        "itel computer"
+      ],
+      "status": "active"
+    },
+    {
+      "canonical": "WindChasers",
+      "aliases_add": [
+        "Wind Chasers",
+        "Windchasers",
+        "Wind Chaser"
+      ],
+      "status": "active"
+    },
+    {
+      "canonical": "Turquoise",
+      "aliases_add": [
+        "Turquoise Holidays",
+        "Turquoise Ops"
+      ],
+      "status": "active"
+    },
+    {
+      "canonical": "YV Homes",
+      "aliases_add": [
+        "YVHomes",
+        "yv homes"
+      ],
+      "status": "active"
+    },
+    {
+      "canonical": "Jamaican Kitchen",
+      "aliases_add": [
+        "JamaicanKitchen"
+      ],
+      "status": "active"
+    },
+    {
+      "canonical": "Kosh Studios",
+      "aliases_add": [
+        "Kosh",
+        "KOSH"
+      ],
+      "status": "active",
+      "kind": "client",
+      "via_brand": "Now Media",
+      "via_kind": "agency"
+    },
+    {
+      "canonical": "WOWBUS (Arvin Software LLP)",
+      "aliases_add": [
+        "WOWBUS",
+        "WOW Bus",
+        "Arvin Software LLP",
+        "Arvinsoftware LLP"
+      ],
+      "status": "active"
+    },
+    {
+      "canonical": "ISIVIS Group",
+      "aliases_add": [
+        "ISIVIS",
+        "Isivis Group",
+        "ISVIS Group"
+      ],
+      "status": "active"
+    }
+  ],
+  "projects": [
+    {
+      "client": "Laptop Store",
+      "name": "Platform build (Zoho)",
+      "status": "active",
+      "kind": "one-time",
+      "progress": 85,
+      "next": "inventory sync + hosting approval",
+      "start_date": "2026-07-28",
+      "end_date": null,
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: retainer PDF 2022 (old); no new proposal post-2022"
+    },
+    {
+      "client": "WindChasers",
+      "name": "Exam / Flight School",
+      "status": "waiting",
+      "kind": "one-time",
+      "progress": 20,
+      "next": "confirm exam invoice pay + Phase 1",
+      "start_date": "2026-07-31",
+      "end_date": null,
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: Growth Proposal May 2024; Exam invoice 31 Jul 2026"
+    },
+    {
+      "client": "Turquoise",
+      "name": "Ops portal",
+      "status": "waiting",
+      "kind": "one-time",
+      "progress": 10,
+      "next": "Sumaiya go/no-go on commercials",
+      "start_date": "2026-08-04",
+      "end_date": null,
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: Holidays proposal Doc mod 28 Oct 2025"
+    },
+    {
+      "client": "YV Homes",
+      "name": "Website",
+      "status": "active",
+      "kind": "one-time",
+      "progress": 90,
+      "next": "UAT signoff / go-live",
+      "start_date": "2026-07-14",
+      "end_date": "2026-08-27",
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: Contract+Invoice 14 Jul 2026"
+    },
+    {
+      "client": "Jamaican Kitchen",
+      "name": "Website + Dine Central",
+      "status": "active",
+      "kind": "one-time",
+      "progress": 60,
+      "next": "bugs + Shah testing",
+      "start_date": "2026-05-01",
+      "end_date": null,
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: no proposal PDF; questionnaire May 2026; system sheet Jul\u2013Aug 2026"
+    },
+    {
+      "client": "Kosh Studios",
+      "name": "Shopify staging",
+      "status": "active",
+      "kind": "one-time",
+      "progress": 40,
+      "next": "post-Shopify milestone",
+      "start_date": "2026-08-03",
+      "end_date": null,
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: no retainer proposal; NOW x BCON Doc 5\u201311 Aug; wireframe 5 Aug"
+    },
+    {
+      "client": "WOWBUS (Arvin Software LLP)",
+      "name": "Branding",
+      "status": "waiting",
+      "kind": "one-time",
+      "progress": 95,
+      "next": "confirm payment landed",
+      "start_date": null,
+      "end_date": "2026-07-28",
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: no proposal PDF; task sheet May 2024"
+    },
+    {
+      "client": "ISIVIS Group",
+      "name": "Website / brand",
+      "status": "parked",
+      "kind": "one-time",
+      "progress": 15,
+      "next": "kickoff after logos",
+      "start_date": "2026-07-13",
+      "end_date": null,
+      "notes": "seed:live-delivery|CEO mail SoT | Drive: BCON.pdf Dec 2023; brand guidelines Dec 2023+"
+    }
+  ],
+  "drive_refine": "CMO/BDR PDF attach dates 2026-08-23; status/% still CEO SoT"
+}
