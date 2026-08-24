@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchMetaAds } from "@/lib/ads/meta";
+import { fetchMetaAds, adAccountsByBrand } from "@/lib/ads/meta";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,11 +13,17 @@ export const fetchCache = "force-no-store";
  * Those are different states and the fix is different for each.
  */
 export async function GET(req: NextRequest) {
-  const configured = !!(process.env.META_ACCESS_TOKEN && process.env.META_AD_ACCOUNT_ID);
+  // `brand` picks one of the accounts in META_AD_ACCOUNTS; without it the panel
+  // shows whichever account is listed first (or the legacy single account).
+  const accounts = adAccountsByBrand();
+  const brand = req.nextUrl.searchParams.get("brand");
+  const accountId = brand ? accounts[brand] : Object.values(accounts)[0];
+
+  const configured = !!(process.env.META_ACCESS_TOKEN && accountId);
   if (!configured) {
     const missing = [
       !process.env.META_ACCESS_TOKEN && "META_ACCESS_TOKEN",
-      !process.env.META_AD_ACCOUNT_ID && "META_AD_ACCOUNT_ID",
+      !accountId && (brand ? `an account for brand "${brand}"` : "META_AD_ACCOUNTS or META_AD_ACCOUNT_ID"),
     ].filter(Boolean);
     return NextResponse.json({
       configured: false,
@@ -29,7 +35,12 @@ export async function GET(req: NextRequest) {
 
   const range = req.nextUrl.searchParams.get("range") ?? "last_30d";
   try {
-    return NextResponse.json({ configured: true, error: null, data: await fetchMetaAds(range) });
+    return NextResponse.json({
+      configured: true,
+      error: null,
+      brands: Object.keys(accounts),
+      data: await fetchMetaAds(range, accountId),
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not reach Meta.";
     // A 200 with an error field keeps the panel rendering: an expired token is

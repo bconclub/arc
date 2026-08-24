@@ -20,7 +20,11 @@ export const config = {
  * the right failure for a route that spends money on model calls per
  * attachment: an open URL would let anyone run up the API bill.
  */
-const CRON_PATHS = ["/api/ops/invoices/scan"];
+const CRON_PATHS = [
+  "/api/ops/invoices/scan",
+  "/api/arc/context-sync",
+  "/api/arc/morning-brief",
+];
 
 function isAuthorisedCron(req: NextRequest): boolean {
   if (req.method !== "GET") return false;

@@ -30,6 +30,8 @@ export type MetaCampaign = {
 
 export type MetaSummary = {
   currency: string;
+  /** Numeric account id these figures came from, so multi-account callers can tell them apart. */
+  accountId: string;
   accountName: string | null;
   since: string;
   until: string;
@@ -85,11 +87,48 @@ const RESULT_ACTION: Record<string, { type: string; label: string }> = {
 
 type Action = { action_type: string; value: string };
 
-export async function fetchMetaAds(datePreset = "last_30d"): Promise<MetaSummary> {
+/**
+ * Which ad account belongs to which brand.
+ *
+ * `META_AD_ACCOUNTS` is a JSON map of brand slug to numeric account id, e.g.
+ *   {"bcon":"597108084400369","proxe":"912260251376153"}
+ *
+ * One Meta token covers every account it has `ads_read` on, so this is a routing
+ * table, not a credential store. Falling back to the single `META_AD_ACCOUNT_ID`
+ * keeps the existing Operations Ads panel working untouched.
+ *
+ * Note these are Graph API account ids, unrelated to whether Meta has enabled
+ * its own Ads MCP on them — that rollout gates the MCP surface only, and ARC
+ * reads the Graph API directly.
+ */
+export function adAccountsByBrand(): Record<string, string> {
+  const raw = process.env.META_AD_ACCOUNTS;
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const out: Record<string, string> = {};
+      for (const [brand, id] of Object.entries(parsed)) {
+        if (typeof id === "string" && id.trim()) out[brand] = id.trim();
+      }
+      if (Object.keys(out).length) return out;
+    } catch {
+      // A malformed map should not take the ads panel down with it. Fall through
+      // to the single-account var, which is the pre-existing behaviour.
+    }
+  }
+  const single = process.env.META_AD_ACCOUNT_ID;
+  return single ? { global: single } : {};
+}
+
+export async function fetchMetaAds(
+  datePreset = "last_30d",
+  /** Numeric account id. Defaults to META_AD_ACCOUNT_ID for existing callers. */
+  accountId?: string,
+): Promise<MetaSummary> {
   const token = process.env.META_ACCESS_TOKEN;
-  const account = process.env.META_AD_ACCOUNT_ID;
+  const account = accountId || process.env.META_AD_ACCOUNT_ID;
   if (!token) throw new Error("META_ACCESS_TOKEN is not set.");
-  if (!account) throw new Error("META_AD_ACCOUNT_ID is not set.");
+  if (!account) throw new Error("No ad account id (set META_AD_ACCOUNTS or META_AD_ACCOUNT_ID).");
 
   // Tolerate the id being given with or without the act_ prefix.
   const act = account.startsWith("act_") ? account : `act_${account}`;
@@ -154,6 +193,7 @@ export async function fetchMetaAds(datePreset = "last_30d"): Promise<MetaSummary
 
   return {
     currency: String(acct.currency ?? "INR"),
+    accountId: act.replace(/^act_/, ""),
     accountName: (acct.name as string) ?? null,
     since: period.date_start ?? "",
     until: period.date_stop ?? "",

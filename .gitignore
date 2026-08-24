@@ -40,7 +40,7 @@ next-env.d.ts
 .claude/state/
 
 # local env backups (may contain real keys)
-.env*.bak
+.env*.bak*
 *.placeholder.bak
 
 # isolated production build output (NEXT_DIST_DIR)
@@ -79,3 +79,6 @@ gcp-*.json
 # local assistant/backup artifacts (from local branch)
 scripts/arc_context.backup.json
 .agents/
+
+# pulled Vercel env snapshot (contains real keys)
+.env.vercel
