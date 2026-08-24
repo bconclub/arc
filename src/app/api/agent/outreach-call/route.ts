@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { requireIngestAuth } from "@/lib/ingest-auth";
+import { checkIngestAuth, authError } from "@/lib/ingest-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,8 +31,8 @@ const DISPOSITION_STAGE: Record<string, string> = {
 const STATUSES = ["identified", "researched", "drafted", "sent", "replied", "meeting", "won", "lost", "no_reply"];
 
 export async function POST(req: NextRequest) {
-  const denied = requireIngestAuth(req);
-  if (denied) return denied;
+  const auth = checkIngestAuth(req);
+  if (!auth.ok) return authError(auth);
 
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
@@ -41,14 +41,15 @@ export async function POST(req: NextRequest) {
   if (body.target_id) {
     const { data } = await supabaseAdmin
       .from("outreach_targets").select("id, status").eq("id", String(body.target_id)).maybeSingle();
-    target = data as typeof target;
+    target = (data as { id: string; status: string } | null) ?? null;
   } else if (body.phone) {
     const key = String(body.phone).replace(/\D/g, "").slice(-10);
     if (key.length < 10) return NextResponse.json({ error: "valid phone or target_id required" }, { status: 400 });
     // Phones are stored free-form; match on the normalized tail.
     const { data } = await supabaseAdmin
       .from("outreach_targets").select("id, status, phone").not("phone", "is", null);
-    target = (data ?? []).find((t) => String(t.phone).replace(/\D/g, "").slice(-10) === key) as typeof target ?? null;
+    const hit = (data ?? []).find((t) => String(t.phone).replace(/\D/g, "").slice(-10) === key);
+    target = hit ? { id: String(hit.id), status: String(hit.status) } : null;
   } else {
     return NextResponse.json({ error: "target_id or phone required" }, { status: 400 });
   }
