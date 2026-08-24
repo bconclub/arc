@@ -52,6 +52,7 @@ export default function OutreachPage() {
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
   const [statusFilter, setStatusFilter] = useState<OutreachStatus | "active" | null>(null);
   const [preferToday, setPreferToday] = useState(false);
+  const [waText, setWaText] = useState("");
 
   const load = useCallback(async () => {
     const data = await fetch("/api/outreach").then((r) => r.json()).catch(() => []);
@@ -159,6 +160,39 @@ export default function OutreachPage() {
       setMessages(Array.isArray(msgs) ? msgs : []);
     }
     load();
+  }
+
+  /** Send (or dry-run) WhatsApp through PROXe's intent endpoint. The dry run
+   *  reports which mode PROXe would use (free text in-window vs template) and
+   *  whether the lead exists there yet, without sending anything. */
+  async function sendWhatsApp(dryRun: boolean) {
+    if (!editing?.id || !waText.trim()) return;
+    setBusy(dryRun ? "wa-dry" : "wa"); setError(""); setNotice("");
+    await fetch(`/api/outreach/${editing.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editing),
+    }).catch(() => null);
+    const res = await fetch(`/api/outreach/${editing.id}/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: waText, dry_run: dryRun }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setBusy("");
+    const p = json.proxe ?? {};
+    if (!res.ok) {
+      setError(p.error ? `PROXe: ${p.error}${p.needed === "template" ? " (cold contact, needs an approved template)" : ""}` : json.error || "WhatsApp send failed");
+      return;
+    }
+    if (dryRun) {
+      setNotice(`Dry run: would send as ${p.would_send ?? "?"}; lead ${p.lead_found ? "exists" : "not in PROXe yet"}; window ${p.window_open ? "open" : "closed"}.`);
+    } else {
+      setNotice(p.sent ? `Sent as ${p.mode}. Lead ${p.lead_created ? "created in PROXe" : "updated"}; replies land in the PROXe inbox.` : "Send did not go out.");
+      const msgs = await fetch(`/api/outreach/${editing.id}/messages`).then((r) => r.json()).catch(() => []);
+      setMessages(Array.isArray(msgs) ? msgs : []);
+      load();
+    }
   }
 
   async function logReply() {
@@ -475,6 +509,25 @@ export default function OutreachPage() {
                   Gmail drafts <ExternalLink size={11} />
                 </a>
               </div>
+
+              {editing.phone && (
+                <Field label="WhatsApp via PROXe (dry run first)">
+                  <div className="flex gap-2">
+                    <input
+                      className={inputCls}
+                      placeholder="message; cold contacts need an approved template"
+                      value={waText}
+                      onChange={(e) => setWaText(e.target.value)}
+                    />
+                    <button className={btnCls} disabled={!waText.trim() || !!busy} onClick={() => sendWhatsApp(true)}>
+                      {busy === "wa-dry" ? "…" : "Dry run"}
+                    </button>
+                    <button className={btnCls} disabled={!waText.trim() || !!busy} onClick={() => sendWhatsApp(false)}>
+                      {busy === "wa" ? "Sending…" : "Send"}
+                    </button>
+                  </div>
+                </Field>
+              )}
 
               {messages.length > 0 && (
                 <Field label={`Messages (${messages.length})`}>
