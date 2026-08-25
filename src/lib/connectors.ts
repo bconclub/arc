@@ -7,7 +7,8 @@
 
 export type ConnectorCategory =
   | "Repos" | "AI API" | "Database" | "Deployments"
-  | "Workflows" | "Email" | "Messaging" | "Research" | "Ads" | "Analytics";
+  | "Workflows" | "Email" | "Messaging" | "Research" | "Ads" | "Analytics"
+  | "Product";
 
 export type ProbeResult = { ok: boolean; detail: string };
 
@@ -165,6 +166,24 @@ export const CONNECTORS: ConnectorDef[] = [
     description: "Web research feeding the signals pipeline.",
     docsUrl: "https://app.tavily.com/home",
     // No free read-only endpoint, a probe would burn a paid search credit.
+  },
+  {
+    key: "proxe",
+    name: "PROXe",
+    category: "Product",
+    envVars: ["PROXE_INTENT_BASE", "PROXE_INBOUND_API_KEY"],
+    optionalEnv: ["ARC_INGEST_SECRET"],
+    description: "Conversations out (WhatsApp via PROXe). Dial transcripts and briefs land back in ARC.",
+    docsUrl: "https://proxe.goproxe.com",
+    async probe() {
+      const base = (process.env.PROXE_INTENT_BASE ?? "").replace(/\/$/, "");
+      if (!base) return { ok: false, detail: "No PROXE_INTENT_BASE" };
+      try {
+        const res = await get(base, {});
+        if (res.status >= 500) return { ok: false, detail: `Host HTTP ${res.status}` };
+        return { ok: true, detail: `Host responded HTTP ${res.status}` };
+      } catch (e) { return fail(e); }
+    },
   },
   {
     key: "whatsapp",

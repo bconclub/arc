@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.28";
+export const VERSION = "0.0.29";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.29",
+    date: "2026-08-25",
+    notes: "Connections page: PROXe pipe is probed for real, listening feeds are tested, and an ICP keyword bank is ranked against what the market actually said. Issues and Updates no longer claim wiring is in progress.",
+  },
   {
     version: "0.0.28",
     date: "2026-08-22",

@@ -16,6 +16,8 @@ export const KNOWN_NAMESPACES = [
   "signals",
   "pipeline",
   "metrics",
+  "icp_keywords",
+  "market",
 ] as const
 
 export type ContextBlock = {
