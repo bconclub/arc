@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.29";
+export const VERSION = "0.0.30";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.30",
+    date: "2026-08-25",
+    notes: "ARC is the GTM beacon: bots pull one pack, a six-hour tick keeps listening and queues drafts for approved ideas, and PROXe reports conversations back onto the outreach board. Nothing auto-publishes.",
+  },
   {
     version: "0.0.29",
     date: "2026-08-25",

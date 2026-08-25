@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Plug, Radio, KeyRound, RefreshCw, Plus, ShieldCheck,
+  Plug, Radio, KeyRound, RefreshCw, Plus, ShieldCheck, Bot, Copy, Zap,
 } from "lucide-react";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
@@ -56,6 +56,8 @@ export default function ConnectionsPage() {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [docsScored, setDocsScored] = useState<number | null>(null);
+  const [ticking, setTicking] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,6 +122,36 @@ export default function ConnectionsPage() {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: next } : r)));
   }
 
+  async function copyPull() {
+    const origin = window.location.origin;
+    const snippet = `curl -sS -H "Authorization: Bearer $ARC_INGEST_SECRET" "${origin}/api/agent/gtm?format=md"`;
+    try {
+      await navigator.clipboard.writeText(snippet);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("Could not copy the pull command.");
+    }
+  }
+
+  async function runTick() {
+    setTicking(true);
+    setError("");
+    setNote("");
+    const data = await fetch("/api/arc/tick", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    }).then((r) => r.json()).catch(() => null);
+    setTicking(false);
+    if (!data) { setError("Tick failed."); return; }
+    if (data.ideas_error) setError(String(data.ideas_error));
+    const queued = Array.isArray(data.jobs_enqueued)
+      ? data.jobs_enqueued.filter((j: { queued?: boolean }) => j.queued).length
+      : 0;
+    setNote(`Tick ran. Filled ${data.ideas_filled ?? 0} proposed ideas. Enqueued ${queued} content job(s). Nothing published.`);
+  }
+
   const filters: SelectFilter[] = [
     {
       key: "cluster", label: "Cluster", value: cluster,
@@ -170,8 +202,8 @@ export default function ConnectionsPage() {
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Connections</h1>
             <p className="mt-0.5 max-w-2xl text-[12.5px] leading-relaxed text-text-muted">
-              PROXe is the product pipe. Listening connections watch the market.
-              Keywords are ranked against what those connections actually return, not against invented search volume.
+              ARC is the GTM beacon. Bots pull one pack from here. PROXe is the conversation pipe.
+              Keywords are ranked against what listening connections actually return, not invented search volume.
             </p>
           </div>
         </div>
@@ -199,6 +231,43 @@ export default function ConnectionsPage() {
       <StatStrip stats={stats} />
 
       <section className="rounded-panel border border-[var(--border)] bg-surface p-4 shadow-card">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Bot size={15} className="text-text-muted" />
+            <h2 className="text-[13.5px] font-semibold text-text">Bots pull this</h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={copyPull}
+              className="flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 text-[12px] font-medium text-text"
+            >
+              <Copy size={13} />
+              {copied ? "Copied" : "Copy pull"}
+            </button>
+            <button
+              type="button"
+              onClick={runTick}
+              disabled={ticking}
+              className="flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 text-[12px] font-medium text-text disabled:opacity-50"
+            >
+              <Zap size={13} className={ticking ? "animate-pulse" : ""} />
+              {ticking ? "Ticking…" : "Run tick"}
+            </button>
+          </div>
+        </div>
+        <p className="text-[12.5px] leading-relaxed text-text-muted">
+          One markdown pack: ICP, use-keywords, market snapshot, ideas, queued jobs, worker heartbeats.
+          Luko and the rest claim <code className="text-text">draft_content</code> and <code className="text-text">render_image</code> from the same queue as mail.
+          Tick fires every six hours. It proposes ideas and enqueues drafts for approved work. It does not publish.
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-card border border-[var(--border)] bg-[var(--glow-white)] px-3 py-2 text-[11.5px] leading-relaxed text-text">
+{`GET /api/agent/gtm?format=md
+Authorization: Bearer $ARC_INGEST_SECRET`}
+        </pre>
+      </section>
+
+      <section className="rounded-panel border border-[var(--border)] bg-surface p-4 shadow-card">
         <div className="mb-3 flex items-center gap-2">
           <ShieldCheck size={15} className="text-text-muted" />
           <h2 className="text-[13.5px] font-semibold text-text">Who this is for</h2>
@@ -220,7 +289,7 @@ export default function ConnectionsPage() {
           <div>
             <h2 className="text-[13.5px] font-semibold text-text">PROXe pipe</h2>
             <p className="mt-0.5 text-[11.5px] text-text-muted">
-              WhatsApp send goes through PROXe. Dial results and briefs land in ARC. Cold WhatsApp still needs a Meta template.
+              WhatsApp send goes through PROXe. Replies, dials and briefs land back on the outreach board via /api/proxe/conversation. Cold WhatsApp still needs a Meta template.
             </p>
           </div>
         </div>

@@ -5,6 +5,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { supabaseAdmin } from "@/lib/supabase";
 import { readSignalsCache } from "@/lib/arc/rss";
 import { recordUsage } from "@/lib/arc/usage";
+import { listKeywords } from "@/lib/market";
 
 const IDEA_MODEL = "claude-haiku-4-5-20251001";
 
@@ -29,8 +30,14 @@ export async function generateTopIdeas(limit = 8): Promise<GeneratedIdea[]> {
     .map((s, i) => `${i + 1}. ${s.title}, ${(s.snippet || "").slice(0, 140)}`)
     .join("\n");
 
+  const bank = await listKeywords();
+  const use = "error" in bank ? [] : bank.rows.filter((r) => r.status === "use").slice(0, 12);
+  const keywordBlock = use.length
+    ? `\nPhrases the buyer types (prefer ideas that can carry one of these, do not stuff):\n${use.map((r) => `- ${r.phrase}`).join("\n")}`
+    : "";
+
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, baseURL: "https://api.anthropic.com" });
-  const sys = `You are the content strategist for:\n${BCON}\n\nFrom the trend list, choose the ${limit} BEST ideas for this founder to post about THIS WEEK. For each return: a punchy post "title" (the hook, in our lowercase voice), an "angle" (how we make it ours, one sentence), a "rationale" (why it lands with our ICP, one sentence), a "fit_score" 0-100, and "source_index" (the trend number it came from). Prefer ideas mapping to our 4 pillars + ICP. Return ONLY a valid JSON array, no prose.`;
+  const sys = `You are the content strategist for:\n${BCON}${keywordBlock}\n\nFrom the trend list, choose the ${limit} BEST ideas for this founder to post about THIS WEEK. For each return: a punchy post "title" (the hook, in our lowercase voice), an "angle" (how we make it ours, one sentence), a "rationale" (why it lands with our ICP, one sentence), a "fit_score" 0-100, and "source_index" (the trend number it came from). Prefer ideas mapping to our 4 pillars + ICP. Return ONLY a valid JSON array, no prose.`;
 
   const resp = await anthropic.messages.create({
     model: IDEA_MODEL,

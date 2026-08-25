@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { coerceChannel } from "@/lib/outreach-match";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 type Ctx = { params: { id: string } };
-
-const CHANNELS = ["email", "linkedin", "whatsapp", "call"];
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
   const { data, error } = await supabaseAdmin
@@ -26,7 +25,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const { data, error } = await supabaseAdmin.from("outreach_messages").insert({
     target_id: ctx.params.id,
     direction,
-    channel: CHANNELS.includes(body.channel) ? body.channel : "email",
+    channel: body.channel ? coerceChannel(body.channel) : "email",
     subject: body.subject || null,
     body: body.body || null,
     sent_at: direction === "out" ? new Date().toISOString() : null,
