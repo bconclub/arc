@@ -16,9 +16,10 @@ call prompts. Written 2026-08-24. Owner of changes to this doc: tag yourself.
 hero callback (`goproxe repo: app/api/callback/route.ts`):
 
 - Outbound call = one POST to ElevenLabs with `agent_id`, `phone_number_id`
-  (SIP +91 80467 33388, id `phnum_6501kwq4tr8kfats4mezvr37krw9`), `to_number`,
-  and per-call overrides for the system prompt + first message. The callback
-  agent (`agent_6201kzbayp7zenc8d3v86sa4zwra`) shows the exact request shape.
+  (PROXe Vobiz outbound, trunk 6f2e835a.sip.vobiz.ai, SIP +91 80653 55717,
+  id `phnum_3701m0wakhjte0zr5fyk25yjpe01`), `to_number`, and per-call overrides
+  for the system prompt + first message. The callback agent
+  (`agent_6201kzbayp7zenc8d3v86sa4zwra`) shows the exact request shape.
 - Post-call transcript arrives on an HMAC-signed webhook
   (`app/api/webhooks/elevenlabs/route.ts`, `elevenlabs-signature: t=..,v0=..`,
   signed payload `<t>.<raw body>`). Copy that verification, it is correct.
