@@ -55,6 +55,7 @@ const nav: NavSection[] = [
       { label: "Radar", href: "/dashboard/ops/alerts", icon: Radar },
       { label: "Feed", href: "/dashboard/feed", icon: Radio },
       { label: "Sources", href: "/dashboard/sources", icon: Rss },
+      { label: "Connections", href: "/dashboard/connections", icon: Plug },
     ],
   },
   {

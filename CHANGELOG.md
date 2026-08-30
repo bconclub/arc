@@ -2,6 +2,43 @@
 
 Each entry's version is an annotated git tag: `git show v0.0.13`.
 
+## 2026-08-25 . v0.0.30 - GTM beacon, always-on tick, PROXe conversation inbound
+
+ARC is the GTM beacon the rest of the stack pulls from, not a page that hopes
+bots will notice the keyword bank.
+
+- **Bot pack.** `GET /api/agent/gtm?format=md` (same ingest secret as every other
+  machine door) returns ICP, the use-keyword list, the market snapshot, proposed
+  and approved ideas, queued jobs and worker heartbeats in one document.
+- **Tick.** `GET /api/arc/tick` every six hours refreshes listening context, fills
+  proposed ideas when the board is empty, and enqueues `draft_content` /
+  `render_image` jobs for work a human already approved. Nothing publishes.
+  Ideas still go through `/dashboard/arc`. Image jobs are briefs, not fake pixels.
+- **PROXe inbound.** `POST /api/proxe/conversation` is the twin of WhatsApp send.
+  After two-way contact PROXe owns the thread and reports it here so the outreach
+  row does not stay "sent". Unmatched inbound numbers become prospects rather than
+  vanishing. Instagram and web are real channels, not aliases of WhatsApp.
+- Connections says "bots pull this" and can fire a tick by hand.
+
+## 2026-08-25 . v0.0.29 - PROXe pipe, market listen, ICP keyword bank
+
+The GTM loop that was implied by Connections, the Feed and the old one-word
+keyword list is now a single page that tells the truth about each part.
+
+- **Connections.** A new page under Signals. PROXe is probed as a product pipe
+  (WhatsApp send through PROXe, dial results and briefs back into ARC). Active
+  RSS sources and Tavily are tested with a real fetch, not a stored badge.
+- **ICP keyword bank.** Durable `icp_keywords` rows, seeded with high-fidelity
+  phrases a buyer would actually type (clinic WhatsApp leak, coaching admission
+  delay, Justdial conversion), not "AI" / "leads" / "India". Listen-rank is ICP
+  fit, specificity and hits in the listening set. It is never presented as
+  Google volume.
+- **Listen and rank.** One button scores the bank against the current market
+  documents, harvests new watch phrases, and writes `agent_context` namespaces
+  `icp_keywords` and `market` so bots quote the same numbers the page shows.
+- **PROXe Issues and Updates** fetch `kind=issue` / `kind=update` like Briefs.
+  Empty means empty. "Wiring in progress" is gone.
+
 ## 2026-08-16 . v0.0.26 - Tell ARC, free invoice parsing, the two branches rejoined
 
 The Windows and Mac lines of this repo had diverged 5 commits against 53. This
