@@ -53,6 +53,7 @@ export default function OutreachPage() {
   const [statusFilter, setStatusFilter] = useState<OutreachStatus | "active" | null>(null);
   const [preferToday, setPreferToday] = useState(false);
   const [waText, setWaText] = useState("");
+  const [researchExpanded, setResearchExpanded] = useState(false);
 
   const load = useCallback(async () => {
     const data = await fetch("/api/outreach").then((r) => r.json()).catch(() => []);
@@ -262,17 +263,26 @@ export default function OutreachPage() {
                 <td className="px-3 py-1.5 text-[12.5px] font-medium text-text">{t.name}</td>
                 <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.segment || "—"}</td>
                 <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.city || "—"}</td>
-                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.phone || "—"}</td>
-                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">
+                <td className="px-3 py-1.5 text-[12.5px] text-text-muted whitespace-nowrap tabular-nums">{t.phone || "—"}</td>
+                <td className="px-3 py-1.5 text-[12.5px] text-text-muted max-w-[180px]">
                   {t.website ? (
                     <a
                       href={t.website}
                       target="_blank"
                       rel="noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 truncate hover:text-text"
+                      className="inline-flex items-center gap-1 hover:text-text"
                     >
-                      <span className="truncate">{t.website}</span>
+                      <span className="truncate block max-w-[150px]">
+                        {(() => {
+                          try {
+                            const url = new URL(t.website.startsWith('http') ? t.website : `https://${t.website}`);
+                            return url.hostname.replace(/^www\./, '');
+                          } catch {
+                            return t.website;
+                          }
+                        })()}
+                      </span>
                       <ExternalLink size={11} className="shrink-0" />
                     </a>
                   ) : (
@@ -481,14 +491,23 @@ export default function OutreachPage() {
           </div>
 
           <Field label="Why them">
-            <textarea rows={2} className={inputCls} value={editing.why_them ?? ""} onChange={(e) => setEditing({ ...editing, why_them: e.target.value })} />
+            <textarea rows={1} className={inputCls} value={editing.why_them ?? ""} onChange={(e) => setEditing({ ...editing, why_them: e.target.value })} />
           </Field>
 
           {editing.id && (
             <>
-              <Field label="Research brief">
-                <textarea rows={5} className={inputCls} placeholder="Run Research, or paste your own notes" value={editing.research ?? ""} onChange={(e) => setEditing({ ...editing, research: e.target.value })} />
-              </Field>
+              <div className="mb-2">
+                <button
+                  onClick={() => setResearchExpanded(!researchExpanded)}
+                  className="mb-1 flex w-full items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-text-muted hover:text-text"
+                >
+                  <span>Research brief</span>
+                  <span>{researchExpanded ? '▼' : '▶'}</span>
+                </button>
+                {researchExpanded && (
+                  <textarea rows={3} className={inputCls} placeholder="Run Research, or paste your own notes" value={editing.research ?? ""} onChange={(e) => setEditing({ ...editing, research: e.target.value })} />
+                )}
+              </div>
 
               <Field label="Draft instructions (optional)">
                 <input className={inputCls} placeholder="angle, detail to use, length…" value={instructions} onChange={(e) => setInstructions(e.target.value)} />
@@ -531,14 +550,14 @@ export default function OutreachPage() {
 
               {messages.length > 0 && (
                 <Field label={`Messages (${messages.length})`}>
-                  <div className="max-h-44 space-y-2 overflow-y-auto">
+                  <div className="max-h-32 space-y-1.5 overflow-y-auto">
                     {messages.map((m) => (
-                      <div key={m.id} className="rounded-xl border border-[var(--border)] px-3 py-2">
+                      <div key={m.id} className="rounded-xl border border-[var(--border)] px-2.5 py-1.5">
                         <p className="text-[10.5px] text-text-muted">
                           {m.direction === "in" ? "← reply" : "→ draft"}{m.sent_at ? " · sent" : ""} · {new Date(m.created_at).toLocaleDateString()}
                           {m.subject ? ` · ${m.subject}` : ""}
                         </p>
-                        <p className="mt-1 whitespace-pre-wrap text-[12px] leading-relaxed text-text">{m.body}</p>
+                        <p className="mt-0.5 whitespace-pre-wrap text-[11.5px] leading-snug text-text line-clamp-2">{m.body}</p>
                       </div>
                     ))}
                   </div>
@@ -547,7 +566,7 @@ export default function OutreachPage() {
 
               <Field label="Log a reply (paste from Gmail)">
                 <div className="flex gap-2">
-                  <textarea rows={2} className={inputCls} value={reply} onChange={(e) => setReply(e.target.value)} />
+                  <textarea rows={1} className={inputCls} value={reply} onChange={(e) => setReply(e.target.value)} />
                   <button className={btnCls} disabled={!reply.trim() || !!busy} onClick={logReply}>
                     {busy === "reply" ? "…" : "Log"}
                   </button>

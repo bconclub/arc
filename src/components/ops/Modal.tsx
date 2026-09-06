@@ -25,11 +25,11 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-card bg-surface p-6"
+        className="w-full max-w-lg rounded-card bg-surface p-5"
         style={{ boxShadow: "0 24px 64px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-5 text-[15px] font-semibold text-text">{title}</h2>
+        <h2 className="mb-4 text-[15px] font-semibold text-text">{title}</h2>
         {children}
       </div>
     </div>
@@ -38,7 +38,7 @@ export function Modal({
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mb-3">
+    <div className="mb-2">
       <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-text-muted">
         {label}
       </label>
@@ -73,7 +73,7 @@ export function ModalActions({
   canDelete?: boolean;
 }) {
   return (
-    <div className="mt-5 flex items-center justify-between gap-2">
+    <div className="mt-4 flex items-center justify-between gap-2">
       {canDelete && onDelete ? (
         <button className={btnDangerCls} onClick={onDelete} disabled={saving}>
           Delete
