@@ -111,7 +111,7 @@ export default function OutreachPage() {
     [filtered],
   );
   const allProspects = useMemo(
-    () => filtered.filter((t) => ACTIVE.includes(t.status)),
+    () => filtered,
     [filtered],
   );
   const outreached = useMemo(() => {
@@ -468,17 +468,17 @@ export default function OutreachPage() {
         </div>
       )}
 
-      {/* All prospects board - shows everything in ACTIVE statuses */}
+      {/* All Prospects - shows ALL targets (any status) */}
       {view === "all" && (
         <div>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            All prospects — {allProspects.length} active (identified, researched, drafted)
+            All Prospects — {allProspects.length} targets (all statuses)
           </p>
           {allProspects.length > 0 ? (
             <TargetsTable targets={allProspects} />
           ) : (
             <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
-              No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
+              No targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
             </p>
           )}
         </div>
