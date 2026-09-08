@@ -382,6 +382,10 @@ export type OutreachStatus =
   | "replied" | "meeting" | "won" | "lost" | "no_reply";
 
 export type OutreachTarget = {
+  promoted_at?: string | null;
+  proxe_lead_id?: string | null;
+  qualified_at?: string | null;
+  qualification_note?: string | null;
   id: string;
   kind: OutreachKind;
   name: string;

@@ -1,692 +1,620 @@
 "use client";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Send, Plus, Search, Sparkles, ExternalLink } from "lucide-react";
-import { Modal, Field, ModalActions, inputCls, btnCls, btnPrimaryCls } from "@/components/ops/Modal";
-import type { OutreachKind, OutreachStatus, OutreachTarget, OutreachMessage } from "@/types/ops";
-
-const KIND_TABS: { key: OutreachKind | "all"; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "business", label: "Businesses" },
-  { key: "investor", label: "Investors" },
-  { key: "grant", label: "Grants" },
-  { key: "citation", label: "Citations" },
+import { Plus, RefreshCw, Search } from "lucide-react";
+import { btnCls, btnPrimaryCls, inputCls } from "@/components/ops/Modal";
+import type { OutreachTarget } from "@/types/ops";
+import {
+  citationOutcome,
+  isTestTarget,
+  latestActivity,
+  outcomeLabel,
+  workState,
+  type OutreachActivity,
+} from "@/lib/outreach-workflow";
+import { SuggestTargets } from "@/components/outreach/SuggestTargets";
+import { LeadDetail } from "@/components/outreach/LeadDetail";
+import { CallReview, type BdrCall } from "@/components/outreach/CallReview";
+type View = "lists" | "calls" | "citations" | "tests";
+const views: { key: View; label: string; description: string }[] = [
+  {
+    key: "lists",
+    label: "Outreach lists",
+    description:
+      "Prospects grouped by where they came from. Choose a source to review a batch.",
+  },
+  {
+    key: "calls",
+    label: "Calls",
+    description:
+      "Every BDR attempt, with recipient, agent, recording and transcript. Ended does not mean qualified.",
+  },
+  {
+    key: "citations",
+    label: "Citations",
+    description:
+      "Track submissions separately from sales. Only a verified public listing counts as live.",
+  },
+  {
+    key: "tests",
+    label: "Test activity",
+    description:
+      "Test targets and calls to your test number, separate from prospect work.",
+  },
 ];
-
-const VIEW_TABS: { key: "today" | "all" | "outreached"; label: string }[] = [
-  { key: "today", label: "Today's 10" },
-  { key: "all", label: "All Prospects" },
-  { key: "outreached", label: "Dialed / Outreached" },
-];
-
-const STATUS_META: Record<OutreachStatus, { label: string; dot: string }> = {
-  identified: { label: "identified", dot: "bg-text-muted" },
-  researched: { label: "researched", dot: "bg-accent-blue" },
-  drafted: { label: "drafted", dot: "bg-accent-orange" },
-  sent: { label: "sent", dot: "bg-accent-blue" },
-  replied: { label: "replied", dot: "bg-accent-green" },
-  meeting: { label: "meeting", dot: "bg-accent-green" },
-  won: { label: "won", dot: "bg-accent-green" },
-  lost: { label: "lost", dot: "bg-accent-red" },
-  no_reply: { label: "no reply", dot: "bg-accent-red" },
-};
-const STATUSES = Object.keys(STATUS_META) as OutreachStatus[];
-
-/** The working set: what today's 10 get picked from. */
-const ACTIVE: OutreachStatus[] = ["identified", "researched", "drafted"];
-
-/** Outreached: any target with outbound activity (sent, dialed) or pipeline stages. */
-const OUTREACHED: OutreachStatus[] = ["sent", "no_reply", "replied", "meeting", "won", "lost"];
-
-type Candidate = { org: string; website: string | null; city: string | null; segment: string | null; why_them: string; source_url: string };
-
-type FormState = Partial<OutreachTarget> & { name: string; kind: OutreachKind };
-const EMPTY: FormState = { name: "", kind: "business", status: "identified" };
-
 export default function OutreachPage() {
-  const [targets, setTargets] = useState<OutreachTarget[]>([]);
-  const [tab, setTab] = useState<OutreachKind | "all">("all");
-  const [view, setView] = useState<"today" | "all" | "outreached">("today");
-  const [q, setQ] = useState("");
-  const [editing, setEditing] = useState<FormState | null>(null);
-  const [messages, setMessages] = useState<OutreachMessage[]>([]);
-  const [reply, setReply] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [busy, setBusy] = useState("");           // which action is running
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [suggestOpen, setSuggestOpen] = useState(false);
-  const [segment, setSegment] = useState("");
-  const [city, setCity] = useState("Bangalore");
-  const [candidates, setCandidates] = useState<Candidate[] | null>(null);
-  const [statusFilter, setStatusFilter] = useState<OutreachStatus | "active" | null>(null);
-  const [waText, setWaText] = useState("");
-  const [researchExpanded, setResearchExpanded] = useState(false);
-  const [targetMessages, setTargetMessages] = useState<Record<string, OutreachMessage[]>>({});
-
+  const [targets, setTargets] = useState<OutreachTarget[]>([]),
+    [activity, setActivity] = useState<OutreachActivity[]>([]),
+    [calls, setCalls] = useState<BdrCall[]>([]);
+  const [suggest, setSuggest] = useState(false);
+  const [listMode, setListMode] = useState("all");
+  const [view, setView] = useState<View>("lists"),
+    [q, setQ] = useState(""),
+    [source, setSource] = useState("all"),
+    [kind, setKind] = useState("all"),
+    [state, setState] = useState("all"),
+    [agent, setAgent] = useState("all"),
+    [audience, setAudience] = useState("all");
+  const [loading, setLoading] = useState(true),
+    [callsLoading, setCallsLoading] = useState(false),
+    [error, setError] = useState(""),
+    [callError, setCallError] = useState(""),
+    [ready, setReady] = useState(false),
+    [page, setPage] = useState(0);
+  const [editing, setEditing] = useState<Partial<OutreachTarget> | null>(null),
+    [callId, setCallId] = useState<string | null>(null),
+    [callsLoaded, setCallsLoaded] = useState(false);
   const load = useCallback(async () => {
-    const data = await fetch("/api/outreach").then((r) => r.json()).catch(() => []);
-    const targetList = Array.isArray(data) ? data : [];
-    setTargets(targetList);
-    
-    // For outreached targets, fetch message data to determine if they have calls
-    const outreachedIds = targetList.filter((t: OutreachTarget) => 
-      OUTREACHED.includes(t.status)
-    ).map((t: OutreachTarget) => t.id);
-    
-    const msgMap: Record<string, OutreachMessage[]> = {};
-    await Promise.all(
-      outreachedIds.map(async (id) => {
-        const msgs = await fetch(`/api/outreach/${id}/messages`).then((r) => r.json()).catch(() => []);
-        msgMap[id] = Array.isArray(msgs) ? msgs : [];
-      })
-    );
-    setTargetMessages(msgMap);
+    setLoading(true);
+    setError("");
+    try {
+      const r = await fetch("/api/outreach/workspace", { cache: "no-store" });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setTargets(d.targets);
+      setActivity(d.activity);
+      setReady(d.reportingReady);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load outreach.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
-  useEffect(() => { load(); }, [load]);
-
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    let result = targets.filter((t) => {
-      if (tab !== "all" && t.kind !== tab) return false;
-      if (!needle) return true;
-      return [t.name, t.org, t.segment, t.city, t.email, t.phone, t.status]
-        .some((f) => (f ?? "").toLowerCase().includes(needle));
-    });
-
-    if (statusFilter) {
-      if (statusFilter === "active") {
-        result = result.filter((t) => ACTIVE.includes(t.status));
-      } else {
-        result = result.filter((t) => t.status === statusFilter);
-      }
+  const loadCalls = useCallback(async () => {
+    setCallsLoading(true);
+    setCallError("");
+    try {
+      const r = await fetch("/api/outreach/calls", { cache: "no-store" });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setCalls(d.calls);
+      setCallsLoaded(true);
+    } catch (e) {
+      setCallError(e instanceof Error ? e.message : "Could not load calls.");
+    } finally {
+      setCallsLoading(false);
     }
-
-    return result;
-  }, [targets, tab, q, statusFilter]);
-
-  const today = useMemo(
-    () => filtered.filter((t) => ACTIVE.includes(t.status)).slice(0, 10),
-    [filtered],
-  );
-  const allProspects = useMemo(
-    () => filtered,
-    [filtered],
-  );
-  const outreached = useMemo(() => {
-    // Dialed / Outreached = business only. Exclude citations, investors, grants.
-    // Include if: kind === business AND (has call messages OR status in OUTREACHED)
-    // Hide test_dial segments from the default view
-    const result = filtered.filter((t) => {
-      // Must be business kind
-      if (t.kind !== "business") return false;
-      
-      // Hide test dial segments
-      const segment = (t.segment ?? "").toLowerCase();
-      if (segment.includes("test_dial") || segment.includes("proxe test")) return false;
-      
-      // Include if has call messages OR is in OUTREACHED status
-      const msgs = targetMessages[t.id] || [];
-      const hasCallActivity = msgs.some((m) => m.channel === "call");
-      const isOutreached = OUTREACHED.includes(t.status);
-      
-      return hasCallActivity || isOutreached;
-    });
-    
-    // Sort by most recent activity (sent_at from messages or updated_at), newest first
-    return result.sort((a, b) => {
-      const aMsgs = targetMessages[a.id] || [];
-      const bMsgs = targetMessages[b.id] || [];
-      const aLatest = aMsgs.length > 0 
-        ? Math.max(...aMsgs.map((m) => new Date(m.sent_at || m.created_at).getTime()))
-        : new Date(a.updated_at).getTime();
-      const bLatest = bMsgs.length > 0
-        ? Math.max(...bMsgs.map((m) => new Date(m.sent_at || m.created_at).getTime()))
-        : new Date(b.updated_at).getTime();
-      return bLatest - aLatest;
-    });
-  }, [filtered, targetMessages]);
-  const rest = useMemo(
-    () => filtered.filter((t) => !ACTIVE.includes(t.status)),
-    [filtered],
-  );
-
-  const counts = useMemo(() => {
-    const c: Partial<Record<OutreachStatus, number>> = {};
-    for (const t of targets) c[t.status] = (c[t.status] ?? 0) + 1;
-    return c;
-  }, [targets]);
-
-  async function openTarget(t: OutreachTarget) {
-    setError(""); setNotice(""); setReply(""); setInstructions("");
-    setEditing({ ...t });
-    const msgs = await fetch(`/api/outreach/${t.id}/messages`).then((r) => r.json()).catch(() => []);
-    setMessages(Array.isArray(msgs) ? msgs : []);
-  }
-
-  async function save() {
-    if (!editing?.name?.trim()) { setError("Name is required."); return; }
-    setSaving(true); setError("");
-    const res = await fetch(editing.id ? `/api/outreach/${editing.id}` : "/api/outreach", {
-      method: editing.id ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editing),
-    });
-    setSaving(false);
-    if (!res.ok) { setError("Save failed."); return; }
-    setEditing(null); load();
-  }
-
-  async function remove() {
-    if (!editing?.id || !confirm(`Delete "${editing.name}"?`)) return;
-    setSaving(true);
-    await fetch(`/api/outreach/${editing.id}`, { method: "DELETE" });
-    setSaving(false); setEditing(null); load();
-  }
-
-  /** Research / draft run against the SAVED row; unsaved edits ride along first. */
-  async function runAction(action: "research" | "draft") {
-    if (!editing?.id) { setError("Save the target first."); return; }
-    setBusy(action); setError(""); setNotice("");
-    // Push field edits (email especially) so the action sees them.
-    await fetch(`/api/outreach/${editing.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editing),
-    }).catch(() => null);
-
-    const res = await fetch(`/api/outreach/${editing.id}/${action}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(action === "draft" ? { instructions } : {}),
-    });
-    const json = await res.json().catch(() => ({}));
-    setBusy("");
-    if (!res.ok) { setError(json.error || `${action} failed`); return; }
-
-    if (action === "research") {
-      setEditing((e) => (e ? { ...e, research: json.research, status: json.status } : e));
-      setNotice("Research saved.");
-    } else {
-      setNotice(json.gmail === "drafted"
-        ? "Draft is in your Gmail Drafts folder."
-        : `Draft saved here. Gmail: ${json.gmail}`);
-      const msgs = await fetch(`/api/outreach/${editing.id}/messages`).then((r) => r.json()).catch(() => []);
-      setMessages(Array.isArray(msgs) ? msgs : []);
-    }
+  }, []);
+  useEffect(() => {
     load();
+    if (new URLSearchParams(window.location.search).get("view") === "calls")
+      setView("calls");
+  }, [load]);
+  useEffect(() => {
+    if (
+      (view === "calls" || view === "tests" || editing?.id) &&
+      !callsLoaded &&
+      !callsLoading &&
+      !callError
+    )
+      loadCalls();
+  }, [view, editing?.id, callsLoaded, callsLoading, callError, loadCalls]);
+  useEffect(() => {
+    setPage(0);
+  }, [view, q, source, kind, state, agent, audience]);
+  const byTarget = useMemo(() => {
+    const map = new Map<string, OutreachActivity[]>();
+    for (const a of activity)
+      map.set(a.target_id, [...(map.get(a.target_id) || []), a]);
+    return map;
+  }, [activity]);
+  function progress(t: OutreachTarget) {
+    if (t.promoted_at) return "handed_off";
+    if (t.qualified_at) return "qualified";
+    const rows = byTarget.get(t.id) || [];
+    return t.kind === "citation"
+      ? citationOutcome(t, rows)
+      : latestActivity(rows)?.outcome ||
+          (["won", "lost"].includes(t.status)
+            ? t.status
+            : t.status === "sent"
+              ? "sent"
+              : t.status === "replied" || t.status === "meeting"
+                ? "replied"
+                : "pending");
   }
-
-  /** Send (or dry-run) WhatsApp through PROXe's intent endpoint. The dry run
-   *  reports which mode PROXe would use (free text in-window vs template) and
-   *  whether the lead exists there yet, without sending anything. */
-  async function sendWhatsApp(dryRun: boolean) {
-    if (!editing?.id || !waText.trim()) return;
-    setBusy(dryRun ? "wa-dry" : "wa"); setError(""); setNotice("");
-    await fetch(`/api/outreach/${editing.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editing),
-    }).catch(() => null);
-    const res = await fetch(`/api/outreach/${editing.id}/whatsapp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: waText, dry_run: dryRun }),
-    });
-    const json = await res.json().catch(() => ({}));
-    setBusy("");
-    const p = json.proxe ?? {};
-    if (!res.ok) {
-      setError(p.error ? `PROXe: ${p.error}${p.needed === "template" ? " (cold contact, needs an approved template)" : ""}` : json.error || "WhatsApp send failed");
-      return;
-    }
-    if (dryRun) {
-      setNotice(`Dry run: would send as ${p.would_send ?? "?"}; lead ${p.lead_found ? "exists" : "not in PROXe yet"}; window ${p.window_open ? "open" : "closed"}.`);
-    } else {
-      setNotice(p.sent ? `Sent as ${p.mode}. Lead ${p.lead_created ? "created in PROXe" : "updated"}; replies land in the PROXe inbox.` : "Send did not go out.");
-      const msgs = await fetch(`/api/outreach/${editing.id}/messages`).then((r) => r.json()).catch(() => []);
-      setMessages(Array.isArray(msgs) ? msgs : []);
-      load();
-    }
+  const base = targets.filter((t) =>
+    view === "tests"
+      ? isTestTarget(t)
+      : !isTestTarget(t) &&
+        (view === "citations" ? t.kind === "citation" : t.kind !== "citation"),
+  );
+  const sources = Array.from(
+    new Set(base.map((t) => t.source || "Unspecified")),
+  ).sort();
+  const filteredBase = base.filter(
+    (t) =>
+      (source === "all" || (t.source || "Unspecified") === source) &&
+      (kind === "all" || t.kind === kind) &&
+      (state === "all" || workState(progress(t)) === state) &&
+      [t.name, t.phone, t.email, t.city, t.segment, t.source].some((v) =>
+        v?.toLowerCase().includes(q.toLowerCase()),
+      ),
+  );
+  const filtered = view !== 'lists' || listMode === 'all' ? filteredBase
+    : listMode === 'today' ? filteredBase.filter(t => ['identified','researched','drafted'].includes(t.status)).slice(0,10)
+    : filteredBase.filter(t => t.kind === 'business' && !isTestTarget(t) &&
+      (['sent','no_reply','replied','meeting','won','lost'].includes(t.status) || (byTarget.get(t.id) || []).some(a => a.channel === 'call')))
+      .sort((a,b) => Date.parse(latestActivity(byTarget.get(b.id)||[])?.occurred_at || b.updated_at) - Date.parse(latestActivity(byTarget.get(a.id)||[])?.occurred_at || a.updated_at));
+  const filteredCalls = calls.filter(
+    (c) =>
+      (view !== "tests" || c.is_test === true) &&
+      (agent === "all" || c.agent === agent) &&
+      (audience === "all" ||
+        (audience === "test"
+          ? c.is_test === true
+          : audience === "other"
+            ? c.is_test === false
+            : c.is_test === null)) &&
+      (state === "all" ||
+        (state === "blocked"
+          ? c.status === "failed"
+          : state === "in_progress"
+            ? ["initiated", "in-progress", "processing"].includes(c.status)
+            : state === "done"
+              ? c.status === "done"
+              : false)) &&
+      [c.phone, c.agent, c.summary, c.status].some((v) =>
+        v?.toLowerCase().includes(q.toLowerCase()),
+      ),
+  );
+  const current = views.find((v) => v.key === view)!;
+  function changeView(v: View) {
+    setView(v);
+    setSource("all");
+    setState("all");
+    setKind("all");
+    setQ("");
+    setAudience("all");
   }
-
-  async function logReply() {
-    if (!editing?.id || !reply.trim()) return;
-    setBusy("reply");
-    await fetch(`/api/outreach/${editing.id}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ direction: "in", channel: "email", body: reply }),
-    });
-    setBusy(""); setReply("");
-    const msgs = await fetch(`/api/outreach/${editing.id}/messages`).then((r) => r.json()).catch(() => []);
-    setMessages(Array.isArray(msgs) ? msgs : []);
-    setEditing((e) => (e ? { ...e, status: "replied" } : e));
-    load();
+  function openCall(id: string) {
+    setEditing(null);
+    setCallId(id);
   }
-
-  async function suggest() {
-    if (!segment.trim()) return;
-    setBusy("suggest"); setCandidates(null); setError("");
-    const res = await fetch("/api/outreach/suggest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ segment, city }),
-    });
-    const json = await res.json().catch(() => ({}));
-    setBusy("");
-    if (!res.ok) { setError(json.error || "Suggest failed"); return; }
-    setCandidates(Array.isArray(json.candidates) ? json.candidates : []);
-  }
-
-  async function acceptCandidate(c: Candidate) {
-    await fetch("/api/outreach", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kind: "business", name: c.org, org: c.org, website: c.website,
-        city: c.city, segment: c.segment, why_them: c.why_them, source: "suggest",
-      }),
-    });
-    setCandidates((cs) => (cs ?? []).filter((x) => x !== c));
-    load();
-  }
-
-  function TargetsTable({ targets }: { targets: OutreachTarget[] }) {
-    return (
-      <div className="overflow-hidden rounded-card border border-[var(--border)]">
-        <table className="w-full">
-          <thead className="bg-surface-hover">
-            <tr>
-              <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-text-muted">Name</th>
-              <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-text-muted">Segment</th>
-              <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-text-muted">City</th>
-              <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-text-muted">Phone</th>
-              <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-text-muted">Website</th>
-              <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-text-muted">Status</th>
-              <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-text-muted">Kind</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--border)]">
-            {targets.map((t) => (
-              <tr
-                key={t.id}
-                onClick={() => openTarget(t)}
-                className="cursor-pointer bg-surface transition-colors hover:bg-surface-hover"
-              >
-                <td className="px-3 py-1.5 text-[12.5px] font-medium text-text">{t.name}</td>
-                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.segment || "—"}</td>
-                <td className="px-3 py-1.5 text-[12.5px] text-text-muted">{t.city || "—"}</td>
-                <td className="px-3 py-1.5 text-[12.5px] text-text-muted whitespace-nowrap tabular-nums">{t.phone || "—"}</td>
-                <td className="px-3 py-1.5 text-[12.5px] text-text-muted max-w-[180px]">
-                  {t.website ? (
-                    <a
-                      href={t.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 hover:text-text"
-                    >
-                      <span className="truncate block max-w-[150px]">
-                        {(() => {
-                          try {
-                            const url = new URL(t.website.startsWith('http') ? t.website : `https://${t.website}`);
-                            return url.hostname.replace(/^www\./, '');
-                          } catch {
-                            return t.website;
-                          }
-                        })()}
-                      </span>
-                      <ExternalLink size={11} className="shrink-0" />
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="px-3 py-1.5">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-surface px-2 py-0.5 text-[11px] text-text-muted">
-                    <span className={`h-1.5 w-1.5 rounded-full ${STATUS_META[t.status].dot}`} />
-                    {STATUS_META[t.status].label}
-                  </span>
-                </td>
-                <td className="px-3 py-1.5 text-[10.5px] uppercase tracking-wide text-text-muted">{t.kind}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+  function nameForCall(c: BdrCall) {
+    const p = c.phone?.replace(/\D/g, "").slice(-10);
+    if (!p || p.length !== 10) return "Recipient unavailable";
+    const matches = targets.filter(
+      (t) => t.phone?.replace(/\D/g, "").slice(-10) === p,
     );
+    return matches.length === 1
+      ? matches[0].name
+      : matches.length > 1
+        ? "Multiple matching targets"
+        : c.phone;
   }
-
+  const showCalls = view === "calls" || (view === "tests" && callsLoaded);
+  const rows = showCalls ? filteredCalls : filtered;
   return (
-    <div className="space-y-5 px-1 pb-24">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <Send size={18} className="text-text-muted" />
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-text">Outreach</h1>
-            <p className="text-[11.5px] text-text-muted">
-              {targets.length} targets · {counts.sent ?? 0} sent · {counts.replied ?? 0} replied · {counts.won ?? 0} won
-            </p>
-          </div>
+    <div className="space-y-5 pb-16 text-text">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Outreach</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Lists, work in progress, and results in one place.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="relative">
-            <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+        <div className="flex gap-2">
+          <button
+            className={btnCls}
+            disabled={loading || callsLoading}
+            onClick={() => {
+              load();
+              if (callsLoaded || view === "calls" || view === "tests")
+                loadCalls();
+            }}
+          >
+            <span className="flex items-center gap-2">
+              <RefreshCw size={15} />
+              Refresh
+            </span>
+          </button>
+          <button className={btnCls} onClick={() => setSuggest(true)}>
+            Find prospects
+          </button>
+          <button
+            className={btnPrimaryCls}
+            onClick={() =>
+              setEditing({
+                name: "",
+                kind: view === "citations" ? "citation" : "business",
+                status: "identified",
+              })
+            }
+          >
+            <span className="flex items-center gap-2">
+              <Plus size={16} />
+              Add target
+            </span>
+          </button>
+        </div>
+      </header>
+      <nav
+        aria-label="Outreach areas"
+        className="flex flex-wrap gap-2 border-b border-[var(--border)] pb-3"
+      >
+        {views.map((v) => (
+          <button
+            className={
+              "min-h-11 rounded-lg px-4 py-2 text-sm " +
+              (view === v.key
+                ? "bg-surface-hover font-semibold"
+                : "text-text-muted hover:text-text")
+            }
+            key={v.key}
+            aria-pressed={view === v.key}
+            onClick={() => changeView(v.key)}
+          >
+            {v.label}
+          </button>
+        ))}
+      </nav>
+      <p className="text-sm text-text-muted">{current.description}</p>
+      {error && (
+        <p role="alert" className="text-sm text-accent-red">
+          {error}{" "}
+          <button className={btnCls} onClick={load}>
+            Retry
+          </button>
+        </p>
+      )}
+      {!loading && !ready && !error && (
+        <p className="rounded-lg border border-[var(--border)] p-3 text-sm text-text-muted">
+          Existing history is available. New worker reporting needs the database
+          update. Historical “sent” citations are unverified.
+        </p>
+      )}
+      {(view === "calls" || view === "tests") && callError && (
+        <p role="alert" className="text-sm text-accent-red">
+          {callError}{" "}
+          <button className={btnCls} onClick={loadCalls}>
+            Retry calls
+          </button>
+        </p>
+      )}
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="min-w-0 flex-1 space-y-1 text-sm">
+          <span className="text-text-muted">Search</span>
+          <span className="relative block">
+            <Search
+              size={16}
+              className="absolute left-3 top-3 text-text-muted"
+            />
             <input
+              aria-label="Search outreach"
+              className={inputCls + " pl-9"}
+              placeholder={
+                showCalls
+                  ? "Phone, agent or summary"
+                  : "Name, phone, city or source"
+              }
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search targets"
-              className="w-44 rounded-full border border-[var(--border)] bg-surface py-1.5 pl-7 pr-3 text-[12px] text-text outline-none placeholder:text-text-muted focus:border-[var(--border-strong)]"
             />
-          </label>
-          <button className={btnCls} onClick={() => { setSuggestOpen(true); setCandidates(null); }}>
-            <span className="flex items-center gap-1.5"><Sparkles size={13} /> Suggest</span>
-          </button>
-          <button className={btnPrimaryCls} onClick={() => { setError(""); setNotice(""); setMessages([]); setEditing({ ...EMPTY }); }}>
-            <span className="flex items-center gap-1.5"><Plus size={13} /> Target</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex flex-wrap gap-1.5">
-          {KIND_TABS.map((k) => (
-            <button
-              key={k.key}
-              onClick={() => setTab(k.key)}
-              className={`rounded-full border px-3 py-1 text-[12px] transition-all ${
-                tab === k.key
-                  ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
-                  : "border-[var(--border)] text-text-muted hover:text-text"
-              }`}
-            >
-              {k.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          {VIEW_TABS.map((v) => (
-            <button
-              key={v.key}
-              onClick={() => setView(v.key)}
-              className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all ${
-                view === v.key
-                  ? "border-[var(--border-strong)] bg-surface-hover text-text"
-                  : "border-[var(--border)] text-text-muted hover:text-text"
-              }`}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-medium text-text-muted">Status:</span>
-          <button
-            onClick={() => setStatusFilter(null)}
-            className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-all ${
-              statusFilter === null
-                ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
-                : "border-[var(--border)] text-text-muted hover:text-text"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setStatusFilter("active")}
-            className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-all ${
-              statusFilter === "active"
-                ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
-                : "border-[var(--border)] text-text-muted hover:text-text"
-            }`}
-          >
-            Active (prospecting)
-          </button>
-          {STATUSES.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-all ${
-                statusFilter === s
-                  ? "border-[var(--border-strong)] bg-surface-hover font-semibold text-text"
-                  : "border-[var(--border)] text-text-muted hover:text-text"
-              }`}
-            >
-              <span className="flex items-center gap-1">
-                <span className={`h-1.5 w-1.5 rounded-full ${STATUS_META[s].dot}`} />
-                {STATUS_META[s].label}
-                {counts[s] ? ` (${counts[s]})` : ""}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Today: the working set, capped at 10 by design (10/day is the motion) */}
-      {view === "today" && (
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Today — research, draft, send ({today.length}/10)
-          </p>
-          {today.length > 0 ? (
-            <TargetsTable targets={today} />
-          ) : (
-            <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
-              No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* All Prospects - shows ALL targets (any status) */}
-      {view === "all" && (
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            All Prospects — {allProspects.length} targets (all statuses)
-          </p>
-          {allProspects.length > 0 ? (
-            <TargetsTable targets={allProspects} />
-          ) : (
-            <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
-              No targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Dialed / Outreached - shows sent, no_reply, replied, meeting, won, lost + any with call messages */}
-      {view === "outreached" && (
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Dialed / Outreached — {outreached.length} targets (most recent first)
-          </p>
-          {outreached.length > 0 ? (
-            <TargetsTable targets={outreached} />
-          ) : (
-            <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
-              No outreached targets yet{tab !== "all" ? " in this tab" : ""}. Dial or send messages to see them here.
-            </p>
-          )}
-        </div>
-      )}
-
-      {view === "today" && rest.length > 0 && (
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Pipeline ({rest.length})
-          </p>
-          <TargetsTable targets={rest} />
-        </div>
-      )}
-
-      {/* ── Target modal ── */}
-      {editing && (
-        <Modal title={editing.id ? editing.name : "New target"} onClose={() => setEditing(null)}>
-          <div className="grid grid-cols-2 gap-x-3">
-            <Field label="Name">
-              <input className={inputCls} value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
-            </Field>
-            <Field label="Kind">
-              <select className={inputCls} value={editing.kind} onChange={(e) => setEditing({ ...editing, kind: e.target.value as OutreachKind })}>
-                {KIND_TABS.slice(1).map((k) => <option key={k.key} value={k.key}>{k.label}</option>)}
+          </span>
+        </label>
+        {!showCalls && view !== "tests" && (
+          <>
+            <label className="space-y-1 text-sm">
+              <span className="text-text-muted">Source / batch</span>
+              <select
+                className={inputCls + " max-w-64"}
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+              >
+                <option value="all">All sources ({sources.length})</option>
+                {sources.map((s) => (
+                  <option key={s} value={s}>
+                    {s} (
+                    {
+                      base.filter((t) => (t.source || "Unspecified") === s)
+                        .length
+                    }
+                    )
+                  </option>
+                ))}
               </select>
-            </Field>
-            <Field label="Org">
-              <input className={inputCls} value={editing.org ?? ""} onChange={(e) => setEditing({ ...editing, org: e.target.value })} />
-            </Field>
-            <Field label="Status">
-              <select className={inputCls} value={editing.status ?? "identified"} onChange={(e) => setEditing({ ...editing, status: e.target.value as OutreachStatus })}>
-                {STATUSES.map((s) => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
+            </label>
+            {view === "lists" && (
+              <label className="space-y-1 text-sm">
+                <span className="text-text-muted">Type</span>
+                <select
+                  className={inputCls}
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value)}
+                >
+                  <option value="all">All types</option>
+                  <option value="business">Businesses</option>
+                  <option value="investor">Investors</option>
+                  <option value="grant">Grants</option>
+                </select>
+              </label>
+            )}
+          </>
+        )}
+        {showCalls && (
+          <>
+            <label className="space-y-1 text-sm">
+              <span className="text-text-muted">Agent</span>
+              <select
+                className={inputCls}
+                value={agent}
+                onChange={(e) => setAgent(e.target.value)}
+              >
+                <option value="all">All agents</option>
+                {["Intro DM", "Intro Cold", "Follow-up"].map((a) => (
+                  <option key={a}>{a}</option>
+                ))}
               </select>
-            </Field>
-            <Field label="Segment">
-              <input className={inputCls} placeholder="coaching, clinic, real estate…" value={editing.segment ?? ""} onChange={(e) => setEditing({ ...editing, segment: e.target.value })} />
-            </Field>
-            <Field label="City">
-              <input className={inputCls} value={editing.city ?? ""} onChange={(e) => setEditing({ ...editing, city: e.target.value })} />
-            </Field>
-            <Field label="Email">
-              <input className={inputCls} value={editing.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value })} />
-            </Field>
-            <Field label="Phone">
-              <input className={inputCls} value={editing.phone ?? ""} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} />
-            </Field>
-            <Field label="Website">
-              <input className={inputCls} value={editing.website ?? ""} onChange={(e) => setEditing({ ...editing, website: e.target.value })} />
-            </Field>
-          </div>
-
-          <Field label="Why them">
-            <textarea rows={1} className={inputCls} value={editing.why_them ?? ""} onChange={(e) => setEditing({ ...editing, why_them: e.target.value })} />
-          </Field>
-
-          {editing.id && (
-            <>
-              <div className="mb-2">
-                <button
-                  onClick={() => setResearchExpanded(!researchExpanded)}
-                  className="mb-1 flex w-full items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-text-muted hover:text-text"
+            </label>
+            {view !== "tests" && (
+              <label className="space-y-1 text-sm">
+                <span className="text-text-muted">Recipient</span>
+                <select
+                  className={inputCls}
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
                 >
-                  <span>Research brief</span>
-                  <span>{researchExpanded ? '▼' : '▶'}</span>
-                </button>
-                {researchExpanded && (
-                  <textarea rows={3} className={inputCls} placeholder="Run Research, or paste your own notes" value={editing.research ?? ""} onChange={(e) => setEditing({ ...editing, research: e.target.value })} />
-                )}
-              </div>
-
-              <Field label="Draft instructions (optional)">
-                <input className={inputCls} placeholder="angle, detail to use, length…" value={instructions} onChange={(e) => setInstructions(e.target.value)} />
-              </Field>
-
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <button className={btnCls} disabled={!!busy} onClick={() => runAction("research")}>
-                  {busy === "research" ? "Researching…" : "Research"}
-                </button>
-                <button className={btnCls} disabled={!!busy} onClick={() => runAction("draft")}>
-                  {busy === "draft" ? "Drafting…" : "Draft email"}
-                </button>
-                <a
-                  href="https://mail.google.com/mail/u/0/#drafts"
-                  target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1 text-[12px] text-text-muted hover:text-text"
-                >
-                  Gmail drafts <ExternalLink size={11} />
-                </a>
-              </div>
-
-              {editing.phone && (
-                <Field label="WhatsApp via PROXe (dry run first)">
-                  <div className="flex gap-2">
-                    <input
-                      className={inputCls}
-                      placeholder="message; cold contacts need an approved template"
-                      value={waText}
-                      onChange={(e) => setWaText(e.target.value)}
-                    />
-                    <button className={btnCls} disabled={!waText.trim() || !!busy} onClick={() => sendWhatsApp(true)}>
-                      {busy === "wa-dry" ? "…" : "Dry run"}
-                    </button>
-                    <button className={btnCls} disabled={!waText.trim() || !!busy} onClick={() => sendWhatsApp(false)}>
-                      {busy === "wa" ? "Sending…" : "Send"}
-                    </button>
-                  </div>
-                </Field>
-              )}
-
-              {messages.length > 0 && (
-                <Field label={`Messages (${messages.length})`}>
-                  <div className="max-h-32 space-y-1.5 overflow-y-auto">
-                    {messages.map((m) => (
-                      <div key={m.id} className="rounded-xl border border-[var(--border)] px-2.5 py-1.5">
-                        <p className="text-[10.5px] text-text-muted">
-                          {m.direction === "in" ? "← reply" : "→ draft"}{m.sent_at ? " · sent" : ""} · {new Date(m.created_at).toLocaleDateString()}
-                          {m.subject ? ` · ${m.subject}` : ""}
-                        </p>
-                        <p className="mt-0.5 whitespace-pre-wrap text-[11.5px] leading-snug text-text line-clamp-2">{m.body}</p>
-                      </div>
+                  <option value="all">All numbers</option>
+                  <option value="other">Other numbers</option>
+                  <option value="test">Test number</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </label>
+            )}
+          </>
+        )}
+        <label className="space-y-1 text-sm">
+          <span className="text-text-muted">Progress</span>
+          <select
+            className={inputCls}
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+          >
+            <option value="all">All progress</option>
+            {!showCalls && <option value="pending">Pending</option>}
+            <option value="in_progress">In progress</option>
+            <option value="done">{showCalls ? "Ended" : "Done"}</option>
+            <option value="blocked">
+              {showCalls ? "Failed" : "Needs attention"}
+            </option>
+          </select>
+        </label>
+      </div>
+      {(loading && !targets.length) ||
+      (callsLoading &&
+        !callsLoaded &&
+        (view === "calls" || view === "tests")) ? (
+        <p role="status" className="py-8 text-sm text-text-muted">
+          {callsLoading
+            ? "Loading call history and recording availability…"
+            : "Loading outreach lists…"}
+        </p>
+      ) : (
+        <>
+          <p className="text-sm text-text-muted">
+            {rows.length} {showCalls ? "call attempts" : "targets"}
+            {showCalls
+              ? " · " +
+                filteredCalls.filter((c) => c.has_audio).length +
+                " recordings available"
+              : ""}
+          </p>
+          {rows.length === 0 ? (
+            <p className="rounded-lg border border-[var(--border)] p-6 text-sm">
+              No matching {showCalls ? "calls" : "targets"}. Try another filter
+              or add a target.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-surface-hover text-text-muted">
+                  <tr>
+                    {(showCalls
+                      ? ["Recipient", "Agent", "When (IST)", "Result", "Review"]
+                      : [
+                          "Name",
+                          "List / source",
+                          "Progress",
+                          "Next step",
+                          "Last update",
+                        ]
+                    ).map((h) => (
+                      <th className="px-4 py-3 font-medium" key={h}>
+                        {h}
+                      </th>
                     ))}
-                  </div>
-                </Field>
-              )}
-
-              <Field label="Log a reply (paste from Gmail)">
-                <div className="flex gap-2">
-                  <textarea rows={1} className={inputCls} value={reply} onChange={(e) => setReply(e.target.value)} />
-                  <button className={btnCls} disabled={!reply.trim() || !!busy} onClick={logReply}>
-                    {busy === "reply" ? "…" : "Log"}
-                  </button>
-                </div>
-              </Field>
-            </>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {showCalls
+                    ? filteredCalls
+                        .slice(page * 50, (page + 1) * 50)
+                        .map((c) => (
+                          <tr
+                            className="bg-surface hover:bg-surface-hover"
+                            key={c.id}
+                          >
+                            <td className="max-w-64 px-4 py-3">
+                              <button
+                                className="text-left font-medium underline-offset-4 hover:underline"
+                                onClick={() => openCall(c.id)}
+                              >
+                                {nameForCall(c)}
+                              </button>
+                              <span className="mt-1 block whitespace-nowrap text-xs text-text-muted">
+                                {c.phone || "Details unavailable"} ·{" "}
+                                {c.is_test === true
+                                  ? "Test"
+                                  : c.is_test === false
+                                    ? "Other number"
+                                    : "Unknown"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">{c.agent}</td>
+                            <td className="whitespace-nowrap px-4 py-3 text-text-muted">
+                              {new Date(c.started_at).toLocaleString("en-IN", {
+                                timeZone: "Asia/Kolkata",
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })}
+                            </td>
+                            <td className="px-4 py-3">
+                              {c.status === "done" ? "Ended" : c.status} ·{" "}
+                              {c.duration}s
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                className={btnCls}
+                                onClick={() => openCall(c.id)}
+                              >
+                                {c.has_audio
+                                  ? "Play & transcript"
+                                  : "View attempt"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                    : filtered.slice(page * 50, (page + 1) * 50).map((t) => {
+                        const latest = latestActivity(byTarget.get(t.id) || []);
+                        return (
+                          <tr
+                            className="bg-surface hover:bg-surface-hover"
+                            key={t.id}
+                          >
+                            <td className="max-w-64 px-4 py-3">
+                              <button
+                                className="text-left font-medium underline-offset-4 hover:underline"
+                                onClick={() => setEditing(t)}
+                              >
+                                {t.name}
+                              </button>
+                              <span className="mt-1 block text-xs text-text-muted">
+                                {[t.phone, t.city]
+                                  .filter(Boolean)
+                                  .join(" · ") || "No contact details"}
+                              </span>
+                            </td>
+                            <td className="max-w-48 break-words px-4 py-3 text-text-muted">
+                              {t.kind}
+                              <span className="mt-1 block text-xs">
+                                {t.source || "Unspecified"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              {outcomeLabel(progress(t))}
+                            </td>
+                            <td className="max-w-64 px-4 py-3 text-text-muted">
+                              {t.notes ||
+                                (progress(t) === "qualified"
+                                  ? "Hand off to PROXe"
+                                  : progress(t) === "handed_off"
+                                    ? "Continue in PROXe"
+                                    : progress(t) === "unverified"
+                                      ? "Verify submission and add evidence"
+                                      : workState(progress(t)) === "pending"
+                                        ? "Review and choose next action"
+                                        : "Review latest activity")}
+                              {(latest?.next_at || t.next_at) && (
+                                <span className="mt-1 block text-xs">
+                                  Due{" "}
+                                  {new Date(
+                                    latest?.next_at || t.next_at || "",
+                                  ).toLocaleDateString()}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-text-muted">
+                              {latest
+                                ? latest.worker +
+                                  " · " +
+                                  new Date(
+                                    latest.occurred_at,
+                                  ).toLocaleDateString()
+                                : "No activity yet"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                </tbody>
+              </table>
+            </div>
           )}
-
-          {notice && <p className="text-[12px] text-accent-green">{notice}</p>}
-          {error && <p className="text-[12px] text-accent-red">{error}</p>}
-          <ModalActions onCancel={() => setEditing(null)} onSave={save} saving={saving || !!busy} canDelete={!!editing.id} onDelete={remove} />
-        </Modal>
-      )}
-
-      {/* ── Suggest modal ── */}
-      {suggestOpen && (
-        <Modal title="Suggest targets" onClose={() => setSuggestOpen(false)}>
-          <p className="mb-4 text-[12px] leading-relaxed text-text-muted">
-            Live search for ICP businesses. Candidates come from real results; emails you fill in yourself.
-          </p>
-          <div className="grid grid-cols-2 gap-x-3">
-            <Field label="Segment">
-              <input className={inputCls} placeholder="coaching academies" value={segment} onChange={(e) => setSegment(e.target.value)} />
-            </Field>
-            <Field label="City">
-              <input className={inputCls} value={city} onChange={(e) => setCity(e.target.value)} />
-            </Field>
-          </div>
-          <button className={btnPrimaryCls} disabled={!segment.trim() || busy === "suggest"} onClick={suggest}>
-            {busy === "suggest" ? "Searching…" : "Find candidates"}
-          </button>
-
-          {candidates && (
-            <div className="mt-4 space-y-2">
-              {candidates.length === 0 && <p className="text-[12px] text-text-muted">Nothing usable came back. Try a different segment phrasing.</p>}
-              {(candidates as Candidate[]).map((c, i) => (
-                <div key={i} className="flex items-start gap-2 rounded-xl border border-[var(--border)] px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-text">{c.org}</p>
-                    <p className="text-[11.5px] text-text-muted">{[c.segment, c.city].filter(Boolean).join(" · ")}</p>
-                    <p className="mt-0.5 text-[11.5px] text-text-muted">{c.why_them}</p>
-                    {c.website && <p className="truncate text-[11px] text-text-muted">{c.website}</p>}
-                  </div>
-                  <button className={btnCls} onClick={() => acceptCandidate(c)}>Add</button>
-                </div>
+          {rows.length > 50 && (
+            <div className="flex items-center justify-end gap-3 text-sm">
+              <button
+                className={btnCls}
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </button>
+              <span>
+                Page {page + 1} of {Math.ceil(rows.length / 50)}
+              </span>
+              <button
+                className={btnCls}
+                disabled={(page + 1) * 50 >= rows.length}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
+          {view === "tests" && base.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {base.map((t) => (
+                <button
+                  className={btnCls}
+                  key={t.id}
+                  onClick={() => setEditing(t)}
+                >
+                  Open {t.name}
+                </button>
               ))}
             </div>
           )}
-          {error && <p className="mt-3 text-[12px] text-accent-red">{error}</p>}
-        </Modal>
+        </>
       )}
+      {editing && (
+        <LeadDetail
+          key={editing.id || "new"}
+          target={
+            editing.id
+              ? targets.find((t) => t.id === editing.id) || editing
+              : editing
+          }
+          activity={byTarget.get(editing.id || "") || []}
+          calls={calls}
+          ready={ready}
+          onClose={() => setEditing(null)}
+          onSaved={load}
+          onCall={openCall}
+        />
+      )}
+      {suggest && (
+        <SuggestTargets onClose={() => setSuggest(false)} onSaved={load} />
+      )}
+      {callId && <CallReview id={callId} onClose={() => setCallId(null)} />}
     </div>
   );
 }

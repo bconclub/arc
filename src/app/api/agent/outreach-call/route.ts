@@ -48,7 +48,9 @@ export async function POST(req: NextRequest) {
     // Phones are stored free-form; match on the normalized tail.
     const { data } = await supabaseAdmin
       .from("outreach_targets").select("id, status, phone").not("phone", "is", null);
-    const hit = (data ?? []).find((t) => String(t.phone).replace(/\D/g, "").slice(-10) === key);
+    const hits = (data ?? []).filter((t) => String(t.phone).replace(/\D/g, "").slice(-10) === key);
+    if (hits.length > 1) return NextResponse.json({ error: "Multiple targets share this phone. Supply target_id." }, { status: 409 });
+    const hit = hits[0];
     target = hit ? { id: String(hit.id), status: String(hit.status) } : null;
   } else {
     return NextResponse.json({ error: "target_id or phone required" }, { status: 400 });
@@ -59,27 +61,41 @@ export async function POST(req: NextRequest) {
   const recording = typeof body.recording_url === "string" ? body.recording_url : "";
   const disposition = typeof body.disposition === "string" ? body.disposition : "";
 
+  const callbackRequest = typeof body.callback_request === 'string' ? body.callback_request.slice(0,2000) : '';
+  const occurredAt = typeof body.occurred_at === 'string' && Number.isFinite(Date.parse(body.occurred_at)) ? body.occurred_at : new Date().toISOString();
   const lines = [
+    callbackRequest && ('CALLBACK REQUEST (pending review): ' + callbackRequest),
     disposition && `DISPOSITION: ${disposition}`,
     recording && `RECORDING: ${recording}`,
     transcript && `TRANSCRIPT:\n${transcript}`,
   ].filter(Boolean).join("\n");
 
+  const providerId = typeof body.conversation_id === "string" && /^conv_[a-zA-Z0-9]+$/.test(body.conversation_id) ? body.conversation_id : null;
   const { data: msg, error: msgErr } = await supabaseAdmin.from("outreach_messages").insert({
+    ...(providerId ? { provider_conversation_id: providerId } : {}),
     target_id: target.id,
     direction: "out",
     channel: "call",
     body: lines || "(call logged, no details)",
-    sent_at: new Date().toISOString(),
+    sent_at: occurredAt,
   }).select("id").single();
-  if (msgErr) return NextResponse.json({ error: msgErr.message }, { status: 500 });
+  let messageId = msg?.id;
+  const duplicate = msgErr?.code === "23505" && !!providerId;
+  if (duplicate) {
+    const { data: existing, error: readError } = await supabaseAdmin.from("outreach_messages").select("id,target_id").eq("provider_conversation_id", providerId).single();
+    if (readError) return NextResponse.json({ error: "Could not verify previous call record" }, { status: 503 });
+    if (existing.target_id !== target.id) return NextResponse.json({ error: "Conversation already belongs to another target" }, { status: 409 });
+    messageId = existing.id;
+  }
+  if (msgErr && !duplicate) return NextResponse.json({ error: msgErr.message }, { status: 500 });
 
   const stage = STATUSES.includes(body.stage) ? body.stage : DISPOSITION_STAGE[disposition];
   // Never demote a target that already progressed past the calling stages.
   const DEMOTABLE = ["identified", "researched", "drafted", "sent", "no_reply"];
   if (stage && (DEMOTABLE.includes(target.status) || stage === "won" || stage === "meeting")) {
-    await supabaseAdmin.from("outreach_targets").update({ status: stage }).eq("id", target.id);
+    const { error: stageError } = await supabaseAdmin.from("outreach_targets").update({ status: stage }).eq("id", target.id);
+    if (stageError) return NextResponse.json({ error: "Call logged, stage update failed. Retry with the same conversation_id." }, { status: 503 });
   }
 
-  return NextResponse.json({ ok: true, target_id: target.id, message_id: msg.id, stage: stage ?? null });
+  return NextResponse.json({ ok: true, target_id: target.id, message_id: messageId, duplicate, stage: stage ?? null });
 }

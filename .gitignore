@@ -82,3 +82,9 @@ scripts/arc_context.backup.json
 
 # pulled Vercel env snapshot (contains real keys)
 .env.vercel
+
+.outreach-goproxe/
+
+.next-outreach-build/
+.next-outreach-dev/
+.next-outreach-integration/

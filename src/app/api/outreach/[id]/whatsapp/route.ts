@@ -33,10 +33,12 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const { data: target, error } = await supabaseAdmin
     .from("outreach_targets").select("*").eq("id", id).single();
   if (error || !target) return NextResponse.json({ error: "target not found" }, { status: 404 });
+  if (!target.qualified_at || !target.qualification_note) return NextResponse.json({ error: "Qualify and hand off this prospect before sending WhatsApp.", sent: false }, { status: 409 });
   if (!target.phone) return NextResponse.json({ error: "target has no phone" }, { status: 400 });
 
   const payload = {
     phone: target.phone,
+    arc_target_id: target.id,
     text: typeof body.text === "string" ? body.text : undefined,
     template: typeof body.template === "string" ? body.template : undefined,
     params: Array.isArray(body.params) ? body.params : undefined,

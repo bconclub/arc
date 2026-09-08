@@ -21,6 +21,15 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next-build/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next-build/types/**/*.ts",
+    ".next-outreach-build/types/**/*.ts",
+    ".next-outreach-dev/types/**/*.ts",
+    ".next-outreach-integration/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".outreach-goproxe"]
 }
