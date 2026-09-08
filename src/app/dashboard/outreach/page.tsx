@@ -13,6 +13,12 @@ const KIND_TABS: { key: OutreachKind | "all"; label: string }[] = [
   { key: "citation", label: "Citations" },
 ];
 
+const VIEW_TABS: { key: "today" | "all" | "outreached"; label: string }[] = [
+  { key: "today", label: "Today's 10" },
+  { key: "all", label: "All Prospects" },
+  { key: "outreached", label: "Dialed / Outreached" },
+];
+
 const STATUS_META: Record<OutreachStatus, { label: string; dot: string }> = {
   identified: { label: "identified", dot: "bg-text-muted" },
   researched: { label: "researched", dot: "bg-accent-blue" },
@@ -29,6 +35,9 @@ const STATUSES = Object.keys(STATUS_META) as OutreachStatus[];
 /** The working set: what today's 10 get picked from. */
 const ACTIVE: OutreachStatus[] = ["identified", "researched", "drafted"];
 
+/** Outreached: any target with outbound activity (sent, dialed) or pipeline stages. */
+const OUTREACHED: OutreachStatus[] = ["sent", "no_reply", "replied", "meeting", "won", "lost"];
+
 type Candidate = { org: string; website: string | null; city: string | null; segment: string | null; why_them: string; source_url: string };
 
 type FormState = Partial<OutreachTarget> & { name: string; kind: OutreachKind };
@@ -37,6 +46,7 @@ const EMPTY: FormState = { name: "", kind: "business", status: "identified" };
 export default function OutreachPage() {
   const [targets, setTargets] = useState<OutreachTarget[]>([]);
   const [tab, setTab] = useState<OutreachKind | "all">("all");
+  const [view, setView] = useState<"today" | "all" | "outreached">("today");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<FormState | null>(null);
   const [messages, setMessages] = useState<OutreachMessage[]>([]);
@@ -51,13 +61,28 @@ export default function OutreachPage() {
   const [city, setCity] = useState("Bangalore");
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
   const [statusFilter, setStatusFilter] = useState<OutreachStatus | "active" | null>(null);
-  const [preferToday, setPreferToday] = useState(false);
   const [waText, setWaText] = useState("");
   const [researchExpanded, setResearchExpanded] = useState(false);
+  const [targetMessages, setTargetMessages] = useState<Record<string, OutreachMessage[]>>({});
 
   const load = useCallback(async () => {
     const data = await fetch("/api/outreach").then((r) => r.json()).catch(() => []);
-    setTargets(Array.isArray(data) ? data : []);
+    const targetList = Array.isArray(data) ? data : [];
+    setTargets(targetList);
+    
+    // For outreached targets, fetch message data to determine if they have calls
+    const outreachedIds = targetList.filter((t: OutreachTarget) => 
+      OUTREACHED.includes(t.status)
+    ).map((t: OutreachTarget) => t.id);
+    
+    const msgMap: Record<string, OutreachMessage[]> = {};
+    await Promise.all(
+      outreachedIds.map(async (id) => {
+        const msgs = await fetch(`/api/outreach/${id}/messages`).then((r) => r.json()).catch(() => []);
+        msgMap[id] = Array.isArray(msgs) ? msgs : [];
+      })
+    );
+    setTargetMessages(msgMap);
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -66,7 +91,7 @@ export default function OutreachPage() {
     let result = targets.filter((t) => {
       if (tab !== "all" && t.kind !== tab) return false;
       if (!needle) return true;
-      return [t.name, t.org, t.segment, t.city, t.email, t.status]
+      return [t.name, t.org, t.segment, t.city, t.email, t.phone, t.status]
         .some((f) => (f ?? "").toLowerCase().includes(needle));
     });
 
@@ -86,16 +111,33 @@ export default function OutreachPage() {
     [filtered],
   );
   const allProspects = useMemo(
-    () => filtered.filter((t) => ACTIVE.includes(t.status)),
+    () => filtered,
     [filtered],
   );
+  const outreached = useMemo(() => {
+    // Show targets with outreach activity: those in OUTREACHED statuses OR with call messages
+    const result = filtered.filter((t) => {
+      if (OUTREACHED.includes(t.status)) return true;
+      const msgs = targetMessages[t.id] || [];
+      return msgs.some((m) => m.channel === "call");
+    });
+    // Sort by most recent activity (sent_at from messages or updated_at)
+    return result.sort((a, b) => {
+      const aMsgs = targetMessages[a.id] || [];
+      const bMsgs = targetMessages[b.id] || [];
+      const aLatest = aMsgs.length > 0 
+        ? Math.max(...aMsgs.map((m) => new Date(m.sent_at || m.created_at).getTime()))
+        : new Date(a.updated_at).getTime();
+      const bLatest = bMsgs.length > 0
+        ? Math.max(...bMsgs.map((m) => new Date(m.sent_at || m.created_at).getTime()))
+        : new Date(b.updated_at).getTime();
+      return bLatest - aLatest;
+    });
+  }, [filtered, targetMessages]);
   const rest = useMemo(
     () => filtered.filter((t) => !ACTIVE.includes(t.status)),
     [filtered],
   );
-
-  // Derive display mode: ALWAYS show expanded unless user explicitly collapsed
-  const showAllProspects = !preferToday;
 
   const counts = useMemo(() => {
     const c: Partial<Record<OutreachStatus, number>> = {};
@@ -352,6 +394,22 @@ export default function OutreachPage() {
           ))}
         </div>
 
+        <div className="flex flex-wrap gap-1.5">
+          {VIEW_TABS.map((v) => (
+            <button
+              key={v.key}
+              onClick={() => setView(v.key)}
+              className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all ${
+                view === v.key
+                  ? "border-[var(--border-strong)] bg-surface-hover text-text"
+                  : "border-[var(--border)] text-text-muted hover:text-text"
+              }`}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[11px] font-medium text-text-muted">Status:</span>
           <button
@@ -395,7 +453,7 @@ export default function OutreachPage() {
       </div>
 
       {/* Today: the working set, capped at 10 by design (10/day is the motion) */}
-      {!showAllProspects && (
+      {view === "today" && (
         <div>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
             Today — research, draft, send ({today.length}/10)
@@ -407,44 +465,42 @@ export default function OutreachPage() {
               No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
             </p>
           )}
-          {allProspects.length > 10 && (
-            <button
-              onClick={() => setPreferToday(false)}
-              className="mt-3 w-full rounded-card border border-[var(--border)] bg-surface px-3.5 py-2 text-[12px] text-text-muted transition-all hover:border-[var(--border-strong)] hover:bg-surface-hover hover:text-text"
-            >
-              Show all {allProspects.length} prospects (identified, researched, drafted)
-            </button>
-          )}
         </div>
       )}
 
-      {/* All prospects board - shows everything without the 10 cap */}
-      {showAllProspects && (
+      {/* All Prospects - shows ALL targets (any status) */}
+      {view === "all" && (
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-              All prospects — {allProspects.length} active
-            </p>
-            {showAllProspects && allProspects.length > 10 && (
-              <button
-                onClick={() => setPreferToday(true)}
-                className="text-[11px] text-text-muted hover:text-text"
-              >
-                Back to Today&apos;s 10
-              </button>
-            )}
-          </div>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+            All Prospects — {allProspects.length} targets (all statuses)
+          </p>
           {allProspects.length > 0 ? (
             <TargetsTable targets={allProspects} />
           ) : (
             <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
-              No active targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
+              No targets{tab !== "all" ? " in this tab" : ""}. Add one or use Suggest.
             </p>
           )}
         </div>
       )}
 
-      {!showAllProspects && rest.length > 0 && (
+      {/* Dialed / Outreached - shows sent, no_reply, replied, meeting, won, lost + any with call messages */}
+      {view === "outreached" && (
+        <div>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+            Dialed / Outreached — {outreached.length} targets (most recent first)
+          </p>
+          {outreached.length > 0 ? (
+            <TargetsTable targets={outreached} />
+          ) : (
+            <p className="rounded-card border border-[var(--border)] bg-surface px-3.5 py-3 text-[12px] text-text-muted">
+              No outreached targets yet{tab !== "all" ? " in this tab" : ""}. Dial or send messages to see them here.
+            </p>
+          )}
+        </div>
+      )}
+
+      {view === "today" && rest.length > 0 && (
         <div>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
             Pipeline ({rest.length})
