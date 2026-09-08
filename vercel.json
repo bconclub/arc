@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/arc/sync", "schedule": "0 1 * * *" },
-    { "path": "/api/ops/invoices/scan", "schedule": "30 1 * * *" }
+    { "path": "/api/ops/invoices/scan", "schedule": "30 1 * * *" },
+    { "path": "/api/arc/tick", "schedule": "0 */6 * * *" }
   ]
 }

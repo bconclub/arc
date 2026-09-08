@@ -128,5 +128,24 @@ function metaPullers(): Array<Promise<PullResult>> {
 export async function syncAllSources(): Promise<PullResult[]> {
   // Add further sources here as they come online; each writes its own namespace
   // and the bots pick them up with no change.
-  return Promise.all([...metaPullers()])
+  return Promise.all([...metaPullers(), pullIcpKeywords()])
+}
+
+async function pullIcpKeywords(): Promise<PullResult> {
+  const ns = "icp_keywords";
+  try {
+    const { listen } = await import("@/lib/market");
+    // Re-rank against the current signals cache. Skip live RSS/Tavily here so
+    // the 6-hourly cron does not spend search credits or hammer feeds.
+    const result = await listen({ liveWeb: false, testConnections: false });
+    if (result.error) return { namespace: ns, scope: "global", ok: false, detail: result.error };
+    return {
+      namespace: ns,
+      scope: "global",
+      ok: true,
+      detail: `${result.scored} phrases, ${result.signals} docs, ${result.harvested} harvested`,
+    };
+  } catch (e) {
+    return { namespace: ns, scope: "global", ok: false, detail: e instanceof Error ? e.message : "pull failed" };
+  }
 }

@@ -32,9 +32,11 @@ X-Agent-Name: luko
 
 | Call | Purpose |
 |---|---|
+| `GET /api/agent/gtm?format=md` | one GTM pack: ICP, use-keywords, market, ideas, jobs, heartbeats |
 | `POST /api/agent/next` | claim one job — `{"kinds":["scan_mail"]}`, returns `{job}` or `{job:null}` |
 | `POST /api/agent/result` | report outcome, persist cursor, optionally enqueue the next job |
 | `POST /api/agent/heartbeat` | liveness — `{"version":"0.1.0","note":"idle"}` |
+| `POST /api/proxe/conversation` | PROXe reports a WhatsApp / IG / web / voice event onto the outreach board |
 | `GET /api/ops/brands?resolve=<name or email>` | resolve any spelling to a brand |
 | `GET /api/ops/brands/<id>` | one brand with everything attached |
 | `POST /api/ops/payments` | one invoice/receipt |
@@ -82,8 +84,24 @@ attempts left is automatically requeued with exponential backoff (5, 10, 20 min)
 | `collect_social` | `{"platform":"linkedin"}` | pull account + post metrics, upsert |
 | `sweep_dates` | `{"horizon_days":14}` | scan `payment_schedule` + `end_date`, raise alerts |
 | `reconcile_tax` | `{"fy":"2025-26"}` | list receipts with `reconciled=false` for the CA |
+| `draft_content` | `{"idea_id":1,"title":"…","angle":"…","keywords":[],"format":"script"}` | write a script/blog draft for an **approved** idea, persist via the ARC API, do not publish |
+| `render_image` | `{"idea_id":1,"script_id":1,"title":"…","prompt":"…","use":"blog"}` | render the brief, store the file, report the URL in `result`. Do not invent a placeholder image |
 
 Unknown kinds must be reported `failed` with a clear error, never guessed at.
+
+Content jobs are only enqueued for **approved** ideas. Proposed ideas sit on `/dashboard/arc` until a human accepts them. Image jobs are briefs (prompt + caption). The worker renders and reports a URL; ARC does not invent pixels.
+
+The GTM loop:
+
+```
+GET /api/agent/gtm?format=md   # paste into the system prompt
+POST /api/agent/next           # kinds: draft_content, render_image
+POST /api/agent/result
+```
+
+ARC's own tick (`GET /api/arc/tick`, every six hours) refreshes the keyword bank, fills proposed ideas when the board is empty, and enqueues those jobs. It does not publish.
+
+PROXe intertwine: after the first two-way contact, PROXe owns the conversation. It POSTs `/api/proxe/conversation` with the phone (or ARC `target_id`) so the outreach row moves to `replied` instead of looking cold. The PROXe repo is what has to make that call; ARC already accepts it.
 
 ## 4. Brand resolution — do this before every write
 

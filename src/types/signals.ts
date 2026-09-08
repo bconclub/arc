@@ -1,4 +1,7 @@
 // Signal types for ARC Feed
+import { icpBoost } from "@/lib/icp";
+
+export { ICP_KEYWORDS } from "@/lib/icp";
 
 export type SourceType = "rss" | "tavily_search";
 export type Pillar = "pain_points" | "build_journey" | "marketing_tips" | "client_results";
@@ -40,14 +43,6 @@ export interface RawSignal {
   sourceType: SourceType;
 }
 
-export const ICP_KEYWORDS = [
-  "WhatsApp", "leads", "India", "Meta ads", "AI", "founder",
-  "follow-up", "follow up", "sales", "automation", "business",
-  "SMB", "small business", "coaching", "clinic", "real estate",
-  "tutoring", "marketing", "demo", "booking", "conversion",
-  "startup", "entrepreneur", "growth", "revenue", "customers"
-];
-
 export function calculateTrendScore(title: string, snippet: string, publishedDate: string): { score: number; label: TrendLabel } {
   // Recency score
   let recency = 30;
@@ -64,19 +59,8 @@ export function calculateTrendScore(title: string, snippet: string, publishedDat
     recency = 30;
   }
 
-  // ICP keyword match score
-  const fullText = (title + " " + snippet).toLowerCase();
-  let keywordMatches = 0;
-  ICP_KEYWORDS.forEach(keyword => {
-    if (fullText.includes(keyword.toLowerCase())) keywordMatches++;
-  });
-  const icpScore = Math.min(100, keywordMatches * 15);
-
-  // Random factor (engagement velocity simulation)
-  const randomFactor = Math.random() * 25;
-
-  // Final score
-  const score = Math.round((recency * 0.4) + (icpScore * 0.35) + (randomFactor * 0.25));
+  const icpScore = Math.min(100, icpBoost(title, snippet));
+  const score = Math.round((recency * 0.55) + (icpScore * 0.45));
 
   // Label
   let label: TrendLabel = "steady";

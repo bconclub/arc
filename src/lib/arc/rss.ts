@@ -44,20 +44,14 @@ export function getLabelFromScore(score: number): "hot" | "rising" | "steady" {
   return "steady";
 }
 
-// ICP relevance booster, marketing / AI / startup float to the top.
-const RELEVANCE_KEYWORDS: { terms: string[]; weight: number }[] = [
-  { terms: ["marketing", "brand", "advertis", "campaign", "seo", "social media", "content", "growth", "lead"], weight: 30 },
-  { terms: ["ai", "artificial intelligence", "llm", "gpt", "agent", "automation", "chatbot", "machine learning"], weight: 25 },
-  { terms: ["startup", "founder", "saas", "b2b", "smb", "small business", "entrepreneur", "product"], weight: 20 },
-];
+import { icpBoost } from "@/lib/icp";
+
 const DEMOTE_KEYWORDS = ["stock", "shares", "ipo", "crypto", "bitcoin", "fund raises", "block deal", "quarterly results"];
 
+/** ICP phrase/anchor match, minus market noise. No random factor. */
 export function relevanceBoost(title: string, snippet: string): number {
   const text = `${title} ${snippet}`.toLowerCase();
-  let boost = 0;
-  for (const group of RELEVANCE_KEYWORDS) {
-    if (group.terms.some((t) => text.includes(t))) boost += group.weight;
-  }
+  let boost = icpBoost(title, snippet);
   if (DEMOTE_KEYWORDS.some((t) => text.includes(t))) boost -= 20;
   return boost;
 }
