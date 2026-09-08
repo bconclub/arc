@@ -115,13 +115,26 @@ export default function OutreachPage() {
     [filtered],
   );
   const outreached = useMemo(() => {
-    // Show targets with outreach activity: those in OUTREACHED statuses OR with call messages
+    // Dialed / Outreached = business only. Exclude citations, investors, grants.
+    // Include if: kind === business AND (has call messages OR status in OUTREACHED)
+    // Hide test_dial segments from the default view
     const result = filtered.filter((t) => {
-      if (OUTREACHED.includes(t.status)) return true;
+      // Must be business kind
+      if (t.kind !== "business") return false;
+      
+      // Hide test dial segments
+      const segment = (t.segment ?? "").toLowerCase();
+      if (segment.includes("test_dial") || segment.includes("proxe test")) return false;
+      
+      // Include if has call messages OR is in OUTREACHED status
       const msgs = targetMessages[t.id] || [];
-      return msgs.some((m) => m.channel === "call");
+      const hasCallActivity = msgs.some((m) => m.channel === "call");
+      const isOutreached = OUTREACHED.includes(t.status);
+      
+      return hasCallActivity || isOutreached;
     });
-    // Sort by most recent activity (sent_at from messages or updated_at)
+    
+    // Sort by most recent activity (sent_at from messages or updated_at), newest first
     return result.sort((a, b) => {
       const aMsgs = targetMessages[a.id] || [];
       const bMsgs = targetMessages[b.id] || [];
