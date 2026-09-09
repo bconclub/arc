@@ -1,3 +1,4 @@
+import { callCosts } from "@/lib/outreach-costs";
 import {
   BDR_AGENTS,
   callDetail,
@@ -17,6 +18,7 @@ export async function GET(
       return Response.json({ error: "BDR call not found." }, { status: 404 });
     const phone = d.metadata?.phone_call?.external_number || null;
     return Response.json({
+      costs: callCosts(d),
       id: d.conversation_id,
       agent: BDR_AGENTS[d.agent_id],
       phone,

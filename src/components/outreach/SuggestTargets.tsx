@@ -65,13 +65,13 @@ export function SuggestTargets({
   }
   return (
     <OutreachDialog title="Find prospects" onClose={onClose}>
-      <header className="flex items-center justify-between border-b border-[var(--border)] p-5">
+      <header className="flex shrink-0 items-center justify-between border-b border-[var(--border)] p-5">
         <h2 className="text-lg font-semibold">Find prospects</h2>
         <button className={btnCls} onClick={onClose}>
           Close
         </button>
       </header>
-      <div className="space-y-4 overflow-y-auto p-5">
+      <div className="min-h-0 space-y-4 overflow-y-auto p-5">
         <label className="block space-y-1 text-sm">
           Business type
           <input

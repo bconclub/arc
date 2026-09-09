@@ -129,3 +129,18 @@ ARC reservation now requires a matching target and refuses closed/ambiguous pros
 Current main filters retained: All Prospects, Today's 10 and business-only Dialed / Outreached. Local modifications in the original ARC checkout remain untouched.
 
 Validation: both production builds passed; 28 qualification checks, 16 BDR isolation checks, seven ARC reservation checks; provider text simulations of silence, IVR, callback and information request. No real call placed. Migration 20260908000000 remains pending user execution; new outbound calls fail closed until ARC is ready.
+
+## Per-call cost reporting
+
+The Calls table and call review expose Vobiz telephony, ElevenLabs USD cost, ElevenLabs credits, and LLM token counts. This includes historical records when providers return billing metadata. Unknown is not zero. Charges may arrive after the call finishes; refresh retrieves provider data again.
+
+- ElevenLabs monetary total uses `metadata.cost_fiat`. Missing provider totals remain unavailable even when some component prices are present. Credits use `metadata.cost` and are never treated as dollars or tokens. The model price is part of the ElevenLabs amount, never added a second time.
+- Tokens aggregate `charging.llm_usage.initiated_generation.model_usage` input, output_total, input_cache_read and input_cache_write. Initiated usage includes interrupted generation. Do not add irreversible_generation or detailed_model_usage because they overlap. Missing categories leave the token total unavailable.
+- BDR's authenticated history bridge allows only the billing fields needed by ARC. Provider secrets remain server-side. Existing agent allowlisting and ARC session verification apply.
+- Configure `VOBIZ_AUTH_ID` and `VOBIZ_AUTH_TOKEN` in the BDR service's secret environment, not client variables. No Vobiz credentials were found in the checked local ARC/BDR configuration. No credentials have been copied from another brand.
+- Vobiz lookup uses its account CDR API filtered by the provider call's SIP ID. Accept exactly one outbound record with matching SIP ID and destination, use `total_cost`, `currency` and `billsec`. Missing/ambiguous matches remain unavailable. Multiple billed legs require reconciliation before reporting a charge. No phone/time approximation is labelled as actual billing.
+- Provider currencies remain separate. No exchange rate, subscription allocation, or combined cross-currency total is invented. Vobiz live billing verification remains pending credentials and exact call-ID availability.
+
+Sources: https://elevenlabs.io/docs/eleven-agents/api-reference/conversations/get and the official https://github.com/vobiz-ai/Vobiz-Python-SDK CDR client/schema.
+
+Checks: `node scripts/outreach-cost-checks.cjs` covers dollar/credit separation, duplicate usage, unknown and zero costs, billing bridge passthrough, and Vobiz matching. Both apps type-check. Desktop and phone cost list/modal rendering verified using saved provider data; no new call placed.

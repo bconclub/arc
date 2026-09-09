@@ -18,8 +18,8 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen">
       <Sidebar />
-      <main className="flex min-h-screen flex-col pb-20 lg:ml-[200px] lg:pb-0">
-        <div className="flex-1 animate-fade-in">{children}</div>
+      <main className="flex min-h-screen min-w-0 flex-col pb-20 lg:ml-[200px] lg:pb-0">
+        <div className="min-w-0 flex-1 animate-fade-in">{children}</div>
       </main>
       {/* Floating on every page: click the bubble, talk to ARC. Confirmed
           changes broadcast arc:data-changed for the page behind to reload. */}

@@ -131,6 +131,7 @@ async function check(name, fn) {
     "src/app/api/outreach/calls/[id]/audio/route.ts",
   ]) {
     const route = load(file, {
+      "@/lib/outreach-costs": load("src/lib/outreach-costs.ts"),
       "@/lib/outreach-calls": {
         callSession: async () => false,
         callProvider: () => {

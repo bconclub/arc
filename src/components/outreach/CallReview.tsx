@@ -1,9 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { CallCostBreakdown } from "./CallCostBreakdown";
+import type { CallCosts } from "@/lib/outreach-costs";
 import { X } from "lucide-react";
 import { btnCls } from "@/components/ops/Modal";
 import { OutreachDialog } from "./OutreachDialog";
 export type BdrCall = {
+  costs?: CallCosts;
   id: string;
   agent: string;
   started_at: string;
@@ -24,8 +27,10 @@ type Detail = BdrCall & {
 export function CallReview({
   id,
   onClose,
+  returnToLead = false,
 }: {
   id: string;
+  returnToLead?: boolean;
   onClose: () => void;
 }) {
   const [detail, setDetail] = useState<Detail | null>(null),
@@ -50,7 +55,7 @@ export function CallReview({
   }, [id, retry]);
   return (
     <OutreachDialog title={detail?.agent || "Call review"} onClose={onClose}>
-      <header className="flex items-center justify-between gap-4 border-b border-[var(--border)] p-5">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] p-5">
         <h2 className="text-lg font-semibold">
           {detail?.agent || "Call review"}
         </h2>
@@ -58,7 +63,8 @@ export function CallReview({
           <X size={18} />
         </button>
       </header>
-      <div className="space-y-5 overflow-y-auto p-5">
+      {returnToLead && <button className="px-5 py-3 text-left text-sm underline" onClick={onClose}>Back to lead</button>}
+      <div className="min-h-0 space-y-5 overflow-y-auto p-5">
         {error ? (
           <p role="alert">
             {error}{" "}
@@ -86,6 +92,7 @@ export function CallReview({
             </p>
             {detail.outcome && <p>Outcome: {detail.outcome.replace(/_/g, " ")}. Qualification requires review.</p>}
             {detail.callback_request && <p>Callback request: {detail.callback_request}</p>}
+            <CallCostBreakdown costs={detail.costs} />
             <section aria-label="Recording">
               <h3 className="mb-2 font-medium">Recording</h3>
               {detail.has_audio ? (

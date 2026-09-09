@@ -1,3 +1,4 @@
+import { callCosts } from "@/lib/outreach-costs";
 import {
   BDR_AGENTS,
   callProvider,
@@ -60,6 +61,7 @@ export async function GET() {
               const phone = d?.metadata?.phone_call?.external_number || null;
               return {
                 ...c,
+                costs: callCosts(d),
                 phone,
                 is_test: phone
                   ? phone.replace(/\D/g, "").slice(-10) === TEST_PHONE
@@ -71,6 +73,7 @@ export async function GET() {
             } catch {
               return {
                 ...c,
+                costs: callCosts(null),
                 phone: null,
                 is_test: null,
                 has_audio: null,

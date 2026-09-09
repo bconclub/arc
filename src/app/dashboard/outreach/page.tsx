@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { CallCostBreakdown } from "@/components/outreach/CallCostBreakdown";
 import { Plus, RefreshCw, Search } from "lucide-react";
 import { btnCls, btnPrimaryCls, inputCls } from "@/components/ops/Modal";
 import type { OutreachTarget } from "@/types/ops";
@@ -145,17 +146,17 @@ export default function OutreachPage() {
     (t) =>
       (source === "all" || (t.source || "Unspecified") === source) &&
       (kind === "all" || t.kind === kind) &&
-      (state === "all" || workState(progress(t)) === state) &&
       [t.name, t.phone, t.email, t.city, t.segment, t.source].some((v) =>
         v?.toLowerCase().includes(q.toLowerCase()),
       ),
   );
-  const filtered = view !== 'lists' || listMode === 'all' ? filteredBase
+  const scopedTargets = view !== 'lists' || listMode === 'all' ? filteredBase
     : listMode === 'today' ? filteredBase.filter(t => ['identified','researched','drafted'].includes(t.status)).slice(0,10)
     : filteredBase.filter(t => t.kind === 'business' && !isTestTarget(t) &&
       (['sent','no_reply','replied','meeting','won','lost'].includes(t.status) || (byTarget.get(t.id) || []).some(a => a.channel === 'call')))
       .sort((a,b) => Date.parse(latestActivity(byTarget.get(b.id)||[])?.occurred_at || b.updated_at) - Date.parse(latestActivity(byTarget.get(a.id)||[])?.occurred_at || a.updated_at));
-  const filteredCalls = calls.filter(
+  const filtered = scopedTargets.filter((t) => state === "all" || workState(progress(t)) === state);
+  const scopedCalls = calls.filter(
     (c) =>
       (view !== "tests" || c.is_test === true) &&
       (agent === "all" || c.agent === agent) &&
@@ -165,18 +166,14 @@ export default function OutreachPage() {
           : audience === "other"
             ? c.is_test === false
             : c.is_test === null)) &&
-      (state === "all" ||
-        (state === "blocked"
-          ? c.status === "failed"
-          : state === "in_progress"
-            ? ["initiated", "in-progress", "processing"].includes(c.status)
-            : state === "done"
-              ? c.status === "done"
-              : false)) &&
       [c.phone, c.agent, c.summary, c.status].some((v) =>
         v?.toLowerCase().includes(q.toLowerCase()),
       ),
   );
+  function callState(c: BdrCall) {
+    return c.status === "failed" ? "blocked" : c.status === "done" ? "done" : "in_progress";
+  }
+  const filteredCalls = scopedCalls.filter((c) => state === "all" || callState(c) === state);
   const current = views.find((v) => v.key === view)!;
   function changeView(v: View) {
     setView(v);
@@ -185,9 +182,9 @@ export default function OutreachPage() {
     setKind("all");
     setQ("");
     setAudience("all");
+    setAgent("all");
   }
   function openCall(id: string) {
-    setEditing(null);
     setCallId(id);
   }
   function nameForCall(c: BdrCall) {
@@ -202,10 +199,17 @@ export default function OutreachPage() {
         ? "Multiple matching targets"
         : c.phone;
   }
-  const showCalls = view === "calls" || (view === "tests" && callsLoaded);
+  const showCalls = view === "calls" || view === "tests";
   const rows = showCalls ? filteredCalls : filtered;
+  const progressOptions = [
+    { key: "all", label: "All" },
+    ...(!showCalls ? [{ key: "pending", label: "Pending" }] : []),
+    { key: "in_progress", label: "In progress" },
+    { key: "done", label: showCalls ? "Ended" : "Done" },
+    { key: "blocked", label: showCalls ? "Failed" : "Needs attention" },
+  ];
   return (
-    <div className="space-y-5 pb-16 text-text">
+    <div className="page min-w-0 max-w-full space-y-5 text-text">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Outreach</h1>
@@ -213,7 +217,7 @@ export default function OutreachPage() {
             Lists, work in progress, and results in one place.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             className={btnCls}
             disabled={loading || callsLoading}
@@ -293,7 +297,7 @@ export default function OutreachPage() {
         </p>
       )}
       <div className="flex flex-wrap items-end gap-3">
-        <label className="min-w-0 flex-1 space-y-1 text-sm">
+        <label className="min-w-0 basis-full space-y-1 text-sm md:basis-64 md:flex-1">
           <span className="text-text-muted">Search</span>
           <span className="relative block">
             <Search
@@ -313,7 +317,7 @@ export default function OutreachPage() {
             />
           </span>
         </label>
-        {!showCalls && view !== "tests" && (
+        {!showCalls && (
           <>
             <label className="space-y-1 text-sm">
               <span className="text-text-muted">Source / batch</span>
@@ -384,22 +388,20 @@ export default function OutreachPage() {
             )}
           </>
         )}
-        <label className="space-y-1 text-sm">
-          <span className="text-text-muted">Progress</span>
-          <select
-            className={inputCls}
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-          >
-            <option value="all">All progress</option>
-            {!showCalls && <option value="pending">Pending</option>}
-            <option value="in_progress">In progress</option>
-            <option value="done">{showCalls ? "Ended" : "Done"}</option>
-            <option value="blocked">
-              {showCalls ? "Failed" : "Needs attention"}
-            </option>
-          </select>
-        </label>
+      </div>
+      <div aria-label="Filter by progress" className="flex flex-wrap gap-2">
+        {progressOptions.map((option) => {
+          const count = showCalls
+            ? scopedCalls.filter((c) => option.key === "all" || callState(c) === option.key).length
+            : scopedTargets.filter((t) => option.key === "all" || workState(progress(t)) === option.key).length;
+          return (
+            <button key={option.key} aria-pressed={state === option.key}
+              onClick={() => setState(option.key)}
+              className={"min-h-11 rounded-lg border px-4 py-2 text-sm " + (state === option.key ? "border-text bg-surface-hover font-semibold" : "border-[var(--border)] text-text-muted hover:text-text")}>
+              {option.label} <span className="ml-2 tabular-nums">{loading || (showCalls && callsLoading) ? "…" : count}</span>
+            </button>
+          );
+        })}
       </div>
       {(loading && !targets.length) ||
       (callsLoading &&
@@ -426,12 +428,12 @@ export default function OutreachPage() {
               or add a target.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+            <div className="max-w-full overflow-x-auto rounded-lg border border-[var(--border)]">
               <table className="w-full min-w-[720px] text-left text-sm">
                 <thead className="bg-surface-hover text-text-muted">
                   <tr>
                     {(showCalls
-                      ? ["Recipient", "Agent", "When (IST)", "Result", "Review"]
+                      ? ["Recipient", "Agent", "When (IST)", "Result", "Cost & tokens", "Review"]
                       : [
                           "Name",
                           "List / source",
@@ -483,6 +485,7 @@ export default function OutreachPage() {
                               {c.status === "done" ? "Ended" : c.status} ·{" "}
                               {c.duration}s
                             </td>
+                            <td className="px-4 py-3"><CallCostBreakdown costs={c.costs} compact /></td>
                             <td className="px-4 py-3">
                               <button
                                 className={btnCls}
@@ -596,7 +599,7 @@ export default function OutreachPage() {
           )}
         </>
       )}
-      {editing && (
+      {editing && !callId && (
         <LeadDetail
           key={editing.id || "new"}
           target={
@@ -615,7 +618,7 @@ export default function OutreachPage() {
       {suggest && (
         <SuggestTargets onClose={() => setSuggest(false)} onSaved={load} />
       )}
-      {callId && <CallReview id={callId} onClose={() => setCallId(null)} />}
+      {callId && <CallReview id={callId} returnToLead={!!editing} onClose={() => setCallId(null)} />}
     </div>
   );
 }
