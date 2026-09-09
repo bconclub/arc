@@ -40,15 +40,20 @@ export async function POST(req: NextRequest) {
   let target: { id: string; status: string } | null = null;
   if (body.target_id) {
     const { data } = await supabaseAdmin
-      .from("outreach_targets").select("id, status").eq("id", String(body.target_id)).maybeSingle();
+      .from("outreach_targets").select("id, status, phone").eq("id", String(body.target_id)).maybeSingle();
+    if (data && body.phone && String(data.phone || "").replace(/\D/g, "").slice(-10) !== String(body.phone).replace(/\D/g, "").slice(-10)) return NextResponse.json({ error: "Target phone mismatch" }, { status: 409 });
     target = (data as { id: string; status: string } | null) ?? null;
   } else if (body.phone) {
     const key = String(body.phone).replace(/\D/g, "").slice(-10);
     if (key.length < 10) return NextResponse.json({ error: "valid phone or target_id required" }, { status: 400 });
     // Phones are stored free-form; match on the normalized tail.
-    const { data } = await supabaseAdmin
-      .from("outreach_targets").select("id, status, phone").not("phone", "is", null);
-    const hits = (data ?? []).filter((t) => String(t.phone).replace(/\D/g, "").slice(-10) === key);
+    const hits: {id: string; status: string; phone: string}[] = [];
+    for (let offset=0; ; offset+=1000) {
+      const { data, error } = await supabaseAdmin.from('outreach_targets').select('id,status,phone').order('id').range(offset,offset+999);
+      if (error) return NextResponse.json({ error: 'Target lookup unavailable' }, { status: 503 });
+      hits.push(...(data || []).filter(t => String(t.phone || '').replace(/\D/g,'').slice(-10) === key));
+      if ((data || []).length < 1000) break;
+    }
     if (hits.length > 1) return NextResponse.json({ error: "Multiple targets share this phone. Supply target_id." }, { status: 409 });
     const hit = hits[0];
     target = hit ? { id: String(hit.id), status: String(hit.status) } : null;

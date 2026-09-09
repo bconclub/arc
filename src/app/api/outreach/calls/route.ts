@@ -66,6 +66,7 @@ export async function GET() {
                   : null,
                 has_audio: Boolean(d?.has_audio),
                 summary: d?.analysis?.transcript_summary || null,
+                outcome: d?.evidence?.outcome || null,
               };
             } catch {
               return {

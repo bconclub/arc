@@ -14,6 +14,8 @@ export type BdrCall = {
   is_test: boolean | null;
   has_audio: boolean | null;
   summary: string | null;
+  outcome?: string | null;
+  callback_request?: string | null;
 };
 type Detail = BdrCall & {
   failure: string | null;
@@ -82,6 +84,8 @@ export function CallReview({
               IST · {detail.duration}s ·{" "}
               {detail.status === "done" ? "Call ended" : detail.status}
             </p>
+            {detail.outcome && <p>Outcome: {detail.outcome.replace(/_/g, " ")}. Qualification requires review.</p>}
+            {detail.callback_request && <p>Callback request: {detail.callback_request}</p>}
             <section aria-label="Recording">
               <h3 className="mb-2 font-medium">Recording</h3>
               {detail.has_audio ? (

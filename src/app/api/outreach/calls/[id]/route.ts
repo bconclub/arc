@@ -29,6 +29,8 @@ export async function GET(
       ).toISOString(),
       duration: d.metadata.call_duration_secs,
       summary: d.analysis?.transcript_summary || null,
+      outcome: d.evidence?.outcome || null,
+      callback_request: d.evidence?.callback_request || null,
       failure: d.metadata?.error?.message || null,
       has_audio: Boolean(d.has_audio),
       transcript: (d.transcript || []).map(

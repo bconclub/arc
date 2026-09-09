@@ -119,3 +119,13 @@ for the test number; no message was sent.
 - Local PostgreSQL migration checks passed: repeat application, preserved rows, competing reservations, expiry, anonymous-access restrictions and event uniqueness.
 - Real local ARC-to-BDR integration returned 45 calls, 30 recordings and zero unknown recipients. Transcript/audio retrieval passed. Browser playback decoded successfully with a finite duration; byte-range seeking checks passed.
 - Applying the migration to the live database and the production rollout remain pending.
+
+## 9 September call controls
+
+BDR outbound prompts now end silent/IVR/goodbye calls using end_call, with a 12-second silence timeout. Voice, model and opener are unchanged; website callback agents are untouched. Outbound WhatsApp tools are detached; server verifies conversation ownership before any PROXe send. No contacts are promoted automatically.
+
+ARC reservation now requires a matching target and refuses closed/ambiguous prospects. Dry runs check migration and cooldown without reserving. Callback preferences are logged with call time and remain pending review. Calls show evidence-based outcomes rather than treating provider completion as qualification.
+
+Current main filters retained: All Prospects, Today's 10 and business-only Dialed / Outreached. Local modifications in the original ARC checkout remain untouched.
+
+Validation: both production builds passed; 28 qualification checks, 16 BDR isolation checks, seven ARC reservation checks; provider text simulations of silence, IVR, callback and information request. No real call placed. Migration 20260908000000 remains pending user execution; new outbound calls fail closed until ARC is ready.

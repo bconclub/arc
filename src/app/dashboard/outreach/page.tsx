@@ -248,6 +248,7 @@ export default function OutreachPage() {
           </button>
         </div>
       </header>
+      {view === 'lists' && <label className="block text-sm">Prospect view <select className={inputCls + ' ml-2 max-w-56'} value={listMode} onChange={e => {setListMode(e.target.value);setPage(0);}}><option value="all">All Prospects</option><option value="today">Today&apos;s 10</option><option value="outreached">Dialed / Outreached</option></select></label>}
       <nav
         aria-label="Outreach areas"
         className="flex flex-wrap gap-2 border-b border-[var(--border)] pb-3"
