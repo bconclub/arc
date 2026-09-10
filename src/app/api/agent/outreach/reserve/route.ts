@@ -17,15 +17,29 @@ export async function POST(req: Request) {
   if (matches.length !== 1) return Response.json({ error: 'Create or select one matching ARC target before dialing' }, { status: 409 });
   const target = matches[0];
   if (['lost','won'].includes(target.status)) return Response.json({ error: 'Target closed. Review before dialing.' }, { status: 409 });
+
+  // Check if this is a scheduled callback (exception to 24h cooldown).
+  const {data: fullTarget} = await supabaseAdmin.from('outreach_targets').select('next_at').eq('id',target.id).single();
+  const isScheduledCallback = fullTarget?.next_at && Date.parse(fullTarget.next_at) <= Date.now();
+
   // Dry runs read readiness and cooldown; they never reserve or place calls.
   if (b.dry_run === true) {
     const {data,error} = await supabaseAdmin.from('outreach_dial_reservations').select('reserved_at').eq('phone',phone).maybeSingle();
     if (error) return Response.json({ error: 'ARC migration required' }, { status: 503 });
-    if (data && Date.now()-Date.parse(data.reserved_at)<86400000) return Response.json({ reason: 'recently_called' }, { status: 409 });
-    return Response.json({ ok: true, dry_run: true, target_id: target.id });
+    // Allow bypass for scheduled callbacks with next_at due.
+    if (data && Date.now()-Date.parse(data.reserved_at)<86400000 && !isScheduledCallback) {
+      return Response.json({ reason: 'recently_called' }, { status: 409 });
+    }
+    return Response.json({ ok: true, dry_run: true, target_id: target.id, callback: isScheduledCallback });
   }
-  const { data, error } = await supabaseAdmin.rpc('reserve_outreach_dial', { dial_phone: phone, worker_name: auth.agent });
+  // Pass target_id to RPC so it can check for scheduled callback exception.
+  const { data, error } = await supabaseAdmin.rpc('reserve_outreach_dial', { 
+    dial_phone: phone, 
+    worker_name: auth.agent,
+    target_id: target.id 
+  });
   if (error) return Response.json({ error: 'Dial reservation unavailable. No call placed.' }, { status: 503 });
-  return data ? Response.json({ ok: true, reservation_id: data, target_id: target.id })
+  return data 
+    ? Response.json({ ok: true, reservation_id: data, target_id: target.id, callback: isScheduledCallback })
     : Response.json({ reason: 'recently_called' }, { status: 409 });
 }
