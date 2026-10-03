@@ -548,11 +548,23 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     });
   }
   const demoRows = (demoRes.data ?? []) as { id: string; company: string; scheduled_at: string; status: string; outcome: string | null }[];
+  // One row per day, not per demo: "3 demos shown" reads; seven identical
+  // rows do not.
+  const demosByDay = new Map<string, { count: number; at: string; outcomes: string[] }>();
   for (const d of demoRows) {
     if (d.status !== "done") continue;
+    const day = d.scheduled_at.slice(0, 10);
+    const cur = demosByDay.get(day) ?? { count: 0, at: d.scheduled_at, outcomes: [] };
+    cur.count += 1;
+    if (d.scheduled_at > cur.at) cur.at = d.scheduled_at;
+    if (d.outcome) cur.outcomes.push(d.outcome.replace("_", " "));
+    demosByDay.set(day, cur);
+  }
+  for (const [day, g] of Array.from(demosByDay)) {
     feed.push({
-      id: `d-${d.id}`, at: d.scheduled_at, type: "demo", kind: "demo", stage: "done",
-      title: ["Prospect", "PROXe lead"].includes(d.company) ? "Demo shown" : `Demo shown to ${d.company}`, body: d.outcome ? `Outcome: ${d.outcome.replace("_", " ")}.` : null,
+      id: `d-${day}`, at: g.at, type: "demo", kind: "demo", stage: "done",
+      title: g.count === 1 ? "Demo shown to a prospect" : `${g.count} demos shown to prospects`,
+      body: g.outcomes.length ? `Outcomes: ${g.outcomes.join(", ")}.` : null,
       amount: null, pinned: false, detail: null, department: "Sales",
     });
   }
