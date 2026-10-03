@@ -4,14 +4,19 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, LogOut, Loader2, Megaphone, Wallet, Newspaper, Pin, Target,
-  Users, Building2, PieChart, ReceiptIndianRupee, Code2, Handshake, Settings2, Star, BadgeCheck, Bell, X, ChevronRight, Inbox, Radar, Presentation, Link2,
+  Users, Code2, Handshake, Settings2, Star, BadgeCheck, Bell, X, ChevronRight, Inbox, Radar, Presentation, Link2, Repeat,
 } from "lucide-react";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { money, moneyShort } from "@/lib/format";
 import type { DaySpend, FeedItem, InvestorOverview } from "@/lib/investor/data";
 
-type Range = "7" | "30" | "90";
+type Range = "7" | "30" | "3650";
+
+const RANGE_TABS: { value: Range; label: string }[] = [
+  { value: "7", label: "7 days" }, { value: "30", label: "30 days" }, { value: "3650", label: "All time" },
+];
+const RANGE_LABEL: Record<Range, string> = { "7": "last 7 days", "30": "last 30 days", "3650": "all time" };
 
 const CATEGORY_LABEL: Record<string, string> = {
   ad_topup: "Ads",
@@ -61,17 +66,28 @@ function Card({ title, icon: Icon, sub, children, className = "" }: {
   );
 }
 
-/** One headline number. The four of these are the whole story at a glance. */
-function Tile({ icon: Icon, label, value, hint, accent }: {
-  icon: typeof Wallet; label: string; value: string; hint?: string; accent?: boolean;
-}) {
+/** Divides the page into its parts: the investment, the business, the detail. */
+function SectionHead({ title, sub, children }: { title: string; sub?: string; children?: React.ReactNode }) {
   return (
-    <div className={`min-w-0 rounded-panel border p-4 sm:p-5 ${accent ? "border-[var(--brand-line)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
-      <p className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-[0.08em] text-text-muted">
-        <Icon size={12} className="shrink-0" /> <span className="truncate">{label}</span>
-      </p>
-      <p className="mt-2 text-[22px] font-semibold tabular-nums tracking-tight text-text sm:text-[26px]">{value}</p>
-      {hint && <p className="mt-1 text-[11px] leading-snug text-text-muted">{hint}</p>}
+    <div className="flex flex-wrap items-end justify-between gap-3 pt-3">
+      <div className="min-w-0">
+        <h2 className="text-[15px] font-semibold tracking-tight text-text sm:text-[17px]">{title}</h2>
+        {sub && <p className="mt-0.5 text-[11.5px] text-text-muted">{sub}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** One line of a money statement: label on the left, amount on the right. */
+function MoneyLine({ label, hint, value, tone }: { label: string; hint?: string; value: string; tone?: "in" | "out" | "total" }) {
+  return (
+    <div className={`flex items-baseline justify-between gap-3 py-2.5 ${tone === "total" ? "border-t border-[var(--border-strong)]" : ""}`}>
+      <div className="min-w-0">
+        <p className={`text-[13px] ${tone === "total" ? "font-semibold text-text" : "text-text"}`}>{label}</p>
+        {hint && <p className="text-[10.5px] text-text-muted">{hint}</p>}
+      </div>
+      <p className={`shrink-0 text-[15px] font-semibold tabular-nums ${tone === "in" ? "text-accent-green" : "text-text"}`}>{value}</p>
     </div>
   );
 }
@@ -133,7 +149,15 @@ const DEPT: Record<string, { icon: typeof Wallet; label: string }> = {
 };
 
 /** Demos per day: booked (light) behind taken (green). Tap a day for its numbers. */
-function DemoBars({ daily }: { daily: { day: string; booked: number; done: number }[] }) {
+function DemoBars({ daily: days }: { daily: { day: string; booked: number; done: number }[] }) {
+  // Past six weeks of days the bars get too thin on a phone: show weeks instead.
+  const daily = days.length <= 45 ? days : days.reduce<{ day: string; booked: number; done: number }[]>((out, d, i) => {
+    if (i % 7 === 0) out.push({ day: d.day, booked: 0, done: 0 });
+    const w = out[out.length - 1]!;
+    w.booked += d.booked;
+    w.done += d.done;
+    return out;
+  }, []);
   const max = Math.max(1, ...daily.map((d) => d.booked));
   const [hover, setHover] = useState<number | null>(null);
   const h = hover != null ? daily[hover] : null;
@@ -347,87 +371,112 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
               </div>
             )}
 
-            {/* ── The sequence: leads in, prospects out, demos, links ── */}
-            <section className="rounded-panel border border-[var(--border)] bg-surface p-4 sm:p-5">
-              <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-text-muted">The sequence, all time</p>
-              <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[
-                  { icon: Inbox, label: "Incoming leads", value: data.funnel.incoming, hint: "inbound, handled by PROXe", gold: false },
-                  { icon: Radar, label: "Outbound scraped", value: data.funnel.outbound, hint: "prospects found", gold: false },
-                  { icon: Presentation, label: "Demos done", value: data.funnel.demosDone, hint: "shown to prospects", gold: false },
-                  { icon: Link2, label: "Links shared", value: data.funnel.linksShared, hint: "payment links sent", gold: true },
-                ].map((s, i) => (
-                  <li key={s.label} className={`relative rounded-card border p-3 ${s.gold ? "border-[#e8b931]/45 bg-[#e8b931]/[0.08]" : "border-[var(--border)] bg-[var(--surface-hover)]"}`}>
-                    <div className="flex items-center gap-1.5 text-text-muted">
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--border)] text-[9.5px] font-semibold tabular-nums text-text">{i + 1}</span>
-                      <s.icon size={12} className={s.gold ? "text-[#e8b931]" : ""} />
+            {/* ══ Part 1: the investment. Terms of the company, not its activity. ══ */}
+            <SectionHead title={owner ? "The round" : "Your investment"} sub={st.roundInfo ? `${st.roundInfo.name} · ${st.roundInfo.equityOffered}% for ${moneyShort(st.roundInfo.target)}` : undefined} />
+            <section className="overflow-hidden rounded-panel border border-[var(--brand-line)] bg-surface">
+              <div className="bg-[var(--brand-faint)] p-4 sm:p-5">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text)]">
+                  {owner ? "Equity issued so far" : "You own"}
+                </p>
+                <p className="mt-1 text-[34px] font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[40px]">
+                  {owner
+                    ? (st.dilutedSoFar != null ? `${st.dilutedSoFar.toFixed(2)}%` : "–")
+                    : (st.equityEarned != null ? `${st.equityEarned.toFixed(2)}%` : "–")}
+                </p>
+                <p className="mt-1.5 text-[12px] text-text-muted">
+                  {owner ? "of PROXe, against money received" : `of PROXe, for the ${moneyShort(st.received ?? 0)} you sent${m.investedOn ? ` on ${fmtDate(m.investedOn)}` : ""}`}
+                </p>
+              </div>
+              <dl className="divide-y divide-[var(--border)] px-4 sm:px-5">
+                <div className="flex items-baseline justify-between gap-3 py-3">
+                  <dt className="text-[12.5px] text-text-muted">Company worth <span className="text-[10.5px]">(post-money)</span></dt>
+                  <dd className="text-[15px] font-semibold tabular-nums text-text">{st.valuation ? moneyShort(st.valuation) : "–"}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3 py-3">
+                  <dt className="text-[12.5px] text-text-muted">Company diluted so far</dt>
+                  <dd className="text-[15px] font-semibold tabular-nums text-text">{st.dilutedSoFar != null ? `${st.dilutedSoFar.toFixed(2)}%` : "–"}</dd>
+                </div>
+                {st.roundInfo && (
+                  <div className="py-3">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-[12.5px] text-text-muted">Round raised</dt>
+                      <dd className="text-[15px] font-semibold tabular-nums text-text">
+                        {moneyShort(st.roundInfo.raised)} <span className="text-[12px] font-normal text-text-muted">of {moneyShort(st.roundInfo.target)}</span>
+                      </dd>
                     </div>
-                    <p className={`mt-2 text-[24px] font-semibold tabular-nums ${s.gold ? "text-[#f0c84b]" : "text-text"}`}>{s.value ?? "–"}</p>
-                    <p className="text-[12px] font-medium text-text">{s.label}</p>
-                    <p className="text-[10.5px] text-text-muted">{s.hint}</p>
-                    {i < 3 && <ChevronRight size={14} className="absolute -right-[11px] top-1/2 z-[1] hidden -translate-y-1/2 text-text-muted sm:block" />}
-                  </li>
-                ))}
-              </ol>
+                    <div className="mt-2"><Bar value={st.roundInfo.target ? st.roundInfo.raised / st.roundInfo.target : 0} /></div>
+                    <p className="mt-1.5 text-[11px] tabular-nums text-text-muted">
+                      Day {st.roundInfo.daysOpen} · {st.roundInfo.daysLeft} days left · closes {fmtDate(st.roundInfo.closesOn)}
+                    </p>
+                  </div>
+                )}
+              </dl>
             </section>
 
-            {/* ── The four numbers that matter ── */}
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Tile
-                icon={Building2}
-                label="Company worth"
-                value={st.valuation ? moneyShort(st.valuation) : "–"}
-                hint={st.roundInfo ? `${st.roundInfo.name}: ${st.roundInfo.equityOffered}% for ${moneyShort(st.roundInfo.target)}` : "Set once the round terms are entered"}
-                accent
-              />
-              <Tile
-                icon={PieChart}
-                label={owner ? "Diluted so far" : "Your equity"}
-                value={
-                  owner
-                    ? (st.dilutedSoFar != null ? `${st.dilutedSoFar.toFixed(2)}%` : "–")
-                    : (st.equityEarned != null ? `${st.equityEarned.toFixed(2)}%` : "–")
-                }
-                hint={
-                  owner
-                    ? "Equity issued against money received"
-                    : `For your ${moneyShort(st.received ?? 0)}${st.dilutedSoFar != null ? ` · company diluted ${st.dilutedSoFar.toFixed(2)}% so far` : ""}`
-                }
-              />
-              <Tile
-                icon={ReceiptIndianRupee}
-                label="Sales total"
-                value={data.sales ? money(data.sales.total) : "–"}
-                hint={data.sales ? `${data.sales.payments} payment${data.sales.payments === 1 ? "" : "s"}${data.sales.last ? ` · last ${fmtDate(data.sales.last)}` : ""}` : "Connecting to checkout"}
-              />
-              <Tile
-                icon={Wallet}
-                label="Total spent"
-                value={money(m.deployed)}
-                hint={sp ? `${moneyShort(m.dailyBurn)}/day over ${sp.burnDays} day${sp.burnDays === 1 ? "" : "s"} since ${fmtDate(sp.since)}` : undefined}
-              />
+            {/* ══ Part 2: the business. What PROXe did with the time and money. ══ */}
+            <SectionHead title="The business" sub={`PROXe, ${RANGE_LABEL[range]}`}>
+              <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange} tabs={RANGE_TABS} />
+            </SectionHead>
+
+            <div className="grid gap-4 lg:grid-cols-5">
+              {/* Growth: the sequence a customer moves through */}
+              <Card title="Growth" icon={Users} sub="lead to paying customer" className="lg:col-span-3">
+                <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    { icon: Inbox, label: "Incoming leads", value: data.funnel.incoming, hint: "inbound to PROXe", gold: false },
+                    { icon: Radar, label: "Outbound leads", value: data.funnel.outbound, hint: "prospects scraped", gold: false },
+                    { icon: Presentation, label: "Demos done", value: data.funnel.demosDone, hint: "shown to prospects", gold: false },
+                    { icon: Link2, label: "Links shared", value: data.funnel.linksShared, hint: "payment links sent", gold: true },
+                  ].map((s, i) => (
+                    <li key={s.label} className={`relative rounded-card border p-3 ${s.gold ? "border-[#e8b931]/45 bg-[#e8b931]/[0.08]" : "border-[var(--border)] bg-[var(--surface-hover)]"}`}>
+                      <div className="flex items-center gap-1.5 text-text-muted">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--border)] text-[9.5px] font-semibold tabular-nums text-text">{i + 1}</span>
+                        <s.icon size={12} className={s.gold ? "text-[#e8b931]" : ""} />
+                      </div>
+                      <p className={`mt-2 text-[24px] font-semibold tabular-nums ${s.gold ? "text-[#f0c84b]" : "text-text"}`}>{s.value ?? "–"}</p>
+                      <p className="text-[12px] font-medium text-text">{s.label}</p>
+                      <p className="text-[10.5px] text-text-muted">{s.hint}</p>
+                      {i < 3 && <ChevronRight size={14} className="absolute -right-[11px] top-1/2 z-[1] hidden -translate-y-1/2 text-text-muted sm:block" />}
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-3 flex items-center gap-3 rounded-card border border-accent-green/45 bg-accent-green/[0.08] p-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent-green/50 text-accent-green">
+                    <Repeat size={14} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] font-medium text-text">Active subscriptions</p>
+                    <p className="text-[10.5px] text-text-muted">customers paying every month, right now</p>
+                  </div>
+                  <p className="text-[24px] font-semibold tabular-nums text-accent-green">{data.funnel.activeSubs ?? "–"}</p>
+                </div>
+              </Card>
+
+              {/* Money: in, then out, split by who spent it */}
+              <Card title="Money" icon={Wallet} sub={RANGE_LABEL[range]} className="lg:col-span-2">
+                <MoneyLine
+                  label="Total sales"
+                  hint={`${data.funnel.salesCount} payment${data.funnel.salesCount === 1 ? "" : "s"} received`}
+                  value={data.funnel.sales != null ? money(data.funnel.sales) : "–"}
+                  tone="in"
+                />
+                <MoneyLine label="Ad spend" hint="loaded into Meta" value={money(data.funnel.spentAds)} />
+                <MoneyLine label="Company spends" hint="tools, software, operations" value={money(data.funnel.spentCompany)} />
+                <MoneyLine label="Total spends" value={money(data.funnel.spentAds + data.funnel.spentCompany)} tone="total" />
+                {sp && (
+                  <p className="mt-1 text-[10.5px] tabular-nums text-text-muted">
+                    Burn {moneyShort(m.dailyBurn)}/day, averaged over {sp.burnDays} day{sp.burnDays === 1 ? "" : "s"} since {fmtDate(sp.since)}
+                  </p>
+                )}
+              </Card>
             </div>
 
-            {/* ── The round: how full it is, and how long it stays open ── */}
-            {st.roundInfo && (
-              <section className="rounded-panel border border-[var(--brand-line)] bg-surface p-4 sm:p-5">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-[13px] font-semibold text-text">{st.roundInfo.name} round</p>
-                  <p className="text-[11.5px] tabular-nums text-text-muted">
-                    Day {st.roundInfo.daysOpen} · {st.roundInfo.daysLeft} days left · closes {fmtDate(st.roundInfo.closesOn)}
-                  </p>
-                </div>
-                <div className="mt-3"><Bar value={st.roundInfo.target ? st.roundInfo.raised / st.roundInfo.target : 0} /></div>
-                <p className="mt-2 text-[12px] tabular-nums text-text-muted">
-                  <span className="font-semibold text-text">{moneyShort(st.roundInfo.raised)}</span> raised of {moneyShort(st.roundInfo.target)}
-                  {" "}({st.roundInfo.target ? ((st.roundInfo.raised / st.roundInfo.target) * 100).toFixed(1) : 0}%) · {st.roundInfo.equityOffered}% of the company on offer
-                </p>
-              </section>
-            )}
+            {/* ══ Part 3: the detail ══ */}
+            <SectionHead title="What's happening" sub="every move, newest first" />
 
             <div className="grid gap-4 lg:grid-cols-3">
               {/* ── What is happening ── */}<span id="feed" className="sr-only" />
-              <Card title="What's happening" icon={Newspaper} sub="newest first" className="lg:col-span-2">
+              <Card title="Feed" icon={Newspaper} sub="plans, launches, money moved" className="lg:col-span-2">
                 <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-text-muted">
                   <span className="flex items-center gap-1.5"><BadgeCheck size={11} className="text-accent-green" />Payments in</span>
                   <span className="flex items-center gap-1.5"><Star size={11} className="fill-[#e8b931] text-[#e8b931]" />Links &amp; conversions</span>
@@ -444,8 +493,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center justify-end">
-                      <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange}
-                        tabs={[{ value: "7", label: "7d" }, { value: "30", label: "30d" }, { value: "90", label: "90d" }]} />
+                      <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange} tabs={RANGE_TABS} />
                     </div>
                     {data.leads && (
                       <div className="grid grid-cols-2 gap-3">
@@ -536,8 +584,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                       <p className="mt-1 text-[22px] font-semibold tabular-nums text-text">{data.demos.data.noShow}</p>
                     </div>
                   </div>
-                  <SegmentedTabs ariaLabel="Demo period" size="sm" value={range} onChange={setRange}
-                    tabs={[{ value: "7", label: "7 days" }, { value: "30", label: "30 days" }]} />
+                  <SegmentedTabs ariaLabel="Demo period" size="sm" value={range} onChange={setRange} tabs={RANGE_TABS} />
                 </div>
                 <DemoBars daily={data.demos.data.daily} />
               </Card>

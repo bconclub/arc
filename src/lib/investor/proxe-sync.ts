@@ -188,8 +188,10 @@ export type ProxeSales = {
   last: string | null;
   /** each succeeded payment, newest first, for the feed */
   items: { at: string; amount: number; customer: string | null }[];
-  /** distinct people a checkout link reached, paid or not */
-  linkCustomers: number;
+  /** when each person a checkout link reached first opened one, paid or not */
+  linkFirsts: string[];
+  /** subscriptions billing right now */
+  activeSubs: number;
 };
 
 /**
@@ -223,7 +225,25 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
     payments: ok.length,
     customers: new Set(ok.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
     last: ok.map((p) => p.created_at ?? "").sort().pop() || null,
-    linkCustomers: new Set(all.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
+    linkFirsts: (() => {
+      const first = new Map<string, string>();
+      for (const p of all) {
+        const who = p.customer?.customer_id ?? p.customer?.email;
+        if (!who || !p.created_at) continue;
+        const cur = first.get(who);
+        if (!cur || p.created_at < cur) first.set(who, p.created_at);
+      }
+      return Array.from(first.values());
+    })(),
+    activeSubs: await (async () => {
+      const res = await fetch(`${base}/subscriptions?page_size=100&status=active`, {
+        headers: { Authorization: `Bearer ${key}` },
+        cache: "no-store",
+      });
+      if (!res.ok) return 0;
+      const j = (await res.json()) as { items?: { status?: string }[] };
+      return (j.items ?? []).filter((s) => s.status === "active").length;
+    })(),
     items: ok
       .map((p) => ({ at: p.created_at ?? "", amount: Number(p.total_amount ?? 0) / 100, customer: p.customer?.name?.trim() || null }))
       .filter((p) => p.at)
@@ -245,14 +265,15 @@ async function proxeCount(path: string, url: string, key: string): Promise<numbe
 
 export type ProxeFunnel = { incoming: number; outbound: number };
 
-/** All-time: every inbound lead PROXe has handled, every prospect scraped for outbound. */
-export async function fetchProxeFunnel(): Promise<ProxeFunnel | null> {
+/** Inbound leads PROXe took in, and prospects scraped for outbound, since a day. */
+export async function fetchProxeFunnel(since: string): Promise<ProxeFunnel | null> {
   if (!proxeSyncConfigured()) return null;
   const url = process.env.PROXE_DB_URL!;
   const key = process.env.PROXE_DB_SERVICE_KEY!;
+  const from = `created_at=gte.${since}T00:00:00Z`;
   const [incoming, outbound] = await Promise.all([
-    proxeCount("all_leads?select=id&brand=eq.proxe", url, key),
-    proxeCount("proxe_outbound_prospects?select=id&brand=eq.proxe", url, key),
+    proxeCount(`all_leads?select=id&brand=eq.proxe&${from}`, url, key),
+    proxeCount(`proxe_outbound_prospects?select=id&brand=eq.proxe&${from}`, url, key),
   ]);
   return { incoming, outbound };
 }

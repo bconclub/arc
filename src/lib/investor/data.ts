@@ -136,8 +136,19 @@ export type InvestorOverview = {
   sales: ProxeSales | null;
   /** everything that happened, newest first: posts, money moved, demos */
   feed: FeedItem[];
-  /** the sequence, all-time: inbound leads, outbound prospects, demos shown, payment links out */
-  funnel: { incoming: number | null; outbound: number | null; demosDone: number; linksShared: number };
+  /** the business over the chosen window: the sequence, then money in and out */
+  funnel: {
+    incoming: number | null;
+    outbound: number | null;
+    demosDone: number;
+    linksShared: number;
+    /** billing right now, not windowed */
+    activeSubs: number | null;
+    sales: number | null;
+    salesCount: number;
+    spentAds: number;
+    spentCompany: number;
+  };
   /** this investor's slice; for the owner preview, the whole round */
   stake: {
     promised: number | null;
@@ -274,7 +285,7 @@ async function loadUpdates(viewer: Viewer) {
 const FIVE_MIN = 300;
 const cachedSales = unstable_cache(() => fetchProxeSales(), ["investor-sales"], { revalidate: FIVE_MIN });
 const cachedTraction = unstable_cache((d: number) => fetchProxeTraction(d), ["investor-traction"], { revalidate: FIVE_MIN });
-const cachedFunnel = unstable_cache(() => fetchProxeFunnel(), ["investor-funnel"], { revalidate: FIVE_MIN });
+const cachedFunnel = unstable_cache((since: string) => fetchProxeFunnel(since), ["investor-funnel"], { revalidate: FIVE_MIN });
 const cachedLeads = unstable_cache((d: number) => fetchProxeLeads(d), ["investor-leads"], { revalidate: FIVE_MIN });
 const cachedCommits = unstable_cache((repos: string[], since: string) => githubCommits(repos, since), ["investor-commits"], { revalidate: 900 });
 // The demo mirror only needs refreshing every ten minutes.
@@ -332,7 +343,9 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   }
 
   // Sync ads for whichever window is wider: the view, or since the money landed.
-  const syncFrom = investedOn && investedOn < since ? investedOn : since;
+  // "All time" does not reach back ten years for ads: the money's first day is enough.
+  const adFrom = days > 90 ? (investedOn ?? untilStr) : since;
+  const syncFrom = investedOn && investedOn < adFrom ? investedOn : adFrom;
   // Meta caps history at 37 months; anything older simply returns empty.
   const sync = await syncAdSpend(syncFrom, untilStr);
 
@@ -343,7 +356,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     cachedTraction(days).catch(() => null),
     cachedLeads(days).catch(() => null),
     cachedSales().catch(() => null),
-    cachedFunnel().catch(() => null),
+    cachedFunnel(since).catch(() => null),
   ]);
 
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
@@ -482,7 +495,10 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
             by.set(day, cur);
           }
           const out: { day: string; booked: number; done: number }[] = [];
-          for (let t = new Date(`${since}T00:00:00Z`); iso(t) <= untilStr; t.setUTCDate(t.getUTCDate() + 1)) {
+          // All time starts at the first demo, not ten years of empty days.
+          const firstDemo = all.map((d) => d.scheduled_at.slice(0, 10)).sort()[0] ?? untilStr;
+          const start = firstDemo > since ? firstDemo : since;
+          for (let t = new Date(`${start}T00:00:00Z`); iso(t) <= untilStr; t.setUTCDate(t.getUTCDate() + 1)) {
             const k = iso(t);
             out.push({ day: k, ...(by.get(k) ?? { booked: 0, done: 0 }) });
           }
@@ -709,13 +725,24 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     leads,
     sales,
     feed: feed.slice(0, 60),
-    funnel: {
-      incoming: proxeFunnel?.incoming ?? null,
-      outbound: proxeFunnel?.outbound ?? null,
-      demosDone: demoRows.filter((d) => d.status === "done").length,
-      // Links logged by hand plus everyone a Dodo checkout reached.
-      linksShared: updateRows.filter((u) => /payment link/i.test(u.title)).length + (sales?.linkCustomers ?? 0),
-    },
+    funnel: (() => {
+      const inWindow = (at: string) => at.slice(0, 10) >= since;
+      const paid = (sales?.items ?? []).filter((p) => inWindow(p.at));
+      const spent = allExpenses.filter((e) => e.spent_on >= since);
+      return {
+        incoming: proxeFunnel?.incoming ?? null,
+        outbound: proxeFunnel?.outbound ?? null,
+        demosDone: demoRows.filter((d) => d.status === "done" && inWindow(d.scheduled_at)).length,
+        // Links logged by hand plus everyone a Dodo checkout reached.
+        linksShared: updateRows.filter((u) => /payment link/i.test(u.title) && inWindow(u.published_at)).length
+          + (sales?.linkFirsts ?? []).filter(inWindow).length,
+        activeSubs: sales ? sales.activeSubs : null,
+        sales: sales ? paid.reduce((s, p) => s + p.amount, 0) : null,
+        salesCount: paid.length,
+        spentAds: spent.filter((e) => e.category === "ad_topup").reduce((s, e) => s + Number(e.amount), 0),
+        spentCompany: spent.filter((e) => e.category !== "ad_topup").reduce((s, e) => s + Number(e.amount), 0),
+      };
+    })(),
     stake,
   };
 }

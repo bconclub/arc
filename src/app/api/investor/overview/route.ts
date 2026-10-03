@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const maxDuration = 60;
 
-const RANGES = new Set([7, 30, 90]);
+// 3650 is "all time": ten years reaches past the company's first day.
+const RANGES = new Set([7, 30, 90, 3650]);
 
 /** GET /api/investor/overview?days=30 — the whole investor view, PROXe only. */
 export async function GET(req: NextRequest) {
