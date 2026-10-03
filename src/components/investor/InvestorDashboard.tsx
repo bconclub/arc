@@ -467,6 +467,29 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
               </dl>
             </section>
 
+            {/* The plan: what the round is for, and how far along it is */}
+            <SectionHead title="The plan" sub="5,000 leads → 1,000 demos → 100 customers" />
+            <section className="space-y-3 rounded-panel bg-surface p-4 sm:p-5">
+              {[
+                { label: "Leads", value: data.goal.leads, target: data.goal.targets.leads, bar: "bg-accent-blue", hint: "inbound + outbound reached" },
+                { label: "Demos", value: data.goal.demos, target: data.goal.targets.demos, bar: "bg-[var(--brand)]", hint: "shown to prospects" },
+                { label: "Customers", value: data.goal.conversions, target: data.goal.targets.conversions, bar: "bg-accent-green", hint: "paid" },
+              ].map((g) => (
+                <div key={g.label}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-[13px] font-medium text-text">{g.label} <span className="text-[10.5px] font-normal text-text-muted">{g.hint}</span></p>
+                    <p className="text-[13px] tabular-nums text-text-muted">
+                      <span className="text-[16px] font-semibold text-text">{g.value.toLocaleString("en-IN")}</span> / {g.target.toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                  <div className="mt-1.5 h-2.5 overflow-hidden rounded-pill bg-[var(--surface-hover)]">
+                    <div className={`h-full rounded-pill ${g.bar}`} style={{ width: `${Math.max(1.5, Math.min(100, (g.value / g.target) * 100))}%` }} />
+                  </div>
+                  <p className="mt-1 text-right text-[10.5px] tabular-nums text-text-muted">{((g.value / g.target) * 100).toFixed(1)}% there</p>
+                </div>
+              ))}
+            </section>
+
             {/* At a glance: the four numbers, then where to look next */}
             <SectionHead title="At a glance" sub={`PROXe, ${RANGE_LABEL[range]}`} />
             <div className="grid grid-cols-2 gap-2">

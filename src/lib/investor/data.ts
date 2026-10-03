@@ -155,6 +155,11 @@ export type InvestorOverview = {
     /** the same money by kind: ads, tools, people... */
     spendByType: { label: string; amount: number }[];
   };
+  /** the plan, all time: where PROXe is against 5,000 leads, 1,000 demos, 100 customers */
+  goal: {
+    leads: number; demos: number; conversions: number;
+    targets: { leads: number; demos: number; conversions: number };
+  };
   /** the two things tracked day by day: demos booked, payment links out */
   activity: {
     demosBooked: number;
@@ -299,6 +304,10 @@ const FIVE_MIN = 300;
 const cachedSales = unstable_cache(() => fetchProxeSales(), ["investor-sales"], { revalidate: FIVE_MIN });
 const cachedTraction = unstable_cache((d: number) => fetchProxeTraction(d), ["investor-traction"], { revalidate: FIVE_MIN });
 const cachedFunnel = unstable_cache((since: string) => fetchProxeFunnel(since), ["investor-funnel"], { revalidate: FIVE_MIN });
+// The plan the round is raised against: 5,000 leads, 1,000 demos, 100 customers.
+const GOAL = { leads: 5000, demos: 1000, conversions: 100 };
+const GOAL_FROM = "2020-01-01";
+
 const cachedDemoNotes = unstable_cache(() => fetchProxeDemoNotes(), ["investor-demo-notes"], { revalidate: FIVE_MIN });
 const cachedLeads = unstable_cache((d: number) => fetchProxeLeads(d), ["investor-leads"], { revalidate: FIVE_MIN });
 const cachedCommits = unstable_cache((repos: string[], since: string) => githubCommits(repos, since), ["investor-commits"], { revalidate: 900 });
@@ -365,7 +374,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
 
   // Pull demo bookings from the PROXe product first, so the demo numbers are
   // the product's own record. A failed sync leaves the last mirror in place.
-  const [, traction, leads, sales, proxeFunnel, demoNotes, outboundRes] = await Promise.all([
+  const [, traction, leads, sales, proxeFunnel, demoNotes, outboundRes, funnelAll, outboundAllRes] = await Promise.all([
     cachedDemoSync().catch(() => null),
     cachedTraction(days).catch(() => null),
     cachedLeads(days).catch(() => null),
@@ -375,6 +384,9 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     // Outbound is who we actually reached: calls and emails sent from ARC.
     supabaseAdmin.from("outreach_messages").select("target_id,channel,sent_at")
       .eq("direction", "out").not("sent_at", "is", null).gte("sent_at", `${since}T00:00:00Z`),
+    // The plan is all time whatever the window.
+    cachedFunnel(GOAL_FROM).catch(() => null),
+    supabaseAdmin.from("outreach_messages").select("target_id").eq("direction", "out").not("sent_at", "is", null),
   ]);
 
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
@@ -812,6 +824,12 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       }
 
       return {
+        goal: {
+          leads: (funnelAll?.incoming ?? 0) + new Set(((outboundAllRes.data ?? []) as { target_id: string }[]).map((t) => t.target_id)).size,
+          demos: doneAt.size,
+          conversions: sales?.customers ?? 0,
+          targets: GOAL,
+        },
         funnel: {
           incoming: proxeFunnel?.incoming ?? null,
           outbound: new Set(touches.map((t) => t.target_id)).size,
