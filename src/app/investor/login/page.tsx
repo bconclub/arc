@@ -38,7 +38,7 @@ export default function InvestorLogin() {
     <div className="flex min-h-screen items-center justify-center bg-bg px-4">
       <form
         onSubmit={submit}
-        className="w-full max-w-sm space-y-4 rounded-panel border border-[var(--border)] bg-surface p-7 shadow-panel"
+        className="w-full max-w-sm space-y-4 rounded-panel bg-surface p-7"
       >
         <div>
           <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-text)]">PROXe</p>
@@ -60,6 +60,10 @@ export default function InvestorLogin() {
           <input
             type={show ? "text" : "password"}
             autoComplete="current-password"
+            // Shown as text, phone keyboards capitalise and autocorrect it.
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"

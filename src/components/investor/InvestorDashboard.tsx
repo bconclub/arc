@@ -322,12 +322,22 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await fetch(`/api/investor/overview?days=${range}${viewAs ? `&as=${viewAs}` : ""}`);
-    if (res.status === 401) { window.location.href = "/investor/login"; return; }
-    const json = await res.json().catch(() => null);
-    setLoading(false);
-    if (!res.ok || !json) { setError("The overview did not load. Try again in a minute."); return; }
-    setData(json);
+    // A dropped connection or a stuck request must end in a message, not an
+    // endless skeleton.
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 45_000);
+    try {
+      const res = await fetch(`/api/investor/overview?days=${range}${viewAs ? `&as=${viewAs}` : ""}`, { signal: ctl.signal });
+      if (res.status === 401) { window.location.href = "/investor/login"; return; }
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json) { setError("The numbers did not load."); return; }
+      setData(json);
+    } catch {
+      setError("The numbers did not load. Check the connection.");
+    } finally {
+      clearTimeout(timer);
+      setLoading(false);
+    }
   }, [range, viewAs]);
 
   useEffect(() => { load(); }, [load]);
@@ -404,8 +414,13 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
           </div>
         </header>
 
-        {error && <p className="mb-4 text-[12.5px] text-accent-red">{error}</p>}
-        {!data && !error && <Skeleton />}
+        {error && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-panel bg-accent-red/[0.10] p-3">
+            <p className="text-[12.5px] text-accent-red">{error}</p>
+            <button onClick={load} className="shrink-0 rounded-pill bg-surface px-3 py-1.5 text-[12px] font-medium text-text">Try again</button>
+          </div>
+        )}
+        {!data && loading && <Skeleton />}
 
         {/* ══ Updates, behind the bell ══ */}
         {data && view === "updates" && (

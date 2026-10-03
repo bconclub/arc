@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { resolveViewer } from "@/lib/investor/viewer";
 import { buildInvestorOverview } from "@/lib/investor/data";
 
@@ -18,6 +19,15 @@ export async function GET(req: NextRequest) {
   const asked = Number(req.nextUrl.searchParams.get("days"));
   const days = RANGES.has(asked) ? asked : 3650;
 
-  const data = await buildInvestorOverview(viewer, days);
+  // Two minutes per viewer and window: tab switches and reopenings are
+  // instant, and nothing on the page moves faster than that.
+  const who = viewer.role === "owner" ? "owner" : viewer.investor.id;
+  const t0 = Date.now();
+  const data = await unstable_cache(
+    () => buildInvestorOverview(viewer, days),
+    ["investor-overview", who, String(days)],
+    { revalidate: 120 },
+  )();
+  console.log(`[investor] overview ${who} ${days}d ${Date.now() - t0}ms`);
   return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
 }
