@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, LogOut, Loader2, Megaphone, Wallet, Newspaper, Pin, Target,
-  Users, Building2, PieChart, ReceiptIndianRupee, Code2, Handshake, Settings2,
+  Users, Building2, PieChart, ReceiptIndianRupee, Code2, Handshake, Settings2, Star,
 } from "lucide-react";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -135,8 +135,8 @@ const DEPT: Record<string, { icon: typeof Wallet; label: string }> = {
 function FeedIcon({ item }: { item: FeedItem }) {
   const Icon = (DEPT[item.department] ?? DEPT.Operations).icon;
   const ring =
-    item.stage === "plan" ? "border-accent-blue/50 text-accent-blue"
-    : item.stage === "executing" ? "border-accent-orange/50 text-accent-orange"
+    item.tone === "sales" ? "border-[#e8b931]/60 text-[#e8b931]"
+    : item.tone === "spend" ? "border-accent-blue/50 text-accent-blue"
     : "border-[var(--brand-line)] text-[var(--brand-text)]";
   return (
     <span className={`relative z-[1] flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-surface ${ring}`}>
@@ -150,15 +150,22 @@ function Feed({ items }: { items: FeedItem[] }) {
     return <p className="text-[12.5px] text-text-muted">Nothing posted yet. Plans, launches and money moved appear here as they happen.</p>;
   }
   return (
-    <ol className="relative space-y-5 before:absolute before:bottom-2 before:left-[13px] before:top-2 before:w-px before:bg-[var(--border)]">
+    <ol className="relative space-y-3 before:absolute before:bottom-2 before:left-[13px] before:top-2 before:w-px before:bg-[var(--border)]">
       {items.map((item) => {
         const stage = item.stage ? FEED_STAGE[item.stage] : null;
+        const box =
+          item.tone === "sales"
+            ? "border-[#e8b931]/45 bg-[#e8b931]/[0.08]"
+            : item.tone === "spend"
+              ? "border-accent-blue/30 bg-accent-blue/[0.06]"
+              : "border-[var(--border)] bg-[var(--surface-hover)]";
         return (
           <li key={item.id} className="flex gap-3">
             <FeedIcon item={item} />
-            <div className="min-w-0 flex-1 pt-0.5">
+            <div className={`min-w-0 flex-1 rounded-card border p-3 ${box}`}>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <h3 className="text-[13.5px] font-semibold leading-snug text-text">{item.title}</h3>
+                {item.tone === "sales" && <Star size={13} className="shrink-0 fill-[#e8b931] text-[#e8b931]" aria-label="Conversion" />}
+                <h3 className={`text-[13.5px] font-semibold leading-snug ${item.tone === "sales" ? "text-[#f0c84b]" : "text-text"}`}>{item.title}</h3>
                 {stage && <StatusPill status={stage.label} tone={stage.tone} />}
                 <span className="rounded-pill border border-[var(--border)] px-1.5 py-px text-[10px] text-text-muted">{item.department}</span>
                 {item.pinned && <Pin size={11} className="text-[var(--brand-text)]" aria-label="Pinned" />}
@@ -190,7 +197,7 @@ function Feed({ items }: { items: FeedItem[] }) {
   );
 }
 
-export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
+export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "investor"; viewAs?: string | null }) {
   const [range, setRange] = useState<Range>("30");
   const [data, setData] = useState<InvestorOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -199,13 +206,13 @@ export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await fetch(`/api/investor/overview?days=${range}`);
+    const res = await fetch(`/api/investor/overview?days=${range}${viewAs ? `&as=${viewAs}` : ""}`);
     if (res.status === 401) { window.location.href = "/investor/login"; return; }
     const json = await res.json().catch(() => null);
     setLoading(false);
     if (!res.ok || !json) { setError("The overview did not load. Try again in a minute."); return; }
     setData(json);
-  }, [range]);
+  }, [range, viewAs]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -223,7 +230,7 @@ export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
     <div className="min-h-screen overflow-x-hidden bg-bg">
       {role === "owner" && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--brand-line)] bg-[var(--brand-faint)] px-4 py-2 text-[12px] text-[var(--brand-text)] sm:px-8">
-          <span>Preview: exactly what investors see. Each sees only their own stake.</span>
+          <span>{viewAs && data ? `Viewing as ${data.viewer.name}: exactly their screen.` : "Preview: exactly what investors see. Each sees only their own stake."}</span>
           <Link href="/dashboard/investors" className="flex shrink-0 items-center gap-1 font-medium hover:underline">
             <ArrowLeft size={12} /> Manage in ARC
           </Link>
@@ -289,6 +296,11 @@ export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
             <div className="grid gap-4 lg:grid-cols-3">
               {/* ── What is happening ── */}
               <Card title="What's happening" icon={Newspaper} sub="newest first" className="lg:col-span-2">
+                <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-text-muted">
+                  <span className="flex items-center gap-1.5"><Star size={11} className="fill-[#e8b931] text-[#e8b931]" />Sales &amp; conversions</span>
+                  <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-accent-blue/50 bg-accent-blue/20" />Money spent</span>
+                  <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-[var(--border)] bg-[var(--surface-hover)]" />Work in progress</span>
+                </div>
                 <Feed items={data.feed} />
               </Card>
 

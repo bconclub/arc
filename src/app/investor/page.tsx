@@ -7,8 +7,11 @@ export const dynamic = "force-dynamic";
 
 export const metadata = { title: "PROXe · Investor view" };
 
-export default async function InvestorPage() {
-  const viewer = await resolveViewer(cookies());
+export default async function InvestorPage({ searchParams }: { searchParams: { as?: string } }) {
+  const jar = cookies();
+  const viewer = await resolveViewer(jar, searchParams.as);
   if (!viewer) redirect("/investor/login");
-  return <InvestorDashboard role={viewer.role} />;
+  // Signed in as an investor, or the owner looking through one investor's eyes.
+  const viewingAs = viewer.role === "investor" && !jar.get("arc_investor") ? viewer.investor.id : null;
+  return <InvestorDashboard role={viewingAs ? "owner" : viewer.role} viewAs={viewingAs} />;
 }

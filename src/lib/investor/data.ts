@@ -54,6 +54,8 @@ export type FeedItem = {
   pinned: boolean;
   /** which part of the company is behind it */
   department: string;
+  /** how the feed colours it: a conversion (gold), money out, or work being done */
+  tone: "sales" | "spend" | "activity";
   /** structured detail an ads launch carries */
   detail: { daily_budget?: number | null; targeting?: string | null } | null;
 };
@@ -529,6 +531,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       id: `u-${u.id}`, at: u.published_at, type: "post", kind: u.kind, stage: u.stage ?? null,
       title: u.title, body: u.body_md || null, amount: null, pinned: Boolean(u.pinned),
       department: (u.payload as { department?: string } | null)?.department ?? DEPT_BY_KIND[u.kind] ?? "Operations",
+      tone: /payment|paid|signed|closed|won|customer/i.test(u.title) ? "sales" : "activity",
       detail: u.kind === "ads" && u.payload
         ? { daily_budget: u.payload.daily_budget ?? null, targeting: u.payload.targeting ?? null }
         : null,
@@ -545,6 +548,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
         .filter(Boolean).join(" ") || null,
       amount: Number(e.amount), pinned: false, detail: null,
       department: e.department || (isTopup ? "Marketing" : "Operations"),
+      tone: "spend",
     });
   }
   const demoRows = (demoRes.data ?? []) as { id: string; company: string; scheduled_at: string; status: string; outcome: string | null }[];
@@ -565,7 +569,16 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       id: `d-${day}`, at: g.at, type: "demo", kind: "demo", stage: "done",
       title: g.count === 1 ? "Demo shown to a prospect" : `${g.count} demos shown to prospects`,
       body: g.outcomes.length ? `Outcomes: ${g.outcomes.join(", ")}.` : null,
-      amount: null, pinned: false, detail: null, department: "Sales",
+      amount: null, pinned: false, detail: null, department: "Sales", tone: "activity",
+    });
+  }
+  // Money in, straight from checkout: the moments a lead became a customer.
+  for (const p of sales?.items ?? []) {
+    feed.push({
+      id: `s-${p.at}`, at: p.at, type: "money", kind: "sale", stage: "done",
+      title: `₹${p.amount.toLocaleString("en-IN")} received from a customer`,
+      body: "Paid through the PROXe checkout.",
+      amount: p.amount, pinned: false, detail: null, department: "Sales", tone: "sales",
     });
   }
   feed.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));

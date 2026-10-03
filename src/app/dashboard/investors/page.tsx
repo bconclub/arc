@@ -63,6 +63,19 @@ const CONFIG: Record<TabKey, {
       { key: "invested_on", label: "Since", render: (r) => fmtDate(r.invested_on) },
       { key: "last_login_at", label: "Last seen", render: (r) => fmtDT(r.last_login_at) },
       { key: "active", label: "Access", render: (r) => <StatusPill status={r.active ? "active" : "disabled"} tone={r.active ? "good" : "neutral"} /> },
+      {
+        key: "view_as", label: "",
+        render: (r) => (
+          <a
+            href={`/investor?as=${r.id}`}
+            target="_blank"
+            onClick={(e) => e.stopPropagation()}
+            className="whitespace-nowrap text-[12px] font-medium text-[var(--brand-text)] hover:underline"
+          >
+            View as {String(r.name).split(" ")[0]}
+          </a>
+        ),
+      },
     ],
   },
   updates: {

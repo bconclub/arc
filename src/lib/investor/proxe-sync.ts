@@ -186,6 +186,8 @@ export type ProxeSales = {
   payments: number;
   customers: number;
   last: string | null;
+  /** each succeeded payment, newest first, for the feed */
+  items: { at: string; amount: number }[];
 };
 
 /**
@@ -219,6 +221,10 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
     payments: ok.length,
     customers: new Set(ok.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
     last: ok.map((p) => p.created_at ?? "").sort().pop() || null,
+    items: ok
+      .map((p) => ({ at: p.created_at ?? "", amount: Number(p.total_amount ?? 0) / 100 }))
+      .filter((p) => p.at)
+      .sort((a, b) => b.at.localeCompare(a.at)),
   };
 }
 
