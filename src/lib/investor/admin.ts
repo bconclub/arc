@@ -49,7 +49,7 @@ export const RESOURCES: Record<string, Resource> = {
     table: "expenses",
     fields: {
       spent_on: "date", category: "text", vendor: "text", description: "text",
-      amount: "number", currency: "text", recurring: "bool",
+      amount: "number", currency: "text", recurring: "bool", daily_budget: "number",
     },
     required: ["spent_on", "amount"],
     order: "spent_on",

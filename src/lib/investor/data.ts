@@ -52,6 +52,16 @@ export type InvestorOverview = {
     byCategory: { category: string; amount: number }[];
     ledger: { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number }[];
   }>;
+  /** cash put into the ad account vs what Meta has drawn from it */
+  adWallet: {
+    funded: number;
+    spent: number;
+    balance: number;
+    dailyBudget: number | null;
+    daysLeft: number | null;
+    firstTopup: string;
+    metaConnected: boolean;
+  } | null;
   ads: Section<{
     running: MetaRunningAd[];
     spend30: number;
@@ -194,7 +204,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
     supabaseAdmin.from("ad_spend_daily").select("day,spend,leads,impressions,clicks")
       .eq("product", PRODUCT).gte("day", syncFrom).lte("day", untilStr),
-    supabaseAdmin.from("expenses").select("id,spent_on,category,vendor,description,amount")
+    supabaseAdmin.from("expenses").select("id,spent_on,category,vendor,description,amount,daily_budget")
       .eq("product", PRODUCT).order("spent_on", { ascending: false }),
     supabaseAdmin.from("demos").select("id,company,scheduled_at,status,outcome")
       .eq("product", PRODUCT).order("scheduled_at", { ascending: false }),
@@ -209,7 +219,12 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
 
   // ── spend ──
   const adRows = (adRowsRes.data ?? []) as { day: string; spend: number; leads: number; impressions: number; clicks: number }[];
-  const expenses = (expRes.data ?? []) as { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number }[];
+  const allExpenses = (expRes.data ?? []) as { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number; daily_budget: number | null }[];
+  // Top-ups move cash into the ad wallet; Meta's spend is what drains it. Counting
+  // both would double the same rupees, so top-ups stay out of the spend lines and
+  // are reconciled against Meta in the wallet instead.
+  const topups = allExpenses.filter((e) => e.category === "ad_topup");
+  const expenses = allExpenses.filter((e) => e.category !== "ad_topup");
 
   const adsByDay = new Map(adRows.map((r) => [r.day, r]));
   const otherByDay = new Map<string, number>();
@@ -243,14 +258,20 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
           other: otherInRange,
           daily,
           byCategory: Array.from(cat, ([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount),
-          ledger: expenses.filter((e) => e.spent_on >= since && e.spent_on <= untilStr).slice(0, 50),
+          ledger: allExpenses.filter((e) => e.spent_on >= since && e.spent_on <= untilStr).slice(0, 50),
         },
       };
 
   // ── deployment since the money landed ──
-  const deployedAds = investedOn
+  const metaSinceInvest = investedOn
     ? adRows.filter((r) => r.day >= investedOn!).reduce((s, r) => s + Number(r.spend), 0)
     : adRows.reduce((s, r) => s + Number(r.spend), 0);
+  const topupsSinceInvest = topups
+    .filter((e) => !investedOn || e.spent_on >= investedOn)
+    .reduce((s, e) => s + Number(e.amount), 0);
+  // Cash out to ads is whichever is larger: what was loaded into the wallet, or
+  // what Meta spent (spend can run ahead of logged top-ups on a card account).
+  const deployedAds = Math.max(metaSinceInvest, topupsSinceInvest);
   const deployedOther = expenses
     .filter((e) => !investedOn || e.spent_on >= investedOn)
     .reduce((s, e) => s + Number(e.amount), 0);
@@ -352,6 +373,25 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
 
   const updates = (updatesRes.data ?? []) as InvestorOverview["updates"];
 
+  let adWallet: InvestorOverview["adWallet"] = null;
+  if (topups.length) {
+    const firstTopup = topups.map((t) => t.spent_on).sort()[0];
+    const funded = topups.reduce((s, t) => s + Number(t.amount), 0);
+    const spentMeta = adRows.filter((r) => r.day >= firstTopup).reduce((s, r) => s + Number(r.spend), 0);
+    const latest = [...topups].sort((a, b) => b.spent_on.localeCompare(a.spent_on))[0];
+    const dailyBudget = latest.daily_budget != null ? Number(latest.daily_budget) : null;
+    const balance = funded - spentMeta;
+    adWallet = {
+      funded,
+      spent: spentMeta,
+      balance,
+      dailyBudget,
+      daysLeft: dailyBudget ? Math.max(0, Math.floor(balance / dailyBudget)) : null,
+      firstTopup,
+      metaConnected: Boolean(adAccountsByBrand()[PRODUCT]),
+    };
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     range: { days, since, until: untilStr },
@@ -366,6 +406,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       dailyBurn,
     },
     spend,
+    adWallet,
     ads,
     demos,
     pipeline,

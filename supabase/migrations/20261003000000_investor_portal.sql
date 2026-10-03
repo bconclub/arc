@@ -90,6 +90,8 @@ create table if not exists public.expenses (
   product text not null default 'proxe',
   spent_on date not null,
   -- tools | infra | calls | people | marketing | legal | other
+  -- ad_topup: cash moved into an ad account wallet. Counted as deployed;
+  -- Meta's daily spend then shows how fast the wallet drains, never added on top.
   category text not null default 'other',
   vendor text,
   description text,
@@ -102,6 +104,9 @@ create table if not exists public.expenses (
 );
 
 create index if not exists expenses_product_idx on public.expenses (product, spent_on desc);
+
+-- For ad_topup rows: the daily budget the wallet is meant to fund.
+alter table public.expenses add column if not exists daily_budget numeric;
 
 -- ── Daily ad spend, persisted ───────────────────────────────
 -- Meta only answers for windows; a stored daily row means the investor chart

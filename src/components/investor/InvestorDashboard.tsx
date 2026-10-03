@@ -12,6 +12,7 @@ type Range = "7" | "30" | "90";
 
 const CATEGORY_LABEL: Record<string, string> = {
   ads: "Ads (Meta)",
+  ad_topup: "Ad wallet top-up",
   tools: "Tools & software",
   infra: "Infrastructure",
   calls: "Calling & telephony",
@@ -407,7 +408,37 @@ export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
             </div>
 
             {/* ── Ads ── */}
-            <Card title="Ads running now" icon={Megaphone} sub="Meta, last 30 days per ad">
+            <Card title="Ads" icon={Megaphone} sub="Meta, last 30 days per ad">
+              {data.adWallet && (() => {
+                const w = data.adWallet;
+                const usedPct = w.funded ? Math.min(100, (w.spent / w.funded) * 100) : 0;
+                return (
+                  <div className="mb-5 rounded-card border border-[var(--brand-line)] bg-[var(--brand-faint)] p-4">
+                    <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-text)]">
+                      Ad wallet · funded since {fmtDate(w.firstTopup)}
+                    </p>
+                    <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+                      <Metric label="Funded" value={money(w.funded)} />
+                      <Metric
+                        label="Spent"
+                        value={w.metaConnected ? money(w.spent) : "–"}
+                        hint={w.metaConnected ? undefined : "live spend appears once Meta is linked"}
+                      />
+                      <Metric label="Left" value={w.metaConnected ? money(w.balance) : money(w.funded)} />
+                      <Metric
+                        label="Daily budget"
+                        value={w.dailyBudget ? money(w.dailyBudget) : "–"}
+                        hint={w.daysLeft != null ? `≈ ${w.daysLeft} days of ads left` : undefined}
+                      />
+                    </div>
+                    {w.metaConnected && (
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-pill bg-[var(--surface-hover)]">
+                        <div className="h-full rounded-pill bg-[var(--brand)]" style={{ width: `${usedPct}%` }} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {!data.ads.ok ? <Unavailable reason={data.ads.reason} /> : (
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-6">

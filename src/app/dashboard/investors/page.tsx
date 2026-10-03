@@ -106,10 +106,11 @@ const CONFIG: Record<TabKey, {
     blank: () => ({ spent_on: today(), category: "tools", vendor: "", description: "", amount: "", recurring: false }),
     fields: [
       { key: "spent_on", label: "Date", type: "date" },
-      { key: "category", label: "Category", type: "select", options: ["tools", "infra", "calls", "people", "marketing", "legal", "other"] },
+      { key: "category", label: "Category", type: "select", options: ["ad_topup", "tools", "infra", "calls", "people", "marketing", "legal", "other"] },
       { key: "vendor", label: "Vendor", type: "text", placeholder: "ElevenLabs, Vobiz, Vercel…" },
       { key: "description", label: "What for", type: "text" },
       { key: "amount", label: "Amount (₹)", type: "number" },
+      { key: "daily_budget", label: "Daily ad budget (ad top-ups only)", type: "number" },
       { key: "recurring", label: "Monthly subscription", type: "checkbox" },
     ],
     cols: [
