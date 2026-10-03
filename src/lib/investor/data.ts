@@ -20,6 +20,8 @@ export type Viewer =
         id: string;
         name: string;
         committed_amount: number | null;
+        received_amount: number | null;
+        equity_pct: number | null;
         currency: string;
         invested_on: string | null;
       };
@@ -28,6 +30,20 @@ export type Viewer =
 type Section<T> = { ok: true; data: T } | { ok: false; reason: string };
 
 export type DaySpend = { day: string; ads: number; other: number; leads: number };
+
+export type FeedItem = {
+  id: string;
+  at: string;
+  type: "post" | "money" | "demo";
+  kind: string;
+  stage: "plan" | "executing" | "done" | null;
+  title: string;
+  body: string | null;
+  amount: number | null;
+  pinned: boolean;
+  /** structured detail an ads launch carries */
+  detail: { daily_budget?: number | null; targeting?: string | null } | null;
+};
 
 export type InvestorOverview = {
   generatedAt: string;
@@ -61,6 +77,8 @@ export type InvestorOverview = {
     daysLeft: number | null;
     firstTopup: string;
     metaConnected: boolean;
+    /** true when spent is budget x days since launch, not Meta's figure */
+    estimated: boolean;
   } | null;
   ads: Section<{
     running: MetaRunningAd[];
@@ -90,6 +108,23 @@ export type InvestorOverview = {
     commitsInRange: number;
   }>;
   updates: { id: string; title: string; body_md: string; kind: string; published_at: string }[];
+  /** everything that happened, newest first: posts, money moved, demos */
+  feed: FeedItem[];
+  /** this investor's slice; for the owner preview, the whole round */
+  stake: {
+    promised: number | null;
+    received: number | null;
+    roundPromised: number;
+    roundReceived: number;
+    /** promised / round promised */
+    shareOfRound: number | null;
+    equityPct: number | null;
+    /** deployed x shareOfRound */
+    yourDeployed: number | null;
+    /** deployed / round received (or promised when nothing marked received) */
+    roundDeployedPct: number | null;
+    investors: number;
+  };
 };
 
 const fail = (reason: string): { ok: false; reason: string } => ({ ok: false, reason });
@@ -178,22 +213,30 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   const untilStr = iso(until);
 
   // ── the money this view is accountable for ──
+  // The whole round is loaded either way: an investor's share is their
+  // promise over everyone's.
+  const { data: roundRows } = await supabaseAdmin
+    .from("investors").select("committed_amount,received_amount,invested_on").eq("active", true);
+  const round = (roundRows ?? []) as { committed_amount: number | null; received_amount: number | null; invested_on: string | null }[];
+  const roundPromised = round.reduce((s, r) => s + (Number(r.committed_amount) || 0), 0);
+  const roundReceived = round.reduce((s, r) => s + (Number(r.received_amount) || 0), 0);
+  const roundStart = round.map((r) => r.invested_on).filter(Boolean).sort()[0] ?? null;
+
   let committed: number | null = null;
+  let received: number | null = null;
+  let equityPct: number | null = null;
   let investedOn: string | null = null;
   let viewerName = "Owner preview";
   if (viewer.role === "investor") {
     committed = viewer.investor.committed_amount;
+    received = viewer.investor.received_amount;
+    equityPct = viewer.investor.equity_pct;
     investedOn = viewer.investor.invested_on;
     viewerName = viewer.investor.name;
   } else {
-    // The owner previews the combined picture across every active investor.
-    const { data } = await supabaseAdmin
-      .from("investors").select("committed_amount,invested_on").eq("active", true);
-    const rows = data ?? [];
-    if (rows.length) {
-      committed = rows.reduce((s, r) => s + (Number(r.committed_amount) || 0), 0) || null;
-      investedOn = rows.map((r) => r.invested_on).filter(Boolean).sort()[0] ?? null;
-    }
+    committed = roundPromised || null;
+    received = roundReceived || null;
+    investedOn = roundStart;
   }
 
   // Sync ads for whichever window is wider: the view, or since the money landed.
@@ -211,7 +254,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     supabaseAdmin.from("outreach_targets").select("name,source,segment,phone,status,kind").eq("kind", "business"),
     supabaseAdmin.from("outreach_activity").select("channel,outcome,occurred_at")
       .eq("channel", "call").gte("occurred_at", `${since}T00:00:00Z`),
-    supabaseAdmin.from("investor_updates").select("id,title,body_md,kind,published_at")
+    supabaseAdmin.from("investor_updates").select("id,title,body_md,kind,published_at,stage,payload,pinned")
       .eq("published", true).order("published_at", { ascending: false }).limit(20),
     supabaseAdmin.from("gtm_areas").select("title,status,stand,ord").order("ord"),
     supabaseAdmin.from("brands").select("name,github_repos"),
@@ -374,26 +417,104 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     },
   };
 
-  const updates = (updatesRes.data ?? []) as InvestorOverview["updates"];
+  type UpdateRow = InvestorOverview["updates"][number] & {
+    stage: FeedItem["stage"];
+    payload: { daily_budget?: number | null; targeting?: string | null } | null;
+    pinned: boolean | null;
+  };
+  const updateRows = (updatesRes.data ?? []) as UpdateRow[];
+  const updates = updateRows.map(({ id, title, body_md, kind, published_at }) => ({ id, title, body_md, kind, published_at }));
 
+  // ── ad wallet ──
+  // The live budget is the newest stated one: an ads post that is executing
+  // or done overrides the budget a top-up was made for.
+  const adPosts = updateRows
+    .filter((u) => u.kind === "ads" && u.payload?.daily_budget && u.stage !== "plan")
+    .sort((a, b) => b.published_at.localeCompare(a.published_at));
   let adWallet: InvestorOverview["adWallet"] = null;
   if (topups.length) {
     const firstTopup = topups.map((t) => t.spent_on).sort()[0];
     const funded = topups.reduce((s, t) => s + Number(t.amount), 0);
-    const spentMeta = adRows.filter((r) => r.day >= firstTopup).reduce((s, r) => s + Number(r.spend), 0);
-    const latest = [...topups].sort((a, b) => b.spent_on.localeCompare(a.spent_on))[0];
-    const dailyBudget = latest.daily_budget != null ? Number(latest.daily_budget) : null;
-    const balance = funded - spentMeta;
+    const metaConnected = Boolean(adAccountsByBrand()[PRODUCT]);
+    const latestTopup = [...topups].sort((a, b) => b.spent_on.localeCompare(a.spent_on))[0];
+    const launch = adPosts[0];
+    const dailyBudget = launch?.payload?.daily_budget != null
+      ? Number(launch.payload.daily_budget)
+      : latestTopup.daily_budget != null ? Number(latestTopup.daily_budget) : null;
+
+    let spent = adRows.filter((r) => r.day >= firstTopup).reduce((s, r) => s + Number(r.spend), 0);
+    let estimated = false;
+    // Without Meta, a wallet that never drains would claim money still there
+    // after it is gone. Budget x days live is the honest stand-in, labelled.
+    if (!metaConnected && launch && dailyBudget) {
+      const liveDays = Math.max(0, Math.floor((Date.now() - new Date(launch.published_at).getTime()) / 864e5));
+      spent = Math.min(funded, liveDays * dailyBudget);
+      estimated = true;
+    }
+    const balance = funded - spent;
     adWallet = {
       funded,
-      spent: spentMeta,
+      spent,
       balance,
       dailyBudget,
       daysLeft: dailyBudget ? Math.max(0, Math.floor(balance / dailyBudget)) : null,
       firstTopup,
-      metaConnected: Boolean(adAccountsByBrand()[PRODUCT]),
+      metaConnected,
+      estimated,
     };
   }
+
+  // ── feed ──
+  const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+  const feed: FeedItem[] = [];
+  for (const u of updateRows) {
+    feed.push({
+      id: `u-${u.id}`, at: u.published_at, type: "post", kind: u.kind, stage: u.stage ?? null,
+      title: u.title, body: u.body_md || null, amount: null, pinned: Boolean(u.pinned),
+      detail: u.kind === "ads" && u.payload
+        ? { daily_budget: u.payload.daily_budget ?? null, targeting: u.payload.targeting ?? null }
+        : null,
+    });
+  }
+  for (const e of allExpenses) {
+    const isTopup = e.category === "ad_topup";
+    feed.push({
+      id: `e-${e.id}`, at: `${e.spent_on}T12:00:00+05:30`, type: "money", kind: e.category, stage: "done",
+      title: isTopup
+        ? `${inr(Number(e.amount))} deployed into the ad wallet`
+        : `${inr(Number(e.amount))} spent on ${e.vendor || e.category}`,
+      body: [e.description, isTopup && e.daily_budget ? `Funds ads at ${inr(Number(e.daily_budget))}/day.` : null]
+        .filter(Boolean).join(" ") || null,
+      amount: Number(e.amount), pinned: false, detail: null,
+    });
+  }
+  const demoRows = (demoRes.data ?? []) as { id: string; company: string; scheduled_at: string; status: string; outcome: string | null }[];
+  for (const d of demoRows) {
+    if (d.status !== "done") continue;
+    feed.push({
+      id: `d-${d.id}`, at: d.scheduled_at, type: "demo", kind: "demo", stage: "done",
+      title: `Demo shown to ${d.company}`, body: d.outcome ? `Outcome: ${d.outcome.replace("_", " ")}.` : null,
+      amount: null, pinned: false, detail: null,
+    });
+  }
+  feed.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
+
+  // ── stake ──
+  const roundBase = roundReceived || roundPromised;
+  const shareOfRound = viewer.role === "investor"
+    ? (committed && roundPromised ? committed / roundPromised : null)
+    : (roundPromised ? 1 : null);
+  const stake: InvestorOverview["stake"] = {
+    promised: committed,
+    received,
+    roundPromised,
+    roundReceived,
+    shareOfRound,
+    equityPct,
+    yourDeployed: shareOfRound != null ? deployed * shareOfRound : null,
+    roundDeployedPct: roundBase ? Math.min(1, deployed / roundBase) : null,
+    investors: round.length,
+  };
 
   return {
     generatedAt: new Date().toISOString(),
@@ -415,5 +536,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     pipeline,
     product,
     updates,
+    feed: feed.slice(0, 60),
+    stake,
   };
 }

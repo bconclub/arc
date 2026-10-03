@@ -17,7 +17,7 @@ export async function resolveViewer(cookies: CookieReader): Promise<Viewer | nul
   if (investorId) {
     const { data } = await supabaseAdmin
       .from("investors")
-      .select("id,name,committed_amount,currency,invested_on,active")
+      .select("id,name,committed_amount,received_amount,equity_pct,currency,invested_on,active")
       .eq("id", investorId)
       .maybeSingle();
     if (data?.active) {
@@ -27,6 +27,8 @@ export async function resolveViewer(cookies: CookieReader): Promise<Viewer | nul
           id: data.id,
           name: data.name,
           committed_amount: data.committed_amount == null ? null : Number(data.committed_amount),
+          received_amount: data.received_amount == null ? null : Number(data.received_amount),
+          equity_pct: data.equity_pct == null ? null : Number(data.equity_pct),
           currency: data.currency ?? "INR",
           invested_on: data.invested_on,
         },

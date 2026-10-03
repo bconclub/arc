@@ -22,15 +22,15 @@ export const RESOURCES: Record<string, Resource> = {
     table: "investors",
     fields: {
       username: "text", name: "text", email: "text",
-      committed_amount: "number", currency: "text", invested_on: "date", active: "bool",
+      committed_amount: "number", received_amount: "number", equity_pct: "number", currency: "text", invested_on: "date", active: "bool",
     },
     required: ["username", "name", "password"],
     order: "created_at",
-    select: "id,username,name,email,committed_amount,currency,invested_on,active,last_login_at,created_at",
+    select: "id,username,name,email,committed_amount,received_amount,equity_pct,currency,invested_on,active,last_login_at,created_at",
   },
   updates: {
     table: "investor_updates",
-    fields: { title: "text", body_md: "text", kind: "text", published_at: "text", published: "bool" },
+    fields: { title: "text", body_md: "text", kind: "text", stage: "text", published_at: "text", published: "bool", pinned: "bool" },
     required: ["title"],
     order: "published_at",
     select: "*",
@@ -83,6 +83,16 @@ export async function buildRow(res: Resource, body: Record<string, unknown>, cre
       if (pw.length < 10) return { ok: false, error: "Password must be at least 10 characters." };
       row.password_hash = await hashPassword(pw);
     }
+  }
+
+  // An ads post carries its budget and targeting as structured detail, so the
+  // portal can show them as fields rather than prose.
+  if (res.table === "investor_updates" && ("daily_budget" in body || "targeting" in body)) {
+    const n = Number(body.daily_budget);
+    row.payload = {
+      daily_budget: body.daily_budget === "" || body.daily_budget == null || !Number.isFinite(n) ? null : n,
+      targeting: typeof body.targeting === "string" && body.targeting.trim() ? body.targeting.trim() : null,
+    };
   }
 
   if (creating) {

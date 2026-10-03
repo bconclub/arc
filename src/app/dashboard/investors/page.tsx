@@ -46,14 +46,18 @@ const CONFIG: Record<TabKey, {
       { key: "username", label: "Username (they sign in with this)", type: "text" },
       { key: "email", label: "Email", type: "text" },
       { key: "password", label: "Password (10+ chars; leave blank to keep)", type: "password" },
-      { key: "committed_amount", label: "Amount invested (₹)", type: "number" },
+      { key: "committed_amount", label: "Promised (₹)", type: "number" },
+      { key: "received_amount", label: "Actually received (₹)", type: "number" },
+      { key: "equity_pct", label: "Equity stake (%)", type: "number" },
       { key: "invested_on", label: "Money landed on", type: "date" },
       { key: "active", label: "Can sign in", type: "checkbox" },
     ],
     cols: [
       { key: "name", label: "Investor" },
       { key: "username", label: "Username" },
-      { key: "committed_amount", label: "Invested", render: (r) => money(r.committed_amount as number) },
+      { key: "committed_amount", label: "Promised", render: (r) => money(r.committed_amount as number) },
+      { key: "received_amount", label: "Received", render: (r) => money(r.received_amount as number) },
+      { key: "equity_pct", label: "Equity", render: (r) => (r.equity_pct == null ? "–" : `${r.equity_pct}%`) },
       { key: "invested_on", label: "Since", render: (r) => fmtDate(r.invested_on) },
       { key: "last_login_at", label: "Last seen", render: (r) => fmtDT(r.last_login_at) },
       { key: "active", label: "Access", render: (r) => <StatusPill status={r.active ? "active" : "disabled"} tone={r.active ? "good" : "neutral"} /> },
@@ -63,16 +67,21 @@ const CONFIG: Record<TabKey, {
     label: "Updates",
     noun: "update",
     canDelete: true,
-    blank: () => ({ title: "", body_md: "", kind: "note", published: true }),
+    blank: () => ({ title: "", body_md: "", kind: "note", stage: "done", daily_budget: "", targeting: "", published: true, pinned: false }),
     fields: [
       { key: "title", label: "Title", type: "text" },
-      { key: "kind", label: "Kind", type: "select", options: ["milestone", "metric", "product", "hiring", "risk", "note"] },
-      { key: "body_md", label: "What happened", type: "textarea" },
+      { key: "kind", label: "Kind", type: "select", options: ["ads", "milestone", "metric", "product", "hiring", "risk", "note"] },
+      { key: "stage", label: "Stage", type: "select", options: ["plan", "executing", "done"] },
+      { key: "body_md", label: "What is happening", type: "textarea" },
+      { key: "daily_budget", label: "Ads only: daily budget (₹)", type: "number" },
+      { key: "targeting", label: "Ads only: targeting (who, where, age, interests, placements)", type: "textarea" },
       { key: "published", label: "Visible to investors", type: "checkbox" },
+      { key: "pinned", label: "Pin to top of feed", type: "checkbox" },
     ],
     cols: [
       { key: "title", label: "Title" },
       { key: "kind", label: "Kind", render: (r) => <StatusPill status={String(r.kind)} /> },
+      { key: "stage", label: "Stage", render: (r) => fmt(r.stage) },
       { key: "published_at", label: "Posted", render: (r) => fmtDate(r.published_at) },
       { key: "published", label: "Visible", render: (r) => (r.published ? "Yes" : "Draft") },
     ],
@@ -144,6 +153,11 @@ export default function InvestorsAdminPage() {
     setError("");
     if (!row) { setEditing(cfg.blank()); return; }
     const copy: Record<string, unknown> = { ...row };
+    const payload = (row.payload ?? {}) as { daily_budget?: number | null; targeting?: string | null };
+    if (tab === "updates") {
+      copy.daily_budget = payload.daily_budget ?? "";
+      copy.targeting = payload.targeting ?? "";
+    }
     for (const f of cfg.fields) {
       if (f.type === "datetime") copy[f.key] = toLocalInput(row[f.key]);
       if (f.type === "password") copy[f.key] = "";
