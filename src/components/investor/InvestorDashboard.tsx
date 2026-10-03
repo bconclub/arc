@@ -80,11 +80,11 @@ function SectionHead({ title, sub, children }: { title: string; sub?: string; ch
 }
 
 /** One line of a money statement: label on the left, amount on the right. */
-function MoneyLine({ label, hint, value, tone }: { label: string; hint?: string; value: string; tone?: "in" | "out" | "total" }) {
+function MoneyLine({ label, hint, value, tone, dept }: { label: string; hint?: string; value: string; tone?: "in" | "out" | "total"; dept?: string }) {
   return (
     <div className={`flex items-baseline justify-between gap-3 py-2.5 ${tone === "total" ? "border-t border-[var(--border-strong)]" : ""}`}>
       <div className="min-w-0">
-        <p className={`text-[13px] ${tone === "total" ? "font-semibold text-text" : "text-text"}`}>{label}</p>
+        <p className={`flex flex-wrap items-center gap-2 text-[13px] ${tone === "total" ? "font-semibold text-text" : "text-text"}`}>{label}{dept && <DeptChip name={dept} />}</p>
         {hint && <p className="text-[10.5px] text-text-muted">{hint}</p>}
       </div>
       <p className={`shrink-0 text-[15px] font-semibold tabular-nums ${tone === "in" ? "text-accent-green" : "text-text"}`}>{value}</p>
@@ -115,7 +115,7 @@ function SpendBars({ daily }: { daily: DaySpend[] }) {
           <span className="tabular-nums text-text">{fmtDate(h.day)}: {money(h.ads + h.other)}</span>
         ) : (
           <>
-            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-[var(--brand)]" />Ads</span>
+            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-[#c084fc]" />Marketing (ads)</span>
             <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-blue" />Everything else</span>
           </>
         )}
@@ -127,7 +127,7 @@ function SpendBars({ daily }: { daily: DaySpend[] }) {
             <div key={d.day} onMouseEnter={() => setHover(i)} onClick={() => setHover(i)}
               className="flex h-full min-w-[6px] max-w-[48px] flex-1 flex-col justify-end" title={`${d.day}: ${money(total)}`}>
               <div className="w-full rounded-t-[3px] bg-accent-blue opacity-80" style={{ height: `${(d.other / max) * 100}%` }} />
-              <div className={`w-full bg-[var(--brand)] ${d.other ? "" : "rounded-t-[3px]"}`} style={{ height: `${(d.ads / max) * 100}%`, minHeight: total ? 2 : 0 }} />
+              <div className={`w-full bg-[#c084fc] ${d.other ? "" : "rounded-t-[3px]"}`} style={{ height: `${(d.ads / max) * 100}%`, minHeight: total ? 2 : 0 }} />
             </div>
           );
         })}
@@ -141,12 +141,40 @@ function SpendBars({ daily }: { daily: DaySpend[] }) {
 }
 
 /** The icon says which department is behind an item, at a glance. */
-const DEPT: Record<string, { icon: typeof Wallet; label: string }> = {
-  Marketing: { icon: Megaphone, label: "Marketing" },
-  Sales: { icon: Handshake, label: "Sales" },
-  Engineering: { icon: Code2, label: "Engineering" },
-  Operations: { icon: Settings2, label: "Operations" },
+// Each department keeps one colour everywhere: chip, bar, and its spends in the feed.
+const DEPT: Record<string, { icon: typeof Wallet; label: string; chip: string; bar: string; box: string; ring: string }> = {
+  Marketing: {
+    icon: Megaphone, label: "Marketing",
+    chip: "border-[#c084fc]/60 bg-[#c084fc]/15 text-[#d8b4fe]", bar: "bg-[#c084fc]",
+    box: "border-[#c084fc]/45 bg-[#c084fc]/[0.08]", ring: "border-[#c084fc]/60 text-[#c084fc]",
+  },
+  Sales: {
+    icon: Handshake, label: "Sales",
+    chip: "border-accent-orange/60 bg-accent-orange/15 text-accent-orange", bar: "bg-accent-orange",
+    box: "border-accent-orange/40 bg-accent-orange/[0.07]", ring: "border-accent-orange/60 text-accent-orange",
+  },
+  Engineering: {
+    icon: Code2, label: "Engineering",
+    chip: "border-[#22d3ee]/55 bg-[#22d3ee]/12 text-[#67e8f9]", bar: "bg-[#22d3ee]",
+    box: "border-[#22d3ee]/40 bg-[#22d3ee]/[0.07]", ring: "border-[#22d3ee]/60 text-[#22d3ee]",
+  },
+  Operations: {
+    icon: Settings2, label: "Operations",
+    chip: "border-accent-blue/55 bg-accent-blue/12 text-accent-blue", bar: "bg-accent-blue",
+    box: "border-accent-blue/30 bg-accent-blue/[0.06]", ring: "border-accent-blue/50 text-accent-blue",
+  },
 };
+const deptOf = (name: string | null | undefined) => DEPT[name ?? ""] ?? DEPT.Operations!;
+
+/** Which department a thing belongs to: icon, name, its colour. */
+function DeptChip({ name }: { name: string | null | undefined }) {
+  const d = deptOf(name);
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1 rounded-pill border px-2 py-0.5 text-[10.5px] font-semibold ${d.chip}`}>
+      <d.icon size={11} /> {name || d.label}
+    </span>
+  );
+}
 
 /** Demos per day: booked (light) behind taken (green). Tap a day for its numbers. */
 function DemoBars({ daily: days }: { daily: { day: string; booked: number; done: number }[] }) {
@@ -193,11 +221,11 @@ function DemoBars({ daily: days }: { daily: { day: string; booked: number; done:
 }
 
 function FeedIcon({ item }: { item: FeedItem }) {
-  const Icon = (DEPT[item.department] ?? DEPT.Operations).icon;
+  const Icon = deptOf(item.department).icon;
   const ring =
     item.tone === "paid" ? "border-accent-green/60 text-accent-green"
     : item.tone === "sales" ? "border-[#e8b931]/60 text-[#e8b931]"
-    : item.tone === "spend" ? "border-accent-blue/50 text-accent-blue"
+    : item.tone === "spend" ? deptOf(item.department).ring
     : "border-[var(--brand-line)] text-[var(--brand-text)]";
   return (
     <span className={`relative z-[1] flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-surface ${ring}`}>
@@ -220,7 +248,7 @@ function Feed({ items }: { items: FeedItem[] }) {
             : item.tone === "sales"
             ? "border-[#e8b931]/45 bg-[#e8b931]/[0.08]"
             : item.tone === "spend"
-              ? "border-accent-blue/30 bg-accent-blue/[0.06]"
+              ? deptOf(item.department).box
               : "border-[var(--border)] bg-[var(--surface-hover)]";
         return (
           <li key={item.id} className="flex gap-3">
@@ -231,7 +259,7 @@ function Feed({ items }: { items: FeedItem[] }) {
                 {item.tone === "paid" && <BadgeCheck size={14} className="shrink-0 text-accent-green" aria-label="Payment received" />}
                 <h3 className={`text-[13.5px] font-semibold leading-snug ${item.tone === "sales" ? "text-[#f0c84b]" : item.tone === "paid" ? "text-accent-green" : "text-text"}`}>{item.title}</h3>
                 {stage && <StatusPill status={stage.label} tone={stage.tone} />}
-                <span className="rounded-pill border border-[var(--border)] px-1.5 py-px text-[10px] text-text-muted">{item.department}</span>
+                <DeptChip name={item.department} />
                 {item.pinned && <Pin size={11} className="text-[var(--brand-text)]" aria-label="Pinned" />}
               </div>
               <p className="mt-0.5 text-[10.5px] tabular-nums text-text-muted">{fmtDateTime(item.at)}</p>
@@ -460,7 +488,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                   value={data.funnel.sales != null ? money(data.funnel.sales) : "–"}
                   tone="in"
                 />
-                <MoneyLine label="Ad spend" hint="loaded into Meta" value={money(data.funnel.spentAds)} />
+                <MoneyLine label="Ad spend" hint="loaded into Meta" value={money(data.funnel.spentAds)} dept="Marketing" />
                 <MoneyLine label="Company spends" hint="tools, software, operations" value={money(data.funnel.spentCompany)} />
                 <MoneyLine label="Total spends" value={money(data.funnel.spentAds + data.funnel.spentCompany)} tone="total" />
                 {sp && (
@@ -480,7 +508,8 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-text-muted">
                   <span className="flex items-center gap-1.5"><BadgeCheck size={11} className="text-accent-green" />Payments in</span>
                   <span className="flex items-center gap-1.5"><Star size={11} className="fill-[#e8b931] text-[#e8b931]" />Links &amp; conversions</span>
-                  <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-accent-blue/50 bg-accent-blue/20" />Money spent</span>
+                  <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-[#c084fc]/60 bg-[#c084fc]/25" />Marketing spend</span>
+                  <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-accent-blue/50 bg-accent-blue/20" />Other spend</span>
                   <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-[var(--border)] bg-[var(--surface-hover)]" />Work in progress</span>
                 </div>
                 <Feed items={data.feed} />
@@ -608,10 +637,12 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                         {sp.byDepartment.map((d) => (
                           <li key={d.department}>
                             <div className="flex justify-between text-[12px]">
-                              <span className="text-text">{d.department}</span>
+                              <DeptChip name={d.department} />
                               <span className="tabular-nums text-text-muted">{money(d.amount)} · {sp.total ? Math.round((d.amount / sp.total) * 100) : 0}%</span>
                             </div>
-                            <div className="mt-1"><Bar value={sp.total ? d.amount / sp.total : 0} /></div>
+                            <div className="mt-1.5 h-2 overflow-hidden rounded-pill bg-[var(--surface-hover)]">
+                              <div className={`h-full rounded-pill ${deptOf(d.department).bar}`} style={{ width: `${sp.total ? (d.amount / sp.total) * 100 : 0}%` }} />
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -625,11 +656,13 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                       {sp.ledger.map((e) => (
                         <li key={e.id} className="flex items-start justify-between gap-3 p-3">
                           <div className="min-w-0">
-                            <p className="text-[12.5px] font-medium text-text">{e.vendor || CATEGORY_LABEL[e.category]}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-[12.5px] font-medium text-text">{e.vendor || CATEGORY_LABEL[e.category]}</p>
+                              <DeptChip name={e.department || (e.category === "ad_topup" ? "Marketing" : "Operations")} />
+                            </div>
                             {e.description && <p className="mt-0.5 break-words text-[11.5px] text-text-muted">{e.description}</p>}
                             <p className="mt-1 text-[10.5px] text-text-muted">
                               {fmtDate(e.spent_on)} · {CATEGORY_LABEL[e.category] ?? e.category}
-                              {e.department ? ` · ${e.department}` : ""}
                               {e.approved_by ? ` · approved by ${e.approved_by}` : ""}
                             </p>
                           </div>
