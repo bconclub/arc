@@ -155,6 +155,17 @@ export type InvestorOverview = {
     equityEarned: number | null;
     /** equity the company has issued so far, all investors combined */
     dilutedSoFar: number | null;
+    /** the round itself: terms, window, and how full it is */
+    roundInfo: {
+      name: string;
+      target: number;
+      equityOffered: number;
+      opensOn: string;
+      closesOn: string;
+      raised: number;
+      daysOpen: number;
+      daysLeft: number;
+    } | null;
   };
 };
 
@@ -260,18 +271,23 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   const untilStr = iso(until);
 
   // ── the money this view is accountable for ──
-  // The whole round is loaded either way: an investor's share is their
-  // promise over everyone's.
+  // The round is the company's: its own terms and window. Investors carry only
+  // what they actually sent, and equity is derived at the round's price.
+  const roundNameWanted = viewer.role === "investor" ? viewer.investor.round : null;
+  const { data: roundTermsRows } = await supabaseAdmin
+    .from("rounds").select("name,target_amount,equity_offered_pct,opens_on,closes_on,status")
+    .order("opens_on", { ascending: false });
+  const terms = ((roundTermsRows ?? []) as { name: string; target_amount: number; equity_offered_pct: number; opens_on: string; closes_on: string; status: string }[])
+    .find((r) => (roundNameWanted ? r.name === roundNameWanted : r.status === "open")) ?? null;
+  const postMoney = terms ? Number(terms.target_amount) / (Number(terms.equity_offered_pct) / 100) : null;
+
   const { data: roundRows } = await supabaseAdmin
     .from("investors").select("committed_amount,received_amount,invested_on,round,equity_pct").eq("active", true);
-  const round = (roundRows ?? []) as { committed_amount: number | null; received_amount: number | null; invested_on: string | null; round: string | null; equity_pct: number | null }[];
-  const dilutedSoFar = round.some((r) => r.equity_pct != null)
-    ? round.reduce((s, r) => {
-        const c = Number(r.committed_amount) || 0;
-        const e = Number(r.equity_pct) || 0;
-        return s + (c ? e * ((Number(r.received_amount) || 0) / c) : 0);
-      }, 0)
-    : null;
+  const round = ((roundRows ?? []) as { committed_amount: number | null; received_amount: number | null; invested_on: string | null; round: string | null; equity_pct: number | null }[])
+    .filter((r) => !terms || !r.round || r.round === terms.name);
+  const raisedInRound = round.reduce((s, r) => s + (Number(r.received_amount) || 0), 0);
+  // Equity issued so far: everything received, at the round's price.
+  const dilutedSoFar = postMoney ? (raisedInRound / postMoney) * 100 : null;
   const roundPromised = round.reduce((s, r) => s + (Number(r.committed_amount) || 0), 0);
   const roundReceived = round.reduce((s, r) => s + (Number(r.received_amount) || 0), 0);
   const roundStart = round.map((r) => r.invested_on).filter(Boolean).sort()[0] ?? null;
@@ -606,15 +622,29 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       ? (fundBase ? Math.min(1, deployed / fundBase) : null)
       : (ownBase && yourDeployed != null ? Math.min(1, yourDeployed / ownBase) : null),
     investors: isOwner ? round.length : null,
-    round: roundName,
+    round: terms?.name ?? roundName,
     // Post-money implied by the round's terms (5% for 25L is 5Cr). Same for
     // every investor in the round, so it is not anyone's private figure.
-    valuation: (() => {
-      const t = round.find((r) => Number(r.equity_pct) > 0 && Number(r.committed_amount) > 0);
-      return t ? Number(t.committed_amount) / (Number(t.equity_pct) / 100) : null;
-    })(),
-    equityEarned: equityPct != null && committed && received != null ? equityPct * (received / committed) : null,
+    valuation: postMoney,
+    equityEarned: postMoney && received != null ? (received / postMoney) * 100 : null,
     dilutedSoFar,
+    roundInfo: terms
+      ? (() => {
+          const today = Date.parse(`${untilStr}T00:00:00Z`);
+          const open = Date.parse(`${terms.opens_on}T00:00:00Z`);
+          const close = Date.parse(`${terms.closes_on}T00:00:00Z`);
+          return {
+            name: terms.name,
+            target: Number(terms.target_amount),
+            equityOffered: Number(terms.equity_offered_pct),
+            opensOn: terms.opens_on,
+            closesOn: terms.closes_on,
+            raised: raisedInRound,
+            daysOpen: Math.max(1, Math.round((today - open) / 864e5) + 1),
+            daysLeft: Math.max(0, Math.round((close - today) / 864e5)),
+          };
+        })()
+      : null,
   };
 
   return {

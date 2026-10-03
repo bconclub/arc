@@ -266,17 +266,21 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 icon={Building2}
                 label="Company worth"
                 value={st.valuation ? moneyShort(st.valuation) : "–"}
-                hint={st.valuation ? `${st.round ?? "Current round"}, post-money` : "Set once the round terms are entered"}
+                hint={st.roundInfo ? `${st.roundInfo.name}: ${st.roundInfo.equityOffered}% for ${moneyShort(st.roundInfo.target)}` : "Set once the round terms are entered"}
                 accent
               />
               <Tile
                 icon={PieChart}
-                label="Diluted so far"
-                value={st.dilutedSoFar != null ? `${st.dilutedSoFar.toFixed(2)}%` : "–"}
+                label={owner ? "Diluted so far" : "Your equity"}
+                value={
+                  owner
+                    ? (st.dilutedSoFar != null ? `${st.dilutedSoFar.toFixed(2)}%` : "–")
+                    : (st.equityEarned != null ? `${st.equityEarned.toFixed(2)}%` : "–")
+                }
                 hint={
-                  !owner && st.equityEarned != null
-                    ? `Yours: ${st.equityEarned.toFixed(2)}% of ${st.equityPct}% (${moneyShort(st.received ?? 0)} of ${moneyShort(st.promised ?? 0)} in)`
-                    : "Equity issued against money received"
+                  owner
+                    ? "Equity issued against money received"
+                    : `For your ${moneyShort(st.received ?? 0)}${st.dilutedSoFar != null ? ` · company diluted ${st.dilutedSoFar.toFixed(2)}% so far` : ""}`
                 }
               />
               <Tile
@@ -292,6 +296,23 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 hint={sp ? `${moneyShort(m.dailyBurn)}/day over ${sp.burnDays} day${sp.burnDays === 1 ? "" : "s"} since ${fmtDate(sp.since)}` : undefined}
               />
             </div>
+
+            {/* ── The round: how full it is, and how long it stays open ── */}
+            {st.roundInfo && (
+              <section className="rounded-panel border border-[var(--brand-line)] bg-surface p-4 sm:p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-[13px] font-semibold text-text">{st.roundInfo.name} round</p>
+                  <p className="text-[11.5px] tabular-nums text-text-muted">
+                    Day {st.roundInfo.daysOpen} · {st.roundInfo.daysLeft} days left · closes {fmtDate(st.roundInfo.closesOn)}
+                  </p>
+                </div>
+                <div className="mt-3"><Bar value={st.roundInfo.target ? st.roundInfo.raised / st.roundInfo.target : 0} /></div>
+                <p className="mt-2 text-[12px] tabular-nums text-text-muted">
+                  <span className="font-semibold text-text">{moneyShort(st.roundInfo.raised)}</span> raised of {moneyShort(st.roundInfo.target)}
+                  {" "}({st.roundInfo.target ? ((st.roundInfo.raised / st.roundInfo.target) * 100).toFixed(1) : 0}%) · {st.roundInfo.equityOffered}% of the company on offer
+                </p>
+              </section>
+            )}
 
             <div className="grid gap-4 lg:grid-cols-3">
               {/* ── What is happening ── */}
