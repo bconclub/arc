@@ -9,9 +9,18 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { adAccountsByBrand, fetchMetaDaily, fetchMetaRunningAds, type MetaRunningAd } from "@/lib/ads/meta";
 import { isTestTarget } from "@/lib/outreach-workflow";
-import { syncProxeDemos } from "./proxe-sync";
+import {
+  fetchProxeLeads, fetchProxeSales, fetchProxeTraction, syncProxeDemos,
+  type ProxeLeads, type ProxeSales, type ProxeTraction,
+} from "./proxe-sync";
 
 export const PRODUCT = "proxe";
+
+/** Which department a post comes from when the post does not say. */
+const DEPT_BY_KIND: Record<string, string> = {
+  ads: "Marketing", milestone: "Sales", metric: "Sales", product: "Engineering",
+  hiring: "Operations", risk: "Operations", note: "Operations",
+};
 
 export type Viewer =
   | { role: "owner" }
@@ -43,6 +52,8 @@ export type FeedItem = {
   body: string | null;
   amount: number | null;
   pinned: boolean;
+  /** which part of the company is behind it */
+  department: string;
   /** structured detail an ads launch carries */
   detail: { daily_budget?: number | null; targeting?: string | null } | null;
 };
@@ -68,7 +79,11 @@ export type InvestorOverview = {
     other: number;
     daily: DaySpend[];
     byCategory: { category: string; amount: number }[];
-    ledger: { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number }[];
+    ledger: { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number; approved_by?: string | null; department?: string | null }[];
+    byDepartment: { department: string; amount: number }[];
+    /** first day money went out; the chart and burn start here */
+    since: string;
+    burnDays: number;
   }>;
   /** cash put into the ad account vs what Meta has drawn from it */
   adWallet: {
@@ -110,14 +125,19 @@ export type InvestorOverview = {
     commitsInRange: number;
   }>;
   updates: { id: string; title: string; body_md: string; kind: string; published_at: string }[];
+  /** live product activity from the PROXe database; null when not connected */
+  traction: ProxeTraction | null;
+  leads: ProxeLeads | null;
+  sales: ProxeSales | null;
   /** everything that happened, newest first: posts, money moved, demos */
   feed: FeedItem[];
   /** this investor's slice; for the owner preview, the whole round */
   stake: {
     promised: number | null;
     received: number | null;
-    roundPromised: number;
-    roundReceived: number;
+    /** owner preview only; null for an investor, who never sees others' money */
+    roundPromised: number | null;
+    roundReceived: number | null;
     /** promised / round promised */
     shareOfRound: number | null;
     equityPct: number | null;
@@ -125,12 +145,14 @@ export type InvestorOverview = {
     yourDeployed: number | null;
     /** deployed / round received (or promised when nothing marked received) */
     roundDeployedPct: number | null;
-    investors: number;
+    investors: number | null;
     round: string | null;
     /** post-money implied by equity for the full promise */
     valuation: number | null;
     /** equity_pct x received / promised */
     equityEarned: number | null;
+    /** equity the company has issued so far, all investors combined */
+    dilutedSoFar: number | null;
   };
 };
 
@@ -212,6 +234,22 @@ async function githubCommits(repos: string[], since: string) {
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
+/**
+ * Posts this viewer may see: everything published for the owner; for an
+ * investor, broadcast posts plus the ones addressed to them alone. Before the
+ * investor_id column exists no addressed post can exist, so the unfiltered
+ * fallback cannot leak one.
+ */
+async function loadUpdates(viewer: Viewer) {
+  const cols = "id,title,body_md,kind,published_at,stage,payload,pinned";
+  const base = () => supabaseAdmin.from("investor_updates").select(cols)
+    .eq("published", true).order("published_at", { ascending: false }).limit(30);
+  if (viewer.role === "owner") return base();
+  const scoped = await base().or(`investor_id.is.null,investor_id.eq.${viewer.investor.id}`);
+  if (scoped.error && /investor_id/.test(scoped.error.message)) return base();
+  return scoped;
+}
+
 export async function buildInvestorOverview(viewer: Viewer, days: number): Promise<InvestorOverview> {
   const until = new Date();
   const sinceDate = new Date(until);
@@ -223,8 +261,15 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   // The whole round is loaded either way: an investor's share is their
   // promise over everyone's.
   const { data: roundRows } = await supabaseAdmin
-    .from("investors").select("committed_amount,received_amount,invested_on,round").eq("active", true);
-  const round = (roundRows ?? []) as { committed_amount: number | null; received_amount: number | null; invested_on: string | null; round: string | null }[];
+    .from("investors").select("committed_amount,received_amount,invested_on,round,equity_pct").eq("active", true);
+  const round = (roundRows ?? []) as { committed_amount: number | null; received_amount: number | null; invested_on: string | null; round: string | null; equity_pct: number | null }[];
+  const dilutedSoFar = round.some((r) => r.equity_pct != null)
+    ? round.reduce((s, r) => {
+        const c = Number(r.committed_amount) || 0;
+        const e = Number(r.equity_pct) || 0;
+        return s + (c ? e * ((Number(r.received_amount) || 0) / c) : 0);
+      }, 0)
+    : null;
   const roundPromised = round.reduce((s, r) => s + (Number(r.committed_amount) || 0), 0);
   const roundReceived = round.reduce((s, r) => s + (Number(r.received_amount) || 0), 0);
   const roundStart = round.map((r) => r.invested_on).filter(Boolean).sort()[0] ?? null;
@@ -255,84 +300,83 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
 
   // Pull demo bookings from the PROXe product first, so the demo numbers are
   // the product's own record. A failed sync leaves the last mirror in place.
-  await syncProxeDemos();
+  const [, traction, leads, sales] = await Promise.all([
+    syncProxeDemos(),
+    fetchProxeTraction(days).catch(() => null),
+    fetchProxeLeads(days).catch(() => null),
+    fetchProxeSales().catch(() => null),
+  ]);
 
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
     supabaseAdmin.from("ad_spend_daily").select("day,spend,leads,impressions,clicks")
       .eq("product", PRODUCT).gte("day", syncFrom).lte("day", untilStr),
-    supabaseAdmin.from("expenses").select("id,spent_on,category,vendor,description,amount,daily_budget")
+    supabaseAdmin.from("expenses").select("*")
       .eq("product", PRODUCT).order("spent_on", { ascending: false }),
     supabaseAdmin.from("demos").select("id,company,scheduled_at,status,outcome")
       .eq("product", PRODUCT).order("scheduled_at", { ascending: false }),
     supabaseAdmin.from("outreach_targets").select("name,source,segment,phone,status,kind").eq("kind", "business"),
     supabaseAdmin.from("outreach_activity").select("channel,outcome,occurred_at")
       .eq("channel", "call").gte("occurred_at", `${since}T00:00:00Z`),
-    supabaseAdmin.from("investor_updates").select("id,title,body_md,kind,published_at,stage,payload,pinned")
-      .eq("published", true).order("published_at", { ascending: false }).limit(20),
+    loadUpdates(viewer),
     supabaseAdmin.from("gtm_areas").select("title,status,stand,ord").order("ord"),
     supabaseAdmin.from("brands").select("name,github_repos"),
   ]);
 
   // ── spend ──
+  // Spend is money out of the bank, from the ledger, since the first rupee
+  // went out (or since this investor's money landed). An ad top-up counts the
+  // day the cash moves into Meta; Meta's own daily delivery is shown on the
+  // ads card and never added on top, so no rupee is counted twice.
   const adRows = (adRowsRes.data ?? []) as { day: string; spend: number; leads: number; impressions: number; clicks: number }[];
-  const allExpenses = (expRes.data ?? []) as { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number; daily_budget: number | null }[];
-  // Top-ups move cash into the ad wallet; Meta's spend is what drains it. Counting
-  // both would double the same rupees, so top-ups stay out of the spend lines and
-  // are reconciled against Meta in the wallet instead.
+  const allExpenses = (expRes.data ?? []) as { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number; daily_budget: number | null; approved_by?: string | null; department?: string | null }[];
   const topups = allExpenses.filter((e) => e.category === "ad_topup");
-  const expenses = allExpenses.filter((e) => e.category !== "ad_topup");
 
-  const adsByDay = new Map(adRows.map((r) => [r.day, r]));
-  const otherByDay = new Map<string, number>();
-  for (const e of expenses) {
-    if (e.spent_on < since || e.spent_on > untilStr) continue;
-    otherByDay.set(e.spent_on, (otherByDay.get(e.spent_on) ?? 0) + Number(e.amount));
+  const counted = allExpenses.filter((e) => !investedOn || e.spent_on >= investedOn);
+  const firstSpend = counted.map((e) => e.spent_on).sort()[0] ?? untilStr;
+  const byDay = new Map<string, { ads: number; other: number }>();
+  for (const e of counted) {
+    const cur = byDay.get(e.spent_on) ?? { ads: 0, other: 0 };
+    if (e.category === "ad_topup") cur.ads += Number(e.amount); else cur.other += Number(e.amount);
+    byDay.set(e.spent_on, cur);
   }
   const daily: DaySpend[] = [];
-  for (let d = new Date(sinceDate); iso(d) <= untilStr; d.setUTCDate(d.getUTCDate() + 1)) {
+  for (let d = new Date(`${firstSpend}T00:00:00Z`); iso(d) <= untilStr; d.setUTCDate(d.getUTCDate() + 1)) {
     const key = iso(d);
-    const a = adsByDay.get(key);
-    daily.push({ day: key, ads: Number(a?.spend ?? 0), other: otherByDay.get(key) ?? 0, leads: Number(a?.leads ?? 0) });
+    const v = byDay.get(key);
+    daily.push({ day: key, ads: v?.ads ?? 0, other: v?.other ?? 0, leads: 0 });
   }
-  const adsInRange = daily.reduce((s, d) => s + d.ads, 0);
-  const otherInRange = daily.reduce((s, d) => s + d.other, 0);
+  const deployedAds = counted.filter((e) => e.category === "ad_topup").reduce((s, e) => s + Number(e.amount), 0);
+  const deployedOther = counted.filter((e) => e.category !== "ad_topup").reduce((s, e) => s + Number(e.amount), 0);
+  const deployed = deployedAds + deployedOther;
+  // Averaged over the days since spending began, today included: on day one
+  // the burn is everything spent today, and it settles as days pass.
+  const burnDays = Math.max(1, Math.round((Date.parse(`${untilStr}T00:00:00Z`) - Date.parse(`${firstSpend}T00:00:00Z`)) / 864e5) + 1);
+  const dailyBurn = deployed / burnDays;
 
   const cat = new Map<string, number>();
-  if (adsInRange) cat.set("ads", adsInRange);
-  for (const e of expenses) {
-    if (e.spent_on < since || e.spent_on > untilStr) continue;
-    cat.set(e.category, (cat.get(e.category) ?? 0) + Number(e.amount));
-  }
+  for (const e of counted) cat.set(e.category, (cat.get(e.category) ?? 0) + Number(e.amount));
 
   const spend: InvestorOverview["spend"] = expRes.error && missingTable(expRes.error.message)
     ? fail("Spend ledger not set up yet.")
     : {
         ok: true,
         data: {
-          total: adsInRange + otherInRange,
-          ads: adsInRange,
-          other: otherInRange,
+          total: deployed,
+          ads: deployedAds,
+          other: deployedOther,
           daily,
           byCategory: Array.from(cat, ([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount),
-          ledger: allExpenses.filter((e) => e.spent_on >= since && e.spent_on <= untilStr).slice(0, 50),
+          ledger: [...counted].sort((a, b) => b.spent_on.localeCompare(a.spent_on)).slice(0, 50)
+            .map(({ id, spent_on, category, vendor, description, amount, approved_by, department }) => ({ id, spent_on, category, vendor, description, amount, approved_by: approved_by ?? null, department: department ?? null })),
+          byDepartment: (() => {
+            const m = new Map<string, number>();
+            for (const e of counted) m.set(e.department || "Unassigned", (m.get(e.department || "Unassigned") ?? 0) + Number(e.amount));
+            return Array.from(m, ([department, amount]) => ({ department, amount })).sort((a, b) => b.amount - a.amount);
+          })(),
+          since: firstSpend,
+          burnDays,
         },
       };
-
-  // ── deployment since the money landed ──
-  const metaSinceInvest = investedOn
-    ? adRows.filter((r) => r.day >= investedOn!).reduce((s, r) => s + Number(r.spend), 0)
-    : adRows.reduce((s, r) => s + Number(r.spend), 0);
-  const topupsSinceInvest = topups
-    .filter((e) => !investedOn || e.spent_on >= investedOn)
-    .reduce((s, e) => s + Number(e.amount), 0);
-  // Cash out to ads is whichever is larger: what was loaded into the wallet, or
-  // what Meta spent (spend can run ahead of logged top-ups on a card account).
-  const deployedAds = Math.max(metaSinceInvest, topupsSinceInvest);
-  const deployedOther = expenses
-    .filter((e) => !investedOn || e.spent_on >= investedOn)
-    .reduce((s, e) => s + Number(e.amount), 0);
-  const deployed = deployedAds + deployedOther;
-  const dailyBurn = (adsInRange + otherInRange) / days;
 
   // ── ads ──
   let ads: InvestorOverview["ads"];
@@ -484,6 +528,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     feed.push({
       id: `u-${u.id}`, at: u.published_at, type: "post", kind: u.kind, stage: u.stage ?? null,
       title: u.title, body: u.body_md || null, amount: null, pinned: Boolean(u.pinned),
+      department: (u.payload as { department?: string } | null)?.department ?? DEPT_BY_KIND[u.kind] ?? "Operations",
       detail: u.kind === "ads" && u.payload
         ? { daily_budget: u.payload.daily_budget ?? null, targeting: u.payload.targeting ?? null }
         : null,
@@ -494,11 +539,12 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     feed.push({
       id: `e-${e.id}`, at: `${e.spent_on}T12:00:00+05:30`, type: "money", kind: e.category, stage: "done",
       title: isTopup
-        ? `${inr(Number(e.amount))} deployed into the ad wallet`
-        : `${inr(Number(e.amount))} spent on ${e.vendor || e.category}`,
+        ? `${inr(Number(e.amount))} loaded into ${e.vendor || "the"} ad account`
+        : `${inr(Number(e.amount))} paid to ${e.vendor || e.category}`,
       body: [e.description, isTopup && e.daily_budget ? `Funds ads at ${inr(Number(e.daily_budget))}/day.` : null]
         .filter(Boolean).join(" ") || null,
       amount: Number(e.amount), pinned: false, detail: null,
+      department: e.department || (isTopup ? "Marketing" : "Operations"),
     });
   }
   const demoRows = (demoRes.data ?? []) as { id: string; company: string; scheduled_at: string; status: string; outcome: string | null }[];
@@ -507,29 +553,43 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     feed.push({
       id: `d-${d.id}`, at: d.scheduled_at, type: "demo", kind: "demo", stage: "done",
       title: ["Prospect", "PROXe lead"].includes(d.company) ? "Demo shown" : `Demo shown to ${d.company}`, body: d.outcome ? `Outcome: ${d.outcome.replace("_", " ")}.` : null,
-      amount: null, pinned: false, detail: null,
+      amount: null, pinned: false, detail: null, department: "Sales",
     });
   }
   feed.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
 
   // ── stake ──
-  const roundBase = roundReceived || roundPromised;
-  const shareOfRound = viewer.role === "investor"
-    ? (committed && roundPromised ? committed / roundPromised : null)
-    : (roundPromised ? 1 : null);
+  // Deployed money is attributed pro rata to what each investor actually
+  // sent. The ratio is computed here and only the investor's own result
+  // leaves the server: no round totals, no other investor's amounts.
+  const isOwner = viewer.role === "owner";
+  const fundBase = roundReceived || roundPromised;
+  const ownBase = received || committed || 0;
+  const shareOfRound = isOwner
+    ? (fundBase ? 1 : null)
+    : (ownBase && fundBase ? ownBase / fundBase : null);
+  const yourDeployed = shareOfRound != null ? deployed * shareOfRound : null;
   const stake: InvestorOverview["stake"] = {
     promised: committed,
     received,
-    roundPromised,
-    roundReceived,
-    shareOfRound,
+    roundPromised: isOwner ? roundPromised : null,
+    roundReceived: isOwner ? roundReceived : null,
+    shareOfRound: isOwner ? shareOfRound : null,
     equityPct,
-    yourDeployed: shareOfRound != null ? deployed * shareOfRound : null,
-    roundDeployedPct: roundBase ? Math.min(1, deployed / roundBase) : null,
-    investors: round.length,
+    yourDeployed,
+    roundDeployedPct: isOwner
+      ? (fundBase ? Math.min(1, deployed / fundBase) : null)
+      : (ownBase && yourDeployed != null ? Math.min(1, yourDeployed / ownBase) : null),
+    investors: isOwner ? round.length : null,
     round: roundName,
-    valuation: committed && equityPct ? committed / (equityPct / 100) : null,
+    // Post-money implied by the round's terms (5% for 25L is 5Cr). Same for
+    // every investor in the round, so it is not anyone's private figure.
+    valuation: (() => {
+      const t = round.find((r) => Number(r.equity_pct) > 0 && Number(r.committed_amount) > 0);
+      return t ? Number(t.committed_amount) / (Number(t.equity_pct) / 100) : null;
+    })(),
     equityEarned: equityPct != null && committed && received != null ? equityPct * (received / committed) : null,
+    dilutedSoFar,
   };
 
   return {
@@ -552,6 +612,9 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     pipeline,
     product,
     updates,
+    traction,
+    leads,
+    sales,
     feed: feed.slice(0, 60),
     stake,
   };

@@ -93,3 +93,167 @@ export async function syncProxeDemos(): Promise<{ synced: number } | { error: st
     return { error: e instanceof Error ? e.message : "sync failed" };
   }
 }
+
+// ── Product traction, read live from PROXe ─────────────────────
+
+export type ProxeTraction = {
+  days: number;
+  leads: number;
+  leadsPrev: number;
+  conversations: number;
+  conversationsPrev: number;
+  messages: number;
+  messagesPrev: number;
+  /** one touchpoint = one lead active on one channel on one day */
+  channels: { channel: string; touchpoints: number; prev: number }[];
+};
+
+type Msg = { lead_id: string | null; channel: string | null; sender: string | null; created_at: string };
+
+async function proxeRows<T>(path: string, url: string, key: string, cap = 10_000): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; from < cap; from += 1000) {
+    const res = await fetch(`${url}/rest/v1/${path}`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}`, Range: `${from}-${from + 999}` },
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`PROXe answered ${res.status}`);
+    const page = (await res.json()) as T[];
+    out.push(...page);
+    if (page.length < 1000) break;
+  }
+  return out;
+}
+
+/**
+ * What PROXe actually did for its own pipeline over the window, against the
+ * window before it. Brand "proxe" only: the same database also runs client
+ * brands, and their conversations are not PROXe's traction to claim.
+ */
+export async function fetchProxeTraction(days: number): Promise<ProxeTraction | null> {
+  if (!proxeSyncConfigured()) return null;
+  const url = process.env.PROXE_DB_URL!;
+  const key = process.env.PROXE_DB_SERVICE_KEY!;
+  const now = Date.now();
+  const start = new Date(now - days * 864e5).toISOString();
+  const prevStart = new Date(now - 2 * days * 864e5).toISOString();
+
+  const [msgs, leads] = await Promise.all([
+    proxeRows<Msg>(`conversations?select=lead_id,channel,sender,created_at&brand=eq.proxe&created_at=gte.${prevStart}&order=created_at.asc`, url, key),
+    proxeRows<{ created_at: string }>(`all_leads?select=created_at&brand=eq.proxe&created_at=gte.${prevStart}`, url, key),
+  ]);
+
+  const inCur = (t: string) => t >= start;
+  const cur = msgs.filter((m) => inCur(m.created_at));
+  const prev = msgs.filter((m) => !inCur(m.created_at));
+
+  const touch = (rows: Msg[]) => {
+    const by = new Map<string, Set<string>>();
+    for (const m of rows) {
+      if (!m.lead_id || !m.channel) continue;
+      if (!by.has(m.channel)) by.set(m.channel, new Set());
+      by.get(m.channel)!.add(`${m.lead_id}|${m.created_at.slice(0, 10)}`);
+    }
+    return by;
+  };
+  const tCur = touch(cur);
+  const tPrev = touch(prev);
+  const channels = Array.from(new Set([...Array.from(tCur.keys()), ...Array.from(tPrev.keys())]))
+    .map((channel) => ({ channel, touchpoints: tCur.get(channel)?.size ?? 0, prev: tPrev.get(channel)?.size ?? 0 }))
+    .filter((c) => c.touchpoints || c.prev)
+    .sort((a, b) => b.touchpoints - a.touchpoints);
+
+  const distinctLeads = (rows: Msg[]) => new Set(rows.map((m) => m.lead_id).filter(Boolean)).size;
+  const agentMsgs = (rows: Msg[]) => rows.filter((m) => m.sender && m.sender !== "customer").length;
+
+  return {
+    days,
+    leads: leads.filter((l) => inCur(l.created_at)).length,
+    leadsPrev: leads.filter((l) => !inCur(l.created_at)).length,
+    conversations: distinctLeads(cur),
+    conversationsPrev: distinctLeads(prev),
+    messages: agentMsgs(cur),
+    messagesPrev: agentMsgs(prev),
+    channels,
+  };
+}
+
+// ── Sales, read live from Dodo Payments ─────────────────────────
+
+export type ProxeSales = {
+  /** rupees, succeeded payments only */
+  total: number;
+  payments: number;
+  customers: number;
+  last: string | null;
+};
+
+/**
+ * PROXe's checkout runs on Dodo and nothing stores the payments elsewhere,
+ * so the sales figure is asked of Dodo directly. Only succeeded payments
+ * count; a link waiting on a card is not a sale. Env: DODO_PAYMENTS_API_KEY
+ * (+ DODO_ENVIRONMENT, "test_mode" for the sandbox).
+ */
+export async function fetchProxeSales(): Promise<ProxeSales | null> {
+  const key = process.env.DODO_PAYMENTS_API_KEY;
+  if (!key) return null;
+  const base = (process.env.DODO_ENVIRONMENT ?? "").includes("test")
+    ? "https://test.dodopayments.com"
+    : "https://live.dodopayments.com";
+  type P = { status?: string; total_amount?: number; currency?: string; created_at?: string; customer?: { customer_id?: string; email?: string } };
+  const all: P[] = [];
+  for (let page = 0; page < 20; page++) {
+    const res = await fetch(`${base}/payments?page_size=100&page_number=${page}`, {
+      headers: { Authorization: `Bearer ${key}` },
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Dodo answered ${res.status}`);
+    const j = (await res.json()) as { items?: P[] };
+    const items = j.items ?? [];
+    all.push(...items);
+    if (items.length < 100) break;
+  }
+  const ok = all.filter((p) => p.status === "succeeded" && (p.currency ?? "INR") === "INR");
+  return {
+    total: ok.reduce((s, p) => s + Number(p.total_amount ?? 0), 0) / 100,
+    payments: ok.length,
+    customers: new Set(ok.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
+    last: ok.map((p) => p.created_at ?? "").sort().pop() || null,
+  };
+}
+
+// ── Leads PROXe is handling ────────────────────────────────────
+
+export type ProxeLeads = {
+  /** leads active in the window, by stage */
+  stages: { stage: string; count: number }[];
+  /** newest first; names reduced to initials before they leave the server */
+  recent: { initials: string; channel: string | null; stage: string | null; at: string }[];
+};
+
+export async function fetchProxeLeads(days: number): Promise<ProxeLeads | null> {
+  if (!proxeSyncConfigured()) return null;
+  const url = process.env.PROXE_DB_URL!;
+  const key = process.env.PROXE_DB_SERVICE_KEY!;
+  const since = new Date(Date.now() - days * 864e5).toISOString();
+  const rows = await proxeRows<{ customer_name: string | null; first_touchpoint: string | null; lead_stage: string | null; created_at: string; last_interaction_at: string | null }>(
+    `all_leads?select=customer_name,first_touchpoint,lead_stage,created_at,last_interaction_at&brand=eq.proxe&last_interaction_at=gte.${since}&order=last_interaction_at.desc`,
+    url, key,
+  );
+  const stages = new Map<string, number>();
+  for (const r of rows) {
+    const s = r.lead_stage || "New";
+    stages.set(s, (stages.get(s) ?? 0) + 1);
+  }
+  const initials = (n: string | null) =>
+    (n ?? "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "?";
+  return {
+    stages: Array.from(stages, ([stage, count]) => ({ stage, count })).sort((a, b) => b.count - a.count),
+    recent: rows.slice(0, 8).map((r) => ({
+      initials: initials(r.customer_name),
+      channel: r.first_touchpoint,
+      stage: r.lead_stage,
+      at: r.last_interaction_at ?? r.created_at,
+    })),
+  };
+}

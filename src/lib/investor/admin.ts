@@ -1,4 +1,5 @@
 import { hashPassword } from "@/lib/auth";
+import { supabaseAdmin } from "@/lib/supabase";
 
 /**
  * Owner-side writes behind the investor portal. Each resource names its table,
@@ -49,7 +50,7 @@ export const RESOURCES: Record<string, Resource> = {
     table: "expenses",
     fields: {
       spent_on: "date", category: "text", vendor: "text", description: "text",
-      amount: "number", currency: "text", recurring: "bool", daily_budget: "number",
+      amount: "number", currency: "text", recurring: "bool", daily_budget: "number", approved_by: "text", department: "text",
     },
     required: ["spent_on", "amount"],
     order: "spent_on",
@@ -93,6 +94,19 @@ export async function buildRow(res: Resource, body: Record<string, unknown>, cre
       daily_budget: body.daily_budget === "" || body.daily_budget == null || !Number.isFinite(n) ? null : n,
       targeting: typeof body.targeting === "string" && body.targeting.trim() ? body.targeting.trim() : null,
     };
+  }
+
+  // A post addressed to one investor: the owner types their username, blank
+  // means everyone. Resolved here so the browser never handles investor ids.
+  if (res.table === "investor_updates" && "for_username" in body) {
+    const u = String(body.for_username ?? "").trim().toLowerCase();
+    if (!u) {
+      row.investor_id = null;
+    } else {
+      const { data } = await supabaseAdmin.from("investors").select("id").eq("username", u).maybeSingle();
+      if (!data) return { ok: false, error: `No investor with username "${u}".` };
+      row.investor_id = data.id;
+    }
   }
 
   if (creating) {

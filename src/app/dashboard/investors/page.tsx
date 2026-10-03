@@ -69,7 +69,7 @@ const CONFIG: Record<TabKey, {
     label: "Updates",
     noun: "update",
     canDelete: true,
-    blank: () => ({ title: "", body_md: "", kind: "note", stage: "done", daily_budget: "", targeting: "", published: true, pinned: false }),
+    blank: () => ({ title: "", body_md: "", kind: "note", stage: "done", daily_budget: "", targeting: "", for_username: "", published: true, pinned: false }),
     fields: [
       { key: "title", label: "Title", type: "text" },
       { key: "kind", label: "Kind", type: "select", options: ["ads", "milestone", "metric", "product", "hiring", "risk", "note"] },
@@ -77,6 +77,7 @@ const CONFIG: Record<TabKey, {
       { key: "body_md", label: "What is happening", type: "textarea" },
       { key: "daily_budget", label: "Ads only: daily budget (₹)", type: "number" },
       { key: "targeting", label: "Ads only: targeting (who, where, age, interests, placements)", type: "textarea" },
+      { key: "for_username", label: "Only for this investor (username; blank = every investor)", type: "text" },
       { key: "published", label: "Visible to investors", type: "checkbox" },
       { key: "pinned", label: "Pin to top of feed", type: "checkbox" },
     ],
@@ -84,6 +85,7 @@ const CONFIG: Record<TabKey, {
       { key: "title", label: "Title" },
       { key: "kind", label: "Kind", render: (r) => <StatusPill status={String(r.kind)} /> },
       { key: "stage", label: "Stage", render: (r) => fmt(r.stage) },
+      { key: "investor_id", label: "Audience", render: (r) => (r.investor_id ? "One investor" : "Everyone") },
       { key: "published_at", label: "Posted", render: (r) => fmtDate(r.published_at) },
       { key: "published", label: "Visible", render: (r) => (r.published ? "Yes" : "Draft") },
     ],
@@ -114,11 +116,13 @@ const CONFIG: Record<TabKey, {
     label: "Spend",
     noun: "expense",
     canDelete: true,
-    blank: () => ({ spent_on: today(), category: "tools", vendor: "", description: "", amount: "", recurring: false }),
+    blank: () => ({ spent_on: today(), category: "tools", vendor: "", department: "Engineering", approved_by: "Thanzeel Ashruf (Founder)", description: "", amount: "", recurring: false }),
     fields: [
       { key: "spent_on", label: "Date", type: "date" },
       { key: "category", label: "Category", type: "select", options: ["ad_topup", "tools", "infra", "calls", "people", "marketing", "legal", "other"] },
       { key: "vendor", label: "Vendor", type: "text", placeholder: "ElevenLabs, Vobiz, Vercel…" },
+      { key: "department", label: "Department", type: "select", options: ["Engineering", "Marketing", "Sales", "Operations"] },
+      { key: "approved_by", label: "Approved by", type: "text" },
       { key: "description", label: "What for", type: "text" },
       { key: "amount", label: "Amount (₹)", type: "number" },
       { key: "daily_budget", label: "Daily ad budget (ad top-ups only)", type: "number" },
@@ -128,6 +132,8 @@ const CONFIG: Record<TabKey, {
       { key: "spent_on", label: "Date", render: (r) => fmtDate(r.spent_on) },
       { key: "category", label: "Category" },
       { key: "vendor", label: "Vendor", render: (r) => fmt(r.vendor) },
+      { key: "department", label: "Dept", render: (r) => fmt(r.department) },
+      { key: "approved_by", label: "Approved by", render: (r) => fmt(r.approved_by) },
       { key: "description", label: "What", render: (r) => fmt(r.description) },
       { key: "amount", label: "Amount", render: (r) => money(r.amount as number) },
     ],
@@ -141,6 +147,15 @@ export default function InvestorsAdminPage() {
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // id → username, so a post addressed to one investor opens with its audience filled in
+  const [usernames, setUsernames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    fetch("/api/ops/investor-admin/investors").then((r) => r.json()).then((d) => {
+      const map: Record<string, string> = {};
+      for (const inv of (d.items ?? []) as { id: string; username: string }[]) map[inv.id] = inv.username;
+      setUsernames(map);
+    }).catch(() => {});
+  }, []);
   const cfg = CONFIG[tab];
 
   const load = useCallback(async () => {
@@ -159,6 +174,7 @@ export default function InvestorsAdminPage() {
     if (tab === "updates") {
       copy.daily_budget = payload.daily_budget ?? "";
       copy.targeting = payload.targeting ?? "";
+      copy.for_username = row.investor_id ? usernames[String(row.investor_id)] ?? "" : "";
     }
     for (const f of cfg.fields) {
       if (f.type === "datetime") copy[f.key] = toLocalInput(row[f.key]);
