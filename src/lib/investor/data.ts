@@ -6,6 +6,7 @@
  * blanks the ads card, it does not take the page down — and says why, so an
  * empty card never reads as "zero".
  */
+import { unstable_cache } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 import { adAccountsByBrand, fetchMetaDaily, fetchMetaRunningAds, type MetaRunningAd } from "@/lib/ads/meta";
 import { isTestTarget } from "@/lib/outreach-workflow";
@@ -263,6 +264,20 @@ async function loadUpdates(viewer: Viewer) {
   return scoped;
 }
 
+// Outside calls (Dodo, the PROXe database, GitHub) are cached for a few
+// minutes: fetched fresh on every load they made the page take ~17s, and
+// none of them changes faster than an investor refreshes.
+const FIVE_MIN = 300;
+const cachedSales = unstable_cache(() => fetchProxeSales(), ["investor-sales"], { revalidate: FIVE_MIN });
+const cachedTraction = unstable_cache((d: number) => fetchProxeTraction(d), ["investor-traction"], { revalidate: FIVE_MIN });
+const cachedLeads = unstable_cache((d: number) => fetchProxeLeads(d), ["investor-leads"], { revalidate: FIVE_MIN });
+const cachedCommits = unstable_cache((repos: string[], since: string) => githubCommits(repos, since), ["investor-commits"], { revalidate: 900 });
+// The demo mirror only needs refreshing every ten minutes.
+const cachedDemoSync = unstable_cache(async () => {
+  await syncProxeDemos();
+  return Date.now();
+}, ["investor-demo-sync"], { revalidate: 600 });
+
 export async function buildInvestorOverview(viewer: Viewer, days: number): Promise<InvestorOverview> {
   const until = new Date();
   const sinceDate = new Date(until);
@@ -319,10 +334,10 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   // Pull demo bookings from the PROXe product first, so the demo numbers are
   // the product's own record. A failed sync leaves the last mirror in place.
   const [, traction, leads, sales] = await Promise.all([
-    syncProxeDemos(),
-    fetchProxeTraction(days).catch(() => null),
-    fetchProxeLeads(days).catch(() => null),
-    fetchProxeSales().catch(() => null),
+    cachedDemoSync().catch(() => null),
+    cachedTraction(days).catch(() => null),
+    cachedLeads(days).catch(() => null),
+    cachedSales().catch(() => null),
   ]);
 
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
@@ -482,7 +497,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   const gtm = (gtmRes.data ?? []) as { title: string; status: string; stand: string | null }[];
   const proxeBrand = ((brandRes.data ?? []) as { name: string; github_repos: string[] | null }[])
     .find((b) => b.name.toLowerCase().startsWith("proxe"));
-  const commits = await githubCommits(proxeBrand?.github_repos ?? [], since);
+  const commits = await cachedCommits(proxeBrand?.github_repos ?? [], since).catch(() => null);
   const product: InvestorOverview["product"] = {
     ok: true,
     data: {
