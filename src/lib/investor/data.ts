@@ -301,7 +301,10 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
         },
       };
     } catch (e) {
-      ads = fail(sync.reason ?? (e instanceof Error ? e.message : "Meta did not answer."));
+      // The raw cause (env var names, Graph API errors) is for the owner's logs,
+      // not an investor's screen.
+      console.error("[investor] ads unavailable:", sync.reason ?? (e instanceof Error ? e.message : e));
+      ads = fail("Live ad numbers are being connected. The ad wallet above is current.");
     }
   }
 
