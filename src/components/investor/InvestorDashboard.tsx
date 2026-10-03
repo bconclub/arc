@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, LogOut, Megaphone, Wallet, Newspaper, Pin, Target,
-  Users, Code2, Handshake, Settings2, Star, BadgeCheck, Bell, ChevronRight, Inbox, Radar, Presentation, Link2, Repeat, Activity, CalendarCheck,
+  Users, Code2, Handshake, Settings2, Star, BadgeCheck, Bell, Inbox, Radar, Presentation, Link2, Repeat, Activity, CalendarCheck, Home, TrendingUp,
 } from "lucide-react";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -12,6 +12,14 @@ import { money, moneyShort } from "@/lib/format";
 import type { DaySpend, FeedItem, InvestorOverview } from "@/lib/investor/data";
 
 type Range = "7" | "30" | "3650";
+type View = "home" | "growth" | "money" | "updates";
+
+const TABS: { key: View; label: string; icon: typeof Wallet }[] = [
+  { key: "home", label: "Home", icon: Home },
+  { key: "growth", label: "Growth", icon: TrendingUp },
+  { key: "money", label: "Money", icon: Wallet },
+  { key: "updates", label: "Updates", icon: Bell },
+];
 
 const RANGE_TABS: { value: Range; label: string }[] = [
   { value: "7", label: "7 days" }, { value: "30", label: "30 days" }, { value: "3650", label: "All time" },
@@ -306,7 +314,7 @@ function Feed({ items }: { items: FeedItem[] }) {
 
 export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "investor"; viewAs?: string | null }) {
   const [range, setRange] = useState<Range>("3650");
-  const [view, setView] = useState<"overview" | "updates">("overview");
+  const [view, setView] = useState<View>("home");
   const [data, setData] = useState<InvestorOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -357,10 +365,13 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
   const sp = data?.spend.ok ? data.spend.data : null;
 
   const newCount = fresh.length;
-  function openUpdates() {
-    setView("updates");
-    markSeen();
+  function go(v: View) {
+    setView(v);
     window.scrollTo({ top: 0 });
+  }
+  function openUpdates() {
+    go("updates");
+    markSeen();
   }
   const f = data?.funnel;
 
@@ -375,28 +386,16 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
         </div>
       )}
 
-      <div className="mx-auto max-w-dashboard px-4 py-5 sm:px-8 sm:py-8">
+      <div className="mx-auto max-w-[560px] px-4 pb-28 pt-5 sm:pt-8">
         <header className="mb-5 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-text)]">PROXe · Investor</p>
             <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-text sm:text-[28px]">
-              {!data ? "\u00a0" : view === "updates" ? "Updates" : owner ? "PROXe, as investors see it" : `Hello, ${data.viewer.name.split(" ")[0]}.`}
+              {!data ? "\u00a0" : view === "home" ? (owner ? "PROXe, as investors see it" : `Hello, ${data.viewer.name.split(" ")[0]}.`) : TABS.find((t) => t.key === view)!.label}
             </h1>
             {data && <p className="mt-1 text-[12px] text-text-muted">Updated {fmtDateTime(data.generatedAt)}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              onClick={view === "updates" ? () => setView("overview") : openUpdates}
-              aria-label={newCount ? `${newCount} new updates` : "Updates"}
-              className={`relative rounded-pill p-2.5 transition-colors ${view === "updates" ? "bg-[var(--brand)] text-black" : "bg-surface text-text hover:bg-[var(--surface-hover)]"}`}
-            >
-              <Bell size={16} />
-              {newCount > 0 && view !== "updates" && (
-                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-pill bg-[var(--brand)] px-1 text-[10px] font-bold tabular-nums text-black">
-                  {newCount > 9 ? "9+" : newCount}
-                </span>
-              )}
-            </button>
             {role === "investor" && (
               <button onClick={logout} aria-label="Sign out" className="rounded-pill bg-surface p-2.5 text-text-muted transition-colors hover:text-text">
                 <LogOut size={16} />
@@ -411,9 +410,6 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
         {/* ══ Updates, behind the bell ══ */}
         {data && view === "updates" && (
           <div className="space-y-4">
-            <button onClick={() => setView("overview")} className="flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--brand-text)]">
-              <ArrowLeft size={13} /> Back to overview
-            </button>
             <Card title="Everything that happened" icon={Newspaper} sub="newest first">
               <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-text-muted">
                 <span className="flex items-center gap-1.5"><BadgeCheck size={11} className="text-accent-green" />Payments in</span>
@@ -427,7 +423,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
           </div>
         )}
 
-        {data && st && m && f && view === "overview" && (
+        {data && st && m && f && view === "home" && (
           <div className={`space-y-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
             {/* ══ Part 1: the investment. Terms of the company, not its activity. ══ */}
             <SectionHead title={owner ? "The round" : "Your investment"} sub={st.roundInfo ? `${st.roundInfo.name} · ${st.roundInfo.equityOffered}% for ${moneyShort(st.roundInfo.target)}` : undefined} />
@@ -471,94 +467,69 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
               </dl>
             </section>
 
-            {/* ══ Part 2: the business, over the chosen window ══ */}
-            <SectionHead title="The business" sub={`PROXe, ${RANGE_LABEL[range]}`}>
-              <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange} tabs={RANGE_TABS} />
-            </SectionHead>
-
-            <div className="grid gap-4 lg:grid-cols-5">
-              {/* Growth: the sequence a customer moves through */}
-              <Card title="Growth" icon={Users} sub="lead to paying customer" className="lg:col-span-3">
-                <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {[
-                    { icon: Inbox, label: "Incoming leads", value: f.incoming, hint: "inbound to PROXe", gold: false },
-                    { icon: Radar, label: "Outbound touched", value: f.outbound, hint: `${f.outboundCalls} calls · ${f.outboundEmails} emails`, gold: false },
-                    { icon: Presentation, label: "Demos done", value: f.demosDone, hint: "shown to prospects", gold: false },
-                    { icon: Link2, label: "Links shared", value: f.linksShared, hint: "payment links sent", gold: true },
-                  ].map((x, i) => (
-                    <li key={x.label} className={`relative rounded-card p-3 ${x.gold ? "bg-[#e8b931]/[0.10]" : "bg-[var(--surface-hover)]"}`}>
-                      <div className="flex items-center gap-1.5 text-text-muted">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--bg)] text-[9.5px] font-semibold tabular-nums text-text">{i + 1}</span>
-                        <x.icon size={12} className={x.gold ? "text-[#e8b931]" : ""} />
-                      </div>
-                      <p className={`mt-2 text-[24px] font-semibold tabular-nums ${x.gold ? "text-[#f0c84b]" : "text-text"}`}>{x.value ?? "–"}</p>
-                      <p className="text-[12px] font-medium text-text">{x.label}</p>
-                      <p className="text-[10.5px] text-text-muted">{x.hint}</p>
-                      {i < 3 && <ChevronRight size={14} className="absolute -right-[11px] top-1/2 z-[1] hidden -translate-y-1/2 text-text-muted sm:block" />}
-                    </li>
-                  ))}
-                </ol>
-                <div className="mt-2 flex items-center gap-3 rounded-card bg-accent-green/[0.10] p-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-green/15 text-accent-green">
-                    <Repeat size={14} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[12.5px] font-medium text-text">Active subscriptions</p>
-                    <p className="text-[10.5px] text-text-muted">customers paying every month, right now</p>
-                  </div>
-                  <p className="text-[24px] font-semibold tabular-nums text-accent-green">{f.activeSubs ?? "–"}</p>
-                </div>
-              </Card>
-
-              {/* Money: in, then out by department, then by kind */}
-              <Card title="Money" icon={Wallet} sub={RANGE_LABEL[range]} className="lg:col-span-2">
-                <MoneyLine
-                  label="Sales"
-                  hint={`${f.salesCount} payment${f.salesCount === 1 ? "" : "s"} received`}
-                  value={f.sales != null ? money(f.sales) : "–"}
-                  tone="in"
-                />
-                <p className="mb-1 mt-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-text-muted">Spends, by department</p>
-                {f.spendGroups.length === 0 && <p className="py-2 text-[12px] text-text-muted">Nothing spent in this window.</p>}
-                <div className="space-y-2">
-                  {f.spendGroups.map((g) => (
-                    <div key={g.department} className={`rounded-card p-3 ${deptOf(g.department).box.replace(/border-\S+/g, "")}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <DeptChip name={g.department} />
-                        <span className="text-[14px] font-semibold tabular-nums text-text">{money(g.total)}</span>
-                      </div>
-                      <ul className="mt-2 space-y-1">
-                        {g.lines.map((l) => (
-                          <li key={`${l.label}|${l.vendor}`} className="flex items-baseline justify-between gap-2 text-[12px]">
-                            <span className="min-w-0 truncate text-text-muted"><span className="text-text">{l.vendor}</span> · {l.label}</span>
-                            <span className="shrink-0 tabular-nums text-text">{money(l.amount)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-                {f.spendByType.length > 0 && (
-                  <>
-                    <p className="mb-1.5 mt-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-text-muted">By kind</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {f.spendByType.map((t) => (
-                        <span key={t.label} className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11.5px] text-text-muted">
-                          {t.label} <span className="font-semibold tabular-nums text-text">{moneyShort(t.amount)}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </>
-                )}
-                <MoneyLine label="Total spends" value={money(f.spentTotal)} tone="total" />
-                {sp && (
-                  <p className="mt-1.5 text-[10.5px] tabular-nums text-text-muted">
-                    Burn {moneyShort(m.dailyBurn)}/day, averaged over {sp.burnDays} day{sp.burnDays === 1 ? "" : "s"} since {fmtDate(sp.since)}
-                  </p>
-                )}
-              </Card>
+            {/* At a glance: the four numbers, then where to look next */}
+            <SectionHead title="At a glance" sub={`PROXe, ${RANGE_LABEL[range]}`} />
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Sales", value: f.sales != null ? moneyShort(f.sales) : "–", tone: "text-accent-green", go: "money" as const },
+                { label: "Spent", value: moneyShort(f.spentTotal), tone: "text-text", go: "money" as const },
+                { label: "Demos done", value: String(f.demosDone), tone: "text-text", go: "growth" as const },
+                { label: "Paying customers", value: String(f.activeSubs ?? "–"), tone: "text-accent-green", go: "growth" as const },
+              ].map((x) => (
+                <button key={x.label} onClick={() => go(x.go)} className="rounded-panel bg-surface p-4 text-left transition-colors active:bg-[var(--surface-hover)]">
+                  <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.label}</p>
+                  <p className={`mt-1.5 text-[24px] font-semibold tabular-nums tracking-tight ${x.tone}`}>{x.value}</p>
+                </button>
+              ))}
             </div>
 
+            {data.feed.length > 0 && (
+              <Card title="Latest" icon={Newspaper} sub="from the updates">
+                <Feed items={data.feed.slice(0, 3)} />
+                <button onClick={openUpdates} className="mt-3 w-full rounded-card bg-[var(--surface-hover)] py-2.5 text-[12.5px] font-medium text-text">
+                  See all updates
+                </button>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {data && f && view === "growth" && (
+          <div className={`space-y-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+            <div className="flex justify-end">
+              <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange} tabs={RANGE_TABS} />
+            </div>
+            {/* Growth: the sequence a customer moves through */}
+            <Card title="Growth" icon={Users} sub="lead to paying customer">
+              <ol className="grid grid-cols-2 gap-2">
+                {[
+                  { icon: Inbox, label: "Incoming leads", value: f.incoming, hint: "inbound to PROXe", gold: false },
+                  { icon: Radar, label: "Outbound touched", value: f.outbound, hint: `${f.outboundCalls} calls · ${f.outboundEmails} emails`, gold: false },
+                  { icon: Presentation, label: "Demos done", value: f.demosDone, hint: "shown to prospects", gold: false },
+                  { icon: Link2, label: "Links shared", value: f.linksShared, hint: "payment links sent", gold: true },
+                ].map((x, i) => (
+                  <li key={x.label} className={`relative rounded-card p-3 ${x.gold ? "bg-[#e8b931]/[0.10]" : "bg-[var(--surface-hover)]"}`}>
+                    <div className="flex items-center gap-1.5 text-text-muted">
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--bg)] text-[9.5px] font-semibold tabular-nums text-text">{i + 1}</span>
+                      <x.icon size={12} className={x.gold ? "text-[#e8b931]" : ""} />
+                    </div>
+                    <p className={`mt-2 text-[24px] font-semibold tabular-nums ${x.gold ? "text-[#f0c84b]" : "text-text"}`}>{x.value ?? "–"}</p>
+                    <p className="text-[12px] font-medium text-text">{x.label}</p>
+                    <p className="text-[10.5px] text-text-muted">{x.hint}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-2 flex items-center gap-3 rounded-card bg-accent-green/[0.10] p-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-green/15 text-accent-green">
+                  <Repeat size={14} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12.5px] font-medium text-text">Active subscriptions</p>
+                  <p className="text-[10.5px] text-text-muted">customers paying every month, right now</p>
+                </div>
+                <p className="text-[24px] font-semibold tabular-nums text-accent-green">{f.activeSubs ?? "–"}</p>
+              </div>
+            </Card>
             {/* ══ Activity: demos booked and payment links, tracked over the window ══ */}
             <Card title="Activity" icon={Activity} sub={RANGE_LABEL[range]}>
               <div className="mb-4 grid grid-cols-2 gap-2">
@@ -586,103 +557,179 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 </ul>
               )}
             </Card>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              {/* ── Leads PROXe is handling ── */}
-              <Card title="Leads PROXe is handling" icon={Users} sub="inbound, live from the product">
-                {!data.leads && !data.traction ? (
-                  <p className="text-[12px] text-text-muted">Connecting to the PROXe product.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {data.leads && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-card bg-accent-orange/[0.10] p-3">
-                          <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Warm leads</p>
-                          <p className="mt-1 text-[24px] font-semibold tabular-nums text-text">{data.leads.warm}</p>
-                          <p className="text-[10.5px] text-text-muted">score 40 to 79, open now</p>
-                        </div>
-                        <div className="rounded-card bg-accent-red/[0.10] p-3">
-                          <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Hot leads</p>
-                          <p className="mt-1 text-[24px] font-semibold tabular-nums text-text">{data.leads.hot}</p>
-                          <p className="text-[10.5px] text-text-muted">score 80+, ready to buy</p>
-                        </div>
+            {/* ── Leads PROXe is handling ── */}
+            <Card title="Leads PROXe is handling" icon={Users} sub="inbound, live from the product">
+              {!data.leads && !data.traction ? (
+                <p className="text-[12px] text-text-muted">Connecting to the PROXe product.</p>
+              ) : (
+                <div className="space-y-4">
+                  {data.leads && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-card bg-accent-orange/[0.10] p-3">
+                        <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Warm leads</p>
+                        <p className="mt-1 text-[24px] font-semibold tabular-nums text-text">{data.leads.warm}</p>
+                        <p className="text-[10.5px] text-text-muted">score 40 to 79, open now</p>
                       </div>
-                    )}
-                    {data.traction && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">New leads</p>
-                          <p className="mt-1 text-[22px] font-semibold tabular-nums text-text">{data.traction.leads}</p>
-                          <p className="text-[11px] text-text-muted">{delta(data.traction.leads, data.traction.leadsPrev)}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">In conversation</p>
-                          <p className="mt-1 text-[22px] font-semibold tabular-nums text-text">{data.traction.conversations}</p>
-                          <p className="text-[11px] text-text-muted">{data.traction.messages} replies sent by PROXe</p>
-                        </div>
+                      <div className="rounded-card bg-accent-red/[0.10] p-3">
+                        <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Hot leads</p>
+                        <p className="mt-1 text-[24px] font-semibold tabular-nums text-text">{data.leads.hot}</p>
+                        <p className="text-[10.5px] text-text-muted">score 80+, ready to buy</p>
                       </div>
-                    )}
-                    {data.traction && data.traction.channels.length > 0 && (
-                      <ul className="space-y-2">
-                        {(() => {
-                          const total = data.traction.channels.reduce((t, c) => t + c.touchpoints, 0) || 1;
-                          return data.traction.channels.map((c) => (
-                            <li key={c.channel}>
-                              <div className="flex justify-between text-[12px]">
-                                <span className="text-text">{CHANNEL_LABEL[c.channel] ?? c.channel}</span>
-                                <span className="tabular-nums text-text-muted">{c.touchpoints} · {Math.round((c.touchpoints / total) * 100)}%</span>
-                              </div>
-                              <div className="mt-1"><Bar value={c.touchpoints / total} tone="blue" /></div>
-                            </li>
-                          ));
-                        })()}
-                      </ul>
-                    )}
-                    {data.leads && data.leads.stages.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {data.leads.stages.map((x) => (
-                          <span key={x.stage} className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11px] text-text-muted">
-                            {x.stage} <span className="font-semibold tabular-nums text-text">{x.count}</span>
-                          </span>
-                        ))}
+                    </div>
+                  )}
+                  {data.traction && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">New leads</p>
+                        <p className="mt-1 text-[22px] font-semibold tabular-nums text-text">{data.traction.leads}</p>
+                        <p className="text-[11px] text-text-muted">{delta(data.traction.leads, data.traction.leadsPrev)}</p>
                       </div>
-                    )}
-                  </div>
-                )}
-              </Card>
-
-              {/* ── Every rupee: what, where it went, department, who approved ── */}
-              <Card title="Every spend" icon={Wallet} sub={sp ? `since ${fmtDate(sp.since)}` : undefined}>
-                {!data.spend.ok ? (
-                  <p className="text-[12px] text-text-muted">{data.spend.reason}</p>
-                ) : sp && (
-                  <div className="space-y-4">
-                    <SpendBars daily={sp.daily} />
-                    <ul className="space-y-1.5">
-                      {sp.ledger.map((e) => (
-                        <li key={e.id} className="flex items-start justify-between gap-3 rounded-card bg-[var(--surface-hover)] p-3">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-[12.5px] font-medium text-text">{e.vendor || CATEGORY_LABEL[e.category]}</p>
-                              <DeptChip name={e.department || (e.category === "ad_topup" ? "Marketing" : "Operations")} />
+                      <div>
+                        <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">In conversation</p>
+                        <p className="mt-1 text-[22px] font-semibold tabular-nums text-text">{data.traction.conversations}</p>
+                        <p className="text-[11px] text-text-muted">{data.traction.messages} replies sent by PROXe</p>
+                      </div>
+                    </div>
+                  )}
+                  {data.traction && data.traction.channels.length > 0 && (
+                    <ul className="space-y-2">
+                      {(() => {
+                        const total = data.traction.channels.reduce((t, c) => t + c.touchpoints, 0) || 1;
+                        return data.traction.channels.map((c) => (
+                          <li key={c.channel}>
+                            <div className="flex justify-between text-[12px]">
+                              <span className="text-text">{CHANNEL_LABEL[c.channel] ?? c.channel}</span>
+                              <span className="tabular-nums text-text-muted">{c.touchpoints} · {Math.round((c.touchpoints / total) * 100)}%</span>
                             </div>
-                            {e.description && <p className="mt-0.5 break-words text-[11.5px] text-text-muted">{e.description}</p>}
-                            <p className="mt-1 text-[10.5px] text-text-muted">
-                              {fmtDate(e.spent_on)} · {CATEGORY_LABEL[e.category] ?? e.category}
-                              {e.approved_by ? ` · approved by ${e.approved_by}` : ""}
-                            </p>
-                          </div>
-                          <span className="shrink-0 text-[13px] font-semibold tabular-nums text-text">{money(e.amount)}</span>
+                            <div className="mt-1"><Bar value={c.touchpoints / total} tone="blue" /></div>
+                          </li>
+                        ));
+                      })()}
+                    </ul>
+                  )}
+                  {data.leads && data.leads.stages.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.leads.stages.map((x) => (
+                        <span key={x.stage} className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11px] text-text-muted">
+                          {x.stage} <span className="font-semibold tabular-nums text-text">{x.count}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {data && m && f && view === "money" && (
+          <div className={`space-y-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+            <div className="flex justify-end">
+              <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange} tabs={RANGE_TABS} />
+            </div>
+            {/* Money: in, then out by department, then by kind */}
+            <Card title="Money" icon={Wallet} sub={RANGE_LABEL[range]}>
+              <MoneyLine
+                label="Sales"
+                hint={`${f.salesCount} payment${f.salesCount === 1 ? "" : "s"} received`}
+                value={f.sales != null ? money(f.sales) : "–"}
+                tone="in"
+              />
+              <p className="mb-1 mt-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-text-muted">Spends, by department</p>
+              {f.spendGroups.length === 0 && <p className="py-2 text-[12px] text-text-muted">Nothing spent in this window.</p>}
+              <div className="space-y-2">
+                {f.spendGroups.map((g) => (
+                  <div key={g.department} className={`rounded-card p-3 ${deptOf(g.department).box.replace(/border-\S+/g, "")}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <DeptChip name={g.department} />
+                      <span className="text-[14px] font-semibold tabular-nums text-text">{money(g.total)}</span>
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {g.lines.map((l) => (
+                        <li key={`${l.label}|${l.vendor}`} className="flex items-baseline justify-between gap-2 text-[12px]">
+                          <span className="min-w-0 truncate text-text-muted"><span className="text-text">{l.vendor}</span> · {l.label}</span>
+                          <span className="shrink-0 tabular-nums text-text">{money(l.amount)}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                )}
-              </Card>
-            </div>
+                ))}
+              </div>
+              {f.spendByType.length > 0 && (
+                <>
+                  <p className="mb-1.5 mt-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-text-muted">By kind</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {f.spendByType.map((t) => (
+                      <span key={t.label} className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11.5px] text-text-muted">
+                        {t.label} <span className="font-semibold tabular-nums text-text">{moneyShort(t.amount)}</span>
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+              <MoneyLine label="Total spends" value={money(f.spentTotal)} tone="total" />
+              {sp && (
+                <p className="mt-1.5 text-[10.5px] tabular-nums text-text-muted">
+                  Burn {moneyShort(m.dailyBurn)}/day, averaged over {sp.burnDays} day{sp.burnDays === 1 ? "" : "s"} since {fmtDate(sp.since)}
+                </p>
+              )}
+            </Card>
+            {/* ── Every rupee: what, where it went, department, who approved ── */}
+            <Card title="Every spend" icon={Wallet} sub={sp ? `since ${fmtDate(sp.since)}` : undefined}>
+              {!data.spend.ok ? (
+                <p className="text-[12px] text-text-muted">{data.spend.reason}</p>
+              ) : sp && (
+                <div className="space-y-4">
+                  <SpendBars daily={sp.daily} />
+                  <ul className="space-y-1.5">
+                    {sp.ledger.map((e) => (
+                      <li key={e.id} className="flex items-start justify-between gap-3 rounded-card bg-[var(--surface-hover)] p-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-[12.5px] font-medium text-text">{e.vendor || CATEGORY_LABEL[e.category]}</p>
+                            <DeptChip name={e.department || (e.category === "ad_topup" ? "Marketing" : "Operations")} />
+                          </div>
+                          {e.description && <p className="mt-0.5 break-words text-[11.5px] text-text-muted">{e.description}</p>}
+                          <p className="mt-1 text-[10.5px] text-text-muted">
+                            {fmtDate(e.spent_on)} · {CATEGORY_LABEL[e.category] ?? e.category}
+                            {e.approved_by ? ` · approved by ${e.approved_by}` : ""}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[13px] font-semibold tabular-nums text-text">{money(e.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
           </div>
         )}
       </div>
+
+      {/* ══ The app's four doors ══ */}
+      {data && (
+        <nav className="fixed inset-x-0 bottom-0 z-20 bg-[var(--bg)]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+          <div className="mx-auto grid max-w-[560px] grid-cols-4 px-2 pt-1.5">
+            {TABS.map((t) => {
+              const on = view === t.key;
+              return (
+                <button key={t.key} onClick={() => (t.key === "updates" ? openUpdates() : go(t.key))}
+                  className="relative flex flex-col items-center gap-1 rounded-card py-2" aria-current={on ? "page" : undefined}>
+                  <span className={`flex h-8 w-14 items-center justify-center rounded-pill transition-colors ${on ? "bg-[var(--brand)] text-black" : "text-text-muted"}`}>
+                    <t.icon size={18} />
+                  </span>
+                  <span className={`text-[10.5px] font-medium ${on ? "text-text" : "text-text-muted"}`}>{t.label}</span>
+                  {t.key === "updates" && newCount > 0 && !on && (
+                    <span className="absolute right-[22%] top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-pill bg-accent-red px-1 text-[9.5px] font-bold tabular-nums text-white">
+                      {newCount > 9 ? "9+" : newCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
