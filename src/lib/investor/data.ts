@@ -9,6 +9,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { adAccountsByBrand, fetchMetaDaily, fetchMetaRunningAds, type MetaRunningAd } from "@/lib/ads/meta";
 import { isTestTarget } from "@/lib/outreach-workflow";
+import { syncProxeDemos } from "./proxe-sync";
 
 export const PRODUCT = "proxe";
 
@@ -22,6 +23,7 @@ export type Viewer =
         committed_amount: number | null;
         received_amount: number | null;
         equity_pct: number | null;
+        round: string | null;
         currency: string;
         invested_on: string | null;
       };
@@ -124,6 +126,11 @@ export type InvestorOverview = {
     /** deployed / round received (or promised when nothing marked received) */
     roundDeployedPct: number | null;
     investors: number;
+    round: string | null;
+    /** post-money implied by equity for the full promise */
+    valuation: number | null;
+    /** equity_pct x received / promised */
+    equityEarned: number | null;
   };
 };
 
@@ -216,8 +223,8 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   // The whole round is loaded either way: an investor's share is their
   // promise over everyone's.
   const { data: roundRows } = await supabaseAdmin
-    .from("investors").select("committed_amount,received_amount,invested_on").eq("active", true);
-  const round = (roundRows ?? []) as { committed_amount: number | null; received_amount: number | null; invested_on: string | null }[];
+    .from("investors").select("committed_amount,received_amount,invested_on,round").eq("active", true);
+  const round = (roundRows ?? []) as { committed_amount: number | null; received_amount: number | null; invested_on: string | null; round: string | null }[];
   const roundPromised = round.reduce((s, r) => s + (Number(r.committed_amount) || 0), 0);
   const roundReceived = round.reduce((s, r) => s + (Number(r.received_amount) || 0), 0);
   const roundStart = round.map((r) => r.invested_on).filter(Boolean).sort()[0] ?? null;
@@ -225,12 +232,14 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   let committed: number | null = null;
   let received: number | null = null;
   let equityPct: number | null = null;
+  let roundName: string | null = round.map((r) => r.round).find(Boolean) ?? null;
   let investedOn: string | null = null;
   let viewerName = "Owner preview";
   if (viewer.role === "investor") {
     committed = viewer.investor.committed_amount;
     received = viewer.investor.received_amount;
     equityPct = viewer.investor.equity_pct;
+    roundName = viewer.investor.round;
     investedOn = viewer.investor.invested_on;
     viewerName = viewer.investor.name;
   } else {
@@ -243,6 +252,10 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   const syncFrom = investedOn && investedOn < since ? investedOn : since;
   // Meta caps history at 37 months; anything older simply returns empty.
   const sync = await syncAdSpend(syncFrom, untilStr);
+
+  // Pull demo bookings from the PROXe product first, so the demo numbers are
+  // the product's own record. A failed sync leaves the last mirror in place.
+  await syncProxeDemos();
 
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
     supabaseAdmin.from("ad_spend_daily").select("day,spend,leads,impressions,clicks")
@@ -493,7 +506,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     if (d.status !== "done") continue;
     feed.push({
       id: `d-${d.id}`, at: d.scheduled_at, type: "demo", kind: "demo", stage: "done",
-      title: `Demo shown to ${d.company}`, body: d.outcome ? `Outcome: ${d.outcome.replace("_", " ")}.` : null,
+      title: ["Prospect", "PROXe lead"].includes(d.company) ? "Demo shown" : `Demo shown to ${d.company}`, body: d.outcome ? `Outcome: ${d.outcome.replace("_", " ")}.` : null,
       amount: null, pinned: false, detail: null,
     });
   }
@@ -514,6 +527,9 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     yourDeployed: shareOfRound != null ? deployed * shareOfRound : null,
     roundDeployedPct: roundBase ? Math.min(1, deployed / roundBase) : null,
     investors: round.length,
+    round: roundName,
+    valuation: committed && equityPct ? committed / (equityPct / 100) : null,
+    equityEarned: equityPct != null && committed && received != null ? equityPct * (received / committed) : null,
   };
 
   return {

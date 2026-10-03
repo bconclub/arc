@@ -22,11 +22,11 @@ export const RESOURCES: Record<string, Resource> = {
     table: "investors",
     fields: {
       username: "text", name: "text", email: "text",
-      committed_amount: "number", received_amount: "number", equity_pct: "number", currency: "text", invested_on: "date", active: "bool",
+      round: "text", committed_amount: "number", received_amount: "number", equity_pct: "number", currency: "text", invested_on: "date", active: "bool",
     },
     required: ["username", "name", "password"],
     order: "created_at",
-    select: "id,username,name,email,committed_amount,received_amount,equity_pct,currency,invested_on,active,last_login_at,created_at",
+    select: "id,username,name,email,round,committed_amount,received_amount,equity_pct,currency,invested_on,active,last_login_at,created_at",
   },
   updates: {
     table: "investor_updates",

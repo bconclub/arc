@@ -278,7 +278,12 @@ export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
             <Card
               title={owner ? "The round" : "Your stake"}
               icon={Wallet}
-              sub={m.investedOn ? `since ${fmtDate(m.investedOn)}` : undefined}
+              sub={[
+                st.round,
+                st.equityPct != null && st.promised ? `${st.equityPct}% for ${moneyShort(st.promised)}` : null,
+                st.valuation ? `${moneyShort(st.valuation)} post-money` : null,
+                m.investedOn ? `since ${fmtDate(m.investedOn)}` : null,
+              ].filter(Boolean).join(" · ") || undefined}
             >
               <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
                 <Metric
@@ -292,9 +297,12 @@ export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
                   hint={st.promised && st.received != null ? `${pct(st.received / st.promised, 0)} of promise` : undefined}
                 />
                 <Metric
-                  label={owner ? "Round size" : "Your share"}
-                  value={owner ? moneyShort(st.roundPromised) : pct(st.shareOfRound)}
-                  hint={!owner && st.equityPct != null ? `${st.equityPct}% equity` : !owner ? `of ${moneyShort(st.roundPromised)} round` : undefined}
+                  label={st.equityPct != null ? "Equity earned" : owner ? "Round size" : "Your share"}
+                  value={
+                    st.equityEarned != null ? `${st.equityEarned.toFixed(2)}%`
+                    : owner ? moneyShort(st.roundPromised) : pct(st.shareOfRound)
+                  }
+                  hint={st.equityPct != null ? `of ${st.equityPct}% on full ${moneyShort(st.promised ?? 0)}` : !owner ? `of ${moneyShort(st.roundPromised)} round` : undefined}
                 />
                 <Metric
                   label={owner ? "Deployed" : "Your money deployed"}
@@ -311,7 +319,7 @@ export function InvestorDashboard({ role }: { role: "owner" | "investor" }) {
                 <div className="mt-5">
                   <Bar value={st.roundDeployedPct} />
                   <p className="mt-1.5 text-[11px] tabular-nums text-text-muted">
-                    {pct(st.roundDeployedPct)} of the round deployed · {moneyShort(m.deployed)} of {moneyShort(st.roundReceived || st.roundPromised)}
+                    {owner ? "" : "Your money at work: "}{moneyShort(m.deployed)} of {moneyShort(st.roundReceived || st.roundPromised)} received is deployed ({pct(st.roundDeployedPct)})
                   </p>
                 </div>
               )}

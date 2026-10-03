@@ -40,12 +40,13 @@ const CONFIG: Record<TabKey, {
     label: "Investors",
     noun: "investor",
     canDelete: false,
-    blank: () => ({ username: "", name: "", email: "", password: "", committed_amount: "", invested_on: today(), active: true }),
+    blank: () => ({ username: "", name: "", email: "", password: "", round: "Pre-seed", committed_amount: "", received_amount: "", equity_pct: "", invested_on: today(), active: true }),
     fields: [
       { key: "name", label: "Full name", type: "text" },
       { key: "username", label: "Username (they sign in with this)", type: "text" },
       { key: "email", label: "Email", type: "text" },
       { key: "password", label: "Password (10+ chars; leave blank to keep)", type: "password" },
+      { key: "round", label: "Round", type: "select", options: ["Pre-seed", "Seed", "Angel", "Bridge"] },
       { key: "committed_amount", label: "Promised (₹)", type: "number" },
       { key: "received_amount", label: "Actually received (₹)", type: "number" },
       { key: "equity_pct", label: "Equity stake (%)", type: "number" },
@@ -55,6 +56,7 @@ const CONFIG: Record<TabKey, {
     cols: [
       { key: "name", label: "Investor" },
       { key: "username", label: "Username" },
+      { key: "round", label: "Round", render: (r) => fmt(r.round) },
       { key: "committed_amount", label: "Promised", render: (r) => money(r.committed_amount as number) },
       { key: "received_amount", label: "Received", render: (r) => money(r.received_amount as number) },
       { key: "equity_pct", label: "Equity", render: (r) => (r.equity_pct == null ? "–" : `${r.equity_pct}%`) },
