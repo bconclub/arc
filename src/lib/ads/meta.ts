@@ -203,3 +203,119 @@ export async function fetchMetaAds(
     campaigns: campaigns.sort((a, b) => b.spend - a.spend),
   };
 }
+
+// ── Daily series and ad-level detail (investor portal) ──────────
+
+export type MetaDay = {
+  day: string;            // YYYY-MM-DD, account timezone
+  spend: number;
+  impressions: number;
+  clicks: number;
+  leads: number;
+};
+
+function actId(account: string): string {
+  return account.startsWith("act_") ? account : `act_${account}`;
+}
+
+function leadsOf(actions: Action[] | undefined): number {
+  // Lead ads report under "lead"; instant forms sometimes only under the grouped type.
+  const hit =
+    actions?.find((a) => a.action_type === "lead") ??
+    actions?.find((a) => a.action_type === "onsite_conversion.lead_grouped");
+  return hit ? num(hit.value) : 0;
+}
+
+/**
+ * One row per day for the account. A window total cannot answer "what are we
+ * spending daily", so this asks Meta for time_increment=1. Days with no
+ * delivery are absent from Meta's answer; the caller fills them with zero.
+ */
+export async function fetchMetaDaily(accountId: string, since: string, until: string): Promise<MetaDay[]> {
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) throw new Error("META_ACCESS_TOKEN is not set.");
+  const res = await call(`${actId(accountId)}/insights`, {
+    level: "account",
+    time_increment: "1",
+    time_range: JSON.stringify({ since, until }),
+    fields: "spend,impressions,clicks,actions",
+    limit: "400",
+  }, token);
+  return ((res.data ?? []) as Record<string, unknown>[]).map((r) => ({
+    day: String(r.date_start ?? ""),
+    spend: num(r.spend),
+    impressions: num(r.impressions),
+    clicks: num(r.clicks),
+    leads: leadsOf(r.actions as Action[] | undefined),
+  }));
+}
+
+export type MetaRunningAd = {
+  id: string;
+  name: string;
+  status: string;
+  campaign: string | null;
+  headline: string | null;
+  body: string | null;
+  thumbnail: string | null;
+  /** last 30 days */
+  spend: number;
+  impressions: number;
+  clicks: number;
+  leads: number;
+};
+
+/**
+ * The ads actually delivering now, with their creative, so "what ads are
+ * running" shows the ad itself rather than a campaign name. Spend is the
+ * last 30 days per ad.
+ */
+export async function fetchMetaRunningAds(accountId: string): Promise<MetaRunningAd[]> {
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) throw new Error("META_ACCESS_TOKEN is not set.");
+  const act = actId(accountId);
+
+  const adsRes = await call(`${act}/ads`, {
+    fields: "id,name,effective_status,campaign{name},creative{title,body,thumbnail_url,image_url}",
+    effective_status: JSON.stringify(["ACTIVE"]),
+    limit: "50",
+  }, token);
+
+  const ads = ((adsRes.data ?? []) as Record<string, unknown>[]).map((a) => {
+    const creative = (a.creative ?? {}) as Record<string, string | undefined>;
+    const campaign = (a.campaign ?? {}) as { name?: string };
+    return {
+      id: String(a.id ?? ""),
+      name: String(a.name ?? "Untitled ad"),
+      status: String(a.effective_status ?? ""),
+      campaign: campaign.name ?? null,
+      headline: creative.title ?? null,
+      body: creative.body ?? null,
+      thumbnail: creative.image_url ?? creative.thumbnail_url ?? null,
+      spend: 0, impressions: 0, clicks: 0, leads: 0,
+    } as MetaRunningAd;
+  });
+  if (!ads.length) return ads;
+
+  try {
+    const ins = await call(`${act}/insights`, {
+      level: "ad",
+      date_preset: "last_30d",
+      fields: "ad_id,spend,impressions,clicks,actions",
+      limit: "200",
+    }, token);
+    const byId = new Map<string, Record<string, unknown>>();
+    for (const r of (ins.data ?? []) as Record<string, unknown>[]) byId.set(String(r.ad_id), r);
+    for (const ad of ads) {
+      const r = byId.get(ad.id);
+      if (!r) continue;
+      ad.spend = num(r.spend);
+      ad.impressions = num(r.impressions);
+      ad.clicks = num(r.clicks);
+      ad.leads = leadsOf(r.actions as Action[] | undefined);
+    }
+  } catch {
+    // Creatives without numbers still answer "what is running".
+  }
+  return ads.sort((a, b) => b.spend - a.spend);
+}

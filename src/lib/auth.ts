@@ -78,6 +78,32 @@ export async function verifySessionToken(token: string | undefined): Promise<boo
 export async function verifyPassword(candidate: string): Promise<boolean> {
   const stored = process.env.DASHBOARD_PASSWORD_HASH;
   if (!stored) throw new Error("Missing DASHBOARD_PASSWORD_HASH env var.");
+  return verifyHash(candidate, stored);
+}
+
+const PBKDF2_ITERATIONS = 210_000;
+
+/** "saltHex:hashHex" for a new password — the format verifyHash reads. */
+export async function hashPassword(plain: string): Promise<string> {
+  const salt = new Uint8Array(new ArrayBuffer(16));
+  crypto.getRandomValues(salt);
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(plain),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const derived = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    keyMaterial,
+    256
+  );
+  return `${hexEncode(salt.buffer)}:${hexEncode(derived)}`;
+}
+
+/** Constant-time check of a candidate against a stored "saltHex:hashHex". */
+export async function verifyHash(candidate: string, stored: string): Promise<boolean> {
   const [saltHex, hashHex] = stored.split(":");
   if (!saltHex || !hashHex) return false;
   const salt = hexDecode(saltHex);
@@ -101,4 +127,45 @@ export async function verifyPassword(candidate: string): Promise<boolean> {
   return diff === 0;
 }
 
-export { COOKIE_NAME };
+// ── Investor sessions ────────────────────────────────────────
+// A different cookie, a different signed payload. The owner token signs only
+// an expiry; this one signs "investor:<id>:<expiry>", so neither verifier can
+// ever accept the other's token, and an investor cookie never opens ARC.
+
+const INVESTOR_COOKIE = "arc_investor";
+const INVESTOR_DAYS = 14;
+
+export async function createInvestorToken(investorId: string): Promise<string> {
+  const expiry = Math.floor(Date.now() / 1000) + INVESTOR_DAYS * 24 * 60 * 60;
+  const key = await hmacKey(getSecret());
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`investor:${investorId}:${expiry}`)
+  );
+  return `${investorId}.${expiry}.${b64urlEncode(sig)}`;
+}
+
+/** The investor id the token was issued to, or null if forged or expired. */
+export async function verifyInvestorToken(token: string | undefined): Promise<string | null> {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [id, expiryStr, sig] = parts;
+  const expiry = Number(expiryStr);
+  if (!id || !Number.isFinite(expiry) || expiry < Math.floor(Date.now() / 1000)) return null;
+  const key = await hmacKey(getSecret());
+  try {
+    const ok = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      b64urlDecode(sig),
+      new TextEncoder().encode(`investor:${id}:${expiryStr}`)
+    );
+    return ok ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export { COOKIE_NAME, INVESTOR_COOKIE, INVESTOR_DAYS };

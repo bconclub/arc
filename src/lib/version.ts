@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.28";
+export const VERSION = "0.0.29";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.29",
+    date: "2026-10-03",
+    notes: "Investor portal at /investor with its own login: PROXe only, read-only. Investors see their money deployed against what they put in, daily spend (Meta ads plus a new spend ledger), the ads running with their creatives, demos booked and shown, the outbound pipeline, code shipped, go-to-market stage and founder updates. Managed from Investors under PROXe. Briefs, which carry ad spend, are no longer publicly readable.",
+  },
   {
     version: "0.0.28",
     date: "2026-08-22",

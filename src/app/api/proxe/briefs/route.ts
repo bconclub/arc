@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { COOKIE_NAME, verifySessionToken } from "@/lib/auth";
+import { checkIngestAuth } from "@/lib/ingest-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +17,13 @@ export const dynamic = "force-dynamic";
  */
 
 export async function GET(req: NextRequest) {
+  // This route is exempt from the session middleware for the machine POST, which
+  // left reads open to anyone: briefs carry ad spend and lead counts. Reads now
+  // need the owner session or the ingest bearer.
+  const session = await verifySessionToken(req.cookies.get(COOKIE_NAME)?.value);
+  if (!session && !checkIngestAuth(req).ok) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const sp = req.nextUrl.searchParams;
   const kind = sp.get("kind") || "brief";
   const brand = sp.get("brand");
