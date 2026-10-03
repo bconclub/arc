@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (!viewer) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const asked = Number(req.nextUrl.searchParams.get("days"));
-  const days = RANGES.has(asked) ? asked : 30;
+  const days = RANGES.has(asked) ? asked : 3650;
 
   const data = await buildInvestorOverview(viewer, days);
   return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });

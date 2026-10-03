@@ -11,7 +11,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { adAccountsByBrand, fetchMetaDaily, fetchMetaRunningAds, type MetaRunningAd } from "@/lib/ads/meta";
 import { isTestTarget } from "@/lib/outreach-workflow";
 import {
-  fetchProxeFunnel, fetchProxeLeads, fetchProxeSales, fetchProxeTraction, syncProxeDemos,
+  fetchProxeDemoNotes, fetchProxeFunnel, fetchProxeLeads, fetchProxeSales, fetchProxeTraction, syncProxeDemos,
   type ProxeLeads, type ProxeSales, type ProxeTraction,
 } from "./proxe-sync";
 
@@ -139,16 +139,28 @@ export type InvestorOverview = {
   /** the business over the chosen window: the sequence, then money in and out */
   funnel: {
     incoming: number | null;
-    outbound: number | null;
+    /** distinct prospects the team called or emailed in the window */
+    outbound: number;
+    outboundCalls: number;
+    outboundEmails: number;
     demosDone: number;
     linksShared: number;
     /** billing right now, not windowed */
     activeSubs: number | null;
     sales: number | null;
     salesCount: number;
-    /** by department: marketing (ads, creative) vs everything else the company runs on */
-    spentMarketing: number;
-    spentCompany: number;
+    spentTotal: number;
+    /** spend by department, each with the lines that make it up */
+    spendGroups: { department: string; total: number; lines: { label: string; vendor: string; amount: number }[] }[];
+    /** the same money by kind: ads, tools, people... */
+    spendByType: { label: string; amount: number }[];
+  };
+  /** the two things tracked day by day: demos booked, payment links out */
+  activity: {
+    demosBooked: number;
+    linksShared: number;
+    daily: { day: string; demos: number; links: number }[];
+    recent: { at: string; kind: "demo" | "link"; title: string }[];
   };
   /** this investor's slice; for the owner preview, the whole round */
   stake: {
@@ -287,6 +299,7 @@ const FIVE_MIN = 300;
 const cachedSales = unstable_cache(() => fetchProxeSales(), ["investor-sales"], { revalidate: FIVE_MIN });
 const cachedTraction = unstable_cache((d: number) => fetchProxeTraction(d), ["investor-traction"], { revalidate: FIVE_MIN });
 const cachedFunnel = unstable_cache((since: string) => fetchProxeFunnel(since), ["investor-funnel"], { revalidate: FIVE_MIN });
+const cachedDemoNotes = unstable_cache(() => fetchProxeDemoNotes(), ["investor-demo-notes"], { revalidate: FIVE_MIN });
 const cachedLeads = unstable_cache((d: number) => fetchProxeLeads(d), ["investor-leads"], { revalidate: FIVE_MIN });
 const cachedCommits = unstable_cache((repos: string[], since: string) => githubCommits(repos, since), ["investor-commits"], { revalidate: 900 });
 // The demo mirror only needs refreshing every ten minutes.
@@ -352,12 +365,16 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
 
   // Pull demo bookings from the PROXe product first, so the demo numbers are
   // the product's own record. A failed sync leaves the last mirror in place.
-  const [, traction, leads, sales, proxeFunnel] = await Promise.all([
+  const [, traction, leads, sales, proxeFunnel, demoNotes, outboundRes] = await Promise.all([
     cachedDemoSync().catch(() => null),
     cachedTraction(days).catch(() => null),
     cachedLeads(days).catch(() => null),
     cachedSales().catch(() => null),
     cachedFunnel(since).catch(() => null),
+    cachedDemoNotes().catch(() => null),
+    // Outbound is who we actually reached: calls and emails sent from ARC.
+    supabaseAdmin.from("outreach_messages").select("target_id,channel,sent_at")
+      .eq("direction", "out").not("sent_at", "is", null).gte("sent_at", `${since}T00:00:00Z`),
   ]);
 
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
@@ -365,7 +382,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       .eq("product", PRODUCT).gte("day", syncFrom).lte("day", untilStr),
     supabaseAdmin.from("expenses").select("*")
       .eq("product", PRODUCT).order("spent_on", { ascending: false }),
-    supabaseAdmin.from("demos").select("id,company,scheduled_at,status,outcome")
+    supabaseAdmin.from("demos").select("id,company,scheduled_at,status,outcome,external_id")
       .eq("product", PRODUCT).order("scheduled_at", { ascending: false }),
     supabaseAdmin.from("outreach_targets").select("name,source,segment,phone,status,kind").eq("kind", "business"),
     supabaseAdmin.from("outreach_activity").select("channel,outcome,occurred_at")
@@ -726,24 +743,101 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     leads,
     sales,
     feed: feed.slice(0, 60),
-    funnel: (() => {
+    ...(() => {
       const inWindow = (at: string) => at.slice(0, 10) >= since;
       const paid = (sales?.items ?? []).filter((p) => inWindow(p.at));
+
+      // Outbound: distinct prospects touched, and how.
+      const touches = (outboundRes.data ?? []) as { target_id: string; channel: string; sent_at: string }[];
+
+      // Demos done: what the demo log says, plus what the team wrote in PROXe
+      // call notes. One per lead, dated by its first record; founder-logged
+      // demos have no lead and count one each.
+      const doneAt = new Map<string, string>();
+      const keep = (k: string, at: string) => { const c = doneAt.get(k); if (!c || at < c) doneAt.set(k, at); };
+      for (const d of demoRows as { id: string; scheduled_at: string; status: string; external_id?: string | null }[]) {
+        if (d.status !== "done") continue;
+        const lead = d.external_id?.startsWith("proxe:") ? d.external_id.split(":")[1] : null;
+        keep(lead ? `lead:${lead}` : `demo:${d.id}`, d.scheduled_at);
+      }
+      for (const n of demoNotes ?? []) keep(`lead:${n.lead}`, n.at);
+      const demosDone = Array.from(doneAt.values()).filter(inWindow).length;
+
+      // Payment links: logged by hand, plus everyone a Dodo checkout reached.
+      const linkEvents = [
+        ...updateRows.filter((u) => /payment link/i.test(u.title)).map((u) => ({ at: u.published_at, title: u.title })),
+        ...(sales?.linkFirsts ?? []).map((at) => ({ at, title: "Checkout link opened by a customer" })),
+      ];
+      const links = linkEvents.filter((e) => inWindow(e.at));
+
+      const booked = (demoRows as { scheduled_at: string; status: string; company: string }[])
+        .filter((d) => d.status !== "cancelled" && inWindow(d.scheduled_at));
+
+      // Spend, by department and by kind.
       const spent = allExpenses.filter((e) => e.spent_on >= since);
-      const isMarketing = (e: { category: string; department?: string | null }) =>
-        (e.department || (e.category === "ad_topup" ? "Marketing" : "Operations")) === "Marketing";
+      const CAT: Record<string, string> = {
+        ad_topup: "Ads", tools: "Tools & software", infra: "Infrastructure", calls: "Calling",
+        people: "People", marketing: "Marketing", legal: "Legal", other: "Other",
+      };
+      const deptOf = (e: { category: string; department?: string | null }) =>
+        e.department || (e.category === "ad_topup" ? "Marketing" : "Operations");
+      const groups = new Map<string, Map<string, { label: string; vendor: string; amount: number }>>();
+      const types = new Map<string, number>();
+      for (const e of spent) {
+        const dept = deptOf(e);
+        const label = CAT[e.category] ?? e.category;
+        const vendor = e.vendor || label;
+        const g = groups.get(dept) ?? new Map();
+        const line = g.get(`${label}|${vendor}`) ?? { label, vendor, amount: 0 };
+        line.amount += Number(e.amount);
+        g.set(`${label}|${vendor}`, line);
+        groups.set(dept, g);
+        types.set(label, (types.get(label) ?? 0) + Number(e.amount));
+      }
+      const spendGroups = Array.from(groups, ([department, g]) => {
+        const lines = Array.from(g.values()).sort((x, y) => y.amount - x.amount);
+        return { department, total: lines.reduce((t, l) => t + l.amount, 0), lines };
+      }).sort((x, y) => y.total - x.total);
+
+      // Day by day, from the window's start or the first event, whichever is later.
+      const firstEvent = [...booked.map((d) => d.scheduled_at), ...links.map((l) => l.at)].map((x) => x.slice(0, 10)).sort()[0] ?? untilStr;
+      const start = firstEvent > since ? firstEvent : since;
+      const perDay = new Map<string, { demos: number; links: number }>();
+      for (const d of booked) { const k = d.scheduled_at.slice(0, 10); const c = perDay.get(k) ?? { demos: 0, links: 0 }; c.demos += 1; perDay.set(k, c); }
+      for (const l of links) { const k = l.at.slice(0, 10); const c = perDay.get(k) ?? { demos: 0, links: 0 }; c.links += 1; perDay.set(k, c); }
+      const daily: { day: string; demos: number; links: number }[] = [];
+      for (let t = new Date(`${start}T00:00:00Z`); iso(t) <= untilStr; t.setUTCDate(t.getUTCDate() + 1)) {
+        const k = iso(t);
+        daily.push({ day: k, ...(perDay.get(k) ?? { demos: 0, links: 0 }) });
+      }
+
       return {
-        incoming: proxeFunnel?.incoming ?? null,
-        outbound: proxeFunnel?.outbound ?? null,
-        demosDone: demoRows.filter((d) => d.status === "done" && inWindow(d.scheduled_at)).length,
-        // Links logged by hand plus everyone a Dodo checkout reached.
-        linksShared: updateRows.filter((u) => /payment link/i.test(u.title) && inWindow(u.published_at)).length
-          + (sales?.linkFirsts ?? []).filter(inWindow).length,
-        activeSubs: sales ? sales.activeSubs : null,
-        sales: sales ? paid.reduce((s, p) => s + p.amount, 0) : null,
-        salesCount: paid.length,
-        spentMarketing: spent.filter(isMarketing).reduce((s, e) => s + Number(e.amount), 0),
-        spentCompany: spent.filter((e) => !isMarketing(e)).reduce((s, e) => s + Number(e.amount), 0),
+        funnel: {
+          incoming: proxeFunnel?.incoming ?? null,
+          outbound: new Set(touches.map((t) => t.target_id)).size,
+          outboundCalls: touches.filter((t) => t.channel === "call").length,
+          outboundEmails: touches.filter((t) => t.channel === "email").length,
+          demosDone,
+          linksShared: links.length,
+          activeSubs: sales ? sales.activeSubs : null,
+          sales: sales ? paid.reduce((t, p) => t + p.amount, 0) : null,
+          salesCount: paid.length,
+          spentTotal: spent.reduce((t, e) => t + Number(e.amount), 0),
+          spendGroups,
+          spendByType: Array.from(types, ([label, amount]) => ({ label, amount })).sort((x, y) => y.amount - x.amount),
+        },
+        activity: {
+          demosBooked: booked.length,
+          linksShared: links.length,
+          daily,
+          recent: [
+            ...booked.map((d) => ({
+              at: d.scheduled_at, kind: "demo" as const,
+              title: d.company && !/^(PROXe lead|Prospect)$/i.test(d.company) ? `Demo booked with ${d.company}` : "Demo booked",
+            })),
+            ...links.map((l) => ({ at: l.at, kind: "link" as const, title: l.title })),
+          ].sort((x, y) => y.at.localeCompare(x.at)).slice(0, 8),
+        },
       };
     })(),
     stake,

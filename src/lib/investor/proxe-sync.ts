@@ -278,6 +278,23 @@ export async function fetchProxeFunnel(since: string): Promise<ProxeFunnel | nul
   return { incoming, outbound };
 }
 
+// ── Demos the team logged as done, from PROXe call notes ────────
+
+// "The demo is done", "I took a demo", "gave him a demo", "saw the entire demo".
+// Plans ("wants a demo", "booking a demo") do not match.
+const DEMO_DONE = /demo (is |was )?(done|completed|taken)|(took|given|gave|showed|did|finished) (him |her |them )?(a |the )?demo|saw the (entire |whole |full )?demo|after the demo/i;
+
+export async function fetchProxeDemoNotes(): Promise<{ lead: string; at: string }[] | null> {
+  if (!proxeSyncConfigured()) return null;
+  const rows = await proxeRows<{ lead_id: string | null; note: string | null; created_at: string }>(
+    "activities?select=lead_id,note,created_at&note=ilike.*demo*&order=created_at.asc",
+    process.env.PROXE_DB_URL!, process.env.PROXE_DB_SERVICE_KEY!,
+  );
+  return rows
+    .filter((r) => r.lead_id && DEMO_DONE.test(r.note ?? ""))
+    .map((r) => ({ lead: r.lead_id!, at: r.created_at }));
+}
+
 // ── Leads PROXe is handling ────────────────────────────────────
 
 export type ProxeLeads = {
