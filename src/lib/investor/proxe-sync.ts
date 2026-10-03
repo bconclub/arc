@@ -187,7 +187,9 @@ export type ProxeSales = {
   customers: number;
   last: string | null;
   /** each succeeded payment, newest first, for the feed */
-  items: { at: string; amount: number }[];
+  items: { at: string; amount: number; customer: string | null }[];
+  /** distinct people a checkout link reached, paid or not */
+  linkCustomers: number;
 };
 
 /**
@@ -202,7 +204,7 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
   const base = (process.env.DODO_ENVIRONMENT ?? "").includes("test")
     ? "https://test.dodopayments.com"
     : "https://live.dodopayments.com";
-  type P = { status?: string; total_amount?: number; currency?: string; created_at?: string; customer?: { customer_id?: string; email?: string } };
+  type P = { status?: string; total_amount?: number; currency?: string; created_at?: string; customer?: { customer_id?: string; email?: string; name?: string } };
   const all: P[] = [];
   for (let page = 0; page < 20; page++) {
     const res = await fetch(`${base}/payments?page_size=100&page_number=${page}`, {
@@ -221,16 +223,46 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
     payments: ok.length,
     customers: new Set(ok.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
     last: ok.map((p) => p.created_at ?? "").sort().pop() || null,
+    linkCustomers: new Set(all.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
     items: ok
-      .map((p) => ({ at: p.created_at ?? "", amount: Number(p.total_amount ?? 0) / 100 }))
+      .map((p) => ({ at: p.created_at ?? "", amount: Number(p.total_amount ?? 0) / 100, customer: p.customer?.name?.trim() || null }))
       .filter((p) => p.at)
       .sort((a, b) => b.at.localeCompare(a.at)),
   };
 }
 
+// ── The funnel: what came in, what we went after ───────────────
+
+/** Row count from a PostgREST count header; no rows are transferred. */
+async function proxeCount(path: string, url: string, key: string): Promise<number> {
+  const res = await fetch(`${url}/rest/v1/${path}`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}`, Prefer: "count=exact", Range: "0-0" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`PROXe answered ${res.status}`);
+  return Number(res.headers.get("content-range")?.split("/")[1] ?? 0);
+}
+
+export type ProxeFunnel = { incoming: number; outbound: number };
+
+/** All-time: every inbound lead PROXe has handled, every prospect scraped for outbound. */
+export async function fetchProxeFunnel(): Promise<ProxeFunnel | null> {
+  if (!proxeSyncConfigured()) return null;
+  const url = process.env.PROXE_DB_URL!;
+  const key = process.env.PROXE_DB_SERVICE_KEY!;
+  const [incoming, outbound] = await Promise.all([
+    proxeCount("all_leads?select=id&brand=eq.proxe", url, key),
+    proxeCount("proxe_outbound_prospects?select=id&brand=eq.proxe", url, key),
+  ]);
+  return { incoming, outbound };
+}
+
 // ── Leads PROXe is handling ────────────────────────────────────
 
 export type ProxeLeads = {
+  /** open pipeline by PROXe's lead score: hot 80+, warm 40-79 */
+  hot: number;
+  warm: number;
   /** leads active in the window, by stage */
   stages: { stage: string; count: number }[];
   /** newest first; names reduced to initials before they leave the server */
@@ -246,6 +278,16 @@ export async function fetchProxeLeads(days: number): Promise<ProxeLeads | null> 
     `all_leads?select=customer_name,first_touchpoint,lead_stage,created_at,last_interaction_at&brand=eq.proxe&last_interaction_at=gte.${since}&order=last_interaction_at.desc`,
     url, key,
   );
+  // Warm and hot are the whole open pipeline, not just this window: a warm
+  // lead from three weeks ago is still warm. Closed deals are out either way.
+  const scored = await proxeRows<{ lead_score: number | null; lead_stage: string | null }>(
+    `all_leads?select=lead_score,lead_stage&brand=eq.proxe&lead_score=gte.40`,
+    url, key,
+  );
+  const open = scored.filter((r) => !/closed|converted|lost/i.test(r.lead_stage ?? ""));
+  const hot = open.filter((r) => (r.lead_score ?? 0) >= 80).length;
+  const warm = open.filter((r) => (r.lead_score ?? 0) >= 40 && (r.lead_score ?? 0) < 80).length;
+
   const stages = new Map<string, number>();
   for (const r of rows) {
     const s = r.lead_stage || "New";
@@ -254,6 +296,8 @@ export async function fetchProxeLeads(days: number): Promise<ProxeLeads | null> 
   const initials = (n: string | null) =>
     (n ?? "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "?";
   return {
+    hot,
+    warm,
     stages: Array.from(stages, ([stage, count]) => ({ stage, count })).sort((a, b) => b.count - a.count),
     recent: rows.slice(0, 8).map((r) => ({
       initials: initials(r.customer_name),

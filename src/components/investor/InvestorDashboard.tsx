@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, LogOut, Loader2, Megaphone, Wallet, Newspaper, Pin, Target,
-  Users, Building2, PieChart, ReceiptIndianRupee, Code2, Handshake, Settings2, Star,
+  Users, Building2, PieChart, ReceiptIndianRupee, Code2, Handshake, Settings2, Star, BadgeCheck, Bell, X, ChevronRight, Inbox, Radar, Presentation, Link2,
 } from "lucide-react";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -132,10 +132,47 @@ const DEPT: Record<string, { icon: typeof Wallet; label: string }> = {
   Operations: { icon: Settings2, label: "Operations" },
 };
 
+/** Demos per day: booked (light) behind taken (green). Tap a day for its numbers. */
+function DemoBars({ daily }: { daily: { day: string; booked: number; done: number }[] }) {
+  const max = Math.max(1, ...daily.map((d) => d.booked));
+  const [hover, setHover] = useState<number | null>(null);
+  const h = hover != null ? daily[hover] : null;
+  return (
+    <div>
+      <div className="mb-2 flex min-h-5 flex-wrap items-center gap-3 text-[11px] text-text-muted">
+        {h ? (
+          <span className="tabular-nums text-text">{fmtDate(h.day)}: {h.done} taken of {h.booked} booked</span>
+        ) : (
+          <>
+            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-green" />Taken</span>
+            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-[var(--surface-hover)] ring-1 ring-[var(--border-strong)]" />Booked</span>
+          </>
+        )}
+      </div>
+      <div className="flex h-32 items-end gap-[3px]" onMouseLeave={() => setHover(null)}>
+        {daily.map((d, i) => (
+          <div key={d.day} onMouseEnter={() => setHover(i)} onClick={() => setHover(i)}
+            className="relative flex h-full min-w-[6px] flex-1 flex-col justify-end" title={`${d.day}: ${d.done}/${d.booked}`}>
+            <div className="absolute bottom-0 w-full rounded-t-[3px] bg-[var(--surface-hover)] ring-1 ring-inset ring-[var(--border)]"
+              style={{ height: `${(d.booked / max) * 100}%` }} />
+            <div className="relative w-full rounded-t-[3px] bg-accent-green"
+              style={{ height: `${(d.done / max) * 100}%`, minHeight: d.done ? 3 : 0 }} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1.5 flex justify-between text-[10px] tabular-nums text-text-muted">
+        <span>{daily[0] && fmtDate(daily[0].day)}</span>
+        <span>today</span>
+      </div>
+    </div>
+  );
+}
+
 function FeedIcon({ item }: { item: FeedItem }) {
   const Icon = (DEPT[item.department] ?? DEPT.Operations).icon;
   const ring =
-    item.tone === "sales" ? "border-[#e8b931]/60 text-[#e8b931]"
+    item.tone === "paid" ? "border-accent-green/60 text-accent-green"
+    : item.tone === "sales" ? "border-[#e8b931]/60 text-[#e8b931]"
     : item.tone === "spend" ? "border-accent-blue/50 text-accent-blue"
     : "border-[var(--brand-line)] text-[var(--brand-text)]";
   return (
@@ -154,7 +191,9 @@ function Feed({ items }: { items: FeedItem[] }) {
       {items.map((item) => {
         const stage = item.stage ? FEED_STAGE[item.stage] : null;
         const box =
-          item.tone === "sales"
+          item.tone === "paid"
+            ? "border-accent-green/50 bg-accent-green/[0.10]"
+            : item.tone === "sales"
             ? "border-[#e8b931]/45 bg-[#e8b931]/[0.08]"
             : item.tone === "spend"
               ? "border-accent-blue/30 bg-accent-blue/[0.06]"
@@ -165,7 +204,8 @@ function Feed({ items }: { items: FeedItem[] }) {
             <div className={`min-w-0 flex-1 rounded-card border p-3 ${box}`}>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 {item.tone === "sales" && <Star size={13} className="shrink-0 fill-[#e8b931] text-[#e8b931]" aria-label="Conversion" />}
-                <h3 className={`text-[13.5px] font-semibold leading-snug ${item.tone === "sales" ? "text-[#f0c84b]" : "text-text"}`}>{item.title}</h3>
+                {item.tone === "paid" && <BadgeCheck size={14} className="shrink-0 text-accent-green" aria-label="Payment received" />}
+                <h3 className={`text-[13.5px] font-semibold leading-snug ${item.tone === "sales" ? "text-[#f0c84b]" : item.tone === "paid" ? "text-accent-green" : "text-text"}`}>{item.title}</h3>
                 {stage && <StatusPill status={stage.label} tone={stage.tone} />}
                 <span className="rounded-pill border border-[var(--border)] px-1.5 py-px text-[10px] text-text-muted">{item.department}</span>
                 {item.pinned && <Pin size={11} className="text-[var(--brand-text)]" aria-label="Pinned" />}
@@ -215,6 +255,28 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
   }, [range, viewAs]);
 
   useEffect(() => { load(); }, [load]);
+  // Live numbers are cached for five minutes server side; refresh on that beat.
+  useEffect(() => {
+    const t = setInterval(load, 5 * 60_000);
+    return () => clearInterval(t);
+  }, [load]);
+
+  // What arrived since this viewer last looked. Kept in the browser only:
+  // a convenience, so losing it just shows the last two days again.
+  const seenKey = data ? `proxe-investor-seen:${data.viewer.name}` : null;
+  const [seenAt, setSeenAt] = useState<string | null>(null);
+  useEffect(() => {
+    if (!seenKey) return;
+    let v: string | null = null;
+    try { v = localStorage.getItem(seenKey); } catch { /* storage blocked */ }
+    setSeenAt(v ?? new Date(Date.now() - 2 * 864e5).toISOString());
+  }, [seenKey]);
+  const fresh = data && seenAt ? data.feed.filter((f) => f.at > seenAt) : [];
+  function markSeen() {
+    const now = new Date().toISOString();
+    setSeenAt(now);
+    try { if (seenKey) localStorage.setItem(seenKey, now); } catch { /* storage blocked */ }
+  }
 
   async function logout() {
     await fetch("/api/investor/logout", { method: "POST" });
@@ -260,6 +322,55 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
 
         {data && st && m && (
           <div className={`space-y-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+            {/* ── What is new since the last visit ── */}
+            {fresh.length > 0 && (
+              <div className="flex items-start gap-3 rounded-panel border border-[var(--brand-line)] bg-[var(--brand-faint)] p-3 sm:p-4">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-black">
+                  <Bell size={13} />
+                </span>
+                <a href="#feed" className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-text">
+                    {fresh.length === 1 ? "1 new update" : `${fresh.length} new updates`}
+                  </p>
+                  <ul className="mt-1 space-y-0.5">
+                    {fresh.slice(0, 3).map((f) => (
+                      <li key={f.id} className={`truncate text-[12px] ${f.tone === "paid" ? "text-accent-green" : f.tone === "sales" ? "text-[#f0c84b]" : "text-text-muted"}`}>
+                        {f.title}
+                      </li>
+                    ))}
+                    {fresh.length > 3 && <li className="text-[11.5px] text-text-muted">and {fresh.length - 3} more in the feed</li>}
+                  </ul>
+                </a>
+                <button onClick={markSeen} aria-label="Mark as seen" className="shrink-0 rounded-pill p-1.5 text-text-muted hover:text-text">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* ── The sequence: leads in, prospects out, demos, links ── */}
+            <section className="rounded-panel border border-[var(--border)] bg-surface p-4 sm:p-5">
+              <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-text-muted">The sequence, all time</p>
+              <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[
+                  { icon: Inbox, label: "Incoming leads", value: data.funnel.incoming, hint: "inbound, handled by PROXe", gold: false },
+                  { icon: Radar, label: "Outbound scraped", value: data.funnel.outbound, hint: "prospects found", gold: false },
+                  { icon: Presentation, label: "Demos done", value: data.funnel.demosDone, hint: "shown to prospects", gold: false },
+                  { icon: Link2, label: "Links shared", value: data.funnel.linksShared, hint: "payment links sent", gold: true },
+                ].map((s, i) => (
+                  <li key={s.label} className={`relative rounded-card border p-3 ${s.gold ? "border-[#e8b931]/45 bg-[#e8b931]/[0.08]" : "border-[var(--border)] bg-[var(--surface-hover)]"}`}>
+                    <div className="flex items-center gap-1.5 text-text-muted">
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--border)] text-[9.5px] font-semibold tabular-nums text-text">{i + 1}</span>
+                      <s.icon size={12} className={s.gold ? "text-[#e8b931]" : ""} />
+                    </div>
+                    <p className={`mt-2 text-[24px] font-semibold tabular-nums ${s.gold ? "text-[#f0c84b]" : "text-text"}`}>{s.value ?? "–"}</p>
+                    <p className="text-[12px] font-medium text-text">{s.label}</p>
+                    <p className="text-[10.5px] text-text-muted">{s.hint}</p>
+                    {i < 3 && <ChevronRight size={14} className="absolute -right-[11px] top-1/2 z-[1] hidden -translate-y-1/2 text-text-muted sm:block" />}
+                  </li>
+                ))}
+              </ol>
+            </section>
+
             {/* ── The four numbers that matter ── */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <Tile
@@ -315,10 +426,11 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
             )}
 
             <div className="grid gap-4 lg:grid-cols-3">
-              {/* ── What is happening ── */}
+              {/* ── What is happening ── */}<span id="feed" className="sr-only" />
               <Card title="What's happening" icon={Newspaper} sub="newest first" className="lg:col-span-2">
                 <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-text-muted">
-                  <span className="flex items-center gap-1.5"><Star size={11} className="fill-[#e8b931] text-[#e8b931]" />Sales &amp; conversions</span>
+                  <span className="flex items-center gap-1.5"><BadgeCheck size={11} className="text-accent-green" />Payments in</span>
+                  <span className="flex items-center gap-1.5"><Star size={11} className="fill-[#e8b931] text-[#e8b931]" />Links &amp; conversions</span>
                   <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-accent-blue/50 bg-accent-blue/20" />Money spent</span>
                   <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm border border-[var(--border)] bg-[var(--surface-hover)]" />Work in progress</span>
                 </div>
@@ -335,6 +447,20 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                       <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange}
                         tabs={[{ value: "7", label: "7d" }, { value: "30", label: "30d" }, { value: "90", label: "90d" }]} />
                     </div>
+                    {data.leads && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-card border border-accent-orange/40 bg-accent-orange/[0.08] p-3">
+                          <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Warm leads</p>
+                          <p className="mt-1 text-[24px] font-semibold tabular-nums text-text">{data.leads.warm}</p>
+                          <p className="text-[10.5px] text-text-muted">score 40 to 79, open now</p>
+                        </div>
+                        <div className="rounded-card border border-accent-red/40 bg-accent-red/[0.08] p-3">
+                          <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Hot leads</p>
+                          <p className="mt-1 text-[24px] font-semibold tabular-nums text-text">{data.leads.hot}</p>
+                          <p className="text-[10.5px] text-text-muted">score 80+, ready to buy</p>
+                        </div>
+                      </div>
+                    )}
                     {data.traction && (
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -391,6 +517,31 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 )}
               </Card>
             </div>
+
+            {/* ── Demos, day by day ── */}
+            {data.demos.ok && (
+              <Card title="Demos" icon={Users} sub={`last ${data.range.days} days`}>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex gap-6">
+                    <div>
+                      <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Booked</p>
+                      <p className="mt-1 text-[22px] font-semibold tabular-nums text-text">{data.demos.data.inRange}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Taken</p>
+                      <p className="mt-1 text-[22px] font-semibold tabular-nums text-accent-green">{data.demos.data.done}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">No-show</p>
+                      <p className="mt-1 text-[22px] font-semibold tabular-nums text-text">{data.demos.data.noShow}</p>
+                    </div>
+                  </div>
+                  <SegmentedTabs ariaLabel="Demo period" size="sm" value={range} onChange={setRange}
+                    tabs={[{ value: "7", label: "7 days" }, { value: "30", label: "30 days" }]} />
+                </div>
+                <DemoBars daily={data.demos.data.daily} />
+              </Card>
+            )}
 
             {/* ── Where the money went ── */}
             <Card title="Where the money went" icon={Wallet} sub={sp ? `since ${fmtDate(sp.since)}` : undefined}>

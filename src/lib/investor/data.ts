@@ -11,7 +11,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { adAccountsByBrand, fetchMetaDaily, fetchMetaRunningAds, type MetaRunningAd } from "@/lib/ads/meta";
 import { isTestTarget } from "@/lib/outreach-workflow";
 import {
-  fetchProxeLeads, fetchProxeSales, fetchProxeTraction, syncProxeDemos,
+  fetchProxeFunnel, fetchProxeLeads, fetchProxeSales, fetchProxeTraction, syncProxeDemos,
   type ProxeLeads, type ProxeSales, type ProxeTraction,
 } from "./proxe-sync";
 
@@ -55,8 +55,8 @@ export type FeedItem = {
   pinned: boolean;
   /** which part of the company is behind it */
   department: string;
-  /** how the feed colours it: a conversion (gold), money out, or work being done */
-  tone: "sales" | "spend" | "activity";
+  /** how the feed colours it: money in (green), a conversion step (gold), money out, or work being done */
+  tone: "paid" | "sales" | "spend" | "activity";
   /** structured detail an ads launch carries */
   detail: { daily_budget?: number | null; targeting?: string | null } | null;
 };
@@ -115,6 +115,8 @@ export type InvestorOverview = {
     upcoming: { id: string; company: string; scheduled_at: string }[];
     recent: { id: string; company: string; scheduled_at: string; status: string; outcome: string | null }[];
     weekly: { week: string; count: number }[];
+    /** one entry per day of the window: demos booked and demos shown */
+    daily: { day: string; booked: number; done: number }[];
   }>;
   pipeline: Section<{
     stages: { stage: string; count: number }[];
@@ -134,6 +136,8 @@ export type InvestorOverview = {
   sales: ProxeSales | null;
   /** everything that happened, newest first: posts, money moved, demos */
   feed: FeedItem[];
+  /** the sequence, all-time: inbound leads, outbound prospects, demos shown, payment links out */
+  funnel: { incoming: number | null; outbound: number | null; demosDone: number; linksShared: number };
   /** this investor's slice; for the owner preview, the whole round */
   stake: {
     promised: number | null;
@@ -270,6 +274,7 @@ async function loadUpdates(viewer: Viewer) {
 const FIVE_MIN = 300;
 const cachedSales = unstable_cache(() => fetchProxeSales(), ["investor-sales"], { revalidate: FIVE_MIN });
 const cachedTraction = unstable_cache((d: number) => fetchProxeTraction(d), ["investor-traction"], { revalidate: FIVE_MIN });
+const cachedFunnel = unstable_cache(() => fetchProxeFunnel(), ["investor-funnel"], { revalidate: FIVE_MIN });
 const cachedLeads = unstable_cache((d: number) => fetchProxeLeads(d), ["investor-leads"], { revalidate: FIVE_MIN });
 const cachedCommits = unstable_cache((repos: string[], since: string) => githubCommits(repos, since), ["investor-commits"], { revalidate: 900 });
 // The demo mirror only needs refreshing every ten minutes.
@@ -333,11 +338,12 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
 
   // Pull demo bookings from the PROXe product first, so the demo numbers are
   // the product's own record. A failed sync leaves the last mirror in place.
-  const [, traction, leads, sales] = await Promise.all([
+  const [, traction, leads, sales, proxeFunnel] = await Promise.all([
     cachedDemoSync().catch(() => null),
     cachedTraction(days).catch(() => null),
     cachedLeads(days).catch(() => null),
     cachedSales().catch(() => null),
+    cachedFunnel().catch(() => null),
   ]);
 
   const [adRowsRes, expRes, demoRes, targetsRes, activityRes, updatesRes, gtmRes, brandRes] = await Promise.all([
@@ -465,6 +471,23 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
           .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at)).slice(0, 8)
           .map(({ id, company, scheduled_at }) => ({ id, company, scheduled_at })),
         recent: all.filter((d) => d.scheduled_at <= nowIso).slice(0, 12),
+        daily: (() => {
+          const by = new Map<string, { booked: number; done: number }>();
+          for (const d of all) {
+            if (d.status === "cancelled") continue;
+            const day = d.scheduled_at.slice(0, 10);
+            const cur = by.get(day) ?? { booked: 0, done: 0 };
+            cur.booked += 1;
+            if (d.status === "done") cur.done += 1;
+            by.set(day, cur);
+          }
+          const out: { day: string; booked: number; done: number }[] = [];
+          for (let t = new Date(`${since}T00:00:00Z`); iso(t) <= untilStr; t.setUTCDate(t.getUTCDate() + 1)) {
+            const k = iso(t);
+            out.push({ day: k, ...(by.get(k) ?? { booked: 0, done: 0 }) });
+          }
+          return out;
+        })(),
         weekly: Array.from(weeks, ([week, count]) => ({ week, count }))
           .sort((a, b) => a.week.localeCompare(b.week)).slice(-12),
       },
@@ -607,9 +630,9 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   for (const p of sales?.items ?? []) {
     feed.push({
       id: `s-${p.at}`, at: p.at, type: "money", kind: "sale", stage: "done",
-      title: `₹${p.amount.toLocaleString("en-IN")} received from a customer`,
+      title: `Payment received from ${p.customer ?? "a customer"}: ₹${p.amount.toLocaleString("en-IN")}`,
       body: "Paid through the PROXe checkout.",
-      amount: p.amount, pinned: false, detail: null, department: "Sales", tone: "sales",
+      amount: p.amount, pinned: false, detail: null, department: "Sales", tone: "paid",
     });
   }
   feed.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
@@ -686,6 +709,13 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     leads,
     sales,
     feed: feed.slice(0, 60),
+    funnel: {
+      incoming: proxeFunnel?.incoming ?? null,
+      outbound: proxeFunnel?.outbound ?? null,
+      demosDone: demoRows.filter((d) => d.status === "done").length,
+      // Links logged by hand plus everyone a Dodo checkout reached.
+      linksShared: updateRows.filter((u) => /payment link/i.test(u.title)).length + (sales?.linkCustomers ?? 0),
+    },
     stake,
   };
 }
