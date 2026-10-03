@@ -488,9 +488,9 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                   value={data.funnel.sales != null ? money(data.funnel.sales) : "–"}
                   tone="in"
                 />
-                <MoneyLine label="Ad spend" hint="loaded into Meta" value={money(data.funnel.spentAds)} dept="Marketing" />
-                <MoneyLine label="Company spends" hint="tools, software, operations" value={money(data.funnel.spentCompany)} />
-                <MoneyLine label="Total spends" value={money(data.funnel.spentAds + data.funnel.spentCompany)} tone="total" />
+                <MoneyLine label="Marketing spend" hint="ads, creative" value={money(data.funnel.spentMarketing)} dept="Marketing" />
+                <MoneyLine label="Company spends" hint="engineering, tools, operations" value={money(data.funnel.spentCompany)} />
+                <MoneyLine label="Total spends" value={money(data.funnel.spentMarketing + data.funnel.spentCompany)} tone="total" />
                 {sp && (
                   <p className="mt-1 text-[10.5px] tabular-nums text-text-muted">
                     Burn {moneyShort(m.dailyBurn)}/day, averaged over {sp.burnDays} day{sp.burnDays === 1 ? "" : "s"} since {fmtDate(sp.since)}

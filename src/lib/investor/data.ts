@@ -146,7 +146,8 @@ export type InvestorOverview = {
     activeSubs: number | null;
     sales: number | null;
     salesCount: number;
-    spentAds: number;
+    /** by department: marketing (ads, creative) vs everything else the company runs on */
+    spentMarketing: number;
     spentCompany: number;
   };
   /** this investor's slice; for the owner preview, the whole round */
@@ -729,6 +730,8 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       const inWindow = (at: string) => at.slice(0, 10) >= since;
       const paid = (sales?.items ?? []).filter((p) => inWindow(p.at));
       const spent = allExpenses.filter((e) => e.spent_on >= since);
+      const isMarketing = (e: { category: string; department?: string | null }) =>
+        (e.department || (e.category === "ad_topup" ? "Marketing" : "Operations")) === "Marketing";
       return {
         incoming: proxeFunnel?.incoming ?? null,
         outbound: proxeFunnel?.outbound ?? null,
@@ -739,8 +742,8 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
         activeSubs: sales ? sales.activeSubs : null,
         sales: sales ? paid.reduce((s, p) => s + p.amount, 0) : null,
         salesCount: paid.length,
-        spentAds: spent.filter((e) => e.category === "ad_topup").reduce((s, e) => s + Number(e.amount), 0),
-        spentCompany: spent.filter((e) => e.category !== "ad_topup").reduce((s, e) => s + Number(e.amount), 0),
+        spentMarketing: spent.filter(isMarketing).reduce((s, e) => s + Number(e.amount), 0),
+        spentCompany: spent.filter((e) => !isMarketing(e)).reduce((s, e) => s + Number(e.amount), 0),
       };
     })(),
     stake,
