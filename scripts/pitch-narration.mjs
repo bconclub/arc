@@ -24,10 +24,10 @@ export const LINES = {
   how: "The loop is simple. Capture every lead. Nurture it, in the business's own tone. Close, by booking the demo or the visit. And repeat, learning from every single conversation.",
   dashboard: "And the founder sees everything. This is a real PROXe dashboard. Every lead is scored, with the next step, and where it came from.",
   memory: "PROXe keeps one memory across channels. A message on Monday. A call on Thursday. The pricing page on Saturday. It connects all of it, so the customer never has to repeat themselves.",
-  price: "The model is simple. One plan. Nine thousand, nine hundred and ninety nine rupees a month, with every channel included. [softly] About the cost of one missed customer.",
+  price: "The model is simple. Nine thousand, nine hundred and ninety nine rupees a month, for a thousand managed leads. That's under ten rupees a lead... when businesses already spend ten to a hundred rupees on every single one.",
   traction: "Here's where we are, against our plan to the first hundred customers. Five thousand leads. A thousand demos. A hundred customers. The rings show how far along we are, today.",
   round: "[confident] We're raising our pre-seed. Five percent, for twenty five lakh rupees. The plan is the one you just saw. And the gold shows how much of the round is already committed.",
-  founder: "This is Thanzeel, our founder. Seven years in marketing, across retail, hospitality, real estate and healthcare. [chuckles] And honestly? We had this exact problem ourselves. Leads, slipping through. That's why we're solving it.",
+  founder: "This is Thanzeel, our founder. Seven years in marketing, across retail, hospitality, real estate and healthcare. [chuckles] And honestly? We had this exact problem. In our own businesses, and in our clients'. We've seen it up close... and we're on a mission to solve it.",
   talk: "[warmly] That's the pitch. Now... talk to PROXe. Tap the orb to speak with it right here, or leave your number, and PROXe will call you in seconds.",
 };
 

@@ -320,10 +320,10 @@ const SLIDES: Slide[] = [
     render: ({ on }) => (
       <>
         <Headline>One plan. One price.</Headline>
-        <Body>A monthly subscription. About the cost of one missed customer.</Body>
+        <Body>1,000 managed leads a month. That is under ₹10 a lead, when businesses already spend ₹10 to ₹100 on every lead.</Body>
         <div className="flex flex-1 flex-col justify-center pt-4">
           <p className={`text-[56px] font-bold leading-none tracking-[-0.04em] text-white tabular-nums ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: "150ms" }}>₹9,999</p>
-          <p className="mt-1 text-[14px] text-white/50">per month, per business. Every channel included.</p>
+          <p className="mt-1 text-[14px] text-white/50">per month · 1,000 managed leads · every channel included</p>
           <Stagger on={on} className="mt-5 grid grid-cols-4 gap-2" step={60}>
             {[
               [<Brand key="w" d={B.whatsapp} color="#25D366" size={20} />, "WhatsApp"],
@@ -449,7 +449,7 @@ const SLIDES: Slide[] = [
             {[
               "Seven years in marketing across retail, services, hospitality, real estate and healthcare",
               "Runs BCON Club, a growth agency teaching businesses to build with AI",
-              "Founder & CEO of PROXe, live with paying customers",
+              "We had this exact problem, in our own businesses and our clients'. We are on a mission to solve it.",
             ].map((t) => (
               <p key={t} className="flex gap-2.5 text-[13.5px] leading-snug text-white/75">
                 <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: C.violet }} />{t}
