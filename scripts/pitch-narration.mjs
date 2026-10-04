@@ -17,7 +17,7 @@ const OUT = "public/pitch/audio";
 // Key pointers, not the card read aloud. Keys match the cards in PitchDeck.tsx.
 export const LINES = {
   cover: "[warmly] This is PROXe. Your AI, for the customer side of your business. In one line? You never miss a lead again.",
-  problem: "Here's the problem. Brands spend on creative, and on ads. A lead writes in at nine at night... and nobody answers till morning. Or the demo gets booked, and they never show up. [sighs] By then, the lead, and the ad money, are both gone.",
+  problem: "Here's the problem. Brands spend money making ads, and running them. The leads show up... and nobody responds. [sighs] The lead goes cold, and the ad money goes with it.",
   gaps: "We see four gaps, again and again. A slow first reply. No follow-up. No-shows. And lost context, between WhatsApp and calls. Under each one... is what PROXe does about it.",
   who: "Who feels this most? Businesses that live on enquiries. Coaching academies. Clinics. Real estate. Training academies, wellness, and professional services. The customer starts on WhatsApp, and usually... the founder is the one replying.",
   solution: "[confident] PROXe answers in seconds, on every channel. WhatsApp, Instagram, Messenger, voice, and web chat. One AI brain that replies, qualifies, books the call, and keeps following up.",
@@ -28,7 +28,7 @@ export const LINES = {
   traction: "Here's where we are, against our plan to the first hundred customers. Five thousand leads. A thousand demos. A hundred customers. The rings show how far along we are, today.",
   round: "[confident] We're raising our pre-seed. Five percent, for twenty five lakh rupees. The plan is the one you just saw. And the gold shows how much of the round is already committed.",
   founder: "This is Thanzeel, our founder. Seven years in marketing, across retail, hospitality, real estate and healthcare. [chuckles] And honestly? We had this exact problem ourselves. Leads, slipping through. That's why we're solving it.",
-  talk: "[warmly] That's the pitch. Now... talk to PROXe. Tap the orb to speak with it right here, or leave your number, and it'll call you in seconds.",
+  talk: "[warmly] That's the pitch. Now... talk to PROXe. Tap the orb to speak with it right here, or leave your number, and PROXe will call you in seconds.",
 };
 
 // Said "Proxy". Spelt PROXe, the voice guesses at it, so it reads the sound instead.

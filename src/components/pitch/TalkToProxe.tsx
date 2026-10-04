@@ -112,7 +112,7 @@ export function TalkToProxe({ onActive }: { onActive: (live: boolean) => void })
       </div>
 
       <form onSubmit={requestCall} className="mt-4 space-y-2">
-        <p className="text-[12.5px] font-medium text-white/70">Or get a call in five seconds</p>
+        <p className="text-[12.5px] font-medium text-white/70">Or PROXe calls you in seconds</p>
         <div className="flex gap-2">
           <div className="flex min-w-0 flex-1 items-center rounded-2xl bg-[#16112b] px-4">
             <span className="text-[15px] text-white/50">+91</span>

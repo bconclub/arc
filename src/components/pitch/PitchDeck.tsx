@@ -85,7 +85,7 @@ function Rings({ on, rows }: { on: boolean; rows: { value: number; target: numbe
 /** Each gap as it happens to a business, then what PROXe does about it. */
 function GapFix({ on }: { on: boolean }) {
   const rows = [
-    { icon: Clock, gap: "Slow first reply", what: "asked at 9 pm, answered at 10 am", fix: "replies in seconds" },
+    { icon: Clock, gap: "Slow first reply", what: "the lead waits, then moves on", fix: "replies in seconds" },
     { icon: BellOff, gap: "No follow-up", what: "interested once, never messaged again", fix: "follows up for days" },
     { icon: CalendarX, gap: "No-shows", what: "demo booked, nobody reminded them", fix: "reminds and rebooks" },
     { icon: Unlink, gap: "Lost context", what: "WhatsApp, then a call, and they start over", fix: "remembers everything" },
@@ -120,12 +120,12 @@ function GapFix({ on }: { on: boolean }) {
 
 // ── the cards ──
 
-type Slide = { key: string; hero?: boolean; label: string; render: (p: { on: boolean; live: Live | null; setOrb: (b: boolean) => void }) => React.ReactNode };
+type Slide = { key: string; hero?: boolean; label: string; render: (p: { on: boolean; live: Live | null; setOrb: (b: boolean) => void; started: boolean; start: () => void }) => React.ReactNode };
 
 const SLIDES: Slide[] = [
   {
     key: "cover", hero: true, label: "The pitch",
-    render: ({ on }) => (
+    render: ({ on, started, start }) => (
       <div className="flex h-full flex-col">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/proxe-logo-white.webp" alt="PROXe" className={`h-9 w-auto self-start ${on ? "pitch-in" : ""}`} />
@@ -137,7 +137,17 @@ const SLIDES: Slide[] = [
             Never miss a lead again.
           </p>
         </div>
-        <Stagger on={on} className="flex items-center gap-2.5" step={70}>
+        {!started ? (
+          <button onClick={(e) => { e.stopPropagation(); start(); }}
+            className="flex items-center justify-between rounded-2xl bg-white px-5 py-4 text-left text-[#3b1a8a] transition-transform active:scale-[0.98]">
+            <span>
+              <span className="block text-[16px] font-semibold">Play the pitch</span>
+              <span className="text-[12px] text-[#3b1a8a]/70">About 3 minutes · narrated</span>
+            </span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#7c3aed] text-white"><Play size={18} className="translate-x-[1px]" /></span>
+          </button>
+        ) : (
+          <Stagger on={on} className="flex items-center gap-2.5" step={70}>
           {[
             <span key="w" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12"><Brand d={B.whatsapp} color="#fff" /></span>,
             <span key="i" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12"><Brand d={B.instagram} color="#fff" /></span>,
@@ -145,7 +155,8 @@ const SLIDES: Slide[] = [
             <span key="p" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12 text-white"><Phone size={17} /></span>,
             <span key="g" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12 text-white"><Globe size={17} /></span>,
           ]}
-        </Stagger>
+          </Stagger>
+        )}
       </div>
     ),
   },
@@ -153,18 +164,18 @@ const SLIDES: Slide[] = [
     key: "problem", label: "The problem",
     render: ({ on }) => (
       <>
-        <Headline>Brands pay for the lead. Then let it go cold.</Headline>
-        <Body>Money goes into creative and ads. The lead comes in at 9 pm. Nobody answers till morning, or the booked call never happens.</Body>
+        <Headline>Brands pay for leads. Then nobody responds.</Headline>
+        <Body>Money goes into making ads and running them. The leads show up, and they go unanswered.</Body>
         <div className="flex flex-1 flex-col justify-center pt-4">
           <Stagger on={on} step={260} className="space-y-0">
             {[
-              <Step key="a" icon={<Brand d={B.meta} color="#fff" size={16} />} tint={C.deep} title="₹ into ads" sub="creative, boosts, campaigns" />,
+              <Step key="a" icon={<Brand d={B.meta} color="#fff" size={16} />} tint={C.deep} title="Make the ads" sub="creative, shoots, edits" />,
               <Joint key="j1" on={on} delay={420} />,
-              <Step key="b" icon={<Brand d={B.whatsapp} color="#25D366" size={17} />} tint="rgba(37,211,102,0.16)" title="A lead writes in" sub="9:02 pm · “what is the fee?”" />,
-              <Joint key="j2" on={on} delay={940} leak />,
-              <Step key="c" icon={<Clock size={16} className="text-[#f87171]" />} tint="rgba(248,113,113,0.14)" title="13 hours of silence" sub="or a demo booked, then a no-show" />,
+              <Step key="b" icon={<Brand d={B.meta} color="#fff" size={16} />} tint={C.deep} title="Run the ads" sub="budget spent every day" />,
+              <Joint key="j2" on={on} delay={940} />,
+              <Step key="c" icon={<Brand d={B.whatsapp} color="#25D366" size={17} />} tint="rgba(37,211,102,0.16)" title="Leads show up" sub="on WhatsApp, Instagram, calls" />,
               <Joint key="j3" on={on} delay={1460} leak />,
-              <Step key="d" icon={<X size={16} className="text-white/50" />} tint="rgba(255,255,255,0.06)" title="Gone to a faster reply" sub="the ad money with it" dim />,
+              <Step key="d" icon={<X size={16} className="text-[#f87171]" />} tint="rgba(248,113,113,0.14)" title="Nobody responds" sub="the lead and the ad money, gone" />,
             ]}
           </Stagger>
         </div>
@@ -397,12 +408,13 @@ const SLIDES: Slide[] = [
                     <span className="text-white/50"> of {inr(r.target)}</span>
                   </p>
                   {/* The round as squares of ₹1L: gold ones are in. */}
-                  <div className="mt-2.5 grid grid-cols-[repeat(25,minmax(0,1fr))] gap-[3px]">
+                  <div className="mt-3 grid grid-cols-10 gap-1.5">
                     {Array.from({ length: Math.round(r.target / 1e5) || 25 }, (_, i) => (
-                      <span key={i} className="aspect-[1/2.2] rounded-[3px]"
+                      <span key={i} className="aspect-square rounded-md"
                         style={{
                           background: i < Math.round(r.raised / 1e5) ? C.money : "rgba(255,255,255,0.09)",
-                          opacity: on ? 1 : 0, transition: `opacity 300ms ${EASE} ${250 + i * 25}ms`,
+                          opacity: on ? 1 : 0, transform: on ? "none" : "scale(0.6)",
+                          transition: `opacity 400ms ${EASE} ${200 + i * 30}ms, transform 400ms ${EASE} ${200 + i * 30}ms`,
                         }} />
                     ))}
                   </div>
@@ -574,6 +586,8 @@ export function PitchDeck() {
   const [held, setHeld] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
   const [orb, setOrb] = useState(false);
+  // Nothing moves or speaks until the viewer starts the pitch (or moves on).
+  const [started, setStarted] = useState(false);
   // Narration: a short spoken explainer per card. On unless muted; sound
   // starts on the first tap or key, since browsers block it before that.
   const [narrate, setNarrate] = useState(true);
@@ -591,6 +605,7 @@ export function PitchDeck() {
   const go = useCallback((i: number) => {
     setIndex(Math.max(0, Math.min(n - 1, i)));
     setHeld(false);
+    setStarted(true);
   }, [n]);
 
   useLayoutEffect(() => {
@@ -629,7 +644,7 @@ export function PitchDeck() {
   }, []);
 
   // ── reading timer: each card gets the time it takes to read, then moves on ──
-  const paused = hover || held || userPaused || orb || dragging || index === n - 1;
+  const paused = !started || hover || held || userPaused || orb || dragging || index === n - 1;
   // The loop reads `paused` through a ref so pausing keeps the elapsed time.
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
@@ -828,7 +843,7 @@ export function PitchDeck() {
               {/* Label and reading timer */}
               <div className="relative mb-4 flex items-center justify-between gap-3">
                 <p className="text-[12px] font-medium" style={{ color: s.hero ? "rgba(255,255,255,0.75)" : C.violet }}>{s.label}</p>
-                {current && i < n - 1 && (
+                {current && started && i < n - 1 && (
                   <button onClick={(e) => { e.stopPropagation(); setUserPaused((p) => !p); }}
                     className="flex items-center gap-1.5 rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] tabular-nums text-white/70"
                     aria-label={paused ? "Resume auto-advance" : "Pause auto-advance"}>
@@ -843,7 +858,7 @@ export function PitchDeck() {
                 </div>
               )}
 
-              <Fit deps={[card.w, live === null, current]}>{s.render({ on: current, live, setOrb })}</Fit>
+              <Fit deps={[card.w, live === null, current]}>{s.render({ on: current, live, setOrb, started, start: () => { setStarted(true); setUnlocked(true); } })}</Fit>
 
               {/* Side cards sink back, but stay visible as more to come */}
               <div className="pointer-events-none absolute inset-0 rounded-[28px]"
