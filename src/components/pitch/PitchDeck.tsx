@@ -529,6 +529,38 @@ function Hub({ on }: { on: boolean }) {
   );
 }
 
+/** Shrinks a card's content to fit on short screens instead of clipping it. */
+function Fit({ children, deps }: { children: React.ReactNode; deps: unknown[] }) {
+  const outer = useRef<HTMLDivElement | null>(null);
+  const inner = useRef<HTMLDivElement | null>(null);
+  const [z, setZ] = useState(1);
+  useLayoutEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    const fit = () => {
+      // Measure at natural size, then scale and give back the full height so
+      // the card's own spacing (flex-1, h-full) still works.
+      i.style.zoom = "1";
+      i.style.height = "auto";
+      const need = i.scrollHeight, have = o.clientHeight;
+      const next = need > have + 1 ? Math.max(0.72, have / need) : 1;
+      i.style.zoom = String(next);
+      i.style.height = `${have / next}px`;
+      setZ(next);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(o);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return (
+    <div ref={outer} className="relative min-h-0 flex-1 overflow-hidden">
+      <div ref={inner} className="flex flex-col" data-zoom={z}>{children}</div>
+    </div>
+  );
+}
+
 // ── the deck ──
 
 export function PitchDeck() {
@@ -778,7 +810,7 @@ export function PitchDeck() {
               className="absolute left-1/2 top-1/2 flex flex-col overflow-hidden rounded-[28px] px-6 pb-6 pt-5 sm:px-7 sm:pb-7"
               style={{
                 width: card.w,
-                height: "min(70dvh, 620px)",
+                height: "min(calc(100dvh - 150px), 640px)",
                 marginLeft: -card.w / 2,
                 transform: `translate3d(${x}px, -50%, ${z}px) rotateY(${rot}deg) scale(${scale})`,
                 transition: dragging ? "none" : `transform 620ms ${EASE}`,
@@ -811,7 +843,7 @@ export function PitchDeck() {
                 </div>
               )}
 
-              <div className="relative flex min-h-0 flex-1 flex-col">{s.render({ on: current, live, setOrb })}</div>
+              <Fit deps={[card.w, live === null, current]}>{s.render({ on: current, live, setOrb })}</Fit>
 
               {/* Side cards sink back, but stay visible as more to come */}
               <div className="pointer-events-none absolute inset-0 rounded-[28px]"
