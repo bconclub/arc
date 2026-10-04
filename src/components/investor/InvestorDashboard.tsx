@@ -34,6 +34,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   people: "People",
   marketing: "Marketing",
   legal: "Legal",
+  equipment: "Equipment",
   other: "Other",
 };
 

@@ -789,7 +789,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       const spent = allExpenses.filter((e) => e.spent_on >= since);
       const CAT: Record<string, string> = {
         ad_topup: "Ads", tools: "Tools & software", infra: "Infrastructure", calls: "Calling",
-        people: "People", marketing: "Marketing", legal: "Legal", other: "Other",
+        people: "People", marketing: "Marketing", legal: "Legal", equipment: "Equipment", other: "Other",
       };
       const deptOf = (e: { category: string; department?: string | null }) =>
         e.department || (e.category === "ad_topup" ? "Marketing" : "Operations");

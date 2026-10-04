@@ -23,6 +23,12 @@ const GRAINIENT = "linear-gradient(135deg,#7C3AED 0%,#4C1D95 50%,#1E1B4B 100%)";
 // The site's grain, as a tiny SVG noise tile instead of its WebGL shader.
 const GRAIN = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>")`;
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+// Narration languages (the proxesi set). The cards stay in English; only the voice changes.
+const LANGS: [string, string][] = [
+  ["en", "English"], ["hi-IN", "हिन्दी"], ["ta-IN", "தமிழ்"], ["te-IN", "తెలుగు"], ["kn-IN", "ಕನ್ನಡ"],
+  ["ml-IN", "മലയാളം"], ["mr-IN", "मराठी"], ["bn-IN", "বাংলা"], ["gu-IN", "ગુજરાતી"], ["pa-IN", "ਪੰਜਾਬੀ"],
+];
+const clipUrl = (lang: string, key: string) => (lang === "en" ? `/pitch/audio/${key}.mp3` : `/pitch/audio/${lang}/${key}.mp3`);
 const LINKEDIN = "https://www.linkedin.com/in/thanzeelashruf/";
 
 type Live = {
@@ -591,6 +597,7 @@ export function PitchDeck() {
   // starts on the first tap or key, since browsers block it before that.
   const [narrate, setNarrate] = useState(true);
   const [unlocked, setUnlocked] = useState(false);
+  const [lang, setLang] = useState("en");
   const audio = useRef<HTMLAudioElement | null>(null);
   const clipMs = useRef(0);
   const start = useRef<{ x: number; y: number; t: number; locked: "x" | "y" | null } | null>(null);
@@ -680,13 +687,13 @@ export function PitchDeck() {
     const a = audio.current ?? (audio.current = new Audio());
     a.pause();
     if (!narrate || !unlocked) return;
-    a.src = `/pitch/audio/${SLIDES[index]!.key}.mp3`;
+    a.src = clipUrl(lang, SLIDES[index]!.key);
     a.onloadedmetadata = () => { if (isFinite(a.duration)) clipMs.current = a.duration * 1000; };
     a.play().catch(() => {});
     // Warm the next clip so it starts without a gap.
     const next = SLIDES[index + 1];
-    if (next) { const pre = new Audio(); pre.preload = "auto"; pre.src = `/pitch/audio/${next.key}.mp3`; }
-  }, [index, narrate, unlocked]);
+    if (next) { const pre = new Audio(); pre.preload = "auto"; pre.src = clipUrl(lang, next.key); }
+  }, [index, narrate, unlocked, lang]);
   // Pausing the deck, or talking to PROXe, silences the narrator.
   useEffect(() => {
     const a = audio.current;
@@ -696,11 +703,18 @@ export function PitchDeck() {
   }, [userPaused, orb, narrate, unlocked]);
   useEffect(() => {
     try { if (localStorage.getItem("pitch-narrate") === "off") setNarrate(false); } catch { /* storage blocked */ }
+    try { const l = localStorage.getItem("pitch-lang"); if (l && LANGS.some(([c]) => c === l)) setLang(l); } catch { /* storage blocked */ }
     const unlock = () => setUnlocked(true);
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
     return () => { window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); audio.current?.pause(); };
   }, []);
+  function pickLang(l: string) {
+    setLang(l);
+    setNarrate(true);
+    setUnlocked(true);
+    try { localStorage.setItem("pitch-lang", l); } catch { /* storage blocked */ }
+  }
   function toggleNarration() {
     const on = !narrate;
     setNarrate(on);
@@ -778,10 +792,18 @@ export function PitchDeck() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/proxe-logo-white.webp" alt="PROXe" className="h-5 w-auto opacity-90" />
         <div className="flex items-center gap-2">
-          <button onClick={toggleNarration} aria-pressed={narrate}
+          <label className="relative flex h-10 items-center rounded-full bg-white/[0.07] pl-3 pr-2 text-[12.5px] text-white/80 backdrop-blur-md">
+            <span className="sr-only">Narration language</span>
+            <Globe size={14} className="mr-1.5 shrink-0 text-white/60" />
+            <select value={lang} onChange={(e) => pickLang(e.target.value)}
+              className="cursor-pointer appearance-none bg-transparent pr-1 text-[12.5px] text-white/85 outline-none">
+              {LANGS.map(([c, name]) => <option key={c} value={c} style={{ background: "#16112b", color: "#fff" }}>{name}</option>)}
+            </select>
+          </label>
+          <button onClick={toggleNarration} aria-pressed={narrate} aria-label={narrate ? "Turn narration off" : "Turn narration on"}
             className="flex h-10 items-center gap-2 rounded-full bg-white/[0.07] px-3.5 text-[12.5px] text-white/80 backdrop-blur-md transition-colors hover:text-white">
             {narrate ? <Volume2 size={16} /> : <VolumeX size={16} />}
-            {narrate ? (unlocked ? "Narration on" : "Tap to listen") : "Narration off"}
+            <span className="hidden sm:inline">{narrate ? (unlocked ? "Narration on" : "Tap to listen") : "Narration off"}</span>
           </button>
           <Link href="/dashboard" aria-label="Close the pitch" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.07] text-white/70 backdrop-blur-md transition-colors hover:text-white">
             <X size={17} />
