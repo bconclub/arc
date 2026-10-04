@@ -26,7 +26,7 @@ const numbers = unstable_cache(async () => {
   };
 }, ["public-pitch"], { revalidate: 300 });
 
-function cors(origin: string | null) {
+function cors(origin: string | null): Record<string, string> {
   return origin && ALLOWED.has(origin)
     ? { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Methods": "GET", Vary: "Origin" }
     : {};
