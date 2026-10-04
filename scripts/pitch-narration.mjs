@@ -16,10 +16,10 @@ const OUT = "public/pitch/audio";
 
 // Key pointers, not the card read aloud. Keys match the cards in PitchDeck.tsx.
 export const LINES = {
-  cover: "[warmly] This is PROXe. Your AI, for the customer side of your business. In one line? You never miss a lead again.",
+  cover: "[warmly] This is PROXe. Your AI, for the customer side of your business. In one line? Never miss a lead, ever again.",
   problem: "Here's the problem. Brands spend money making ads, and running them. The leads show up... and nobody responds. [sighs] The lead goes cold, and the ad money goes with it.",
   gaps: "We see four gaps, again and again. A slow first reply. No follow-up. No-shows. And lost context, between WhatsApp and calls. Under each one... is what PROXe does about it.",
-  who: "Who feels this most? Businesses that live on enquiries. Coaching academies. Clinics. Real estate. Training academies, wellness, and professional services. The customer starts on WhatsApp, and usually... the founder is the one replying.",
+  who: "Who is this for? Any business that runs on leads, and wants to take better care of its customers. Coaching academies, clinics, real estate, training academies, wellness, professional services... if leads come in, PROXe takes care of them.",
   solution: "[confident] PROXe answers in seconds, on every channel. WhatsApp, Instagram, Messenger, voice, and web chat. One AI brain that replies, qualifies, books the call, and keeps following up.",
   how: "The loop is simple. Capture every lead. Nurture it, in the business's own tone. Close, by booking the demo or the visit. And repeat, learning from every single conversation.",
   dashboard: "And the founder sees everything. This is a real PROXe dashboard. Every lead is scored, with the next step, and where it came from.",
@@ -32,7 +32,8 @@ export const LINES = {
 };
 
 // Said "Proxy". Spelt PROXe, the voice guesses at it, so it reads the sound instead.
-const speakable = (t) => t.replace(/PROXe/g, "Proxy");
+// Names said the way they are said: PROXe is "Proxy", Thanzeel is "Than-zeel".
+const speakable = (t) => t.replace(/PROXe/g, "Proxy").replace(/Thanzeel/g, "Than-zeel");
 
 async function tts(text, model) {
   text = speakable(text);

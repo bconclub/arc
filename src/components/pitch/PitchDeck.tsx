@@ -134,11 +134,11 @@ const SLIDES: Slide[] = [
             Your AI for the customer side of your business.
           </h1>
           <p className={`mt-4 text-[16px] text-white/75 ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: "300ms" }}>
-            Never miss a lead again.
+            Never miss a lead ever again.
           </p>
         </div>
         {!started ? (
-          <button onClick={(e) => { e.stopPropagation(); start(); }}
+          <button onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); start(); }}
             className="flex items-center justify-between rounded-2xl bg-white px-5 py-4 text-left text-[#3b1a8a] transition-transform active:scale-[0.98]">
             <span>
               <span className="block text-[16px] font-semibold">Play the pitch</span>
@@ -197,8 +197,8 @@ const SLIDES: Slide[] = [
     key: "who", label: "Who feels it",
     render: ({ on }) => (
       <>
-        <Headline>Businesses that live on enquiries.</Headline>
-        <Body>Where the customer starts on WhatsApp, and the founder is the one replying.</Body>
+        <Headline>Any business that runs on leads.</Headline>
+        <Body>And wants to take better care of its customers. A few we see every day:</Body>
         <div className="flex flex-1 items-center pt-4">
           <Stagger on={on} className="grid w-full grid-cols-2 gap-2" step={80}>
             {[
@@ -582,7 +582,6 @@ export function PitchDeck() {
   const [card, setCard] = useState({ w: 380, step: 300, narrow: false });
   const [reduced, setReduced] = useState(false);
   const [live, setLive] = useState<Live | null>(null);
-  const [hover, setHover] = useState(false);
   const [held, setHeld] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
   const [orb, setOrb] = useState(false);
@@ -644,7 +643,7 @@ export function PitchDeck() {
   }, []);
 
   // ── reading timer: each card gets the time it takes to read, then moves on ──
-  const paused = !started || hover || held || userPaused || orb || dragging || index === n - 1;
+  const paused = !started || held || userPaused || orb || dragging || index === n - 1;
   // The loop reads `paused` through a ref so pausing keeps the elapsed time.
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
@@ -819,8 +818,6 @@ export function PitchDeck() {
               aria-hidden={!current}
               aria-label={`${i + 1} of ${n}: ${s.label}`}
               onClick={() => { if (!current && !moved.current) go(i); }}
-              onPointerEnter={(e) => { if (current && e.pointerType === "mouse") setHover(true); }}
-              onPointerLeave={(e) => { if (e.pointerType === "mouse") setHover(false); }}
               onPointerDown={() => { if (current) setHeld(true); }}
               className="absolute left-1/2 top-1/2 flex flex-col overflow-hidden rounded-[28px] px-6 pb-6 pt-5 sm:px-7 sm:pb-7"
               style={{
@@ -859,7 +856,7 @@ export function PitchDeck() {
                 </div>
               )}
 
-              <Fit deps={[card.w, live === null, current]}>{s.render({ on: current, live, setOrb, started, start: () => { setStarted(true); setUnlocked(true); } })}</Fit>
+              <Fit deps={[card.w, live === null, current]}>{s.render({ on: current, live, setOrb, started, start: () => { setStarted(true); setUnlocked(true); setHeld(false); } })}</Fit>
 
               {/* Side cards sink back, but stay visible as more to come */}
               <div className="pointer-events-none absolute inset-0 rounded-[28px]"
