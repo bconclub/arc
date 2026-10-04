@@ -612,7 +612,7 @@ export function PitchDeck() {
     const fit = () => {
       const vw = window.innerWidth;
       const narrow = vw < 640;
-      const w = Math.min(vw * (narrow ? 0.8 : 0.86), 420);
+      const w = Math.min(vw * (narrow ? 0.86 : 0.9), 460);
       setCard({ w, step: narrow ? w * 0.9 : w * 0.66, narrow });
     };
     fit();
@@ -825,7 +825,8 @@ export function PitchDeck() {
               className="absolute left-1/2 top-1/2 flex flex-col overflow-hidden rounded-[28px] px-6 pb-6 pt-5 sm:px-7 sm:pb-7"
               style={{
                 width: card.w,
-                height: "min(calc(100dvh - 150px), 640px)",
+                // Wider than tall-and-thin: capped by the screen, 560px, and 1.45x the width.
+                height: `min(calc(100dvh - 160px), 560px, ${Math.round(card.w * 1.45)}px)`,
                 marginLeft: -card.w / 2,
                 transform: `translate3d(${x}px, -50%, ${z}px) rotateY(${rot}deg) scale(${scale})`,
                 transition: dragging ? "none" : `transform 620ms ${EASE}`,
