@@ -18,7 +18,7 @@ const OUT = "public/pitch/audio";
 export const LINES = {
   cover: "[warmly] This is PROXe. Your AI, for the customer side of your business. In one line? Never miss a lead, ever again.",
   problem: "Here's the problem. Brands spend money making ads, and running them. The leads show up... and nobody responds. [sighs] The lead goes cold, and the ad money goes with it.",
-  gaps: "We see four gaps, again and again. A slow first reply. No follow-up. No-shows. And lost context, between WhatsApp and calls. Under each one... is what PROXe does about it.",
+  gaps: "And it's not just one gap. Replies are slow. Nobody follows up. Chat, support and the website all sit on different tools that never talk to each other. And after the sale... customers are left alone, so they slip away. Under each one, is what PROXe does about it.",
   who: "Who is this for? Any business that runs on leads, and wants to take better care of its customers. Coaching academies, clinics, real estate, training academies, wellness, professional services... if leads come in, PROXe takes care of them.",
   solution: "[confident] PROXe answers in seconds, on every channel. WhatsApp, Instagram, Messenger, voice, and web chat. One AI brain that replies, qualifies, books the call, and keeps following up.",
   how: "The loop is simple. Capture every lead. Nurture it, in the business's own tone. Close, by booking the demo or the visit. And repeat, learning from every single conversation.",

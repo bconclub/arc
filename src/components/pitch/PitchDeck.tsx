@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, ArrowRight, X, Phone, Globe, Clock, Pause, Play, Radar, BellOff, CalendarX, Unlink, MessagesSquare, CalendarCheck, Repeat2, Check, Volume2, VolumeX,
+  ArrowLeft, ArrowRight, X, Phone, Globe, Clock, Pause, Play, Radar, BellOff, UserMinus, Unlink, MessagesSquare, CalendarCheck, Repeat2, Check, Volume2, VolumeX,
 } from "lucide-react";
 import * as B from "./brandIcons";
 import { TalkToProxe } from "./TalkToProxe";
@@ -85,10 +85,10 @@ function Rings({ on, rows }: { on: boolean; rows: { value: number; target: numbe
 /** Each gap as it happens to a business, then what PROXe does about it. */
 function GapFix({ on }: { on: boolean }) {
   const rows = [
-    { icon: Clock, gap: "Slow first reply", what: "the lead waits, then moves on", fix: "replies in seconds" },
-    { icon: BellOff, gap: "No follow-up", what: "interested once, never messaged again", fix: "follows up for days" },
-    { icon: CalendarX, gap: "No-shows", what: "demo booked, nobody reminded them", fix: "reminds and rebooks" },
-    { icon: Unlink, gap: "Lost context", what: "WhatsApp, then a call, and they start over", fix: "remembers everything" },
+    { icon: Clock, gap: "Slow replies", what: "the lead waits, then moves on", fix: "replies in seconds" },
+    { icon: BellOff, gap: "No follow-up", what: "interested once, never messaged again", fix: "follows up until they are ready" },
+    { icon: Unlink, gap: "Disconnected tools", what: "chat, support and the website, each on a different tool", fix: "runs them as one system" },
+    { icon: UserMinus, gap: "Customers slip away", what: "no care after the sale, no community, retention drops", fix: "keeps customers looked after and coming back" },
   ];
   return (
     <div className="space-y-2">
