@@ -31,7 +31,11 @@ export const LINES = {
   talk: "[warmly] That's the pitch. Now... talk to PROXe. Tap the orb to speak with it right here, or leave your number, and it'll call you in seconds.",
 };
 
+// Said "Proxy". Spelt PROXe, the voice guesses at it, so it reads the sound instead.
+const speakable = (t) => t.replace(/PROXe/g, "Proxy");
+
 async function tts(text, model) {
+  text = speakable(text);
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE}?output_format=mp3_44100_128`, {
     method: "POST",
     headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY, "content-type": "application/json" },
