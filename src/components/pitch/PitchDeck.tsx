@@ -389,8 +389,8 @@ const SLIDES: Slide[] = [
       const pct = r ? (r.raised / r.target) * 100 : 0;
       return (
         <>
-          <Headline>We are raising our pre-seed.</Headline>
-          <Body>{r ? `${r.equityOffered}% for ${inr(r.target)}` : "5% for ₹25L"}{live?.stake.valuation ? `, at ${inr(live.stake.valuation)} post-money.` : "."}</Body>
+          <Headline>We are raising {r ? inr(r.target) : "₹25L"}.</Headline>
+          <Body>Pre-seed, at a {live?.stake.valuation ? inr(live.stake.valuation) : "₹5Cr"} post-money valuation, for {r ? r.equityOffered : 5}% of PROXe.</Body>
           <div className="flex flex-1 flex-col justify-center gap-3 pt-4">
             <div className="rounded-2xl bg-white/[0.05] px-4 py-3">
               <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-white/45">The plan</p>
