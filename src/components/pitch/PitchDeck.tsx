@@ -420,7 +420,13 @@ const SLIDES: Slide[] = [
                     {Array.from({ length: Math.round(r.target / 1e5) || 25 }, (_, i) => (
                       <span key={i} className="aspect-square rounded-md"
                         style={{
-                          background: i < Math.round(r.raised / 1e5) ? C.money : "rgba(255,255,255,0.09)",
+                          // Whole lakhs fill a square; a part-lakh fills part of the next one.
+                          background: (() => {
+                            const filled = r.raised / 1e5 - i;
+                            if (filled >= 1) return C.money;
+                            if (filled <= 0) return "rgba(255,255,255,0.09)";
+                            return `linear-gradient(90deg, ${C.money} ${filled * 100}%, rgba(255,255,255,0.09) ${filled * 100}%)`;
+                          })(),
                           opacity: on ? 1 : 0, transform: on ? "none" : "scale(0.6)",
                           transition: `opacity 400ms ${EASE} ${200 + i * 30}ms, transform 400ms ${EASE} ${200 + i * 30}ms`,
                         }} />
