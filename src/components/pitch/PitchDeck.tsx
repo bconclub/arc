@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, ArrowRight, X, Phone, Globe, Clock, Pause, Play, GraduationCap, Stethoscope, Building2,
-  BookOpen, Flower2, UserRound, Radar, MessagesSquare, CalendarCheck, Repeat2, Check,
+  ArrowLeft, ArrowRight, X, Phone, Globe, Clock, Pause, Play, Radar, BellOff, CalendarX, Unlink, MessagesSquare, CalendarCheck, Repeat2, Check,
 } from "lucide-react";
 import * as B from "./brandIcons";
 import { TalkToProxe } from "./TalkToProxe";
@@ -62,24 +61,64 @@ function Body({ children }: { children: React.ReactNode }) {
   return <p className="mt-2.5 text-[14.5px] leading-relaxed text-white/65">{children}</p>;
 }
 
-/** Concentric rings, one per goal, drawn when the card is in front. */
-function Rings({ on, rows }: { on: boolean; rows: { value: number; target: number; color: string }[] }) {
-  const R = [64, 50, 36];
+/** The plan as a funnel: each stage's target, filled by what is done. */
+function Funnel({ on, stages }: { on: boolean; stages: { label: string; value: number; target: number; color: string; width: number }[] }) {
   return (
-    <svg viewBox="0 0 160 160" className="h-36 w-36 shrink-0 -rotate-90" aria-hidden>
-      {rows.map((r, i) => {
-        const len = 2 * Math.PI * R[i]!;
-        const frac = Math.max(0.025, Math.min(1, r.value / r.target));
+    <div className="flex flex-col items-center gap-2">
+      {stages.map((st, i) => {
+        const frac = Math.max(0.02, Math.min(1, st.value / st.target));
         return (
-          <g key={i}>
-            <circle cx="80" cy="80" r={R[i]} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
-            <circle cx="80" cy="80" r={R[i]} fill="none" stroke={r.color} strokeWidth="10" strokeLinecap="round"
-              strokeDasharray={len} strokeDashoffset={on ? len * (1 - frac) : len}
-              style={{ transition: `stroke-dashoffset 1400ms ${EASE} ${300 + i * 150}ms` }} />
-          </g>
+          <div key={st.label} className="relative overflow-hidden rounded-2xl" style={{ width: `${st.width}%`, background: "rgba(255,255,255,0.06)" }}>
+            <div className="absolute inset-y-0 left-0" style={{
+              width: on ? `${frac * 100}%` : "0%", background: st.color, opacity: 0.35,
+              transition: `width 1400ms ${EASE} ${300 + i * 220}ms`,
+            }} />
+            <div className="relative flex items-baseline justify-between gap-2 px-3.5 py-3">
+              <span className="text-[12.5px] text-white/70">{st.label}</span>
+              <span className="text-[13px] tabular-nums text-white/50">
+                <span className="text-[18px] font-semibold text-white">{st.value.toLocaleString("en-IN")}</span> / {st.target.toLocaleString("en-IN")}
+              </span>
+            </div>
+          </div>
         );
       })}
-    </svg>
+    </div>
+  );
+}
+
+/** Each gap as it happens to a business, then what PROXe does about it. */
+function GapFix({ on }: { on: boolean }) {
+  const rows = [
+    { icon: Clock, gap: "Slow first reply", what: "asked at 9 pm, answered at 10 am", fix: "replies in seconds" },
+    { icon: BellOff, gap: "No follow-up", what: "interested once, never messaged again", fix: "follows up for days" },
+    { icon: CalendarX, gap: "No-shows", what: "demo booked, nobody reminded them", fix: "reminds and rebooks" },
+    { icon: Unlink, gap: "Lost context", what: "WhatsApp, then a call, and they start over", fix: "remembers everything" },
+  ];
+  return (
+    <div className="space-y-2">
+      {rows.map((r, i) => {
+        const Icon = r.icon;
+        return (
+          <div key={r.gap} className={`overflow-hidden rounded-2xl bg-white/[0.04] ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: `${120 + i * 140}ms` }}>
+            <div className="flex items-center gap-3 px-3.5 py-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(248,113,113,0.14)", color: C.leak }}><Icon size={15} /></span>
+              <span className="min-w-0">
+                <span className="block text-[13.5px] font-medium text-white">{r.gap}</span>
+                <span className="block text-[11.5px] leading-snug text-white/50">{r.what}</span>
+              </span>
+            </div>
+            {/* PROXe's answer slides in under each gap */}
+            <div className="flex items-center gap-2 px-3.5 py-1.5 text-[11.5px] font-medium"
+              style={{
+                background: "rgba(124,58,237,0.22)", color: "#ddd6fe",
+                transform: on ? "none" : "translateX(-100%)", transition: `transform 600ms ${EASE} ${900 + i * 260}ms`,
+              }}>
+              <Check size={12} /> PROXe {r.fix}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -140,10 +179,9 @@ const SLIDES: Slide[] = [
     key: "gaps", label: "Where it leaks",
     render: ({ on }) => (
       <>
-        <Headline>Four gaps nobody measures.</Headline>
-        <Body>Every business has accepted them as normal. Each one quietly costs a customer.</Body>
+        <Headline>Four gaps every business has stopped noticing.</Headline>
         <div className="flex flex-1 flex-col justify-center pt-4">
-          <Journey on={on} />
+          <GapFix on={on} />
         </div>
       </>
     ),
@@ -153,21 +191,20 @@ const SLIDES: Slide[] = [
     render: ({ on }) => (
       <>
         <Headline>Businesses that live on enquiries.</Headline>
-        <Body>Indian SMBs where the customer starts on WhatsApp, and the founder is the one replying.</Body>
+        <Body>Where the customer starts on WhatsApp, and the founder is the one replying.</Body>
         <div className="flex flex-1 items-center pt-4">
-          <Stagger on={on} className="grid w-full grid-cols-2 gap-2" step={70}>
+          <Stagger on={on} className="grid w-full grid-cols-2 gap-2" step={80}>
             {[
-              [GraduationCap, "Coaching academies"], [Stethoscope, "Clinics"], [Building2, "Real estate"],
-              [BookOpen, "Tutoring centres"], [Flower2, "Wellness & spa"], [UserRound, "Solo founders"],
-            ].map(([I, t]) => {
-              const Icon = I as typeof Phone;
-              return (
-                <div key={t as string} className="flex items-center gap-2.5 rounded-2xl bg-white/[0.05] px-3 py-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(167,139,250,0.16)", color: C.violet }}><Icon size={16} /></span>
-                  <span className="text-[13px] leading-tight text-white/85">{t as string}</span>
-                </div>
-              );
-            })}
+              ["coaching", "Coaching academies"], ["clinics", "Clinics"], ["real-estate", "Real estate"],
+              ["academies", "Training academies"], ["wellness", "Wellness & spa"], ["services", "Professional services"],
+            ].map(([img, t]) => (
+              <div key={t} className="relative h-[84px] overflow-hidden rounded-2xl sm:h-[96px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/pitch/${img}.webp`} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(22,17,43,0.05) 30%, rgba(22,17,43,0.92) 100%)" }} />
+                <span className="absolute bottom-2 left-2.5 right-2 text-[12.5px] font-medium leading-tight text-white">{t}</span>
+              </div>
+            ))}
           </Stagger>
         </div>
       </>
@@ -209,6 +246,29 @@ const SLIDES: Slide[] = [
                 </div>
               );
             })}
+          </Stagger>
+        </div>
+      </>
+    ),
+  },
+  {
+    key: "dashboard", label: "The founder's view",
+    render: ({ on }) => (
+      <>
+        <Headline>Every lead, scored, with the next step.</Headline>
+        <Body>The PROXe dashboard a client runs on today: conversations, high-intent leads, booked calls and where they came from.</Body>
+        <div className="flex flex-1 flex-col justify-center pt-4">
+          <div className="overflow-hidden rounded-2xl" style={{ boxShadow: `0 0 0 1px ${C.line}, 0 20px 40px -16px rgba(0,0,0,0.8)` }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/pitch/dashboard.webp" alt="PROXe dashboard" loading="lazy" className="block w-full"
+              style={{ transform: on ? "scale(1)" : "scale(1.08)", transition: `transform 1600ms ${EASE}` }} />
+          </div>
+          <Stagger on={on} className="mt-3 flex flex-wrap gap-1.5" step={120}>
+            {["Lead score on every lead", "What to do next", "Where leads come from"].map((x) => (
+              <span key={x} className="flex items-center gap-1.5 rounded-full bg-white/[0.07] px-2.5 py-1 text-[11.5px] text-white/80">
+                <Check size={12} style={{ color: C.violet }} />{x}
+              </span>
+            ))}
           </Stagger>
         </div>
       </>
@@ -269,38 +329,22 @@ const SLIDES: Slide[] = [
     ),
   },
   {
-    key: "traction", label: "Traction · live",
+    key: "traction", label: "The plan · live",
     render: ({ on, live }) => (
       <>
-        <Headline>Where we are, against the plan.</Headline>
-        <Body>Pulled from ARC right now. The round funds 5,000 leads, 1,000 demos, 100 customers.</Body>
-        <div className="flex flex-1 items-center gap-4 pt-4">
+        <Headline>Our plan to the first 100 customers.</Headline>
+        <Body>5,000 leads, 1,000 demos, 100 customers. Filled live from ARC.</Body>
+        <div className="flex flex-1 flex-col justify-center pt-4">
           {live ? (
-            <>
-              <Rings on={on} rows={[
-                { value: live.goal.leads, target: live.goal.targets.leads, color: C.violet },
-                { value: live.goal.demos, target: live.goal.targets.demos, color: "#60a5fa" },
-                { value: live.goal.conversions, target: live.goal.targets.conversions, color: C.good },
-              ]} />
-              <div className="min-w-0 flex-1 space-y-3">
-                {[
-                  ["Leads", live.goal.leads, live.goal.targets.leads, C.violet],
-                  ["Demos", live.goal.demos, live.goal.targets.demos, "#60a5fa"],
-                  ["Customers", live.goal.conversions, live.goal.targets.conversions, C.good],
-                ].map(([l, v, t, c]) => (
-                  <div key={l as string}>
-                    <p className="flex items-center gap-1.5 text-[11.5px] text-white/55"><i className="h-2 w-2 rounded-full" style={{ background: c as string }} />{l as string}</p>
-                    <p className="text-[19px] font-semibold tabular-nums text-white">
-                      {(v as number).toLocaleString("en-IN")}<span className="text-[12px] font-normal text-white/40"> / {(t as number).toLocaleString("en-IN")}</span>
-                    </p>
-                  </div>
-                ))}
-                {live.sales && <p className="text-[11.5px] text-white/45">{inr(live.sales.total)} collected</p>}
-              </div>
-            </>
+            <Funnel on={on} stages={[
+              { label: "Leads", value: live.goal.leads, target: live.goal.targets.leads, color: C.violet, width: 100 },
+              { label: "Demos", value: live.goal.demos, target: live.goal.targets.demos, color: "#60a5fa", width: 74 },
+              { label: "Customers", value: live.goal.conversions, target: live.goal.targets.conversions, color: C.good, width: 48 },
+            ]} />
           ) : (
-            <div className="h-36 w-full animate-pulse rounded-2xl bg-white/[0.05]" />
+            <div className="h-44 animate-pulse rounded-2xl bg-white/[0.05]" />
           )}
+          {live?.sales && <p className="mt-4 text-center text-[12px] text-white/50">{inr(live.sales.total)} collected so far</p>}
         </div>
       </>
     ),
@@ -417,42 +461,6 @@ function Joint({ on, delay, leak = false }: { on: boolean; delay: number; leak?:
           background: leak ? `repeating-linear-gradient(${C.leak} 0 3px, transparent 3px 6px)` : "rgba(255,255,255,0.25)",
           transform: on ? "scaleY(1)" : "scaleY(0)", transition: `transform 400ms ${EASE} ${delay}ms`,
         }} />
-    </div>
-  );
-}
-
-/** Ad → customer, with the four places a lead falls out. */
-function Journey({ on }: { on: boolean }) {
-  const stops = ["Ad", "Lead", "Reply", "Follow-up", "Demo", "Customer"];
-  const gaps: Record<number, string> = { 1: "slow first reply", 2: "no follow-up", 3: "no-show", 4: "lost context" };
-  return (
-    <div className="space-y-0">
-      {stops.map((s, i) => (
-        <div key={s}>
-          <div className={`flex items-center gap-3 ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: `${150 + i * 160}ms` }}>
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-              style={{ background: i === stops.length - 1 ? C.good : "rgba(167,139,250,0.2)", color: i === stops.length - 1 ? "#05210f" : C.violet }}>
-              {i === stops.length - 1 ? <Check size={12} /> : i + 1}
-            </span>
-            <span className="text-[13.5px] text-white/85">{s}</span>
-          </div>
-          {i < stops.length - 1 && (
-            <div className="flex items-center gap-3">
-              <div className="ml-[11px] h-5 w-[2px]"
-                style={{
-                  background: gaps[i] ? `repeating-linear-gradient(${C.leak} 0 3px, transparent 3px 6px)` : "rgba(255,255,255,0.2)",
-                  opacity: on ? 1 : 0, transition: `opacity 300ms ${EASE} ${260 + i * 160}ms`,
-                }} />
-              {gaps[i] && (
-                <span className={`ml-[11px] rounded-full px-2 py-0.5 text-[11px] ${on ? "pitch-in" : "opacity-0"}`}
-                  style={{ background: "rgba(248,113,113,0.14)", color: C.leak, animationDelay: `${330 + i * 160}ms` }}>
-                  gap · {gaps[i]}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      ))}
     </div>
   );
 }
