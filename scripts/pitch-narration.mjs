@@ -1,5 +1,5 @@
-// Generates the /pitch narration: one short clip per card, in PROXe's own
-// agent voice, saved as small static MP3s under public/pitch/audio/.
+// Generates the /pitch narration: one short clip per card, read by a narrator
+// (not the PROXe agent's calling voice), saved as small MP3s under public/pitch/audio/.
 //
 //   node --env-file=<file with ELEVENLABS_API_KEY> scripts/pitch-narration.mjs [key ...]
 //
@@ -9,24 +9,26 @@
 import { writeFile, mkdir, rm } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 
-const VOICE = "hg1icMxI2KADq9a81ecq"; // the PROXe agent voice (Site Widget / Hero Callback)
+// Riya Rao, "Confident and Clear": Indian English, built for narration. Swap
+// the ID to change the narrator; the agent voice stays for calls only.
+const VOICE = "vYENaCJHl4vFKNDYPr8y";
 const OUT = "public/pitch/audio";
 
 // Key pointers, not the card read aloud. Keys match the cards in PitchDeck.tsx.
 export const LINES = {
-  cover: "This is PROXe. Your AI for the customer side of your business. In one line: you never miss a lead again.",
-  problem: "Here's the problem. Brands spend on creative and ads. A lead writes in at nine at night, and nobody answers till morning. Or the demo gets booked, and they never show up. By then, the lead and the ad money are both gone.",
-  gaps: "We see four gaps, again and again. A slow first reply. No follow-up. No-shows. And lost context between WhatsApp and calls. Under each one, you can see what PROXe does about it.",
-  who: "Who feels this most? Businesses that live on enquiries. Coaching academies, clinics, real estate, training academies, wellness, and professional services. The customer starts on WhatsApp, and usually, the founder is the one replying.",
-  solution: "PROXe answers in seconds, on every channel. WhatsApp, Instagram, Messenger, voice, and web chat. One AI brain that replies, qualifies, books the call, and keeps following up.",
-  how: "The loop is simple. Capture every lead. Nurture it in the business's own tone. Close, by booking the demo or the visit. And repeat, learning from every conversation.",
+  cover: "[warmly] This is PROXe. Your AI, for the customer side of your business. In one line? You never miss a lead again.",
+  problem: "Here's the problem. Brands spend on creative, and on ads. A lead writes in at nine at night... and nobody answers till morning. Or the demo gets booked, and they never show up. [sighs] By then, the lead, and the ad money, are both gone.",
+  gaps: "We see four gaps, again and again. A slow first reply. No follow-up. No-shows. And lost context, between WhatsApp and calls. Under each one... is what PROXe does about it.",
+  who: "Who feels this most? Businesses that live on enquiries. Coaching academies. Clinics. Real estate. Training academies, wellness, and professional services. The customer starts on WhatsApp, and usually... the founder is the one replying.",
+  solution: "[confident] PROXe answers in seconds, on every channel. WhatsApp, Instagram, Messenger, voice, and web chat. One AI brain that replies, qualifies, books the call, and keeps following up.",
+  how: "The loop is simple. Capture every lead. Nurture it, in the business's own tone. Close, by booking the demo or the visit. And repeat, learning from every single conversation.",
   dashboard: "And the founder sees everything. This is a real PROXe dashboard. Every lead is scored, with the next step, and where it came from.",
-  memory: "PROXe keeps one memory across channels. A message on Monday, a call on Thursday, the pricing page on Saturday. It connects all of it, so the customer never repeats themselves.",
-  price: "The model is simple. One plan, nine thousand nine hundred and ninety nine rupees a month, with every channel included. About the cost of one missed customer.",
-  traction: "Here's where we are, against our plan to the first hundred customers. Five thousand leads, a thousand demos, a hundred customers. The rings show how far along we are, today.",
-  round: "We're raising our pre-seed. Five percent, for twenty five lakh rupees. The plan is the one you just saw, and the gold squares show how much of the round is already committed.",
-  founder: "This is Thanzeel, our founder. Seven years in marketing, across retail, hospitality, real estate and healthcare. [chuckles] Honestly? We had this exact problem ourselves. Leads slipping through. That's why we're solving it.",
-  talk: "That's the pitch. Now, talk to PROXe. Tap the orb to speak with it right here, or leave your number, and it'll call you in seconds.",
+  memory: "PROXe keeps one memory across channels. A message on Monday. A call on Thursday. The pricing page on Saturday. It connects all of it, so the customer never has to repeat themselves.",
+  price: "The model is simple. One plan. Nine thousand, nine hundred and ninety nine rupees a month, with every channel included. [softly] About the cost of one missed customer.",
+  traction: "Here's where we are, against our plan to the first hundred customers. Five thousand leads. A thousand demos. A hundred customers. The rings show how far along we are, today.",
+  round: "[confident] We're raising our pre-seed. Five percent, for twenty five lakh rupees. The plan is the one you just saw. And the gold shows how much of the round is already committed.",
+  founder: "This is Thanzeel, our founder. Seven years in marketing, across retail, hospitality, real estate and healthcare. [chuckles] And honestly? We had this exact problem ourselves. Leads, slipping through. That's why we're solving it.",
+  talk: "[warmly] That's the pitch. Now... talk to PROXe. Tap the orb to speak with it right here, or leave your number, and it'll call you in seconds.",
 };
 
 async function tts(text, model) {
