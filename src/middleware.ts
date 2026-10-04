@@ -6,12 +6,14 @@ import { COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 // Leaving them out of this matcher exemption is not a safe default: it makes them
 // 401 on the session gate before their own auth ever runs.
 //
+// api/public is read by goproxe.com/pitch: live plan and round numbers only.
+//
 // investor and api/investor are the investor portal: their own login, their own
 // cookie, checked in lib/investor/viewer.ts. The owner session still opens them
 // as a preview; nothing an investor holds passes the gate below.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
   ],
 };
 
