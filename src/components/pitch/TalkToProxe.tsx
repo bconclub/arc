@@ -6,22 +6,16 @@ import { Mic, PhoneCall, Loader2, Check } from "lucide-react";
 /**
  * The pitch's last card: talk to PROXe in the browser (an orb), or get a call.
  *
- * The orb uses the same public ElevenLabs agent as goproxe.com; the ID is a
- * public identifier, not a secret. The agent only connects from domains on its
- * allowlist (ElevenLabs → Agent → Security), so arc.bconclub.com must be there.
- * The SDK loads only when someone taps the orb, so the deck stays light.
+ * Both use the "PROXe Pitch" ElevenLabs agent: its own prompt treats the
+ * person as an investor who just read the pitch, opens with "you just finished
+ * looking at the pitch, any questions? can I get your name?", and knows the
+ * round. The agent ID is a public identifier; the agent only accepts
+ * arc.bconclub.com (and localhost). The SDK loads on tap, so the deck stays light.
  */
-const AGENT_ID = process.env.NEXT_PUBLIC_PITCH_AGENT_ID || "agent_7301kz312hzffr292fz3d6v04c9q";
-// Opening line override works only once "First message" overrides are enabled
-// on the agent. Until then the agent opens with its own line and gets the
-// pitch context as a contextual update instead.
-const USE_OVERRIDE = process.env.NEXT_PUBLIC_PITCH_ORB_OVERRIDE === "1";
-const FIRST_MESSAGE = "Hey, you just went through our pitch. What do you think of PROXe? I can walk you through anything you want to know.";
-const CONTEXT =
-  "The person you are speaking to just finished the PROXe investor pitch inside ARC. Ask what they thought, answer questions about PROXe, the product, pricing (₹9,999 a month) and the pre-seed round, and offer to set up a call with Thanzeel, the founder.";
+const AGENT_ID = process.env.NEXT_PUBLIC_PITCH_AGENT_ID || "agent_2201m434mm0zfgrsqexd5510g8ak";
 
 type OrbState = "idle" | "connecting" | "live" | "ending";
-type Session = { endSession: () => Promise<void>; sendContextualUpdate?: (t: string) => void };
+type Session = { endSession: () => Promise<void> };
 
 export function TalkToProxe({ onActive }: { onActive: (live: boolean) => void }) {
   const [state, setState] = useState<OrbState>("idle");
@@ -57,14 +51,12 @@ export function TalkToProxe({ onActive }: { onActive: (live: boolean) => void })
       const { Conversation } = await import("@elevenlabs/client");
       const s = (await Conversation.startSession({
         agentId: AGENT_ID,
-        ...(USE_OVERRIDE ? { overrides: { agent: { firstMessage: FIRST_MESSAGE } } } : {}),
         onConnect: () => setState("live"),
         onDisconnect: () => { session.current = null; setState("idle"); setSpeaking(false); },
         onModeChange: ({ mode }: { mode: string }) => setSpeaking(mode === "speaking"),
         onError: () => setOrbError("PROXe dropped the line. Tap to try again."),
       })) as unknown as Session;
       session.current = s;
-      s.sendContextualUpdate?.(CONTEXT);
       // This voice is mastered quiet; goproxe.com applies the same gain.
       try {
         (s as unknown as { output?: { setVolume?: (v: number) => void } }).output?.setVolume?.(5.5);

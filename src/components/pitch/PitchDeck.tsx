@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, ArrowRight, X, Phone, Globe, Clock, Pause, Play, Radar, BellOff, CalendarX, Unlink, MessagesSquare, CalendarCheck, Repeat2, Check,
+  ArrowLeft, ArrowRight, X, Phone, Globe, Clock, Pause, Play, Radar, BellOff, CalendarX, Unlink, MessagesSquare, CalendarCheck, Repeat2, Check, Volume2, VolumeX,
 } from "lucide-react";
 import * as B from "./brandIcons";
 import { TalkToProxe } from "./TalkToProxe";
@@ -61,28 +61,24 @@ function Body({ children }: { children: React.ReactNode }) {
   return <p className="mt-2.5 text-[14.5px] leading-relaxed text-white/65">{children}</p>;
 }
 
-/** The plan as a funnel: each stage's target, filled by what is done. */
-function Funnel({ on, stages }: { on: boolean; stages: { label: string; value: number; target: number; color: string; width: number }[] }) {
+/** Concentric rings, one per goal, drawn when the card is in front. */
+function Rings({ on, rows }: { on: boolean; rows: { value: number; target: number; color: string }[] }) {
+  const R = [64, 50, 36];
   return (
-    <div className="flex flex-col items-center gap-2">
-      {stages.map((st, i) => {
-        const frac = Math.max(0.02, Math.min(1, st.value / st.target));
+    <svg viewBox="0 0 160 160" className="h-36 w-36 shrink-0 -rotate-90" aria-hidden>
+      {rows.map((r, i) => {
+        const len = 2 * Math.PI * R[i]!;
+        const frac = Math.max(0.025, Math.min(1, r.value / r.target));
         return (
-          <div key={st.label} className="relative overflow-hidden rounded-2xl" style={{ width: `${st.width}%`, background: "rgba(255,255,255,0.06)" }}>
-            <div className="absolute inset-y-0 left-0" style={{
-              width: on ? `${frac * 100}%` : "0%", background: st.color, opacity: 0.35,
-              transition: `width 1400ms ${EASE} ${300 + i * 220}ms`,
-            }} />
-            <div className="relative flex items-baseline justify-between gap-2 px-3.5 py-3">
-              <span className="text-[12.5px] text-white/70">{st.label}</span>
-              <span className="text-[13px] tabular-nums text-white/50">
-                <span className="text-[18px] font-semibold text-white">{st.value.toLocaleString("en-IN")}</span> / {st.target.toLocaleString("en-IN")}
-              </span>
-            </div>
-          </div>
+          <g key={i}>
+            <circle cx="80" cy="80" r={R[i]} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+            <circle cx="80" cy="80" r={R[i]} fill="none" stroke={r.color} strokeWidth="10" strokeLinecap="round"
+              strokeDasharray={len} strokeDashoffset={on ? len * (1 - frac) : len}
+              style={{ transition: `stroke-dashoffset 1400ms ${EASE} ${300 + i * 150}ms` }} />
+          </g>
         );
       })}
-    </div>
+    </svg>
   );
 }
 
@@ -313,15 +309,25 @@ const SLIDES: Slide[] = [
     render: ({ on }) => (
       <>
         <Headline>One plan. One price.</Headline>
-        <Body>A monthly subscription. The cost of one missed customer, for a system that never misses one.</Body>
+        <Body>A monthly subscription. About the cost of one missed customer.</Body>
         <div className="flex flex-1 flex-col justify-center pt-4">
-          <p className={`text-[58px] font-bold leading-none tracking-[-0.04em] text-white tabular-nums ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: "150ms" }}>₹9,999</p>
-          <p className="mt-1 text-[14px] text-white/50">per month, per business</p>
-          <Stagger on={on} className="mt-5 flex flex-wrap gap-2" step={80}>
-            {["Every channel", "Founder dashboard", "Trained on your playbook"].map((x) => (
-              <span key={x} className="flex items-center gap-1.5 rounded-full bg-white/[0.07] px-3 py-1.5 text-[12.5px] text-white/80">
-                <Check size={13} style={{ color: C.violet }} />{x}
-              </span>
+          <p className={`text-[56px] font-bold leading-none tracking-[-0.04em] text-white tabular-nums ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: "150ms" }}>₹9,999</p>
+          <p className="mt-1 text-[14px] text-white/50">per month, per business. Every channel included.</p>
+          <Stagger on={on} className="mt-5 grid grid-cols-4 gap-2" step={60}>
+            {[
+              [<Brand key="w" d={B.whatsapp} color="#25D366" size={20} />, "WhatsApp"],
+              [<Brand key="i" d={B.instagram} color="#E4405F" size={19} />, "Instagram"],
+              [<Brand key="m" d={B.messenger} color="#0099FF" size={19} />, "Messenger"],
+              [<Brand key="f" d={B.facebook} color="#1877F2" size={19} />, "Facebook"],
+              [<Phone key="p" size={18} className="text-white" />, "Voice"],
+              [<Globe key="g" size={18} className="text-white" />, "Web chat"],
+              [<Brand key="e" d={B.gmail} color="#EA4335" size={18} />, "Email"],
+              [<MessagesSquare key="s" size={18} className="text-white" />, "SMS"],
+            ].map(([icon, label]) => (
+              <div key={label as string} className="flex flex-col items-center gap-1.5 rounded-2xl bg-white/[0.05] py-2.5">
+                <span className="flex h-8 items-center">{icon as React.ReactNode}</span>
+                <span className="text-[10.5px] text-white/60">{label as string}</span>
+              </div>
             ))}
           </Stagger>
         </div>
@@ -329,66 +335,85 @@ const SLIDES: Slide[] = [
     ),
   },
   {
-    key: "traction", label: "The plan · live",
+    key: "traction", label: "Traction · live",
     render: ({ on, live }) => (
       <>
-        <Headline>Our plan to the first 100 customers.</Headline>
-        <Body>5,000 leads, 1,000 demos, 100 customers. Filled live from ARC.</Body>
-        <div className="flex flex-1 flex-col justify-center pt-4">
+        <Headline>Where we are, against the plan.</Headline>
+        <Body>Our plan to the first 100 customers: 5,000 leads, 1,000 demos, 100 customers.</Body>
+        <div className="flex flex-1 items-center gap-5 pt-4">
           {live ? (
-            <Funnel on={on} stages={[
-              { label: "Leads", value: live.goal.leads, target: live.goal.targets.leads, color: C.violet, width: 100 },
-              { label: "Demos", value: live.goal.demos, target: live.goal.targets.demos, color: "#60a5fa", width: 74 },
-              { label: "Customers", value: live.goal.conversions, target: live.goal.targets.conversions, color: C.good, width: 48 },
-            ]} />
+            <>
+              <Rings on={on} rows={[
+                { value: live.goal.leads, target: live.goal.targets.leads, color: C.violet },
+                { value: live.goal.demos, target: live.goal.targets.demos, color: "#60a5fa" },
+                { value: live.goal.conversions, target: live.goal.targets.conversions, color: C.good },
+              ]} />
+              <div className="min-w-0 flex-1 space-y-3">
+                {[
+                  ["Leads", live.goal.leads, live.goal.targets.leads, C.violet],
+                  ["Demos", live.goal.demos, live.goal.targets.demos, "#60a5fa"],
+                  ["Customers", live.goal.conversions, live.goal.targets.conversions, C.good],
+                ].map(([l, v, t, c]) => (
+                  <div key={l as string}>
+                    <p className="flex items-center gap-1.5 text-[11.5px] text-white/55"><i className="h-2 w-2 rounded-full" style={{ background: c as string }} />{l as string}</p>
+                    <p className="text-[19px] font-semibold tabular-nums text-white">
+                      {(v as number).toLocaleString("en-IN")}<span className="text-[12px] font-normal text-white/40"> / {(t as number).toLocaleString("en-IN")}</span>
+                    </p>
+                  </div>
+                ))}
+                {live.sales && <p className="text-[11.5px] text-white/45">{inr(live.sales.total)} collected</p>}
+              </div>
+            </>
           ) : (
-            <div className="h-44 animate-pulse rounded-2xl bg-white/[0.05]" />
+            <div className="h-36 w-full animate-pulse rounded-2xl bg-white/[0.05]" />
           )}
-          {live?.sales && <p className="mt-4 text-center text-[12px] text-white/50">{inr(live.sales.total)} collected so far</p>}
         </div>
       </>
     ),
   },
   {
-    key: "round", label: "The seed round",
+    key: "round", label: "The round",
     render: ({ on, live }) => {
       const r = live?.stake.roundInfo;
       const pct = r ? (r.raised / r.target) * 100 : 0;
       return (
         <>
-          <Headline>{r ? `${r.name}: ${r.equityOffered}% for ${inr(r.target)}` : "Pre-seed"}</Headline>
-          <Body>{live?.stake.valuation ? `${inr(live.stake.valuation)} post-money. ` : ""}Raised against one plan: 5,000 leads, 1,000 demos, 100 customers.</Body>
-          <div className="flex flex-1 flex-col justify-center pt-4">
-            {r ? (
-              <>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-[11.5px] text-white/50">Committed so far</p>
-                    <p className="text-[40px] font-bold leading-none tracking-[-0.03em] tabular-nums text-white">{inr(r.raised)}</p>
-                  </div>
-                  <p className="pb-1 text-[13px] tabular-nums text-white/55">of {inr(r.target)}</p>
-                </div>
-                {/* The round as 25 slots of ₹1L: filled ones are in. */}
-                <div className="mt-4 grid grid-cols-10 gap-1.5">
-                  {Array.from({ length: Math.round(r.target / 1e5) || 25 }, (_, i) => {
-                    const filled = i < Math.round(r.raised / 1e5);
-                    return (
-                      <span key={i} className="aspect-square rounded-md"
+          <Headline>We are raising our pre-seed.</Headline>
+          <Body>{r ? `${r.equityOffered}% for ${inr(r.target)}` : "5% for ₹25L"}{live?.stake.valuation ? `, at ${inr(live.stake.valuation)} post-money.` : "."}</Body>
+          <div className="flex flex-1 flex-col justify-center gap-3 pt-4">
+            <div className="rounded-2xl bg-white/[0.05] px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-white/45">The plan</p>
+              <p className="mt-1 text-[14px] text-white">5,000 leads → 1,000 demos → 100 customers</p>
+            </div>
+            <div className="rounded-2xl bg-white/[0.05] px-4 py-3">
+              <div className="flex items-baseline justify-between">
+                <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-white/45">Where we are</p>
+                <p className="text-[12px] tabular-nums text-white/55">{r ? `${pct.toFixed(0)}% committed` : ""}</p>
+              </div>
+              {r ? (
+                <>
+                  <p className="mt-1 text-[14px] text-white">
+                    <span className="text-[24px] font-bold tabular-nums tracking-[-0.02em]">{inr(r.raised)}</span>
+                    <span className="text-white/50"> of {inr(r.target)}</span>
+                  </p>
+                  {/* The round as squares of ₹1L: gold ones are in. */}
+                  <div className="mt-2.5 grid grid-cols-[repeat(25,minmax(0,1fr))] gap-[3px]">
+                    {Array.from({ length: Math.round(r.target / 1e5) || 25 }, (_, i) => (
+                      <span key={i} className="aspect-[1/2.2] rounded-[3px]"
                         style={{
-                          background: filled ? C.money : "rgba(255,255,255,0.07)",
-                          opacity: on ? 1 : 0, transform: on ? "none" : "scale(0.6)",
-                          transition: `opacity 400ms ${EASE} ${200 + i * 30}ms, transform 400ms ${EASE} ${200 + i * 30}ms`,
+                          background: i < Math.round(r.raised / 1e5) ? C.money : "rgba(255,255,255,0.09)",
+                          opacity: on ? 1 : 0, transition: `opacity 300ms ${EASE} ${250 + i * 25}ms`,
                         }} />
-                    );
-                  })}
-                </div>
-                <p className="mt-3 text-[12px] tabular-nums text-white/55">
-                  {pct.toFixed(0)}% ready · each square is ₹1L · {r.daysLeft} days left, closes {new Date(r.closesOn).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                </p>
-              </>
-            ) : (
-              <div className="h-32 animate-pulse rounded-2xl bg-white/[0.05]" />
-            )}
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11.5px] tabular-nums text-white/45">
+                    Open {r.daysOpen === 1 ? "since today" : `for ${r.daysOpen} days`} · closes {new Date(r.closesOn).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                </>
+              ) : (
+                <div className="mt-2 h-14 animate-pulse rounded-xl bg-white/[0.05]" />
+              )}
+            </div>
           </div>
         </>
       );
@@ -517,6 +542,12 @@ export function PitchDeck() {
   const [held, setHeld] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
   const [orb, setOrb] = useState(false);
+  // Narration: a short spoken explainer per card. On unless muted; sound
+  // starts on the first tap or key, since browsers block it before that.
+  const [narrate, setNarrate] = useState(true);
+  const [unlocked, setUnlocked] = useState(false);
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const clipMs = useRef(0);
   const start = useRef<{ x: number; y: number; t: number; locked: "x" | "y" | null } | null>(null);
   const moved = useRef(false);
   const wheelLock = useRef(0);
@@ -574,7 +605,8 @@ export function PitchDeck() {
     const el = cardRefs.current[index];
     const words = (el?.textContent ?? "").trim().split(/\s+/).length;
     // ~240 words a minute, plus a beat for the picture.
-    const total = Math.min(20, Math.max(6, Math.round(words / 4) + 3)) * 1000;
+    const read = Math.min(20, Math.max(6, Math.round(words / 4) + 3)) * 1000;
+    clipMs.current = 0;
     let elapsed = 0;
     let last = performance.now();
     let raf = 0;
@@ -583,6 +615,8 @@ export function PitchDeck() {
       last = now;
       const stop = pausedRef.current;
       if (!stop && !document.hidden) elapsed += dt;
+      // While the voice is on, the card waits for its clip to finish.
+      const total = Math.max(read, clipMs.current ? clipMs.current + 1200 : 0);
       const left = Math.max(0, total - elapsed);
       if (barRef.current) barRef.current.style.transform = `scaleX(${Math.min(1, elapsed / total)})`;
       if (secRef.current) secRef.current.textContent = stop ? "Paused" : `${Math.ceil(left / 1000)}s`;
@@ -594,6 +628,40 @@ export function PitchDeck() {
     // Restart only when the card changes; pausing must not reset the clock.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, live === null]);
+
+  // Play the current card's clip; stop the last one.
+  useEffect(() => {
+    const a = audio.current ?? (audio.current = new Audio());
+    a.pause();
+    if (!narrate || !unlocked) return;
+    a.src = `/pitch/audio/${SLIDES[index]!.key}.mp3`;
+    a.onloadedmetadata = () => { if (isFinite(a.duration)) clipMs.current = a.duration * 1000; };
+    a.play().catch(() => {});
+    // Warm the next clip so it starts without a gap.
+    const next = SLIDES[index + 1];
+    if (next) { const pre = new Audio(); pre.preload = "auto"; pre.src = `/pitch/audio/${next.key}.mp3`; }
+  }, [index, narrate, unlocked]);
+  // Pausing the deck, or talking to PROXe, silences the narrator.
+  useEffect(() => {
+    const a = audio.current;
+    if (!a || !a.src) return;
+    if (userPaused || orb) a.pause();
+    else if (narrate && unlocked && !a.ended) a.play().catch(() => {});
+  }, [userPaused, orb, narrate, unlocked]);
+  useEffect(() => {
+    try { if (localStorage.getItem("pitch-narrate") === "off") setNarrate(false); } catch { /* storage blocked */ }
+    const unlock = () => setUnlocked(true);
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => { window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); audio.current?.pause(); };
+  }, []);
+  function toggleNarration() {
+    const on = !narrate;
+    setNarrate(on);
+    setUnlocked(true);
+    if (!on) { audio.current?.pause(); clipMs.current = 0; }
+    try { localStorage.setItem("pitch-narrate", on ? "on" : "off"); } catch { /* storage blocked */ }
+  }
 
   function onPointerDown(e: React.PointerEvent) {
     start.current = { x: e.clientX, y: e.clientY, t: performance.now(), locked: null };
@@ -644,17 +712,35 @@ export function PitchDeck() {
         @keyframes pitch-spin { to { transform: rotate(360deg); } }
         @keyframes pitch-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.45); } 50% { box-shadow: 0 0 0 14px rgba(124,58,237,0); } }
         .pitch-pulse { animation: pitch-pulse 2.6s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) { .pitch-in, .pitch-pulse { animation: none !important; opacity: 1 !important; } }
+        @keyframes pitch-drift { from { transform: translate3d(-2%, -1%, 0) scale(1); } to { transform: translate3d(2%, 1.5%, 0) scale(1.06); } }
+        .pitch-glow { animation: pitch-drift 18s ease-in-out infinite alternate; }
+        @media (prefers-reduced-motion: reduce) { .pitch-in, .pitch-pulse, .pitch-glow { animation: none !important; opacity: 1 !important; } }
       `}</style>
+      {/* Violet glow behind the deck, drifting slowly */}
+      <div className="pitch-glow pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute left-1/2 top-1/2 h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(124,58,237,0.42) 0%, rgba(124,58,237,0) 65%)" }} />
+        <div className="absolute -left-[15vmin] -top-[20vmin] h-[60vmin] w-[60vmin] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(76,29,149,0.55) 0%, rgba(76,29,149,0) 65%)" }} />
+        <div className="absolute -bottom-[25vmin] -right-[10vmin] h-[65vmin] w-[65vmin] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(167,139,250,0.22) 0%, rgba(167,139,250,0) 65%)" }} />
+      </div>
       {/* The site's grain, very faint */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{ backgroundImage: GRAIN }} />
 
       <header className="relative z-10 flex items-center justify-between px-5 pt-[max(16px,env(safe-area-inset-top))] sm:px-8">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/proxe-logo-white.webp" alt="PROXe" className="h-5 w-auto opacity-90" />
-        <Link href="/dashboard" aria-label="Close the pitch" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.07] text-white/70 transition-colors hover:text-white">
-          <X size={17} />
-        </Link>
+        <div className="flex items-center gap-2">
+          <button onClick={toggleNarration} aria-pressed={narrate}
+            className="flex h-10 items-center gap-2 rounded-full bg-white/[0.07] px-3.5 text-[12.5px] text-white/80 backdrop-blur-md transition-colors hover:text-white">
+            {narrate ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {narrate ? (unlocked ? "Narration on" : "Tap to listen") : "Narration off"}
+          </button>
+          <Link href="/dashboard" aria-label="Close the pitch" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.07] text-white/70 backdrop-blur-md transition-colors hover:text-white">
+            <X size={17} />
+          </Link>
+        </div>
       </header>
 
       <div
@@ -697,8 +783,10 @@ export function PitchDeck() {
                 transform: `translate3d(${x}px, -50%, ${z}px) rotateY(${rot}deg) scale(${scale})`,
                 transition: dragging ? "none" : `transform 620ms ${EASE}`,
                 zIndex: 100 - Math.round(a * 10),
-                background: s.hero ? GRAINIENT : C.card,
-                boxShadow: `0 0 0 1px ${s.hero ? "rgba(255,255,255,0.18)" : C.line}, 0 30px 60px -20px rgba(0,0,0,0.7)`,
+                background: s.hero ? GRAINIENT : "linear-gradient(160deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 38%, rgba(255,255,255,0) 60%), rgba(22,17,43,0.72)",
+                backdropFilter: !s.hero && a < 0.5 ? "blur(22px) saturate(150%)" : undefined,
+                WebkitBackdropFilter: !s.hero && a < 0.5 ? "blur(22px) saturate(150%)" : undefined,
+                boxShadow: `inset 0 1px 0 rgba(255,255,255,${s.hero ? 0.25 : 0.14}), 0 0 0 1px ${s.hero ? "rgba(255,255,255,0.18)" : C.line}, 0 30px 70px -24px rgba(0,0,0,0.75)`,
                 willChange: "transform",
                 cursor: current ? "grab" : "pointer",
               }}
@@ -727,7 +815,7 @@ export function PitchDeck() {
 
               {/* Side cards sink back, but stay visible as more to come */}
               <div className="pointer-events-none absolute inset-0 rounded-[28px]"
-                style={{ background: C.page, opacity: Math.min(a, 1.6) * 0.32, transition: dragging ? "none" : `opacity 620ms ${EASE}` }} />
+                style={{ background: C.page, opacity: Math.min(a, 1.6) * 0.38, transition: dragging ? "none" : `opacity 620ms ${EASE}` }} />
             </article>
           );
         })}
