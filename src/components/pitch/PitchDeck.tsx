@@ -368,7 +368,7 @@ const SLIDES: Slide[] = [
             {[
               "Seven years in marketing across retail, services, hospitality, real estate and healthcare",
               "Runs BCON Club, a growth agency teaching businesses to build with AI",
-              "Built PROXe from the gaps he saw in every client's inbox",
+              "Founder & CEO of PROXe, live with paying customers",
             ].map((t) => (
               <p key={t} className="flex gap-2.5 text-[13.5px] leading-snug text-white/75">
                 <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: C.violet }} />{t}
@@ -565,8 +565,8 @@ export function PitchDeck() {
   useEffect(() => {
     const el = cardRefs.current[index];
     const words = (el?.textContent ?? "").trim().split(/\s+/).length;
-    // ~200 words a minute, plus a beat for the picture.
-    const total = Math.min(22, Math.max(6, Math.round(words / 3.3) + 3)) * 1000;
+    // ~240 words a minute, plus a beat for the picture.
+    const total = Math.min(20, Math.max(6, Math.round(words / 4) + 3)) * 1000;
     let elapsed = 0;
     let last = performance.now();
     let raf = 0;

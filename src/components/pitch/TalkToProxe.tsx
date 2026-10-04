@@ -101,28 +101,28 @@ export function TalkToProxe({ onActive }: { onActive: (live: boolean) => void })
         <button
           onClick={toggleOrb}
           aria-label={live ? "End the conversation" : "Talk to PROXe"}
-          className="relative flex h-36 w-36 items-center justify-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-[#0b0c08]/30"
+          className="relative flex h-36 w-36 items-center justify-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/40"
         >
           {/* Rings breathe while PROXe talks */}
-          <span className={`absolute inset-0 rounded-full bg-[#0b0c08]/10 ${live ? "animate-ping" : ""}`} style={{ animationDuration: speaking ? "1.1s" : "2.4s" }} />
-          <span className="absolute inset-3 rounded-full bg-[#0b0c08]/15" />
+          <span className={`absolute inset-0 rounded-full bg-white/10 ${live ? "animate-ping" : ""}`} style={{ animationDuration: speaking ? "1.1s" : "2.4s" }} />
+          <span className="absolute inset-3 rounded-full bg-white/15" />
           <span
-            className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#0b0c08] text-[#cbfa0a] transition-transform duration-300"
+            className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white text-[#6d28d9] transition-transform duration-300"
             style={{ transform: speaking ? "scale(1.08)" : "scale(1)" }}
           >
             {state === "connecting" || state === "ending" ? <Loader2 size={28} className="animate-spin" /> : <Mic size={30} />}
           </span>
         </button>
-        <p className="text-[14px] font-medium text-[#0b0c08]">
+        <p className="text-[14px] font-medium text-white">
           {state === "connecting" ? "Connecting…" : live ? (speaking ? "PROXe is talking" : "Listening · tap to end") : "Tap to talk to PROXe"}
         </p>
-        {orbError && <p className="text-center text-[12.5px] text-[#5c1f00]">{orbError}</p>}
+        {orbError && <p className="text-center text-[12.5px] text-[#fecaca]">{orbError}</p>}
       </div>
 
       <form onSubmit={requestCall} className="mt-4 space-y-2">
-        <p className="text-[12.5px] font-medium text-[#0b0c08]/70">Or get a call in five seconds</p>
+        <p className="text-[12.5px] font-medium text-white/70">Or get a call in five seconds</p>
         <div className="flex gap-2">
-          <div className="flex min-w-0 flex-1 items-center rounded-2xl bg-[#0b0c08] px-4">
+          <div className="flex min-w-0 flex-1 items-center rounded-2xl bg-[#16112b] px-4">
             <span className="text-[15px] text-white/50">+91</span>
             <input
               value={phone}
@@ -137,13 +137,13 @@ export function TalkToProxe({ onActive }: { onActive: (live: boolean) => void })
           <button
             type="submit"
             disabled={call === "sending" || phone.replace(/\D/g, "").length < 10}
-            className="flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-white px-4 text-[14px] font-semibold text-[#0b0c08] transition-opacity disabled:opacity-40"
+            className="flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-white px-4 text-[14px] font-semibold text-[#4c1d95] transition-opacity disabled:opacity-40"
           >
             {call === "sending" ? <Loader2 size={16} className="animate-spin" /> : call === "ringing" ? <Check size={16} /> : <PhoneCall size={16} />}
             Call me
           </button>
         </div>
-        {callMsg && <p className={`text-[12.5px] ${call === "error" ? "text-[#5c1f00]" : "text-[#0b0c08]"}`}>{callMsg}</p>}
+        {callMsg && <p className={`text-[12.5px] ${call === "error" ? "text-[#fecaca]" : "text-white"}`}>{callMsg}</p>}
       </form>
     </div>
   );
