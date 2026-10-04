@@ -61,14 +61,14 @@ for (const [key, line] of Object.entries(LINES)) {
   const raw = `${OUT}/${key}.raw.mp3`;
   await writeFile(raw, buf);
   // Even loudness across clips (this voice is mastered quiet), mono, small.
-  // v3 sometimes rushes a line. Keep every clip near one pace (~132 words a
-  // minute) by slowing fast ones, pitch unchanged.
+  // v3 rushes some lines and drags others. Set every clip to one pace
+  // (135 words a minute), pitch unchanged; the deck plays it at 1.15x.
   const secs = parseFloat(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", raw]).toString());
   const words = line.replace(/\[[^\]]+\]/g, "").split(/\s+/).filter(Boolean).length;
   const wpm = (words / secs) * 60;
-  const tempo = wpm > 140 ? Math.max(0.8, 132 / wpm) : 1;
+  const tempo = Math.min(1.25, Math.max(0.8, 135 / wpm)); // even pace, both ways
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", raw, "-af", `atempo=${tempo.toFixed(3)},loudnorm=I=-16:TP=-1.5:LRA=11`, "-ac", "1", "-b:a", "64k", `${OUT}/${key}.mp3`]);
   await rm(raw);
-  if (tempo < 1) console.log(`  ${key}: ${wpm.toFixed(0)} wpm, slowed to ${(wpm * tempo).toFixed(0)}`);
+  if (Math.abs(tempo - 1) >= 0.03) console.log(`  ${key}: ${wpm.toFixed(0)} wpm, set to ${(wpm * tempo).toFixed(0)}`);
   console.log(`${key}.mp3`);
 }

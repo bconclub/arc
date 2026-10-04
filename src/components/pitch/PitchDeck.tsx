@@ -28,6 +28,8 @@ const LANGS: [string, string][] = [
   ["en", "English"], ["hi-IN", "हिन्दी"], ["ta-IN", "தமிழ்"], ["te-IN", "తెలుగు"], ["kn-IN", "ಕನ್ನಡ"],
   ["ml-IN", "മലയാളം"], ["mr-IN", "मराठी"], ["bn-IN", "বাংলা"], ["gu-IN", "ગુજરાતી"], ["pa-IN", "ਪੰਜਾਬੀ"],
 ];
+// Every clip is evened to one pace; played a touch faster so it moves.
+const RATE = 1.15;
 const clipUrl = (lang: string, key: string) => (lang === "en" ? `/pitch/audio/${key}.mp3` : `/pitch/audio/${lang}/${key}.mp3`);
 const LINKEDIN = "https://www.linkedin.com/in/thanzeelashruf/";
 
@@ -97,12 +99,12 @@ function GapFix({ on }: { on: boolean }) {
     { icon: UserMinus, gap: "Customers slip away", what: "no care after the sale, no community, retention drops", fix: "keeps customers looked after and coming back" },
   ];
   return (
-    <div className="space-y-2">
+    <div className="flex flex-1 flex-col gap-2">
       {rows.map((r, i) => {
         const Icon = r.icon;
         return (
-          <div key={r.gap} className={`overflow-hidden rounded-2xl bg-white/[0.04] ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: `${120 + i * 140}ms` }}>
-            <div className="flex items-center gap-3 px-3.5 py-2.5">
+          <div key={r.gap} className={`flex flex-1 flex-col overflow-hidden rounded-2xl bg-white/[0.04] ${on ? "pitch-in" : "opacity-0"}`} style={{ animationDelay: `${120 + i * 140}ms` }}>
+            <div className="flex flex-1 items-center gap-3 px-3.5 py-2.5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(248,113,113,0.14)", color: C.leak }}><Icon size={15} /></span>
               <span className="min-w-0">
                 <span className="block text-[13.5px] font-medium text-white">{r.gap}</span>
@@ -193,7 +195,7 @@ const SLIDES: Slide[] = [
     render: ({ on }) => (
       <>
         <Headline>Four gaps every business has stopped noticing.</Headline>
-        <div className="flex flex-1 flex-col justify-center pt-4">
+        <div className="flex flex-1 flex-col pt-4">
           <GapFix on={on} />
         </div>
       </>
@@ -688,7 +690,8 @@ export function PitchDeck() {
     a.pause();
     if (!narrate || !unlocked) return;
     a.src = clipUrl(lang, SLIDES[index]!.key);
-    a.onloadedmetadata = () => { if (isFinite(a.duration)) clipMs.current = a.duration * 1000; };
+    a.playbackRate = RATE;
+    a.onloadedmetadata = () => { if (isFinite(a.duration)) clipMs.current = (a.duration * 1000) / RATE; a.playbackRate = RATE; };
     a.play().catch(() => {});
     // Warm the next clip so it starts without a gap.
     const next = SLIDES[index + 1];
