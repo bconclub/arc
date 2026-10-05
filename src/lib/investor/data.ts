@@ -75,6 +75,8 @@ export type InvestorOverview = {
     runwayLeft: number | null;
     /** average daily burn over the selected window */
     dailyBurn: number;
+    /** the company's cash right now, whatever the window: round money in + sales in - everything spent since */
+    bank: { balance: number; raised: number; sales: number; spent: number; since: string | null };
   };
   spend: Section<{
     total: number;
@@ -837,6 +839,11 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       deployedOther,
       runwayLeft: committed != null ? committed - deployed : null,
       dailyBurn,
+      bank: (() => {
+        const out = allExpenses.filter((e) => !roundStart || e.spent_on >= roundStart).reduce((t, e) => t + Number(e.amount), 0);
+        const salesIn = (sales?.items ?? []).filter((p) => !roundStart || p.at.slice(0, 10) >= roundStart).reduce((t, p) => t + p.amount, 0);
+        return { balance: roundReceived + salesIn - out, raised: roundReceived, sales: salesIn, spent: out, since: roundStart };
+      })(),
     },
     spend,
     adWallet,

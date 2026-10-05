@@ -43,6 +43,11 @@
      (#CBFA0A on #FFF is about 1.4:1), so the light theme darkens it. Use this
      for lime type and --brand for lime fills. */
   --brand-text: #cbfa0a;
+  /* Tone colors as TEXT (department chips, conversions). Pastels read on
+     black, wash out on white; the light theme swaps in deeper shades. */
+  --tone-purple-text: #d8b4fe;
+  --tone-cyan-text: #67e8f9;
+  --tone-gold-text: #f0c84b;
 
   /* ── Semantic tokens used across the app (esp. the inline-styled Feed) ── */
   --card-bg: #141414;        /* feed card surface */
@@ -99,6 +104,9 @@
   --brand-faint: rgba(203, 250, 10, 0.14);
   --brand-line: rgba(163, 201, 8, 0.45);
   --brand-text: #4f6a02;   /* ~7:1 on white; the raw lime is ~1.4:1 */
+  --tone-purple-text: #7e22ce;
+  --tone-cyan-text: #0e7490;
+  --tone-gold-text: #a16207;
 }
 
 * {

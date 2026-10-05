@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   ArrowLeft, LogOut, Megaphone, Wallet, Newspaper, Pin, Target,
   Users, Code2, Handshake, BarChart3, Smartphone, MapPin, MousePointerClick, Gauge, Settings2, Star, BadgeCheck, Bell, Inbox, Radar, Presentation, Link2, Repeat, Activity, CalendarCheck, Home, TrendingUp,
@@ -155,8 +156,8 @@ function SpendBars({ daily }: { daily: DaySpend[] }) {
 const DEPT: Record<string, { icon: typeof Wallet; label: string; chip: string; bar: string; box: string; ring: string }> = {
   Marketing: {
     icon: Megaphone, label: "Marketing",
-    chip: "border-[#c084fc]/60 bg-[#c084fc]/15 text-[#d8b4fe]", bar: "bg-[#c084fc]",
-    box: "border-[#c084fc]/45 bg-[#c084fc]/[0.08]", ring: "border-[#c084fc]/60 text-[#c084fc]",
+    chip: "border-[#c084fc]/60 bg-[#c084fc]/15 text-[var(--tone-purple-text)]", bar: "bg-[#c084fc]",
+    box: "border-[#c084fc]/45 bg-[#c084fc]/[0.08]", ring: "border-[#c084fc]/60 text-[var(--tone-purple-text)]",
   },
   Sales: {
     icon: Handshake, label: "Sales",
@@ -165,8 +166,8 @@ const DEPT: Record<string, { icon: typeof Wallet; label: string; chip: string; b
   },
   Engineering: {
     icon: Code2, label: "Engineering",
-    chip: "border-[#22d3ee]/55 bg-[#22d3ee]/12 text-[#67e8f9]", bar: "bg-[#22d3ee]",
-    box: "border-[#22d3ee]/40 bg-[#22d3ee]/[0.07]", ring: "border-[#22d3ee]/60 text-[#22d3ee]",
+    chip: "border-[#22d3ee]/55 bg-[#22d3ee]/12 text-[var(--tone-cyan-text)]", bar: "bg-[#22d3ee]",
+    box: "border-[#22d3ee]/40 bg-[#22d3ee]/[0.07]", ring: "border-[#22d3ee]/60 text-[var(--tone-cyan-text)]",
   },
   Operations: {
     icon: Settings2, label: "Operations",
@@ -249,7 +250,7 @@ function FeedIcon({ item }: { item: FeedItem }) {
   const Icon = deptOf(item.department).icon;
   const ring =
     item.tone === "paid" ? "border-accent-green/60 text-accent-green"
-    : item.tone === "sales" ? "border-[#e8b931]/60 text-[#e8b931]"
+    : item.tone === "sales" ? "border-[#e8b931]/60 text-[var(--tone-gold-text)]"
     : item.tone === "spend" ? deptOf(item.department).ring
     : "border-[var(--brand-line)] text-[var(--brand-text)]";
   return (
@@ -282,7 +283,7 @@ function Feed({ items }: { items: FeedItem[] }) {
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 {item.tone === "sales" && <Star size={13} className="shrink-0 fill-[#e8b931] text-[#e8b931]" aria-label="Conversion" />}
                 {item.tone === "paid" && <BadgeCheck size={14} className="shrink-0 text-accent-green" aria-label="Payment received" />}
-                <h3 className={`text-[13.5px] font-semibold leading-snug ${item.tone === "sales" ? "text-[#f0c84b]" : item.tone === "paid" ? "text-accent-green" : "text-text"}`}>{item.title}</h3>
+                <h3 className={`text-[13.5px] font-semibold leading-snug ${item.tone === "sales" ? "text-[var(--tone-gold-text)]" : item.tone === "paid" ? "text-accent-green" : "text-text"}`}>{item.title}</h3>
                 {stage && <StatusPill status={stage.label} tone={stage.tone} />}
                 <DeptChip name={item.department} />
                 {item.pinned && <Pin size={11} className="text-[var(--brand-text)]" aria-label="Pinned" />}
@@ -365,12 +366,12 @@ function SiteSection({ s }: { s: SiteVisitors }) {
       <Card title="What ad visitors do" icon={MousePointerClick} sub={`${s.sample} recent ad visits`}>
         <div className="flex h-3 gap-0.5 overflow-hidden rounded-pill">
           <div className="bg-accent-red" style={{ flex: s.bounced }} title="left within 10 seconds" />
-          <div className="bg-text-muted/40" style={{ flex: s.noClick }} title="stayed, clicked nothing" />
+          <div className="bg-text-muted opacity-40" style={{ flex: s.noClick }} title="stayed, clicked nothing" />
           <div className="bg-accent-green" style={{ flex: s.clicked }} title="clicked something" />
         </div>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-muted">
           <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-red" />left in under 10s · {pct(s.bounced, s.sample)}%</span>
-          <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-text-muted/40" />looked, no click · {pct(s.noClick, s.sample)}%</span>
+          <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-text-muted opacity-40" />looked, no click · {pct(s.noClick, s.sample)}%</span>
           <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-green" />clicked · {pct(s.clicked, s.sample)}%</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
@@ -403,6 +404,7 @@ function SiteSection({ s }: { s: SiteVisitors }) {
         )}
       </Card>
 
+      <div className="grid gap-4 md:grid-cols-2">
       {s.adsEngagement && s.adsEngagement.length > 0 && (
         <Card title="Which ad brings engaged visitors" icon={Megaphone} sub="visits, and how many tapped anything">
           <ul className="space-y-3">
@@ -424,6 +426,7 @@ function SiteSection({ s }: { s: SiteVisitors }) {
           </ul>
         </Card>
       )}
+      </div>
 
       {(s.cities?.length || s.devices?.length) ? (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -507,6 +510,7 @@ function AdsView({ d }: { d: AdsDesk }) {
         </dl>
       </section>
 
+      <div className="grid gap-4 md:grid-cols-2">
       {d.daily.length > 0 && (
         <Card title="Spend by day" icon={Wallet} sub={`since ${fmtDate(d.since)}`}>
           <div className="flex h-28 items-end gap-1">
@@ -562,6 +566,7 @@ function AdsView({ d }: { d: AdsDesk }) {
           {d.funnel.leads} leads in total since {fmtDate(d.since)}, {d.funnel.fromAds} of them from ads. Bookings and demos come from the team&apos;s call notes and chats.
         </p>
       </Card>
+      </div>
 
       {d.site && <SiteSection s={d.site} />}
 
@@ -658,18 +663,51 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
         </div>
       )}
 
-      <div className="mx-auto max-w-[560px] px-4 pb-28 pt-5 sm:pt-8">
-        <header className="mb-5 flex items-start justify-between gap-3">
+      {/* ══ The app's five doors: bottom bar on phones, top bar from tablet up ══ */}
+      {data && (
+        <nav className="fixed inset-x-0 bottom-0 z-20 bg-[var(--bg)]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:sticky md:bottom-auto md:top-0 md:border-b md:border-[var(--border)] md:pb-0">
+          <div className="mx-auto grid max-w-[560px] grid-cols-5 px-1 pt-1.5 md:flex md:h-14 md:max-w-[960px] md:items-center md:gap-1 md:px-8 md:pt-0">
+            <p className="hidden shrink-0 pr-4 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-text)] lg:block">PROXe · Investor</p>
+            {TABS.map((t) => {
+              const on = view === t.key;
+              return (
+                <button key={t.key} onClick={() => (t.key === "updates" ? openUpdates() : go(t.key))}
+                  className={`relative flex flex-col items-center gap-1 rounded-card py-2 md:flex-row md:gap-2 md:rounded-pill md:py-1.5 md:pl-2.5 md:pr-3.5 md:transition-colors ${on ? "md:bg-[var(--brand)]" : "md:hover:bg-surface"}`} aria-current={on ? "page" : undefined}>
+                  <span className={`flex h-8 w-12 items-center justify-center rounded-pill transition-colors md:h-auto md:w-auto md:bg-transparent ${on ? "bg-[var(--brand)] text-black" : "text-text-muted"}`}>
+                    <t.icon size={18} className="md:h-4 md:w-4" />
+                  </span>
+                  <span className={`text-[10.5px] font-medium md:text-[13px] ${on ? "text-text md:text-black" : "text-text-muted"}`}>{t.label}</span>
+                  {t.key === "updates" && newCount > 0 && !on && (
+                    <span className="absolute right-[22%] top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-pill bg-accent-red px-1 text-[9.5px] font-bold tabular-nums text-white md:static">
+                      {newCount > 9 ? "9+" : newCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            <div className="ml-auto hidden md:block"><ThemeToggle /></div>
+            {role === "investor" && (
+              <button onClick={logout} aria-label="Sign out" className="hidden rounded-pill p-2.5 text-text-muted transition-colors hover:bg-surface hover:text-text md:flex">
+                <LogOut size={16} />
+              </button>
+            )}
+          </div>
+        </nav>
+      )}
+
+      <div className="mx-auto max-w-[560px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 sm:pt-8 md:max-w-[960px] md:px-8 md:pb-12">
+        <header className="mb-5 flex items-start justify-between gap-3 md:mb-6">
           <div className="min-w-0">
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-text)]">PROXe · Investor</p>
+            <p className="text-[10.5px] font-semibold md:hidden uppercase tracking-[0.14em] text-[var(--brand-text)]">PROXe · Investor</p>
             <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-text sm:text-[28px]">
               {!data ? "\u00a0" : view === "home" ? (owner ? "PROXe, as investors see it" : `Hello, ${data.viewer.name.split(" ")[0]}.`) : TABS.find((t) => t.key === view)!.label}
             </h1>
             {data && <p className="mt-1 text-[12px] text-text-muted">Updated {fmtDateTime(data.generatedAt)}</p>}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 md:hidden">
+            <ThemeToggle />
             {role === "investor" && (
-              <button onClick={logout} aria-label="Sign out" className="rounded-pill bg-surface p-2.5 text-text-muted transition-colors hover:text-text">
+              <button onClick={logout} aria-label="Sign out" className="rounded-pill bg-surface p-2.5 md:hidden text-text-muted transition-colors hover:text-text">
                 <LogOut size={16} />
               </button>
             )}
@@ -702,9 +740,11 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
 
         {data && st && m && f && view === "home" && (
           <div className={`space-y-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+            <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-4">
             {/* ══ Part 1: the investment. Terms of the company, not its activity. ══ */}
             <SectionHead title={owner ? "The round" : "Your investment"} sub={st.roundInfo ? `${st.roundInfo.name} · ${st.roundInfo.equityOffered}% for ${moneyShort(st.roundInfo.target)}` : undefined} />
-            <section className="overflow-hidden rounded-panel bg-surface">
+            <section className="flex-1 overflow-hidden rounded-panel bg-surface">
               <div className="bg-[var(--brand-faint)] p-4 sm:p-5">
                 <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text)]">
                   {owner ? "Equity issued so far" : "You own"}
@@ -744,9 +784,11 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
               </dl>
             </section>
 
+            </div>
+            <div className="flex min-w-0 flex-col gap-4">
             {/* The plan: what the round is for, and how far along it is */}
             <SectionHead title="The plan" sub="5,000 leads → 1,000 demos → 100 customers" />
-            <section className="space-y-3 rounded-panel bg-surface p-4 sm:p-5">
+            <section className="flex flex-1 flex-col justify-between gap-3 rounded-panel bg-surface p-4 sm:p-5">
               {[
                 { label: "Leads", value: data.goal.leads, target: data.goal.targets.leads, bar: "bg-accent-blue", hint: "inbound + outbound reached" },
                 { label: "Demos", value: data.goal.demos, target: data.goal.targets.demos, bar: "bg-[var(--brand)]", hint: "shown to prospects" },
@@ -766,19 +808,37 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 </div>
               ))}
             </section>
+            </div>
+            </div>
 
             {/* At a glance: the four numbers, then where to look next */}
             <SectionHead title="At a glance" sub={`PROXe, ${RANGE_LABEL[range]}`} />
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {[
-                { label: "Sales", value: f.sales != null ? moneyShort(f.sales) : "–", tone: "text-accent-green", go: "money" as const },
+                { label: "In the bank", value: moneyShort(m.bank.balance), tone: "text-text", go: "money" as const },
                 { label: "Spent", value: moneyShort(f.spentTotal), tone: "text-text", go: "money" as const },
-                { label: "Demos done", value: String(f.demosDone), tone: "text-text", go: "growth" as const },
+                { label: "Sales", value: f.sales != null ? moneyShort(f.sales) : "–", tone: "text-accent-green", go: "money" as const },
                 { label: "Paying customers", value: String(f.activeSubs ?? "–"), tone: "text-accent-green", go: "growth" as const },
               ].map((x) => (
                 <button key={x.label} onClick={() => go(x.go)} className="rounded-panel bg-surface p-4 text-left transition-colors active:bg-[var(--surface-hover)]">
                   <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.label}</p>
                   <p className={`mt-1.5 text-[24px] font-semibold tabular-nums tracking-tight ${x.tone}`}>{x.value}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* The pipeline: the four things tracked from lead to paying customer */}
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              {[
+                { label: "Total leads", hint: "inbound + outbound reached", value: f.incoming != null ? String(f.incoming + f.outbound) : "–", tone: "text-text" },
+                { label: "Demos done", hint: "shown to prospects", value: String(f.demosDone), tone: "text-text" },
+                { label: "Payment links sent", hint: "to businesses ready to buy", value: String(f.linksShared), tone: "text-[#f0c84b]" },
+                { label: "Active subscriptions", hint: "paying every month", value: String(f.activeSubs ?? "–"), tone: "text-accent-green" },
+              ].map((x) => (
+                <button key={x.label} onClick={() => go("growth")} className="rounded-panel bg-surface p-4 text-left transition-colors active:bg-[var(--surface-hover)]">
+                  <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.label}</p>
+                  <p className={`mt-1.5 text-[24px] font-semibold tabular-nums tracking-tight ${x.tone}`}>{x.value}</p>
+                  <p className="mt-0.5 text-[10.5px] text-text-muted">{x.hint}</p>
                 </button>
               ))}
             </div>
@@ -801,7 +861,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
             </div>
             {/* Growth: the sequence a customer moves through */}
             <Card title="Growth" icon={Users} sub="lead to paying customer">
-              <ol className="grid grid-cols-2 gap-2">
+              <ol className="grid grid-cols-2 gap-2 md:grid-cols-4">
                 {[
                   { icon: Inbox, label: "Incoming leads", value: f.incoming, hint: "inbound to PROXe", gold: false },
                   { icon: Radar, label: "Outbound touched", value: f.outbound, hint: `${f.outboundCalls} calls · ${f.outboundEmails} emails`, gold: false },
@@ -813,7 +873,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                       <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--bg)] text-[9.5px] font-semibold tabular-nums text-text">{i + 1}</span>
                       <x.icon size={12} className={x.gold ? "text-[#e8b931]" : ""} />
                     </div>
-                    <p className={`mt-2 text-[24px] font-semibold tabular-nums ${x.gold ? "text-[#f0c84b]" : "text-text"}`}>{x.value ?? "–"}</p>
+                    <p className={`mt-2 text-[24px] font-semibold tabular-nums ${x.gold ? "text-[var(--tone-gold-text)]" : "text-text"}`}>{x.value ?? "–"}</p>
                     <p className="text-[12px] font-medium text-text">{x.label}</p>
                     <p className="text-[10.5px] text-text-muted">{x.hint}</p>
                   </li>
@@ -830,6 +890,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 <p className="text-[24px] font-semibold tabular-nums text-accent-green">{f.activeSubs ?? "–"}</p>
               </div>
             </Card>
+            <div className="grid gap-4 md:grid-cols-2">
             {/* ══ Activity: demos booked and payment links, tracked over the window ══ */}
             <Card title="Activity" icon={Activity} sub={RANGE_LABEL[range]}>
               <div className="mb-4 grid grid-cols-2 gap-2">
@@ -839,7 +900,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 </div>
                 <div className="rounded-card bg-[#e8b931]/[0.10] p-3">
                   <p className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.08em] text-text-muted"><Link2 size={11} />Payment links</p>
-                  <p className="mt-1 text-[24px] font-semibold tabular-nums text-[#f0c84b]">{data.activity.linksShared}</p>
+                  <p className="mt-1 text-[24px] font-semibold tabular-nums text-[var(--tone-gold-text)]">{data.activity.linksShared}</p>
                 </div>
               </div>
               <ActivityBars daily={data.activity.daily} />
@@ -850,7 +911,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                       {r.kind === "link"
                         ? <Star size={12} className="shrink-0 fill-[#e8b931] text-[#e8b931]" />
                         : <CalendarCheck size={12} className="shrink-0 text-[var(--brand-text)]" />}
-                      <span className={`min-w-0 flex-1 truncate text-[12.5px] ${r.kind === "link" ? "text-[#f0c84b]" : "text-text"}`}>{r.title}</span>
+                      <span className={`min-w-0 flex-1 truncate text-[12.5px] ${r.kind === "link" ? "text-[var(--tone-gold-text)]" : "text-text"}`}>{r.title}</span>
                       <span className="shrink-0 text-[10.5px] tabular-nums text-text-muted">{fmtDate(r.at)}</span>
                     </li>
                   ))}
@@ -919,6 +980,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 </div>
               )}
             </Card>
+            </div>
           </div>
         )}
 
@@ -937,8 +999,24 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
             <div className="flex justify-end">
               <SegmentedTabs ariaLabel="Period" size="sm" value={range} onChange={setRange} tabs={RANGE_TABS} />
             </div>
+            {/* The two numbers that matter: cash now, and what went out in the window */}
+            <section className="grid overflow-hidden rounded-panel bg-surface sm:grid-cols-2">
+              <div className="bg-[var(--brand-faint)] p-4 sm:p-5">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text)]">In the bank</p>
+                <p className="mt-1 text-[34px] font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[40px]">{money(Math.round(m.bank.balance))}</p>
+                <p className="mt-1.5 text-[12px] tabular-nums text-text-muted">
+                  {moneyShort(m.bank.raised)} raised{m.bank.sales ? ` + ${moneyShort(m.bank.sales)} sales` : ""} − {moneyShort(m.bank.spent)} spent{m.bank.since ? ` since ${fmtDate(m.bank.since)}` : ""}
+                </p>
+              </div>
+              <div className="p-4 sm:p-5">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-text-muted">Spent, {RANGE_LABEL[range]}</p>
+                <p className="mt-1 text-[34px] font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[40px]">{money(f.spentTotal)}</p>
+                <p className="mt-1.5 text-[12px] tabular-nums text-text-muted">{f.salesCount ? `${moneyShort(f.sales ?? 0)} came in from sales` : "money out of the bank in this window"}</p>
+              </div>
+            </section>
+            <div className="grid items-start gap-4 md:grid-cols-2">
             {/* Money: in, then out by department, then by kind */}
-            <Card title="Money" icon={Wallet} sub={RANGE_LABEL[range]}>
+            <Card title="Money" icon={Wallet} sub={RANGE_LABEL[range]} className="md:sticky md:top-20">
               <MoneyLine
                 label="Sales"
                 hint={`${f.salesCount} payment${f.salesCount === 1 ? "" : "s"} received`}
@@ -1012,34 +1090,11 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 </div>
               )}
             </Card>
+            </div>
           </div>
         )}
       </div>
 
-      {/* ══ The app's five doors ══ */}
-      {data && (
-        <nav className="fixed inset-x-0 bottom-0 z-20 bg-[var(--bg)]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
-          <div className="mx-auto grid max-w-[560px] grid-cols-5 px-1 pt-1.5">
-            {TABS.map((t) => {
-              const on = view === t.key;
-              return (
-                <button key={t.key} onClick={() => (t.key === "updates" ? openUpdates() : go(t.key))}
-                  className="relative flex flex-col items-center gap-1 rounded-card py-2" aria-current={on ? "page" : undefined}>
-                  <span className={`flex h-8 w-12 items-center justify-center rounded-pill transition-colors ${on ? "bg-[var(--brand)] text-black" : "text-text-muted"}`}>
-                    <t.icon size={18} />
-                  </span>
-                  <span className={`text-[10.5px] font-medium ${on ? "text-text" : "text-text-muted"}`}>{t.label}</span>
-                  {t.key === "updates" && newCount > 0 && !on && (
-                    <span className="absolute right-[22%] top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-pill bg-accent-red px-1 text-[9.5px] font-bold tabular-nums text-white">
-                      {newCount > 9 ? "9+" : newCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-      )}
     </div>
   );
 }
