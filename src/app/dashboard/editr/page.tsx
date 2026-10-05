@@ -210,9 +210,13 @@ export default function EditrPage() {
                       <div className="mt-2 flex items-center gap-2"><Bar value={t.progress_done} max={t.progress_total} color="var(--accent-green)" />
                         <span className="text-[10.5px] tabular-nums text-text-muted">{t.progress_done}/{t.progress_total}</span></div>
                     )}
-                    {t.effective !== "done" && (t.blocked_by?.length || t.waiting_on) ? (
-                      <p className="mt-1.5 text-[11px] text-accent-red">{[...(t.blocked_by || []).map((b) => `needs ${b}`), t.waiting_on].filter(Boolean).join(" · ")}</p>
-                    ) : null}
+                    {(() => {
+                      // Only blockers that aren't done yet; a finished dependency is no longer a wait.
+                      const open = (t.blocked_by || []).filter((b) => tasks.find((x) => x.id === b)?.effective !== "done");
+                      const waits = [...open.map((b) => `needs ${b}`), t.waiting_on].filter(Boolean);
+                      return t.effective !== "done" && waits.length
+                        ? <p className="mt-1.5 text-[11px] text-accent-red">{waits.join(" · ")}</p> : null;
+                    })()}
                     {t.due && <p className="mt-1 text-[10.5px] text-text-muted">due {t.due}</p>}
                   </div>
                 ))}
