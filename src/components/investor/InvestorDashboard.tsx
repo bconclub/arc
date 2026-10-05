@@ -9,14 +9,15 @@ import {
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { money, moneyShort } from "@/lib/format";
-import type { DaySpend, FeedItem, InvestorOverview } from "@/lib/investor/data";
+import type { AdsDesk, DaySpend, FeedItem, InvestorOverview } from "@/lib/investor/data";
 
 type Range = "7" | "30" | "3650";
-type View = "home" | "growth" | "money" | "updates";
+type View = "home" | "growth" | "ads" | "money" | "updates";
 
 const TABS: { key: View; label: string; icon: typeof Wallet }[] = [
   { key: "home", label: "Home", icon: Home },
   { key: "growth", label: "Growth", icon: TrendingUp },
+  { key: "ads", label: "Ads", icon: Megaphone },
   { key: "money", label: "Money", icon: Wallet },
   { key: "updates", label: "Updates", icon: Bell },
 ];
@@ -310,6 +311,147 @@ function Feed({ items }: { items: FeedItem[] }) {
         );
       })}
     </ol>
+  );
+}
+
+/** One row of a horizontal bar list: label, filled track, value. */
+function HBar({ label, sub, value, max, display, tone = "brand" }: {
+  label: string; sub?: string; value: number; max: number; display: string; tone?: "brand" | "good" | "bad" | "muted";
+}) {
+  const fill = tone === "good" ? "bg-accent-green" : tone === "bad" ? "bg-accent-red" : tone === "muted" ? "bg-text-muted/50" : "bg-[var(--brand)]";
+  return (
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1">
+      <div className="min-w-0">
+        <p className="truncate text-[12.5px] text-text">{label}</p>
+        {sub && <p className="truncate text-[10.5px] text-text-muted">{sub}</p>}
+      </div>
+      <span className="self-end text-[12.5px] font-semibold tabular-nums text-text">{display}</span>
+      <div className="col-span-2 h-2 overflow-hidden rounded-pill bg-[var(--surface-hover)]">
+        <div className={`h-full rounded-pill ${fill}`} style={{ width: `${max ? Math.max(value ? 2 : 0, (value / max) * 100) : 0}%` }} />
+      </div>
+    </li>
+  );
+}
+
+/** The Ads tab: what PROXe has spent on ads since 1 Oct, what is running, and what it bought. */
+function AdsView({ d }: { d: AdsDesk }) {
+  const maxDay = Math.max(1, ...d.daily.map((x) => x.spend));
+  const maxCamp = Math.max(1, ...d.campaigns.map((c) => c.spend));
+  const cpls = d.campaigns.map((c) => c.cpl).filter((x): x is number => x != null);
+  const best = cpls.length ? Math.min(...cpls) : null;
+  const tone = (cpl: number | null): "good" | "bad" | "brand" =>
+    cpl == null ? "bad" : best != null && cpl <= best * 1.15 ? "good" : best != null && cpl >= best * 2 ? "bad" : "brand";
+  const maxAdLeads = Math.max(1, ...d.ads.map((a) => a.leads));
+  const steps = [
+    { label: "Leads from ads", value: d.funnel.fromAds },
+    { label: "Replied", value: d.funnel.replied },
+    { label: "Demo booked", value: d.funnel.booked },
+    { label: "Demo done", value: d.funnel.demos },
+    { label: "Paid", value: d.funnel.paid },
+  ];
+  return (
+    <div className="space-y-4">
+      <section className="overflow-hidden rounded-panel bg-surface">
+        <div className="bg-[var(--brand-faint)] p-4 sm:p-5">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text)]">Spent on ads since {fmtDate(d.since)}</p>
+          <p className="mt-1 text-[34px] font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[40px]">{money(Math.round(d.spend))}</p>
+          <p className="mt-1.5 text-[12px] text-text-muted">Facebook + Instagram · as of {fmtDateTime(d.takenAt)}</p>
+        </div>
+        <dl className="grid grid-cols-3">
+          {[
+            { k: "Leads", v: String(d.leads), h: "into PROXe" },
+            { k: "Cost per lead", v: d.cpl != null ? money(Math.round(d.cpl)) : "–", h: "spend ÷ leads" },
+            { k: "Clicks", v: d.clicks ? d.clicks.toLocaleString("en-IN") : "–", h: d.impressions ? `${d.impressions.toLocaleString("en-IN")} views` : "" },
+          ].map((x) => (
+            <div key={x.k} className="p-3 sm:p-4">
+              <dt className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.k}</dt>
+              <dd className="mt-1 text-[20px] font-semibold tabular-nums text-text">{x.v}</dd>
+              <dd className="text-[10.5px] text-text-muted">{x.h}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {d.daily.length > 0 && (
+        <Card title="Spend by day" icon={Wallet} sub={`since ${fmtDate(d.since)}`}>
+          <div className="flex h-28 items-end gap-1">
+            {d.daily.map((x) => (
+              <div key={x.day} className="flex h-full flex-1 flex-col justify-end" title={`${fmtDate(x.day)}: ${money(Math.round(x.spend))}${x.leads ? ` · ${x.leads} leads` : ""}`}>
+                <div className="w-full rounded-t-[3px] bg-[#c084fc]" style={{ height: `${(x.spend / maxDay) * 100}%`, minHeight: x.spend ? 2 : 0 }} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-1.5 flex justify-between text-[10px] tabular-nums text-text-muted">
+            <span>{fmtDate(d.daily[0].day)}</span><span>{fmtDate(d.daily[d.daily.length - 1].day)}</span>
+          </div>
+        </Card>
+      )}
+
+      <Card title="Campaigns" icon={Megaphone} sub="spend and cost per lead">
+        {d.campaigns.length === 0 ? <p className="text-[12px] text-text-muted">No campaign spent money in this window.</p> : (
+          <ul className="space-y-3">
+            {d.campaigns.map((c) => (
+              <HBar key={c.name} label={c.name} max={maxCamp} value={c.spend} tone={tone(c.cpl)}
+                sub={`${c.status === "Active" ? "Running" : "Stopped"} · ${c.results} lead${c.results === 1 ? "" : "s"} · ${c.cpl != null ? `${money(Math.round(c.cpl))} per lead` : "no leads yet"}`}
+                display={money(Math.round(c.spend))} />
+            ))}
+          </ul>
+        )}
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10.5px] text-text-muted">
+          <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-green" />cheapest leads</span>
+          <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-red" />twice the cheapest, or none</span>
+        </div>
+      </Card>
+
+      {d.ads.length > 0 && (
+        <Card title="Ads running" icon={Megaphone} sub="leads each creative brought">
+          <ul className="space-y-3">
+            {d.ads.map((a) => (
+              <HBar key={`${a.name}|${a.campaign}`} label={a.name} max={maxAdLeads} value={a.leads}
+                tone={a.leads ? "good" : "muted"}
+                sub={[a.campaign, a.status === "Active" ? "running" : a.status.toLowerCase(), a.cpl != null ? `${money(Math.round(a.cpl))} per lead` : null].filter(Boolean).join(" · ")}
+                display={`${a.leads} lead${a.leads === 1 ? "" : "s"}`} />
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <Card title="What the ads bought" icon={Target} sub={`since ${fmtDate(d.since)}`}>
+        <ul className="space-y-3">
+          {steps.map((s, i) => (
+            <HBar key={s.label} label={s.label} max={Math.max(1, steps[0].value)} value={s.value} display={String(s.value)}
+              tone={i === steps.length - 1 ? (s.value ? "good" : "bad") : "brand"} />
+          ))}
+        </ul>
+        <p className="mt-3 text-[10.5px] text-text-muted">
+          {d.funnel.leads} leads in total since {fmtDate(d.since)}, {d.funnel.fromAds} of them from ads. Bookings and demos come from the team&apos;s call notes and chats.
+        </p>
+      </Card>
+
+      {d.site && (
+        <Card title="What ad visitors do on the site" icon={Activity} sub={`sample of ${d.site.sample} visits`}>
+          <div className="flex h-3 gap-0.5 overflow-hidden rounded-pill">
+            <div className="bg-accent-red" style={{ flex: d.site.bounced }} title="left within 10 seconds" />
+            <div className="bg-text-muted/40" style={{ flex: d.site.noClick }} title="stayed, clicked nothing" />
+            <div className="bg-accent-green" style={{ flex: d.site.clicked }} title="clicked something" />
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-muted">
+            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-red" />left in under 10s · {d.site.bounced}</span>
+            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-text-muted/40" />looked, no click · {d.site.noClick}</span>
+            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-green" />clicked · {d.site.clicked}</span>
+          </div>
+          <p className="mt-2 text-[11px] tabular-nums text-text-muted">
+            {d.site.sessions} site visits yesterday{d.site.mobileSeconds != null ? ` · ${d.site.mobileSeconds}s average on mobile` : ""}
+          </p>
+        </Card>
+      )}
+
+      {d.notes.length > 0 && (
+        <ul className="space-y-1 px-1 text-[10.5px] text-text-muted">
+          {d.notes.map((n) => <li key={n}>{n}</li>)}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -661,6 +803,16 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
           </div>
         )}
 
+        {data && view === "ads" && (
+          <div className={`transition-opacity ${loading ? "opacity-60" : ""}`}>
+            {data.adsDesk.ok ? <AdsView d={data.adsDesk.data} /> : (
+              <Card title="Ads" icon={Megaphone} sub="from 1 Oct">
+                <p className="text-[12px] text-text-muted">{data.adsDesk.reason}</p>
+              </Card>
+            )}
+          </div>
+        )}
+
         {data && m && f && view === "money" && (
           <div className={`space-y-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
             <div className="flex justify-end">
@@ -745,16 +897,16 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
         )}
       </div>
 
-      {/* ══ The app's four doors ══ */}
+      {/* ══ The app's five doors ══ */}
       {data && (
         <nav className="fixed inset-x-0 bottom-0 z-20 bg-[var(--bg)]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
-          <div className="mx-auto grid max-w-[560px] grid-cols-4 px-2 pt-1.5">
+          <div className="mx-auto grid max-w-[560px] grid-cols-5 px-1 pt-1.5">
             {TABS.map((t) => {
               const on = view === t.key;
               return (
                 <button key={t.key} onClick={() => (t.key === "updates" ? openUpdates() : go(t.key))}
                   className="relative flex flex-col items-center gap-1 rounded-card py-2" aria-current={on ? "page" : undefined}>
-                  <span className={`flex h-8 w-14 items-center justify-center rounded-pill transition-colors ${on ? "bg-[var(--brand)] text-black" : "text-text-muted"}`}>
+                  <span className={`flex h-8 w-12 items-center justify-center rounded-pill transition-colors ${on ? "bg-[var(--brand)] text-black" : "text-text-muted"}`}>
                     <t.icon size={18} />
                   </span>
                   <span className={`text-[10.5px] font-medium ${on ? "text-text" : "text-text-muted"}`}>{t.label}</span>

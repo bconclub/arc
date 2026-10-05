@@ -108,6 +108,8 @@ export type InvestorOverview = {
     impressions30: number;
     clicks30: number;
   }>;
+  /** the Ads tab: PROXe ads from 1 Oct 2026 only, from the routine's newest snapshot */
+  adsDesk: Section<AdsDesk>;
   demos: Section<{
     inRange: number;
     done: number;
@@ -201,6 +203,31 @@ export type InvestorOverview = {
       daysLeft: number;
     } | null;
   };
+};
+
+/** Investors look at ads from this day on, never earlier. */
+export const ADS_FROM = "2026-10-01";
+
+export type AdsDesk = {
+  since: string;
+  until: string;
+  takenAt: string;
+  source: string | null;
+  /** rupees spent on PROXe ads since ADS_FROM */
+  spend: number;
+  /** leads the PROXe product received from ads since ADS_FROM */
+  leads: number;
+  /** leads as Meta counts them (pixel), usually lower than the product's count */
+  metaLeads: number;
+  cpl: number | null;
+  impressions: number;
+  clicks: number;
+  daily: { day: string; spend: number; leads: number }[];
+  campaigns: { name: string; status: string; spend: number; results: number; cpl: number | null }[];
+  ads: { name: string; campaign: string | null; status: string; spend: number | null; leads: number; cpl: number | null }[];
+  funnel: { leads: number; fromAds: number; replied: number; booked: number; demos: number; paid: number };
+  site: { sessions: number; sample: number; bounced: number; noClick: number; clicked: number; mobileSeconds: number | null } | null;
+  notes: string[];
 };
 
 const fail = (reason: string): { ok: false; reason: string } => ({ ok: false, reason });
@@ -490,6 +517,49 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     }
   }
 
+  // ── ads desk: the routine's newest snapshot, 1 Oct onwards ──
+  let adsDesk: InvestorOverview["adsDesk"];
+  {
+    const [snapRes, dailyRes] = await Promise.all([
+      supabaseAdmin.from("ad_reports").select("taken_at,since,until,source,payload")
+        .eq("product", PRODUCT).order("taken_at", { ascending: false }).limit(1),
+      supabaseAdmin.from("ad_spend_daily").select("day,spend,leads")
+        .eq("product", PRODUCT).gte("day", ADS_FROM).order("day"),
+    ]);
+    const snap = snapRes.data?.[0] as { taken_at: string; since: string; until: string; source: string | null; payload: Partial<AdsDesk> } | undefined;
+    if (snapRes.error) {
+      adsDesk = fail(missingTable(snapRes.error.message) ? "Ad reporting is being set up." : "Ad numbers did not load.");
+    } else if (!snap) {
+      adsDesk = fail("The first ads report lands after the next morning run.");
+    } else {
+      const p = snap.payload ?? {};
+      const stored = ((dailyRes.data ?? []) as { day: string; spend: number; leads: number }[])
+        .map((d) => ({ day: d.day, spend: Number(d.spend), leads: Number(d.leads) }));
+      const daily = stored.length ? stored : (p.daily ?? []).filter((d) => d.day >= ADS_FROM);
+      adsDesk = {
+        ok: true,
+        data: {
+          since: snap.since < ADS_FROM ? ADS_FROM : snap.since,
+          until: snap.until,
+          takenAt: snap.taken_at,
+          source: snap.source,
+          spend: Number(p.spend ?? 0),
+          leads: Number(p.leads ?? 0),
+          metaLeads: Number(p.metaLeads ?? 0),
+          cpl: p.leads ? Number(p.spend ?? 0) / Number(p.leads) : null,
+          impressions: Number(p.impressions ?? 0),
+          clicks: Number(p.clicks ?? 0),
+          daily,
+          campaigns: (p.campaigns ?? []).filter((c) => c.spend > 0).sort((a, b) => b.spend - a.spend),
+          ads: (p.ads ?? []).sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0) || b.leads - a.leads),
+          funnel: p.funnel ?? { leads: 0, fromAds: 0, replied: 0, booked: 0, demos: 0, paid: 0 },
+          site: p.site ?? null,
+          notes: p.notes ?? [],
+        },
+      };
+    }
+  }
+
   // ── demos ──
   let demos: InvestorOverview["demos"];
   if (demoRes.error) {
@@ -747,6 +817,7 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
     spend,
     adWallet,
     ads,
+    adsDesk,
     demos,
     pipeline,
     product,
