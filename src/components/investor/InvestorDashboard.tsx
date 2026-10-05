@@ -4,21 +4,21 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, LogOut, Megaphone, Wallet, Newspaper, Pin, Target,
-  Users, Code2, Handshake, Settings2, Star, BadgeCheck, Bell, Inbox, Radar, Presentation, Link2, Repeat, Activity, CalendarCheck, Home, TrendingUp,
+  Users, Code2, Handshake, BarChart3, Smartphone, MapPin, MousePointerClick, Gauge, Settings2, Star, BadgeCheck, Bell, Inbox, Radar, Presentation, Link2, Repeat, Activity, CalendarCheck, Home, TrendingUp,
 } from "lucide-react";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { money, moneyShort } from "@/lib/format";
-import type { AdsDesk, DaySpend, FeedItem, InvestorOverview } from "@/lib/investor/data";
+import type { AdsDesk, DaySpend, FeedItem, InvestorOverview, SiteVisitors } from "@/lib/investor/data";
 
 type Range = "7" | "30" | "3650";
-type View = "home" | "growth" | "ads" | "money" | "updates";
+type View = "home" | "growth" | "money" | "analytics" | "updates";
 
 const TABS: { key: View; label: string; icon: typeof Wallet }[] = [
   { key: "home", label: "Home", icon: Home },
   { key: "growth", label: "Growth", icon: TrendingUp },
-  { key: "ads", label: "Ads", icon: Megaphone },
   { key: "money", label: "Money", icon: Wallet },
+  { key: "analytics", label: "Analytics", icon: BarChart3 },
   { key: "updates", label: "Updates", icon: Bell },
 ];
 
@@ -333,7 +333,142 @@ function HBar({ label, sub, value, max, display, tone = "brand" }: {
   );
 }
 
-/** The Ads tab: what PROXe has spent on ads since 1 Oct, what is running, and what it bought. */
+/** Site visitors: who comes to goproxe.com from the ads and what they do there. */
+function SiteSection({ s }: { s: SiteVisitors }) {
+  const mobile = s.devices?.find((d) => d.name === "Mobile");
+  const totalDev = (s.devices ?? []).reduce((t, d) => t + d.visits, 0);
+  const maxCity = Math.max(1, ...(s.cities ?? []).map((c) => c.visits));
+  const maxPlace = Math.max(1, ...(s.placements ?? []).map((p) => p.visits));
+  const maxAd = Math.max(1, ...(s.adsEngagement ?? []).map((p) => p.visits));
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
+  const loadSec = s.medianLoadMs ? s.medianLoadMs / 1000 : null;
+  return (
+    <>
+      <SectionHead title="Site visitors" sub="goproxe.com, from Microsoft Clarity" />
+      <section className="overflow-hidden rounded-panel bg-surface">
+        <dl className="grid grid-cols-2 sm:grid-cols-4">
+          {[
+            { k: "Visits", v: s.sessions.toLocaleString("en-IN"), h: s.users ? `${s.users.toLocaleString("en-IN")} people` : "" },
+            { k: "On mobile", v: mobile && totalDev ? `${pct(mobile.visits, totalDev)}%` : "–", h: "of visits" },
+            { k: "Scroll depth", v: mobile ? `${Math.round(mobile.scroll)}%` : "–", h: "average, mobile" },
+            { k: "Time on page", v: s.medianActiveSeconds != null ? `${s.medianActiveSeconds}s` : s.mobileSeconds != null ? `${s.mobileSeconds}s` : "–", h: "median, ad visits" },
+          ].map((x) => (
+            <div key={x.k} className="p-3 sm:p-4">
+              <dt className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.k}</dt>
+              <dd className="mt-1 text-[20px] font-semibold tabular-nums text-text">{x.v}</dd>
+              <dd className="text-[10.5px] text-text-muted">{x.h}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <Card title="What ad visitors do" icon={MousePointerClick} sub={`${s.sample} recent ad visits`}>
+        <div className="flex h-3 gap-0.5 overflow-hidden rounded-pill">
+          <div className="bg-accent-red" style={{ flex: s.bounced }} title="left within 10 seconds" />
+          <div className="bg-text-muted/40" style={{ flex: s.noClick }} title="stayed, clicked nothing" />
+          <div className="bg-accent-green" style={{ flex: s.clicked }} title="clicked something" />
+        </div>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-muted">
+          <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-red" />left in under 10s · {pct(s.bounced, s.sample)}%</span>
+          <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-text-muted/40" />looked, no click · {pct(s.noClick, s.sample)}%</span>
+          <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-green" />clicked · {pct(s.clicked, s.sample)}%</span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {s.typed != null && (
+            <div className="rounded-card bg-[var(--surface-hover)] p-3">
+              <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Typed in a form</p>
+              <p className="mt-1 text-[20px] font-semibold tabular-nums text-text">{s.typed}</p>
+              <p className="text-[10.5px] text-text-muted">of {s.sample} visits</p>
+            </div>
+          )}
+          {s.morePages != null && (
+            <div className="rounded-card bg-[var(--surface-hover)] p-3">
+              <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Saw a second page</p>
+              <p className="mt-1 text-[20px] font-semibold tabular-nums text-text">{s.morePages}</p>
+              <p className="text-[10.5px] text-text-muted">of {s.sample} visits</p>
+            </div>
+          )}
+        </div>
+        {s.topClicks && s.topClicks.length > 0 && (
+          <>
+            <p className="mb-1.5 mt-4 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-text-muted">What they tap</p>
+            <div className="flex flex-wrap gap-1.5">
+              {s.topClicks.map((c) => (
+                <span key={c.label} className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11.5px] text-text-muted">
+                  {c.label} <span className="font-semibold tabular-nums text-text">{c.count}</span>
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </Card>
+
+      {s.adsEngagement && s.adsEngagement.length > 0 && (
+        <Card title="Which ad brings engaged visitors" icon={Megaphone} sub="visits, and how many tapped anything">
+          <ul className="space-y-3">
+            {s.adsEngagement.map((a) => (
+              <HBar key={a.name} label={a.name} max={maxAd} value={a.visits} tone={pct(a.engaged, a.visits) >= 20 ? "good" : "brand"}
+                sub={`${a.engaged} of ${a.visits} tapped something · ${pct(a.engaged, a.visits)}%`} display={`${a.visits} visits`} />
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {s.placements && s.placements.length > 0 && (
+        <Card title="Where on Facebook and Instagram they came from" icon={Smartphone} sub="placement">
+          <ul className="space-y-3">
+            {s.placements.map((p) => (
+              <HBar key={p.name} label={p.name} max={maxPlace} value={p.visits} tone={pct(p.engaged, p.visits) >= 20 ? "good" : "brand"}
+                sub={`${p.engaged} engaged · ${pct(p.engaged, p.visits)}%`} display={`${p.visits}`} />
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {(s.cities?.length || s.devices?.length) ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {s.cities && s.cities.length > 0 && (
+            <Card title="Cities" icon={MapPin} sub="ad visitors">
+              <ul className="space-y-3">
+                {s.cities.map((c) => <HBar key={c.name} label={c.name} max={maxCity} value={c.visits} display={String(c.visits)} />)}
+              </ul>
+            </Card>
+          )}
+          {s.devices && s.devices.length > 0 && (
+            <Card title="Devices" icon={Smartphone} sub="visits · scroll depth">
+              <ul className="space-y-3">
+                {s.devices.map((d) => <HBar key={d.name} label={d.name} sub={`scrolls ${Math.round(d.scroll)}% of the page`} max={totalDev || 1} value={d.visits} display={String(d.visits)} />)}
+              </ul>
+            </Card>
+          )}
+        </div>
+      ) : null}
+
+      {(loadSec != null || s.medianLcpSeconds != null) && (
+        <Card title="Page speed" icon={Gauge} sub="median, ad visits">
+          <div className="grid grid-cols-2 gap-2">
+            {loadSec != null && (
+              <div className={`rounded-card p-3 ${loadSec > 3 ? "bg-accent-red/[0.10]" : "bg-accent-green/[0.10]"}`}>
+                <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Full page load</p>
+                <p className="mt-1 text-[20px] font-semibold tabular-nums text-text">{loadSec.toFixed(1)}s</p>
+                <p className="text-[10.5px] text-text-muted">{loadSec > 3 ? "slow on mobile data" : "fine"}</p>
+              </div>
+            )}
+            {s.medianLcpSeconds != null && (
+              <div className={`rounded-card p-3 ${s.medianLcpSeconds > 2.5 ? "bg-accent-red/[0.10]" : "bg-accent-green/[0.10]"}`}>
+                <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">Main content shows</p>
+                <p className="mt-1 text-[20px] font-semibold tabular-nums text-text">{s.medianLcpSeconds.toFixed(1)}s</p>
+                <p className="text-[10.5px] text-text-muted">{s.medianLcpSeconds > 2.5 ? "slow" : "good"}</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+    </>
+  );
+}
+
+/** The Analytics tab: what PROXe has spent on ads since 1 Oct, what is running, and what it bought. */
 function AdsView({ d }: { d: AdsDesk }) {
   const maxDay = Math.max(1, ...d.daily.map((x) => x.spend));
   const maxCamp = Math.max(1, ...d.campaigns.map((c) => c.spend));
@@ -428,23 +563,7 @@ function AdsView({ d }: { d: AdsDesk }) {
         </p>
       </Card>
 
-      {d.site && (
-        <Card title="What ad visitors do on the site" icon={Activity} sub={`sample of ${d.site.sample} visits`}>
-          <div className="flex h-3 gap-0.5 overflow-hidden rounded-pill">
-            <div className="bg-accent-red" style={{ flex: d.site.bounced }} title="left within 10 seconds" />
-            <div className="bg-text-muted/40" style={{ flex: d.site.noClick }} title="stayed, clicked nothing" />
-            <div className="bg-accent-green" style={{ flex: d.site.clicked }} title="clicked something" />
-          </div>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-muted">
-            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-red" />left in under 10s · {d.site.bounced}</span>
-            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-text-muted/40" />looked, no click · {d.site.noClick}</span>
-            <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-sm bg-accent-green" />clicked · {d.site.clicked}</span>
-          </div>
-          <p className="mt-2 text-[11px] tabular-nums text-text-muted">
-            {d.site.sessions} site visits yesterday{d.site.mobileSeconds != null ? ` · ${d.site.mobileSeconds}s average on mobile` : ""}
-          </p>
-        </Card>
-      )}
+      {d.site && <SiteSection s={d.site} />}
 
       {d.notes.length > 0 && (
         <ul className="space-y-1 px-1 text-[10.5px] text-text-muted">
@@ -803,10 +922,10 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
           </div>
         )}
 
-        {data && view === "ads" && (
+        {data && view === "analytics" && (
           <div className={`transition-opacity ${loading ? "opacity-60" : ""}`}>
             {data.adsDesk.ok ? <AdsView d={data.adsDesk.data} /> : (
-              <Card title="Ads" icon={Megaphone} sub="from 4 Oct">
+              <Card title="Analytics" icon={BarChart3} sub="from 4 Oct">
                 <p className="text-[12px] text-text-muted">{data.adsDesk.reason}</p>
               </Card>
             )}

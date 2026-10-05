@@ -208,6 +208,30 @@ export type InvestorOverview = {
 /** Investors look at ads from this day on, never earlier: the UGC v3 launch. */
 export const ADS_FROM = "2026-10-04";
 
+/** Who visits goproxe.com and what they do there, from Microsoft Clarity. */
+export type SiteVisitors = {
+  sessions: number;
+  users?: number;
+  /** visits by device with average scroll depth */
+  devices?: { name: string; visits: number; scroll: number }[];
+  /** where ad visitors are */
+  cities?: { name: string; visits: number }[];
+  /** behaviour in a sample of recent ad visits */
+  sample: number;
+  bounced: number;
+  noClick: number;
+  clicked: number;
+  typed?: number;
+  morePages?: number;
+  medianActiveSeconds?: number | null;
+  mobileSeconds?: number | null;
+  medianLoadMs?: number | null;
+  medianLcpSeconds?: number | null;
+  placements?: { name: string; visits: number; engaged: number }[];
+  adsEngagement?: { name: string; visits: number; engaged: number }[];
+  topClicks?: { label: string; count: number }[];
+};
+
 export type AdsDesk = {
   since: string;
   until: string;
@@ -226,7 +250,7 @@ export type AdsDesk = {
   campaigns: { name: string; status: string; spend: number; results: number; cpl: number | null }[];
   ads: { name: string; campaign: string | null; status: string; spend: number | null; leads: number; cpl: number | null }[];
   funnel: { leads: number; fromAds: number; replied: number; booked: number; demos: number; paid: number };
-  site: { sessions: number; sample: number; bounced: number; noClick: number; clicked: number; mobileSeconds: number | null } | null;
+  site: SiteVisitors | null;
   notes: string[];
 };
 
