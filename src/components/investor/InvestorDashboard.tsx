@@ -359,9 +359,9 @@ function AdsView({ d }: { d: AdsDesk }) {
         </div>
         <dl className="grid grid-cols-3">
           {[
-            { k: "Leads", v: String(d.leads), h: "into PROXe" },
+            { k: "Leads", v: String(d.leads), h: `into PROXe · Meta counts ${d.metaLeads}` },
             { k: "Cost per lead", v: d.cpl != null ? money(Math.round(d.cpl)) : "–", h: "spend ÷ leads" },
-            { k: "Clicks", v: d.clicks ? d.clicks.toLocaleString("en-IN") : "–", h: d.impressions ? `${d.impressions.toLocaleString("en-IN")} views` : "" },
+            { k: "Link clicks", v: d.clicks ? d.clicks.toLocaleString("en-IN") : "–", h: d.impressions ? `${d.impressions.toLocaleString("en-IN")} views` : "" },
           ].map((x) => (
             <div key={x.k} className="p-3 sm:p-4">
               <dt className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.k}</dt>
@@ -404,7 +404,7 @@ function AdsView({ d }: { d: AdsDesk }) {
       </Card>
 
       {d.ads.length > 0 && (
-        <Card title="Ads running" icon={Megaphone} sub="leads each creative brought">
+        <Card title="Ads running" icon={Megaphone} sub="spend and leads per creative, Meta's count">
           <ul className="space-y-3">
             {d.ads.map((a) => (
               <HBar key={`${a.name}|${a.campaign}`} label={a.name} max={maxAdLeads} value={a.leads}
@@ -806,7 +806,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
         {data && view === "ads" && (
           <div className={`transition-opacity ${loading ? "opacity-60" : ""}`}>
             {data.adsDesk.ok ? <AdsView d={data.adsDesk.data} /> : (
-              <Card title="Ads" icon={Megaphone} sub="from 1 Oct">
+              <Card title="Ads" icon={Megaphone} sub="from 4 Oct">
                 <p className="text-[12px] text-text-muted">{data.adsDesk.reason}</p>
               </Card>
             )}

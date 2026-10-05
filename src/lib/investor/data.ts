@@ -108,7 +108,7 @@ export type InvestorOverview = {
     impressions30: number;
     clicks30: number;
   }>;
-  /** the Ads tab: PROXe ads from 1 Oct 2026 only, from the routine's newest snapshot */
+  /** the Ads tab: PROXe ads from ADS_FROM only, from the routine's newest snapshot */
   adsDesk: Section<AdsDesk>;
   demos: Section<{
     inRange: number;
@@ -205,8 +205,8 @@ export type InvestorOverview = {
   };
 };
 
-/** Investors look at ads from this day on, never earlier. */
-export const ADS_FROM = "2026-10-01";
+/** Investors look at ads from this day on, never earlier: the UGC v3 launch. */
+export const ADS_FROM = "2026-10-04";
 
 export type AdsDesk = {
   since: string;
