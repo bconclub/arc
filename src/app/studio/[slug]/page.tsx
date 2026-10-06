@@ -24,6 +24,11 @@ type Brand = { name: string; mood: string | null; palette: string[]; intro: stri
 type Board = { brand: Brand; items: Item[]; mine: Pick[] };
 
 const NAME_KEY = "studio:voter";
+// Stills per idea sit in one row on desktop and wrap evenly on a phone: never a lone orphan tile.
+const STILL_GRID: Record<number, string> = {
+  1: "grid-cols-1 max-w-[180px]", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-2 sm:grid-cols-4",
+  5: "grid-cols-5", 6: "grid-cols-3 sm:grid-cols-6",
+};
 const STEPS = [
   { key: "idea", n: "01", label: "Idea" },
   { key: "script", n: "02", label: "Script" },
@@ -327,7 +332,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                     </div>
                     {stills.length > 0 && (
                       // One clean row: 4 stills sit 2x2 on a phone and in a single row on desktop, no orphans.
-                      <div className={`grid shrink-0 gap-2 lg:w-[560px] ${stills.length === 4 ? "grid-cols-2 sm:grid-cols-4" : stills.length >= 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+                      <div className={`grid shrink-0 gap-2 lg:w-[560px] ${STILL_GRID[Math.min(stills.length, 6)]}`}>
                         {stills.slice(0, 6).map((s) => (
                           <button key={s.id} onClick={() => setZoom(s)} className="overflow-hidden rounded-soft" aria-label={`View ${s.title || "still"} larger`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
