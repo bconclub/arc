@@ -17,6 +17,9 @@ mkdir -p "$HOME/.claude/skills"
 rm -rf "$HOME/.claude/skills/brand-reel"
 cp -R "$HERE/skill/brand-reel" "$HOME/.claude/skills/brand-reel"
 sed -i '' "s#__WORKER__#$HERE/worker.mjs#g" "$HOME/.claude/skills/brand-reel/SKILL.md"
+rm -rf "$HOME/.claude/skills/arc-studio"
+cp -R "$HERE/skill/arc-studio" "$HOME/.claude/skills/arc-studio"
+sed -i '' "s#__STUDIO__#$HERE/studio.mjs#g" "$HOME/.claude/skills/arc-studio/SKILL.md"
 
 echo "3/5 config"
 [ -f "$HERE/.env" ] || { cp "$HERE/.env.example" "$HERE/.env"; chmod 600 "$HERE/.env"; echo "   created .env: fill in the keys, then re-run ./install.sh"; exit 0; }
