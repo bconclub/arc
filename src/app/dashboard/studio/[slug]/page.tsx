@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowUpRight, Check, ChevronLeft, Copy, Download, Eye, EyeOff, FolderOpen, Globe, Heart, ImagePlus, Link2, Loader2, Pin, RefreshCw, Trash2, X,
+  ArrowUpRight, Check, ChevronLeft, Download, Eye, EyeOff, FolderOpen, Globe, Heart, ImagePlus, Link2, Loader2, Pin, RefreshCw, Trash2, X,
 } from "lucide-react";
 import { SegmentedTabs, type Tab } from "@/components/ui/SegmentedTabs";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
@@ -77,10 +77,29 @@ function Editable({ value, placeholder, onSave, multiline, className = "" }: {
 }
 
 function Header({ brand, onSaved }: { brand: Brand; onSaved: () => void }) {
+  const [editLinks, setEditLinks] = useState(false);
+  const [editPalette, setEditPalette] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   async function save(body: Record<string, unknown>) {
     await fetch(`/api/ops/studio/${brand.slug}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     onSaved();
   }
+  /** One button: turns the client board on if it is off, then copies its link. */
+  async function copyClientLink() {
+    setSharing(true);
+    const r = await fetch(`/api/ops/studio/${brand.slug}/share`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(brand.share_enabled ? {} : { enabled: true }),
+    }).then((x) => x.json()).catch(() => null);
+    setSharing(false);
+    if (!r?.path) return;
+    try { await navigator.clipboard.writeText(`${window.location.origin}${r.path}`); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* clipboard blocked */ }
+    if (!brand.share_enabled) onSaved();
+  }
+  const clientLink = brand.share_enabled && brand.share_token ? `/studio/${brand.slug}?k=${brand.share_token}` : null;
+
   const links = [
     brand.site_url && { href: brand.site_url, label: "Site", icon: Globe },
     brand.instagram && { href: brand.instagram.startsWith("http") ? brand.instagram : `https://instagram.com/${brand.instagram.replace(/^@/, "")}`, label: brand.instagram.startsWith("http") ? "Instagram" : brand.instagram, icon: ArrowUpRight },
@@ -88,52 +107,92 @@ function Header({ brand, onSaved }: { brand: Brand; onSaved: () => void }) {
   ].filter(Boolean) as { href: string; label: string; icon: typeof Globe }[];
 
   return (
-    <section className="flex flex-col gap-4 rounded-panel border border-[var(--border)] bg-surface p-4 lg:flex-row lg:items-start lg:gap-6 lg:p-5">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <Link href="/dashboard/studio" className="inline-flex items-center gap-1 self-start text-[12px] text-text-muted hover:text-text">
+    <section className="flex flex-col gap-5 rounded-panel border border-[var(--border)] bg-[var(--bg)] p-4 lg:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/dashboard/studio" className="inline-flex items-center gap-1 text-[12px] text-text-muted hover:text-text">
           <ChevronLeft size={14} /> Studio
         </Link>
-        <div className="flex items-center gap-3">
-          {brand.logo_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={brand.logo_url} alt="" className="h-12 w-12 shrink-0 rounded-soft bg-white object-contain" />
+        <div className="flex flex-wrap items-center gap-2">
+          {clientLink && (
+            <a href={clientLink} target="_blank" rel="noreferrer"
+              className="flex h-9 items-center gap-1.5 rounded-soft border border-[var(--border)] px-3 text-[12.5px] text-text hover:bg-[var(--surface-hover)]">
+              <ArrowUpRight size={14} /> Client view
+            </a>
           )}
-          <div className="min-w-0">
-            <h1 className="truncate text-[22px] font-bold tracking-tight text-text">{brand.name}</h1>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-text-muted">
-              <select value={brand.status} onChange={(e) => save({ status: e.target.value })} aria-label="Brand status"
-                className="rounded-pill bg-[var(--surface-hover)] px-2 py-0.5 text-[11px] font-semibold capitalize text-text outline-none">
-                {["intake", "active", "paused", "archived"].map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-              {links.map((l) => (
-                <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-text">
-                  <l.icon size={12} /> {l.label}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div>
-          <p className="mb-1 text-[11px] font-medium text-text-muted">Mood we are going after</p>
-          <Editable value={brand.mood || ""} placeholder="Click to set the mood, e.g. warm festive gold, real pieces in real light" multiline
-            onSave={(v) => save({ mood: v })} className="px-1 py-1 text-[15px] leading-snug text-text" />
+          <button onClick={copyClientLink} disabled={sharing}
+            className="flex h-9 items-center gap-1.5 rounded-soft bg-[var(--brand)] px-3.5 text-[12.5px] font-semibold text-[var(--brand-ink)] disabled:opacity-50">
+            {sharing ? <Loader2 size={14} className="animate-spin" /> : copied ? <Check size={14} /> : <Link2 size={14} />}
+            {copied ? "Link copied" : brand.share_enabled ? "Copy client link" : "Share with client"}
+          </button>
         </div>
       </div>
-      <div className="flex shrink-0 flex-col gap-2 lg:w-[300px]">
-        <p className="text-[11px] font-medium text-text-muted">Palette</p>
-        <div className="flex h-14 overflow-hidden rounded-soft border border-[var(--border)]">
-          {brand.palette.length ? brand.palette.map((c) => (
-            <div key={c} className="flex flex-1 items-end p-1.5" style={{ background: c }}>
-              <span className="rounded bg-black/50 px-1 font-mono text-[9.5px] text-white">{c}</span>
+
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <div className="flex items-center gap-4">
+            {brand.logo_url && (
+              // Logos arrive as full lockups (crest + wordmark), so the tile sizes to the
+              // logo's width instead of cropping it into an icon square.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={brand.logo_url} alt={`${brand.name} logo`} className="h-20 w-auto max-w-[180px] shrink-0 rounded-soft bg-white object-contain p-1.5" />
+            )}
+            <div className="min-w-0">
+              <h1 className="truncate text-[28px] font-bold leading-tight tracking-tight text-text">{brand.name}</h1>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] text-text-muted">
+                <select value={brand.status} onChange={(e) => save({ status: e.target.value })} aria-label="Brand status"
+                  className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11.5px] font-semibold capitalize text-text outline-none">
+                  {["intake", "active", "paused", "archived"].map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                {links.map((l) => (
+                  <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-text">
+                    <l.icon size={13} /> {l.label}
+                  </a>
+                ))}
+                <button onClick={() => setEditLinks((v) => !v)} className="text-[12px] underline-offset-2 hover:text-text hover:underline">
+                  {editLinks ? "Done" : links.length ? "Edit links" : "Add links"}
+                </button>
+              </div>
             </div>
-          )) : <div className="flex flex-1 items-center justify-center text-[11px] text-text-muted">No colours yet</div>}
+          </div>
+          {editLinks && (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {([["site_url", "Website", brand.site_url], ["instagram", "Instagram handle", brand.instagram], ["drive_url", "Drive folder link", brand.drive_url]] as const).map(([k, label, v]) => (
+                <label key={k} className="flex flex-col gap-1">
+                  <span className="text-[11px] font-medium text-text-muted">{label}</span>
+                  <input defaultValue={v || ""} onBlur={(e) => e.target.value.trim() !== (v || "") && save({ [k]: e.target.value })}
+                    className={`h-9 ${field}`} />
+                </label>
+              ))}
+            </div>
+          )}
+          <div>
+            <p className="mb-1 text-[11px] font-medium text-text-muted">Mood we are going after</p>
+            <Editable value={brand.mood || ""} placeholder="Click to set the mood, e.g. warm festive gold, real pieces in real light" multiline
+              onSave={(v) => save({ mood: v })} className="px-1 py-1 text-[16px] leading-snug text-text" />
+          </div>
         </div>
-        <Editable value={brand.palette.join(" ")} placeholder="Add hex colours: #47704C #B8892E" onSave={(v) => save({ palette: v })}
-          className="px-1 py-1 font-mono text-[11.5px] text-text-muted" />
-        <p className="mt-1 text-[11px] font-medium text-text-muted">Links</p>
-        <Editable value={brand.site_url || ""} placeholder="Website" onSave={(v) => save({ site_url: v })} className="px-1 py-0.5 text-[12px] text-text" />
-        <Editable value={brand.instagram || ""} placeholder="Instagram handle" onSave={(v) => save({ instagram: v })} className="px-1 py-0.5 text-[12px] text-text" />
-        <Editable value={brand.drive_url || ""} placeholder="Drive folder link" onSave={(v) => save({ drive_url: v })} className="px-1 py-0.5 text-[12px] text-text" />
+
+        <div className="flex shrink-0 flex-col gap-2 lg:w-[320px]">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-medium text-text-muted">Palette</p>
+            <button onClick={() => setEditPalette((v) => !v)} className="text-[11.5px] text-text-muted underline-offset-2 hover:text-text hover:underline">
+              {editPalette ? "Done" : "Edit"}
+            </button>
+          </div>
+          <div className="flex h-20 overflow-hidden rounded-soft border border-[var(--border)]">
+            {brand.palette.length ? brand.palette.map((c) => (
+              <div key={c} className="flex flex-1 items-end p-1.5" style={{ background: c }}>
+                <span className="rounded bg-black/50 px-1 font-mono text-[9.5px] text-white">{c}</span>
+              </div>
+            )) : <div className="flex flex-1 items-center justify-center text-[11px] text-text-muted">No colours yet</div>}
+          </div>
+          {editPalette && (
+            <input autoFocus defaultValue={brand.palette.join(" ")} aria-label="Palette hex colours" placeholder="#47704C #B8892E"
+              onBlur={(e) => { save({ palette: e.target.value }); setEditPalette(false); }}
+              onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+              className={`h-9 font-mono ${field}`} />
+          )}
+        </div>
       </div>
     </section>
   );
@@ -161,19 +220,13 @@ function VoteLine({ item }: { item: Item }) {
 
 function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
   const shown = items.filter((i) => (i.kind === "idea" || i.kind === "image") && !i.hidden && i.status !== "rejected" && i.status !== "parked").length;
   const voters = new Set(items.flatMap((i) => i.votes.map((v) => v.voter))).size;
-  const link = brand.share_token && typeof window !== "undefined" ? `${window.location.origin}/studio/${brand.slug}?k=${brand.share_token}` : "";
 
   async function share(body: Record<string, unknown>) {
     setBusy(true);
     await fetch(`/api/ops/studio/${brand.slug}/share`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     setBusy(false); onChanged();
-  }
-  async function copy() {
-    if (!link) return;
-    try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch { /* clipboard blocked */ }
   }
 
   return (
@@ -189,14 +242,8 @@ function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; 
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {brand.share_enabled && link && (
+          {brand.share_enabled && (
             <>
-              <button onClick={copy} className="flex h-9 items-center gap-1.5 rounded-soft bg-[var(--brand)] px-3 text-[12.5px] font-semibold text-[var(--brand-ink)]">
-                {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy link"}
-              </button>
-              <a href={link} target="_blank" rel="noreferrer" className="flex h-9 items-center gap-1.5 rounded-soft border border-[var(--border)] px-3 text-[12.5px] text-text hover:bg-[var(--surface-hover)]">
-                <ArrowUpRight size={14} /> Preview
-              </a>
               <button onClick={() => share({ rotate: true })} disabled={busy} title="The old link stops working"
                 className="flex h-9 items-center gap-1.5 rounded-soft px-2 text-[12.5px] text-text-muted hover:text-text disabled:opacity-50">
                 <RefreshCw size={13} /> New link
@@ -206,7 +253,7 @@ function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; 
           <button onClick={() => share({ enabled: !brand.share_enabled })} disabled={busy} role="switch" aria-checked={brand.share_enabled}
             className={`flex h-9 items-center gap-2 rounded-soft border px-3 text-[12.5px] font-medium disabled:opacity-50 ${brand.share_enabled ? "border-[var(--border)] text-text hover:bg-[var(--surface-hover)]" : "border-[var(--brand-line)] text-[var(--brand-text)] hover:bg-[var(--brand-faint)]"}`}>
             {busy && <Loader2 size={13} className="animate-spin" />}
-            {brand.share_enabled ? "Turn off" : "Share with client"}
+            {brand.share_enabled ? "Turn off link" : "Turn on"}
           </button>
         </div>
       </div>
