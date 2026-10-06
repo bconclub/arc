@@ -1,27 +1,37 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, ChevronUp, Heart, Loader2, Send, X } from "lucide-react";
+import { Check, ChevronUp, Download, Loader2, MessageSquare, Send, X } from "lucide-react";
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 
 /**
- * A client's view of one brand board, opened from a share link. No ARC login.
+ * A client's Brand Reels order page (bconclub.com/brand-reels), opened from a share
+ * link with no login. It walks the order the way the site promises:
  *
- * Order of the page, top to bottom:
- *   header   their own world: a collage of what we pulled from their store, logo, name
- *   rework   "Brand rework by BCON": who is picking, the mood, then the ideas
- *   ideas    the main event: each idea with 3 to 5 visual options to choose between
- *   bar      a bottom bar with their picks; review and send them to us from there
+ *   01 Idea          3 to 5 reel ideas built from their products; they choose one
+ *   02 Script        the script for that idea; approve or ask for a change
+ *   03 Visual board  frame by frame; changes on frames count against the 3 included
+ *   04 Final reel    watch and download
+ *
+ * Later stages appear once BCON adds them in ARC. The header is their world today,
+ * a faded collage of what we pulled from their store.
  */
 
-type Item = { id: string; kind: "idea" | "image"; title: string | null; body: string | null; url: string | null; featured: boolean; parent_id: string | null };
+type Kind = "idea" | "image" | "script" | "frame" | "video";
+type Item = { id: string; kind: Kind; title: string | null; body: string | null; url: string | null; featured: boolean; parent_id: string | null; position: number | null };
 type Pick = { item_id: string; choice: "like" | "pass" | null; comment: string | null };
-type Board = { brand: { name: string; mood: string | null; palette: string[]; intro: string | null; logo_url: string | null }; items: Item[]; mine: Pick[] };
+type Brand = { name: string; mood: string | null; palette: string[]; intro: string | null; logo_url: string | null; reel_length: string | null; changes_allowed: number; changes_used: number };
+type Board = { brand: Brand; items: Item[]; mine: Pick[] };
 
 const NAME_KEY = "studio:voter";
-const LETTERS = "ABCDEFGH";
+const STEPS = [
+  { key: "idea", n: "01", label: "Idea" },
+  { key: "script", n: "02", label: "Script" },
+  { key: "board", n: "03", label: "Visual board" },
+  { key: "final", n: "04", label: "Final reel" },
+] as const;
 
-export default function SharedBoard({ params, searchParams }: { params: { slug: string }; searchParams: { k?: string } }) {
+export default function ReelOrder({ params, searchParams }: { params: { slug: string }; searchParams: { k?: string } }) {
   const key = searchParams.k || "";
   const [board, setBoard] = useState<Board | null>(null);
   const [gone, setGone] = useState(false);
@@ -49,15 +59,21 @@ export default function SharedBoard({ params, searchParams }: { params: { slug: 
   }, [params.slug, key]);
   useEffect(() => { load(name); }, [load, name]);
 
-  const { ideas, optionsOf, pulled } = useMemo(() => {
+  const v = useMemo(() => {
     const items = board?.items || [];
     const ideas = items.filter((i) => i.kind === "idea");
     const ideaIds = new Set(ideas.map((i) => i.id));
-    const optionsOf = (id: string) => items.filter((i) => i.kind === "image" && i.parent_id === id);
-    // Everything not attached to an idea is what we were given: their store, their photos.
+    const childrenOf = (id: string, kind: Kind) => items.filter((i) => i.kind === kind && i.parent_id === id);
     const pulled = items.filter((i) => i.kind === "image" && !(i.parent_id && ideaIds.has(i.parent_id)));
-    return { ideas, optionsOf, pulled };
-  }, [board]);
+    // The idea the order is built on: the one that has a script/board/reel, else the client's choice.
+    const built = ideas.find((i) => childrenOf(i.id, "script").length || childrenOf(i.id, "frame").length || childrenOf(i.id, "video").length);
+    const chosen = built || ideas.find((i) => picks[i.id]?.choice === "like") || null;
+    const script = chosen ? childrenOf(chosen.id, "script")[0] : items.find((i) => i.kind === "script");
+    const frames = chosen ? childrenOf(chosen.id, "frame") : items.filter((i) => i.kind === "frame");
+    const video = chosen ? childrenOf(chosen.id, "video")[0] : items.find((i) => i.kind === "video");
+    const stage = video ? "final" : frames.length ? "board" : script ? "script" : "idea";
+    return { ideas, childrenOf, pulled, built, chosen, script, frames, video, stage };
+  }, [board, picks]);
 
   function saveName(e: React.FormEvent) {
     e.preventDefault();
@@ -67,18 +83,40 @@ export default function SharedBoard({ params, searchParams }: { params: { slug: 
     setName(n); setNudge(false);
   }
 
+  async function post(item: Item, next: Pick, patch: Partial<Pick>) {
+    const r = await fetch(`/api/public/studio/${params.slug}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ k: key, item_id: item.id, voter: name, choice: next.choice, ...(patch.comment !== undefined ? { comment: patch.comment } : {}) }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "That did not save. Check your connection and try again.");
+  }
+
   async function pick(item: Item, patch: Partial<Pick>) {
     if (!name) { setNudge(true); document.getElementById("who")?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     const prev = picks[item.id] || { item_id: item.id, choice: null, comment: null };
     const next = { ...prev, ...patch };
     setPicks((p) => ({ ...p, [item.id]: next }));
     setSaving(item.id); setErr(null); setSent("idle");
-    const r = await fetch(`/api/public/studio/${params.slug}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ k: key, item_id: item.id, voter: name, choice: next.choice, ...(patch.comment !== undefined ? { comment: patch.comment } : {}) }),
-    });
-    setSaving(null);
-    if (!r.ok) { setPicks((p) => ({ ...p, [item.id]: prev })); setErr("That pick did not save. Check your connection and try again."); }
+    try {
+      await post(item, next, patch);
+      if (patch.comment !== undefined) load(name); // refresh the changes counter
+    } catch (e) {
+      setPicks((p) => ({ ...p, [item.id]: prev })); setErr((e as Error).message);
+    } finally { setSaving(null); }
+  }
+
+  /** One idea only: choosing it clears the choice on the others. */
+  async function chooseIdea(idea: Item) {
+    const on = picks[idea.id]?.choice === "like";
+    await pick(idea, { choice: on ? null : "like" });
+    if (on) return;
+    for (const other of v.ideas) {
+      if (other.id !== idea.id && picks[other.id]?.choice === "like") {
+        const o = { ...picks[other.id], choice: null };
+        setPicks((p) => ({ ...p, [other.id]: o }));
+        post(other, o, {}).catch(() => {});
+      }
+    }
   }
 
   async function sendPicks() {
@@ -94,7 +132,7 @@ export default function SharedBoard({ params, searchParams }: { params: { slug: 
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] p-6 text-center">
         <div>
-          <p className="text-[15px] text-text">This board is not available.</p>
+          <p className="text-[15px] text-text">This page is not available.</p>
           <p className="mt-1 text-[13px] text-text-muted">The link may have changed. Ask the BCON team for a fresh one.</p>
         </div>
       </main>
@@ -103,28 +141,28 @@ export default function SharedBoard({ params, searchParams }: { params: { slug: 
   if (!board) return <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] text-text-muted"><Loader2 className="animate-spin" size={20} /></main>;
 
   const { brand } = board;
-  const all = Object.values(picks);
-  const loved = all.filter((p) => p.choice === "like");
-  const noted = all.filter((p) => p.comment);
+  const stepIdx = STEPS.findIndex((s) => s.key === v.stage);
+  const changesLeft = Math.max(0, brand.changes_allowed - brand.changes_used);
+  const actionable = Object.values(picks).filter((p) => p.choice || p.comment);
   const byId = new Map(board.items.map((i) => [i.id, i]));
+  const showIdeas = !v.built; // once we are building on an idea, the others step aside
 
   return (
     <main className="min-h-screen bg-[var(--bg)] pb-28 text-text">
-      {/* ── Header: their world, from what we pulled ── */}
-      <header className="relative h-[340px] overflow-hidden sm:h-[420px]">
-        {pulled.length > 0 && (
+      {/* ── Header: their brand today ── */}
+      <header className="relative h-[320px] overflow-hidden sm:h-[400px]">
+        {v.pulled.length > 0 && (
           <div aria-hidden className="absolute inset-0 grid grid-cols-3 gap-1 sm:grid-cols-5 lg:grid-cols-7">
-            {pulled.slice(0, 21).map((i) => (
+            {v.pulled.slice(0, 21).map((i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={i.id} src={i.url || ""} alt="" className="h-full min-h-[140px] w-full object-cover" />
             ))}
           </div>
         )}
-        {/* Fades the collage into the page so the header reads as one image, not a grid. */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-[var(--bg)]" />
         <div className="relative mx-auto flex h-full max-w-[1200px] flex-col justify-between px-4 py-5 lg:px-8">
-          <div className="flex items-center justify-end">
-            <span className="rounded-pill bg-black/50 px-3 py-1 text-[12px] text-white/80">Prepared by BCON</span>
+          <div className="flex justify-end">
+            <span className="rounded-pill bg-black/50 px-3 py-1 text-[12px] text-white/80">BCON Brand Reels</span>
           </div>
           <div className="flex items-end gap-4 pb-2">
             {brand.logo_url && (
@@ -132,130 +170,195 @@ export default function SharedBoard({ params, searchParams }: { params: { slug: 
               <img src={brand.logo_url} alt={`${brand.name} logo`} className={`h-20 w-auto max-w-[200px] rounded-soft object-contain p-2 shadow-card sm:h-24 ${logoTile(tone)}`} />
             )}
             <div>
-              <p className="text-[13px] text-white/70">{pulled.length ? "Where you are today" : "Brand rework"}</p>
+              <p className="text-[13px] text-white/70">Your brand reel{brand.reel_length ? ` · ${brand.reel_length}` : ""}</p>
               <h1 className="text-[34px] font-bold leading-none tracking-[-0.03em] text-white sm:text-[48px]">{brand.name}</h1>
             </div>
           </div>
         </div>
       </header>
 
-      {/* ── Brand rework ── */}
-      <section className="mx-auto max-w-[1200px] px-4 pt-10 lg:px-8">
-        <p className="text-[13px] font-medium text-[var(--brand-text)]">Brand rework by BCON</p>
-        <h2 className="mt-2 max-w-[22ch] text-[32px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[44px]">Where we want to take {brand.name}</h2>
-        <p className="mt-4 max-w-[62ch] text-[16px] leading-relaxed text-text-muted">
-          {brand.intro || "Below is the mood we are going after and a few ideas, each with options built from your products. Pick the ones you love, pass on what is not you, and add a note anywhere. Then send your picks to us from the bar at the bottom."}
+      {/* ── Where the order is ── */}
+      <section className="mx-auto max-w-[1200px] px-4 pt-8 lg:px-8">
+        <ol className="grid grid-cols-4 gap-2">
+          {STEPS.map((s, i) => (
+            <li key={s.key} className="flex flex-col gap-2">
+              <div className={`h-1 rounded-full ${i < stepIdx ? "bg-[var(--brand)]" : i === stepIdx ? "bg-[var(--brand)]" : "bg-[var(--surface-hover)]"}`} />
+              <span className={`text-[12px] sm:text-[13px] ${i <= stepIdx ? "text-text" : "text-text-muted"}`}>
+                <span className="mr-1.5 font-mono text-text-muted">{s.n}</span>{s.label}
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        <h2 className="mt-10 max-w-[24ch] text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[42px]">
+          {v.stage === "idea" ? `Pick the idea for your reel` : v.stage === "script" ? "Your script is ready" : v.stage === "board" ? "Your visual board is ready" : "Your reel is ready"}
+        </h2>
+        <p className="mt-3 max-w-[62ch] text-[16px] leading-relaxed text-text-muted">
+          {brand.intro || (v.stage === "idea"
+            ? "We made these ideas from your products. Choose the one you want as your reel, add a note if you like, and send your pick to us. We write the script from it."
+            : v.stage === "script" ? "Read it through. Approve it, or tell us what to change. The delivery clock starts once your script is final."
+            : v.stage === "board" ? `Every frame of your reel, planned before we generate it. Ask for changes on any frame. Your order includes ${brand.changes_allowed} changes.`
+            : "Here is your final reel, scored and captioned. Download it and post it.")}
         </p>
 
         <form id="who" onSubmit={saveName}
-          className={`mt-8 flex flex-wrap items-center gap-2 rounded-panel border p-4 transition-colors ${nudge ? "border-[var(--brand)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
+          className={`mt-6 flex flex-wrap items-center gap-2 rounded-panel border p-4 transition-colors ${nudge ? "border-[var(--brand)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
           {name ? (
-            <p className="text-[14px]">Picking as <span className="font-semibold">{name}</span>.{" "}
+            <p className="text-[14px]">Reviewing as <span className="font-semibold">{name}</span>.{" "}
               <button type="button" onClick={() => setName("")} className="text-text-muted underline-offset-2 hover:text-text hover:underline">Not you?</button>
             </p>
           ) : (
             <>
-              <label htmlFor="voter" className="w-full text-[14px] sm:w-auto">{nudge ? "Add your name first, so we know whose picks these are:" : "Your name, so we know whose picks these are:"}</label>
+              <label htmlFor="voter" className="w-full text-[14px] sm:w-auto">{nudge ? "Add your name first, so we know who picked:" : "Your name, so we know who picked:"}</label>
               <input id="voter" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} autoComplete="name" placeholder="e.g. Priya"
                 className="h-11 w-full rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 text-[15px] outline-none focus:border-[var(--brand-line)] sm:w-60" />
-              <button className="h-11 rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)]">Start picking</button>
+              <button className="h-11 rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)]">Start</button>
             </>
           )}
         </form>
       </section>
 
-      {/* ── The mood ── */}
-      {(brand.mood || brand.palette.length > 0) && (
-        <section className="mx-auto max-w-[1200px] px-4 pt-14 lg:px-8">
-          <h3 className="mb-4 text-[22px] font-semibold tracking-tight">The mood</h3>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
-            {brand.mood && (
-              <p className="flex-1 rounded-panel border border-[var(--border)] bg-surface p-5 text-[20px] leading-snug">{brand.mood}</p>
-            )}
-            {brand.palette.length > 0 && (
-              <div className="flex min-h-[110px] overflow-hidden rounded-panel border border-[var(--border)] sm:w-[340px]">
-                {brand.palette.map((c) => <div key={c} className="flex-1" style={{ background: c }} title={c} />)}
-              </div>
-            )}
+      {/* ── 04 Final reel ── */}
+      {v.video?.url && (
+        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+          <h3 className="mb-4 text-[22px] font-semibold tracking-tight">Final reel</h3>
+          <div className="flex flex-col items-start gap-4 sm:flex-row">
+            <video src={v.video.url} controls playsInline className="aspect-[9/16] w-full max-w-[360px] rounded-panel bg-black object-contain" />
+            <div className="flex flex-col gap-3">
+              {v.video.title && <p className="text-[16px]">{v.video.title}</p>}
+              <a href={v.video.url} download className="flex h-11 items-center gap-2 self-start rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)]">
+                <Download size={16} /> Download reel
+              </a>
+            </div>
           </div>
         </section>
       )}
 
-      {/* ── The ideas ── */}
-      <section className="mx-auto max-w-[1200px] px-4 pt-14 lg:px-8">
-        <h3 className="mb-1 text-[22px] font-semibold tracking-tight">The ideas</h3>
-        <p className="mb-5 text-[14px] text-text-muted">Each idea comes with options. Tap the options you like, then tell us how you feel about the idea.</p>
-        {ideas.length === 0 && <p className="text-[14px] text-text-muted">Ideas are on their way. We will let you know when they are ready.</p>}
-        <div className="flex flex-col gap-6">
-          {ideas.map((idea, n) => {
-            const p = picks[idea.id];
-            const opts = optionsOf(idea.id);
-            return (
-              <article key={idea.id} className={`rounded-panel border p-5 transition-colors lg:p-6 ${p?.choice === "like" ? "border-[var(--brand-line)]" : "border-[var(--border)]"} bg-surface`}>
-                <p className="text-[12px] font-medium text-text-muted">Idea {n + 1}</p>
-                <h4 className="mt-1 text-[22px] font-semibold leading-snug tracking-tight">{idea.title}</h4>
-                {idea.body && <p className="mt-2 max-w-[70ch] text-[15px] leading-relaxed text-text-muted">{idea.body}</p>}
-
-                {opts.length > 0 ? (
-                  <div className={`mt-5 grid gap-3 ${opts.length >= 4 ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-3"}`}>
-                    {opts.map((o, j) => {
-                      const on = picks[o.id]?.choice === "like";
-                      return (
-                        <div key={o.id} className={`group relative overflow-hidden rounded-soft ring-2 transition-shadow ${on ? "ring-[var(--brand)]" : "ring-transparent"}`}>
-                          <button onClick={() => setZoom(o)} className="block w-full" aria-label={`View option ${LETTERS[j]} larger`}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={o.url || ""} alt={o.title || `Option ${LETTERS[j]}`} loading="lazy" className="aspect-[4/5] w-full object-cover" />
-                          </button>
-                          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/80 to-transparent p-2.5 pt-8">
-                            <span className="truncate text-[12.5px] font-medium text-white">Option {LETTERS[j]}{o.title ? ` · ${o.title}` : ""}</span>
-                            <button onClick={() => pick(o, { choice: on ? null : "like" })} aria-pressed={on}
-                              className={`flex h-9 shrink-0 items-center gap-1 rounded-pill px-3 text-[12.5px] font-semibold transition-colors ${on ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/90 text-black hover:bg-white"}`}>
-                              {on ? <Check size={14} /> : <Heart size={13} />} {on ? "Picked" : "Pick"}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="mt-4 rounded-soft border border-dashed border-[var(--border)] px-4 py-6 text-center text-[13px] text-text-muted">Options for this idea are being made.</p>
-                )}
-
-                <div className="mt-5 flex flex-col gap-3">
-                  <IdeaVerdict pick={p} busy={saving === idea.id} onPick={(choice) => pick(idea, { choice })} />
-                  <NoteBox value={p?.comment || ""} onSave={(comment) => pick(idea, { comment })} />
+      {/* ── 03 Visual board ── */}
+      {v.frames.length > 0 && (
+        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+            <h3 className="text-[22px] font-semibold tracking-tight">Visual board</h3>
+            <span className={`rounded-pill px-3 py-1 text-[12.5px] font-medium ${changesLeft ? "bg-surface text-text" : "bg-[rgba(245,158,11,0.14)] text-accent-orange"}`}>
+              {brand.changes_used} of {brand.changes_allowed} changes used
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {v.frames.map((f, n) => (
+              <article key={f.id} className="flex flex-col overflow-hidden rounded-soft border border-[var(--border)] bg-surface">
+                <button onClick={() => setZoom(f)} className="relative block" aria-label={`Frame ${n + 1} larger`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={f.url || ""} alt={f.title || `Frame ${n + 1}`} loading="lazy" className="aspect-[9/16] w-full object-cover" />
+                  <span className="absolute left-2 top-2 rounded-pill bg-black/70 px-2 py-0.5 font-mono text-[11px] text-white">{String(n + 1).padStart(2, "0")}</span>
+                </button>
+                <div className="flex flex-1 flex-col gap-2 p-3">
+                  {f.title && <p className="text-[13px] font-medium">{f.title}</p>}
+                  {f.body && <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-text-muted">{f.body}</p>}
+                  <NoteBox label="Change this frame" placeholder="What should change in this frame?" value={picks[f.id]?.comment || ""}
+                    locked={!changesLeft && !picks[f.id]?.comment} onSave={(comment) => pick(f, { comment })} />
                 </div>
               </article>
-            );
-          })}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* ── Bottom bar: picks, review, send ── */}
+      {/* ── 02 Script ── */}
+      {v.script && (
+        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+          <h3 className="mb-4 text-[22px] font-semibold tracking-tight">Script</h3>
+          <article className={`rounded-panel border p-5 lg:p-6 ${picks[v.script.id]?.choice === "like" ? "border-[var(--brand-line)]" : "border-[var(--border)]"} bg-surface`}>
+            {v.script.title && <p className="mb-2 text-[13px] text-text-muted">{v.script.title}</p>}
+            <p className="max-w-[70ch] whitespace-pre-wrap text-[16px] leading-relaxed">{v.script.body}</p>
+            <div className="mt-5 flex flex-col gap-3">
+              <button onClick={() => pick(v.script!, { choice: picks[v.script!.id]?.choice === "like" ? null : "like" })}
+                className={`flex h-11 items-center gap-2 self-start rounded-soft px-4 text-[14px] font-medium ${picks[v.script.id]?.choice === "like" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "border border-[var(--border)] hover:bg-[var(--surface-hover)]"}`}>
+                <Check size={16} /> {picks[v.script.id]?.choice === "like" ? "Script approved" : "Approve script"}
+              </button>
+              <NoteBox label="Request a change" placeholder="What should change in the script?" value={picks[v.script.id]?.comment || ""}
+                locked={!changesLeft && !picks[v.script.id]?.comment} onSave={(comment) => pick(v.script!, { comment })} />
+            </div>
+          </article>
+        </section>
+      )}
+
+      {/* ── 01 Ideas ── */}
+      {v.built ? (
+        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+          <h3 className="mb-3 text-[22px] font-semibold tracking-tight">Your idea</h3>
+          <div className="rounded-panel border border-[var(--border)] bg-surface p-5">
+            <p className="text-[18px] font-semibold">{v.built.title}</p>
+            {v.built.body && <p className="mt-1 text-[14.5px] text-text-muted">{v.built.body}</p>}
+          </div>
+        </section>
+      ) : showIdeas && (
+        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+          <h3 className="mb-1 text-[22px] font-semibold tracking-tight">The ideas</h3>
+          <p className="mb-5 text-[14px] text-text-muted">Choose one. That is the reel we make.</p>
+          {v.ideas.length === 0 && <p className="text-[14px] text-text-muted">Your ideas are being made. We will send you this link again when they are ready.</p>}
+          <div className="flex flex-col gap-5">
+            {v.ideas.map((idea, n) => {
+              const on = picks[idea.id]?.choice === "like";
+              const stills = v.childrenOf(idea.id, "image");
+              return (
+                <article key={idea.id} className={`rounded-panel border-2 p-5 transition-colors lg:p-6 ${on ? "border-[var(--brand)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
+                  <div className="flex flex-col gap-5 lg:flex-row">
+                    <div className="flex min-w-0 flex-1 flex-col gap-3">
+                      <p className="text-[12px] font-medium text-text-muted">Idea {n + 1}</p>
+                      <h4 className="text-[24px] font-semibold leading-snug tracking-tight">{idea.title}</h4>
+                      {idea.body && <p className="max-w-[60ch] text-[15.5px] leading-relaxed text-text-muted">{idea.body}</p>}
+                      <div className="mt-auto flex flex-col gap-3 pt-2">
+                        <button onClick={() => chooseIdea(idea)} aria-pressed={on}
+                          className={`flex h-12 items-center gap-2 self-start rounded-soft px-5 text-[15px] font-semibold transition-colors ${on ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "border border-[var(--border)] hover:bg-[var(--surface-hover)]"}`}>
+                          {saving === idea.id ? <Loader2 size={16} className="animate-spin" /> : on ? <Check size={17} /> : null}
+                          {on ? "This is my pick" : "Choose this idea"}
+                        </button>
+                        <NoteBox label="Add a note" placeholder="Anything to add? e.g. love it, but use our bridal set" value={picks[idea.id]?.comment || ""}
+                          onSave={(comment) => pick(idea, { comment })} />
+                      </div>
+                    </div>
+                    {stills.length > 0 && (
+                      <div className="grid shrink-0 grid-cols-3 gap-2 lg:w-[480px]">
+                        {stills.slice(0, 6).map((s) => (
+                          <button key={s.id} onClick={() => setZoom(s)} className="overflow-hidden rounded-soft" aria-label={`View ${s.title || "still"} larger`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={s.url || ""} alt={s.title || ""} loading="lazy" className="aspect-[9/16] w-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── Bottom bar ── */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--bg)]">
         {tray && (
           <div className="mx-auto max-h-[55vh] max-w-[1200px] overflow-auto px-4 pt-4 lg:px-8">
-            {all.filter((p) => p.choice || p.comment).length === 0 ? (
-              <p className="pb-2 text-[13px] text-text-muted">Nothing picked yet.</p>
+            {actionable.length === 0 ? (
+              <p className="pb-2 text-[13px] text-text-muted">Nothing yet.</p>
             ) : (
               <ul className="flex flex-col">
-                {all.filter((p) => p.choice || p.comment).map((p) => {
+                {actionable.map((p) => {
                   const it = byId.get(p.item_id);
                   if (!it) return null;
-                  const parent = it.parent_id ? byId.get(it.parent_id) : null;
+                  const label = it.kind === "idea" ? (p.choice === "like" ? "Chosen idea" : p.choice === "pass" ? "Not for us" : "Note")
+                    : it.kind === "script" ? (p.comment ? "Change asked" : "Approved") : it.kind === "frame" ? "Change asked" : p.choice === "like" ? "Liked" : "Note";
                   return (
                     <li key={p.item_id} className="flex items-center gap-3 border-t border-[var(--border)] py-2.5 first:border-t-0">
                       {it.url
                         // eslint-disable-next-line @next/next/no-img-element
-                        ? <img src={it.url} alt="" className="h-12 w-10 shrink-0 rounded-soft object-cover" />
-                        : <span className="flex h-12 w-10 shrink-0 items-center justify-center rounded-soft bg-surface text-[10px] text-text-muted">Idea</span>}
+                        ? <img src={it.url} alt="" className="h-12 w-9 shrink-0 rounded-soft object-cover" />
+                        : <span className="flex h-12 w-9 shrink-0 items-center justify-center rounded-soft bg-surface text-[10px] capitalize text-text-muted">{it.kind}</span>}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13.5px]">{parent ? `${parent.title}: ${it.title || "option"}` : it.title}</p>
+                        <p className="truncate text-[13.5px]">{it.title || (it.kind === "frame" ? `Frame ${(v.frames.indexOf(it) + 1) || ""}` : it.kind)}</p>
                         {p.comment && <p className="truncate text-[12px] text-text-muted">“{p.comment}”</p>}
                       </div>
-                      <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[11.5px] font-semibold ${p.choice === "like" ? "bg-[var(--brand-soft)] text-[var(--brand-text)]" : p.choice === "pass" ? "bg-[var(--surface-hover)] text-text-muted" : "bg-[var(--surface-hover)] text-text"}`}>
-                        {p.choice === "like" ? (parent ? "Picked" : "Love it") : p.choice === "pass" ? "Not for us" : "Note"}
-                      </span>
+                      <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[11.5px] font-semibold ${p.choice === "like" ? "bg-[var(--brand-soft)] text-[var(--brand-text)]" : "bg-[var(--surface-hover)] text-text"}`}>{label}</span>
                     </li>
                   );
                 })}
@@ -264,20 +367,22 @@ export default function SharedBoard({ params, searchParams }: { params: { slug: 
           </div>
         )}
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-8">
-          <button onClick={() => setTray((v) => !v)} aria-expanded={tray} className="flex items-center gap-2 text-left text-[13.5px]">
-            <span className="flex h-8 min-w-8 items-center justify-center rounded-pill bg-[var(--brand)] px-2 text-[13px] font-bold text-[var(--brand-ink)]">{loved.length}</span>
-            <span>
-              picked{noted.length ? `, ${noted.length} note${noted.length > 1 ? "s" : ""}` : ""}
+          <button onClick={() => setTray((t) => !t)} aria-expanded={tray} className="flex min-w-0 items-center gap-2 text-left text-[13.5px]">
+            <span className="flex h-8 min-w-8 items-center justify-center rounded-pill bg-[var(--brand)] px-2 text-[13px] font-bold text-[var(--brand-ink)]">{actionable.length}</span>
+            <span className="min-w-0 truncate">
+              {v.stage === "idea"
+                ? (v.chosen ? <>Your pick: <span className="font-semibold">{v.chosen.title}</span></> : "Choose an idea")
+                : `${brand.changes_used} of ${brand.changes_allowed} changes used`}
               <span className="ml-1 text-text-muted">{sent === "sent" ? "· sent to BCON" : "· saved as you go"}</span>
             </span>
-            <ChevronUp size={16} className={`text-text-muted transition-transform ${tray ? "" : "rotate-180"}`} />
+            <ChevronUp size={16} className={`shrink-0 text-text-muted transition-transform ${tray ? "" : "rotate-180"}`} />
           </button>
           <div className="flex items-center gap-3">
             {err && <span className="text-[12.5px] text-accent-red">{err}</span>}
-            <button onClick={sendPicks} disabled={!name || !all.some((p) => p.choice || p.comment) || sent === "sending"}
+            <button onClick={sendPicks} disabled={!name || !actionable.length || sent === "sending" || (v.stage === "idea" && !v.chosen)}
               className="flex h-10 items-center gap-2 rounded-soft bg-[var(--brand)] px-4 text-[13.5px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
               {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : sent === "sent" ? <Check size={15} /> : <Send size={15} />}
-              {sent === "sent" ? "Sent. Thank you" : "Send picks to BCON"}
+              {sent === "sent" ? "Sent. Thank you" : v.stage === "idea" ? "Send my pick to BCON" : "Send to BCON"}
             </button>
           </div>
         </div>
@@ -296,33 +401,20 @@ export default function SharedBoard({ params, searchParams }: { params: { slug: 
   );
 }
 
-function IdeaVerdict({ pick, busy, onPick }: { pick?: Pick; busy: boolean; onPick: (c: "like" | "pass" | null) => void }) {
-  const base = "flex h-11 items-center gap-2 rounded-soft px-4 text-[14px] font-medium transition-colors";
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button onClick={() => onPick(pick?.choice === "like" ? null : "like")} aria-pressed={pick?.choice === "like"}
-        className={`${base} ${pick?.choice === "like" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "border border-[var(--border)] hover:bg-[var(--surface-hover)]"}`}>
-        <Heart size={16} fill={pick?.choice === "like" ? "currentColor" : "none"} /> Love this idea
-      </button>
-      <button onClick={() => onPick(pick?.choice === "pass" ? null : "pass")} aria-pressed={pick?.choice === "pass"}
-        className={`${base} ${pick?.choice === "pass" ? "bg-[var(--surface-hover)] text-text" : "text-text-muted hover:text-text"}`}>
-        {pick?.choice === "pass" ? <Check size={16} /> : <X size={16} />} Not for us
-      </button>
-      {busy && <Loader2 size={14} className="animate-spin text-text-muted" />}
-    </div>
-  );
-}
-
-function NoteBox({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+function NoteBox({ label, placeholder, value, onSave, locked }: { label: string; placeholder: string; value: string; onSave: (v: string) => void; locked?: boolean }) {
   const [v, setV] = useState(value);
   const [open, setOpen] = useState(!!value);
   useEffect(() => { setV(value); if (value) setOpen(true); }, [value]);
+  if (locked) return <p className="text-[12.5px] text-text-muted">All included changes are used. Message us for more.</p>;
   if (!open) {
-    return <button onClick={() => setOpen(true)} className="self-start text-[13px] text-text-muted underline-offset-2 hover:text-text hover:underline">Add a note</button>;
+    return (
+      <button onClick={() => setOpen(true)} className="flex items-center gap-1.5 self-start text-[13px] text-text-muted underline-offset-2 hover:text-text hover:underline">
+        <MessageSquare size={13} /> {label}
+      </button>
+    );
   }
   return (
-    <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} rows={2} aria-label="Your note"
-      placeholder="What would you change? e.g. love option B, but in our green"
+    <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} rows={2} aria-label={label} placeholder={placeholder}
       className="rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[14px] outline-none placeholder:text-text-muted focus:border-[var(--brand-line)]" />
   );
 }

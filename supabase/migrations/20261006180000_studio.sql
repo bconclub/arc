@@ -87,3 +87,17 @@ drop trigger if exists studio_votes_set_updated_at on public.studio_votes;
 create trigger studio_votes_set_updated_at before update on public.studio_votes
   for each row execute function public.set_updated_at();
 alter table public.studio_votes enable row level security;
+
+-- Brand Reels orders (bconclub.com/brand-reels): the client board walks a reel
+-- order through Concept -> Script -> Visual board -> Final reel.
+--   idea   a reel concept (client chooses one); its images are the concept's stills
+--   script the script for a concept (parent_id = the idea)
+--   frame  one storyboard frame (parent_id = the idea, position = order, body = VO / on-screen line)
+--   video  the final reel (image_path holds the video)
+-- changes_allowed: the board changes included in the order (3 on the site).
+alter table public.studio_items drop constraint if exists studio_items_kind_check;
+alter table public.studio_items add constraint studio_items_kind_check
+  check (kind in ('request', 'idea', 'image', 'note', 'script', 'frame', 'video'));
+alter table public.studio_items add column if not exists position int;
+alter table public.studio_brands add column if not exists reel_length text;   -- 30s | 60s | custom
+alter table public.studio_brands add column if not exists changes_allowed int not null default 3;

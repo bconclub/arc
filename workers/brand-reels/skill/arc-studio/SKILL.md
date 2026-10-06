@@ -59,7 +59,9 @@ A brand's board can be shared with the client (ARC: Client board > Share with cl
 
 - Write ideas, image titles and the mood as if the client is reading. Never mention other clients or brands, internal methods ("the Evernuts method"), costs, tools or risks there. Put that in a note.
 - Internal-only image or idea (tests, references from other brands, rejected directions): add `--hidden 1` to `images`, or run `hide <id>`.
-- **Ideas are the main thing the client sees.** Each idea needs 3 to 5 visual options made from the brand's real products: `images <slug> opt-a.png opt-b.png opt-c.png --for <idea-id> --prompt "..." --title "<short option name>"`. The client sees them as Option A, B, C under the idea and picks. Images without `--for` are reference only: they form the header collage ("where you are today").
+- **The client board is a Brand Reels order page** (bconclub.com/brand-reels: idea, script, visual board, final reel). The client sees 3 to 5 **reel ideas** and chooses one. Write each idea as a reel: the hook, what happens, the length, why it sells.
+- Give each idea 1 to 6 vertical stills that show the reel: `images <slug> a.png b.png --for <idea-id> --prompt "..." --title "<short title>"`. Images without `--for` are reference only and form the header collage.
+- Once the client sends their pick (a "<name> sent their picks" note appears), build the order on that idea: `script <slug> --for <idea-id> --file script.txt`, then `frames <slug> 01.png 02.png ... --for <idea-id> --captions captions.txt` (one line per frame: what happens / VO / on-screen), then `final <slug> reel.mp4 --for <idea-id>`. The client page moves through the stages by itself. Comments on the script or frames count against the order's included changes (3 by default).
 - Check picks before making more: `brand <slug>` shows them in ARC; the most loved items are what to make next.
 
 ## Rules

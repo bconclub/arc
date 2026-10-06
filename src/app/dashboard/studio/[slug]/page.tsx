@@ -16,7 +16,8 @@ import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
  */
 
 type Item = {
-  id: string; kind: "request" | "idea" | "image" | "note"; title: string | null; body: string | null; status: string;
+  position?: number | null;
+  id: string; kind: "request" | "idea" | "image" | "note" | "script" | "frame" | "video"; title: string | null; body: string | null; status: string;
   image_path: string | null; url: string | null; source: string | null; prompt: string | null; tags: string[]; parent_id: string | null;
   created_by: string | null; assignee: string | null; pinned: boolean; created_at: string;
   hidden?: boolean; votes: Vote[];
@@ -27,13 +28,14 @@ type Brand = {
   id: string; slug: string; name: string; status: string; mood: string | null; palette: string[]; brief: string | null;
   site_url: string | null; instagram: string | null; drive_url: string | null; logo_url: string | null;
   share_enabled: boolean; share_token: string | null; share_intro: string | null;
+  reel_length: string | null; changes_allowed: number;
 };
 type Data = { brand: Brand; items: Item[]; reels: Reel[] };
-type View = "board" | "requests" | "ideas" | "images" | "picks" | "reels" | "brief";
-type Kind = "request" | "idea" | "note" | "image";
+type View = "board" | "reel" | "requests" | "ideas" | "images" | "picks" | "reels" | "brief";
+type Kind = "request" | "idea" | "note" | "image" | "script" | "frame" | "video";
 
 const ITEM_TONE: Record<string, Tone> = { open: "warn", doing: "info", done: "good", approved: "good", rejected: "bad", parked: "neutral" };
-const KIND_LABEL: Record<string, string> = { request: "Request", idea: "Idea", note: "Note" };
+const KIND_LABEL: Record<string, string> = { request: "Request", idea: "Reel idea", note: "Note", script: "Script" };
 const REEL_TONE: Record<string, Tone> = { queued: "neutral", processing: "info", review: "warn", approved: "good", live: "brand", failed: "bad" };
 const REEL_LABEL: Record<string, string> = { review: "sent", processing: "making" };
 
@@ -150,6 +152,14 @@ function Header({ brand, onSaved }: { brand: Brand; onSaved: () => void }) {
                     <l.icon size={13} /> {l.label}
                   </a>
                 ))}
+                <select value={brand.reel_length || ""} onChange={(e) => save({ reel_length: e.target.value })} aria-label="Reel length"
+                  className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11.5px] font-semibold text-text outline-none">
+                  <option value="">Reel length</option><option value="30s">30s reel</option><option value="60s">60s reel</option><option value="custom">Custom</option>
+                </select>
+                <select value={String(brand.changes_allowed)} onChange={(e) => save({ changes_allowed: Number(e.target.value) })} aria-label="Included changes"
+                  className="rounded-pill bg-[var(--surface-hover)] px-2.5 py-1 text-[11.5px] font-semibold text-text outline-none">
+                  {[1, 2, 3, 4, 5, 6, 8, 10].map((n) => <option key={n} value={n}>{n} changes</option>)}
+                </select>
                 <button onClick={() => setEditLinks((v) => !v)} className="text-[12px] underline-offset-2 hover:text-text hover:underline">
                   {editLinks ? "Done" : links.length ? "Edit links" : "Add links"}
                 </button>
@@ -273,7 +283,7 @@ function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; 
 
 // ── Composer: drop a request, idea, note or images ─────────────
 
-function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdded: () => void }) {
+function Composer({ slug, ideas, existingFrames, onAdded }: { slug: string; ideas: Item[]; existingFrames: (ideaId: string) => number; onAdded: () => void }) {
   const [forIdea, setForIdea] = useState("");
   const [kind, setKind] = useState<Kind>("request");
   const [title, setTitle] = useState("");
@@ -285,12 +295,18 @@ function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdd
   const fileRef = useRef<HTMLInputElement>(null);
 
   const tabs: Tab<Kind>[] = [
-    { value: "request", label: "Request" }, { value: "idea", label: "Idea" },
-    { value: "image", label: "Images" }, { value: "note", label: "Note" },
+    { value: "request", label: "Request" }, { value: "idea", label: "Reel idea" }, { value: "image", label: "Images" },
+    { value: "script", label: "Script" }, { value: "frame", label: "Board frames" }, { value: "video", label: "Final reel" },
+    { value: "note", label: "Note" },
   ];
+  const [captions, setCaptions] = useState("");
+  const needsIdea = kind === "script" || kind === "frame" || kind === "video";
   const hint: Record<Kind, string> = {
     request: "What should the editors make? e.g. 6 festive stills of the ruby jhumka on a model, warm Diwali light",
-    idea: "A concept worth making. e.g. jhumka sway in slow macro, synced to temple bells",
+    idea: "A reel idea the client can choose. One or two lines: the hook, what happens, why it sells. e.g. The jhumka sways in slow macro, each swing timed to temple bells, price lands on the last beat.",
+    script: "The full script. One beat per line: VISUAL / VO / ON-SCREEN text.",
+    frame: "",
+    video: "",
     note: "A decision or finding. e.g. client confirmed: no lifetime-guarantee claim",
     image: "",
   };
@@ -299,7 +315,33 @@ function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdd
     e.preventDefault();
     setBusy(true); setErr(null);
     try {
-      if (kind === "image") {
+      if (needsIdea && !forIdea) throw new Error("Choose which reel idea this belongs to.");
+      const upload = async (f: File) => {
+        const u = await fetch(`/api/ops/studio/${slug}/items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ upload: f.name }) }).then((r) => r.json());
+        if (!u.signedUrl) throw new Error(u.error || "Upload link failed.");
+        const put = await fetch(u.signedUrl, { method: "PUT", headers: { "Content-Type": f.type || "application/octet-stream" }, body: f });
+        if (!put.ok) throw new Error(`Upload of ${f.name} failed.`);
+        return u.path as string;
+      };
+      const create = (b: Record<string, unknown>) => fetch(`/api/ops/studio/${slug}/items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) });
+      if (kind === "frame") {
+        if (!files.length) throw new Error("Choose the frame images, in order.");
+        const lines = captions.split(/\r?\n/);
+        const start = existingFrames(forIdea);
+        const ordered = [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+        for (let i = 0; i < ordered.length; i++) {
+          const path = await upload(ordered[i]);
+          await create({ kind: "frame", parent_id: forIdea, image_path: path, position: start + i + 1, title: `Frame ${start + i + 1}`, body: (lines[i] || "").trim() });
+        }
+      } else if (kind === "video") {
+        if (!files[0]) throw new Error("Choose the final reel video.");
+        const path = await upload(files[0]);
+        await create({ kind: "video", parent_id: forIdea, image_path: path, title: title || "Final reel" });
+      } else if (kind === "script") {
+        if (!body.trim()) throw new Error("Paste the script first.");
+        const r = await create({ kind: "script", parent_id: forIdea, title: title || "Script", body });
+        if (!r.ok) throw new Error((await r.json()).error || "Could not add it.");
+      } else if (kind === "image") {
         if (!files.length) throw new Error("Pick one or more images first.");
         for (const f of files) {
           const u = await fetch(`/api/ops/studio/${slug}/items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ upload: f.name }) }).then((r) => r.json());
@@ -313,7 +355,7 @@ function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdd
         const r = await fetch(`/api/ops/studio/${slug}/items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, title, body }) });
         if (!r.ok) throw new Error((await r.json()).error || "Could not add it.");
       }
-      setTitle(""); setBody(""); setPrompt(""); setFiles([]);
+      setTitle(""); setBody(""); setPrompt(""); setFiles([]); setCaptions("");
       if (fileRef.current) fileRef.current.value = "";
       onAdded();
     } catch (e) {
@@ -331,7 +373,33 @@ function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdd
       </div>
       <input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Title"
         placeholder={kind === "image" ? "Title for these images (optional)" : "Short title"} className={`h-10 ${field}`} />
-      {kind === "image" ? (
+      {needsIdea && (
+        <label className="flex flex-col gap-1">
+          <span className="text-[11.5px] font-medium text-text-muted">For which reel idea (the one the client chose)</span>
+          <select value={forIdea} onChange={(e) => setForIdea(e.target.value)} className={`h-10 ${field}`}>
+            <option value="">Choose the idea</option>
+            {ideas.map((i) => <option key={i.id} value={i.id}>{i.title || "Untitled idea"}{likes(i) ? ` (client chose it)` : ""}</option>)}
+          </select>
+        </label>
+      )}
+      {kind === "frame" ? (
+        <>
+          <label className="flex cursor-pointer items-center gap-3 rounded-soft border border-dashed border-[var(--border)] px-4 py-4 text-[13px] text-text-muted hover:border-[var(--brand-line)] hover:text-text">
+            <ImagePlus size={18} />
+            {files.length ? `${files.length} frame${files.length > 1 ? "s" : ""} ready (ordered by file name)` : "Choose the board frames (9:16 stills), named in order: 01.png, 02.png..."}
+            <input ref={fileRef} type="file" accept="image/*" multiple className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
+          </label>
+          <textarea rows={4} value={captions} onChange={(e) => setCaptions(e.target.value)} aria-label="Frame captions"
+            placeholder={"One line per frame, same order: what happens / VO / on-screen text\ne.g. Close-up, jhumka catches the diya light. VO: Every festival has its sound."}
+            className={`py-2 leading-relaxed ${field}`} />
+        </>
+      ) : kind === "video" ? (
+        <label className="flex cursor-pointer items-center gap-3 rounded-soft border border-dashed border-[var(--border)] px-4 py-4 text-[13px] text-text-muted hover:border-[var(--brand-line)] hover:text-text">
+          <ImagePlus size={18} />
+          {files[0] ? files[0].name : "Choose the final reel (mp4)"}
+          <input ref={fileRef} type="file" accept="video/*" className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 1))} />
+        </label>
+      ) : kind === "image" ? (
         <>
           <label className="flex cursor-pointer items-center gap-3 rounded-soft border border-dashed border-[var(--border)] px-4 py-4 text-[13px] text-text-muted hover:border-[var(--brand-line)] hover:text-text">
             <ImagePlus size={18} />
@@ -339,10 +407,10 @@ function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdd
             <input ref={fileRef} type="file" accept="image/*" multiple className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-[11.5px] font-medium text-text-muted">Show these as options under an idea (the client picks between them)</span>
+            <span className="text-[11.5px] font-medium text-text-muted">Show these as stills of a reel idea (the client sees them next to the idea)</span>
             <select value={forIdea} onChange={(e) => setForIdea(e.target.value)} className={`h-10 ${field}`}>
               <option value="">No, reference only (header collage)</option>
-              {ideas.map((i) => <option key={i.id} value={i.id}>Options for: {i.title || "Untitled idea"}</option>)}
+              {ideas.map((i) => <option key={i.id} value={i.id}>Stills for: {i.title || "Untitled idea"}</option>)}
             </select>
           </label>
           <textarea rows={2} value={prompt} onChange={(e) => setPrompt(e.target.value)} aria-label="Prompt used"
@@ -354,7 +422,7 @@ function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdd
       <div className="flex items-center gap-3">
         <button disabled={busy} className="flex h-10 items-center gap-2 rounded-soft bg-[var(--brand)] px-4 text-[13px] font-semibold text-[var(--brand-ink)] disabled:opacity-50">
           {busy && <Loader2 size={14} className="animate-spin" />}
-          {kind === "request" ? "Send request" : kind === "image" ? "Add to board" : `Add ${kind}`}
+          {kind === "request" ? "Send request" : kind === "image" ? "Add to board" : kind === "frame" ? "Add frames" : kind === "video" ? "Upload final reel" : kind === "idea" ? "Add reel idea" : `Add ${kind}`}
         </button>
         {err && <p className="text-[12px] text-accent-red">{err}</p>}
       </div>
@@ -389,7 +457,7 @@ function TextCard({ item, options = [], onOpen, onChanged }: { item: Item; optio
           ))}
         </div>
       ) : (
-        <p className="rounded-soft border border-dashed border-[var(--border)] px-2 py-2 text-[11.5px] text-text-muted">No options yet. Add 3 to 5 images with &quot;Options for: {item.title}&quot;; the client picks between them.</p>
+        <p className="rounded-soft border border-dashed border-[var(--border)] px-2 py-2 text-[11.5px] text-text-muted">No stills yet. Add 1 to 6 with &quot;Stills for: {item.title}&quot; so the client can see the idea.</p>
       ))}
       <VoteLine item={item} />
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-muted">
@@ -523,6 +591,69 @@ function Reels({ reels }: { reels: Reel[] }) {
   );
 }
 
+// ── Reel order: what the client is reviewing ───────────────────
+
+function ReelOrder({ ideas, items, brand, onOpen }: { ideas: Item[]; items: Item[]; brand: Brand; onOpen: (i: Item) => void }) {
+  const kids = (id: string, k: string) => items.filter((i) => i.parent_id === id && i.kind === k).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const remove = async (id: string) => { if (confirm("Delete this from the reel order?")) { await fetch(`/api/ops/studio/items/${id}`, { method: "DELETE" }); location.reload(); } };
+  const chosen = ideas.filter((i) => likes(i) > 0 || kids(i.id, "script").length || kids(i.id, "frame").length || kids(i.id, "video").length);
+  const used = new Set(items.filter((i) => (i.kind === "script" || i.kind === "frame") && i.votes.some((v) => v.comment)).map((i) => i.id)).size;
+  if (!chosen.length) return <p className="py-10 text-center text-[12.5px] text-text-muted">No idea chosen yet. Share the client board; once they choose an idea, add its script, board frames and final reel here with the composer above.</p>;
+  return (
+    <div className="flex flex-col gap-6">
+      <p className="text-[12.5px] text-text-muted">{brand.reel_length || "Length not set"} · {used} of {brand.changes_allowed} changes used</p>
+      {chosen.map((idea) => {
+        const script = kids(idea.id, "script")[0];
+        const frames = kids(idea.id, "frame");
+        const video = kids(idea.id, "video")[0];
+        return (
+          <section key={idea.id} className="flex flex-col gap-4 rounded-panel border border-[var(--border)] bg-surface p-4">
+            <div>
+              <p className="text-[11px] font-medium text-text-muted">{likes(idea) ? `Chosen by ${idea.votes.filter((v) => v.choice === "like").map((v) => v.voter).join(", ")}` : "In production"}</p>
+              <h3 className="text-[16px] font-semibold text-text">{idea.title}</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.4fr]">
+              <div className="flex flex-col gap-2">
+                <p className="text-[12px] font-semibold text-text">02 Script {script && script.votes.some((v) => v.choice === "like") && <span className="text-accent-green">· approved</span>}</p>
+                {script ? (
+                  <>
+                    <p className="max-h-[360px] overflow-auto whitespace-pre-wrap rounded-soft bg-[var(--bg)] p-3 text-[12.5px] leading-relaxed text-text">{script.body}</p>
+                    <VoteLine item={script} />
+                    <button onClick={() => remove(script.id)} className="self-start text-[11.5px] text-text-muted hover:text-accent-red">Remove script</button>
+                  </>
+                ) : <p className="text-[12px] text-text-muted">Not added. Composer: Script.</p>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-[12px] font-semibold text-text">03 Visual board ({frames.length} frames)</p>
+                {frames.length ? (
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {frames.map((f, n) => (
+                      <div key={f.id} className="flex flex-col gap-1">
+                        <button onClick={() => onOpen(f)} className="relative overflow-hidden rounded-soft">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={f.url || ""} alt="" className="aspect-[9/16] w-full object-cover" />
+                          <span className="absolute left-1 top-1 rounded bg-black/70 px-1 font-mono text-[10px] text-white">{String(n + 1).padStart(2, "0")}</span>
+                          {f.votes.some((v) => v.comment) && <span className="absolute bottom-1 right-1 rounded-pill bg-accent-orange px-1.5 text-[10px] font-semibold text-black">change</span>}
+                        </button>
+                        {f.body && <p className="line-clamp-2 text-[10.5px] text-text-muted">{f.body}</p>}
+                        {f.votes.filter((v) => v.comment).map((v) => <p key={v.voter} className="text-[10.5px] text-accent-orange">{v.voter}: {v.comment}</p>)}
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className="text-[12px] text-text-muted">Not added. Composer: Board frames.</p>}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-[12px] font-semibold text-text">04 Final reel</p>
+              {video?.url ? <video src={video.url} controls className="aspect-[9/16] w-full max-w-[240px] rounded-soft bg-black" /> : <p className="text-[12px] text-text-muted">Not uploaded. Composer: Final reel.</p>}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Page ────────────────────────────────────────────────────────
 
 export default function StudioBrandPage({ params }: { params: { slug: string } }) {
@@ -553,6 +684,7 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
   const picked = items.filter((i) => i.votes.length).sort((a, b) => likes(b) - likes(a) || passes(a) - passes(b));
   const tabs: Tab<View>[] = [
     { value: "board", label: "Board" },
+    { value: "reel", label: "Reel order" },
     { value: "requests", label: "Requests", count: openReq.length },
     { value: "ideas", label: "Ideas", count: ideas.length },
     { value: "images", label: "Images", count: images.length },
@@ -569,7 +701,7 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
     <div className="mx-auto flex max-w-[1400px] flex-col gap-4 p-4 lg:p-6">
       <Header brand={brand} onSaved={load} />
       <SharePanel brand={brand} items={items} onChanged={load} />
-      <Composer slug={brand.slug} ideas={ideas} onAdded={load} />
+      <Composer slug={brand.slug} ideas={ideas} existingFrames={(id) => items.filter((i) => i.kind === "frame" && i.parent_id === id).length} onAdded={load} />
       <SegmentedTabs tabs={tabs} value={view} onChange={setView} ariaLabel="Board sections" className="self-start" />
 
       {view === "board" && (
@@ -596,6 +728,7 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
           </section>
         </div>
       )}
+      {view === "reel" && <ReelOrder ideas={ideas} items={items} brand={brand} onOpen={setOpen} />}
       {view === "requests" && textList(requests, "No requests yet.")}
       {view === "ideas" && textList([...ideas, ...notes], "No ideas yet.")}
       {view === "images" && <ImageGrid images={images} onOpen={setOpen} />}

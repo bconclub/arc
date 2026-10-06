@@ -12,6 +12,10 @@
  *   node studio.mjs note <slug> "<title>" ["<body>"]
  *   node studio.mjs request <slug> "<title>" ["<body>"]
  *   node studio.mjs hide <item-id> | show <item-id>   keep an idea/image off (or on) the client board
+ *   Reel order (client chose an idea):
+ *   node studio.mjs script <slug> --for <idea-id> --file script.txt
+ *   node studio.mjs frames <slug> 01.png 02.png ... --for <idea-id> [--captions captions.txt]   one caption line per frame
+ *   node studio.mjs final <slug> reel.mp4 --for <idea-id> [--title T]
  *   node studio.mjs set <slug> [--name N] [--mood M] [--palette "#hex #hex"] [--brief-file F] [--site U] [--ig H] [--drive U] [--logo file] [--status S]
  */
 import fs from "node:fs";
@@ -43,7 +47,7 @@ async function api(body) {
   if (!r.ok) throw new Error(`${body.action} ${r.status}: ${j.error || "no body"}`);
   return j;
 }
-const MIME = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
+const MIME = { ".mp4": "video/mp4", ".mov": "video/quicktime", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
 async function upload(slug, file) {
   const { path: p, signedUrl } = await api({ action: "upload_url", slug, name: path.basename(file) });
   const r = await netFetch(signedUrl, { method: "PUT", headers: { "Content-Type": MIME[path.extname(file).toLowerCase()] || "application/octet-stream" }, body: fs.readFileSync(file) });
@@ -99,6 +103,31 @@ const C = {
       await api({ action: "add", slug, kind: "image", image_path, title: o.title || path.basename(f).replace(/\.[^.]+$/, ""), prompt: o.prompt, source: o.source || (o.prompt ? "gpt" : "editor"), parent_id: o.for, ...(o.hidden ? { hidden: true } : {}) });
       console.log("added", path.basename(f));
     }
+  },
+  async script(args) {
+    const { o, pos } = parse(args);
+    if (!pos[0] || !o.for || !o.file) throw new Error("usage: script <slug> --for <idea-id> --file script.txt");
+    console.log((await api({ action: "add", slug: pos[0], kind: "script", parent_id: o.for, title: o.title || "Script", body: fs.readFileSync(o.file, "utf8") })).id);
+  },
+  async frames(args) {
+    const { o, pos } = parse(args);
+    const [slug, ...files] = pos;
+    if (!slug || !o.for || !files.length) throw new Error("usage: frames <slug> <files in order...> --for <idea-id> [--captions captions.txt]");
+    const caps = o.captions ? fs.readFileSync(o.captions, "utf8").split(/\r?\n/).map((c) => c.trim()) : [];
+    const { items } = await api({ action: "brand", slug });
+    const start = items.filter((i) => i.kind === "frame" && i.parent_id === o.for).length;
+    for (let i = 0; i < files.length; i++) {
+      const image_path = await upload(slug, files[i]);
+      await api({ action: "add", slug, kind: "frame", parent_id: o.for, image_path, position: start + i + 1, title: `Frame ${start + i + 1}`, body: (caps[i] || "").trim() });
+      console.log("frame", start + i + 1, path.basename(files[i]));
+    }
+  },
+  async final(args) {
+    const { o, pos } = parse(args);
+    const [slug, file] = pos;
+    if (!slug || !file || !o.for) throw new Error("usage: final <slug> reel.mp4 --for <idea-id> [--title T]");
+    const image_path = await upload(slug, file);
+    console.log((await api({ action: "add", slug, kind: "video", parent_id: o.for, image_path, title: o.title || "Final reel" })).id);
   },
   async hide([id]) { await api({ action: "update", id, hidden: true }); console.log("Hidden from the client board."); },
   async show([id]) { await api({ action: "update", id, hidden: false }); console.log("Shown on the client board."); },

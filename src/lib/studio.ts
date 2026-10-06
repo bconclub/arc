@@ -3,9 +3,9 @@
 import { supabaseAdmin } from "@/lib/supabase"
 
 export const STUDIO_BUCKET = "studio"
-export const ITEM_KINDS = ["request", "idea", "image", "note"] as const
+export const ITEM_KINDS = ["request", "idea", "image", "note", "script", "frame", "video"] as const
 export const ITEM_STATUSES = ["open", "doing", "done", "approved", "rejected", "parked"] as const
-export const BRAND_FIELDS = ["name", "status", "mood", "palette", "brief", "site_url", "instagram", "drive_url", "logo_path", "share_intro"] as const
+export const BRAND_FIELDS = ["name", "status", "mood", "palette", "brief", "site_url", "instagram", "drive_url", "logo_path", "share_intro", "reel_length", "changes_allowed"] as const
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const db = supabaseAdmin as any
@@ -13,7 +13,7 @@ export const db = supabaseAdmin as any
 export type StudioItem = {
   id: string; brand_id: string; kind: string; title: string | null; body: string | null; status: string
   image_path: string | null; source: string | null; prompt: string | null; tags: string[]
-  parent_id: string | null; created_by: string | null; assignee: string | null; pinned: boolean; hidden?: boolean
+  parent_id: string | null; created_by: string | null; assignee: string | null; pinned: boolean; hidden?: boolean; position?: number | null
   created_at: string; updated_at: string
 }
 
@@ -48,6 +48,12 @@ export function brandPatch(body: Record<string, unknown>) {
         .filter((c) => /^#?[0-9a-fA-F]{6}$/.test(c))
         .map((c) => (c.startsWith("#") ? c : `#${c}`).toUpperCase())
         .slice(0, 8)
+    } else if (k === "changes_allowed") {
+      const n = Number(v)
+      if (Number.isFinite(n) && n >= 0 && n <= 20) patch.changes_allowed = Math.round(n)
+    } else if (k === "reel_length") {
+      if (["30s", "60s", "custom"].includes(String(v))) patch.reel_length = v
+      else if (v === null || v === "") patch.reel_length = null
     } else if (k === "status") {
       if (["intake", "active", "paused", "archived"].includes(String(v))) patch.status = v
     } else {
@@ -69,6 +75,7 @@ export function itemPatch(body: Record<string, unknown>) {
   if (typeof body.assignee === "string") patch.assignee = body.assignee || null
   if (typeof body.pinned === "boolean") patch.pinned = body.pinned
   if (typeof body.hidden === "boolean") patch.hidden = body.hidden
+  if (Number.isFinite(body.position)) patch.position = Math.round(body.position as number)
   if (Array.isArray(body.tags)) patch.tags = body.tags.map(String).slice(0, 12)
   if (typeof body.status === "string" && (ITEM_STATUSES as readonly string[]).includes(body.status)) patch.status = body.status
   return patch
@@ -81,8 +88,12 @@ export async function withUrls(items: StudioItem[]) {
 }
 
 /** What a client may see on a shared board: ideas and images, minus hidden or rejected ones. */
+export const CLIENT_KINDS = ["idea", "image", "script", "frame", "video"]
 export const isClientVisible = (i: { kind: string; hidden?: boolean; status: string }) =>
-  (i.kind === "idea" || i.kind === "image") && !i.hidden && i.status !== "rejected" && i.status !== "parked"
+  CLIENT_KINDS.includes(i.kind) && !i.hidden && i.status !== "rejected" && i.status !== "parked"
+
+/** Kinds where a client comment counts as one of the order's included changes. */
+export const CHANGE_KINDS = ["script", "frame"]
 
 /** Constant-time compare for share keys. */
 export function sameKey(a: string | null | undefined, b: string | null | undefined) {
