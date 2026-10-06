@@ -224,11 +224,15 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
     all.push(...items);
     if (items.length < 100) break;
   }
-  const ok = all.filter((p) => p.status === "succeeded" && (p.currency ?? "INR") === "INR");
+  const succeeded = all.filter((p) => p.status === "succeeded" && (p.currency ?? "INR") === "INR"
+    && !OWN_TEST_EMAILS.has((p.customer?.email ?? "").toLowerCase()));
+  // A trial starts with a small card check (₹100 on Dodo). It makes the
+  // business a customer, but it is not a sale; real money is anything above it.
+  const ok = succeeded.filter((p) => Number(p.total_amount ?? 0) > 100 * 100);
   return {
     total: ok.reduce((s, p) => s + Number(p.total_amount ?? 0), 0) / 100,
     payments: ok.length,
-    customers: new Set(ok.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
+    customers: new Set(succeeded.map((p) => p.customer?.customer_id ?? p.customer?.email).filter(Boolean)).size,
     last: ok.map((p) => p.created_at ?? "").sort().pop() || null,
     linkFirsts: (() => {
       const first = new Map<string, string>();
