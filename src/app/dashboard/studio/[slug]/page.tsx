@@ -30,7 +30,8 @@ type Brand = {
   share_enabled: boolean; share_token: string | null; share_intro: string | null;
   reel_length: string | null; changes_allowed: number; drafting?: string[];
 };
-type Data = { brand: Brand; items: Item[]; reels: Reel[] };
+type Activity = { id: number; at: string; kind: string; voter: string | null; item_id: string | null; session: string | null; meta: { text?: string; count?: number; ua?: string } };
+type Data = { brand: Brand; items: Item[]; reels: Reel[]; activity: Activity[] };
 type View = "board" | "reel" | "requests" | "ideas" | "images" | "picks" | "reels" | "brief";
 type Kind = "request" | "idea" | "note" | "image" | "script" | "frame" | "video";
 
@@ -230,7 +231,7 @@ function VoteLine({ item }: { item: Item }) {
   );
 }
 
-function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; onChanged: () => void }) {
+function SharePanel({ brand, items, activity, onChanged }: { brand: Brand; items: Item[]; activity: Activity[]; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
   const shown = items.filter((i) => (i.kind === "idea" || i.kind === "image") && !i.hidden && i.status !== "rejected" && i.status !== "parked").length;
   const voters = new Set(items.flatMap((i) => i.votes.map((v) => v.voter))).size;
@@ -270,6 +271,12 @@ function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; 
           </button>
         </div>
       </div>
+      {(brand.share_enabled || activity.length > 0) && (
+        <div className="rounded-soft bg-[var(--bg)] p-3">
+          <p className="mb-1.5 text-[11px] font-medium text-text-muted">Client activity</p>
+          <ActivityFeed activity={activity} items={items} />
+        </div>
+      )}
       {brand.share_enabled && (
         <div>
           <p className="mb-1 text-[11px] font-medium text-text-muted">Message at the top of their board</p>
@@ -279,6 +286,49 @@ function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; 
         </div>
       )}
     </section>
+  );
+}
+
+// ── Client activity: everything they do on their link ──────────
+
+const ACT_VERB: Record<string, string> = {
+  open: "opened the link", name: "entered their name", view: "looked at", choose: "chose", unchoose: "unchose",
+  pass: "passed on", note: "left a note on", tray: "reviewed their picks", send: "sent their picks to BCON",
+};
+
+function ActivityFeed({ activity, items }: { activity: Activity[]; items: Item[] }) {
+  const [all, setAll] = useState(false);
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const label = (a: Activity) => {
+    const it = a.item_id ? byId.get(a.item_id) : null;
+    const parent = it?.parent_id ? byId.get(it.parent_id) : null;
+    const what = it ? (it.kind === "image" && parent ? `a still of "${parent.title}"` : `"${it.title || it.kind}"`) : "";
+    return `${ACT_VERB[a.kind] || a.kind}${what ? ` ${what}` : ""}${a.kind === "note" && a.meta?.text ? `: "${a.meta.text}"` : ""}`;
+  };
+  if (!activity.length) return <p className="text-[12px] text-text-muted">No client activity yet. Every open, view, choice, note and send on their link shows up here.</p>;
+  const visits = new Set(activity.filter((a) => a.kind === "open").map((a) => a.session)).size;
+  const list = all ? activity : activity.slice(0, 8);
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-[11.5px] text-text-muted">
+        Last seen {ago(activity[0].at)}{activity[0].voter ? ` (${activity[0].voter})` : ""} · {visits} visit{visits === 1 ? "" : "s"}
+      </p>
+      <ul className="flex flex-col">
+        {list.map((a) => (
+          <li key={a.id} className="flex gap-3 border-t border-[var(--border)] py-1.5 text-[12px] first:border-t-0">
+            <span className="w-14 shrink-0 text-text-muted">{ago(a.at)}</span>
+            <span className={`min-w-0 flex-1 ${a.kind === "send" || a.kind === "choose" ? "text-text" : "text-text-muted"}`}>
+              <span className="font-medium text-text">{a.voter || "Someone"}</span> {label(a)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {activity.length > 8 && (
+        <button onClick={() => setAll((v) => !v)} className="self-start text-[11.5px] text-text-muted underline-offset-2 hover:text-text hover:underline">
+          {all ? "Show less" : `Show all ${activity.length}`}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -701,7 +751,7 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-4 p-4 lg:p-6">
       <Header brand={brand} onSaved={load} />
-      <SharePanel brand={brand} items={items} onChanged={load} />
+      <SharePanel brand={brand} items={items} activity={d.activity || []} onChanged={load} />
       <Composer slug={brand.slug} ideas={ideas} existingFrames={(id) => items.filter((i) => i.kind === "frame" && i.parent_id === id).length} onAdded={load} />
       <SegmentedTabs tabs={tabs} value={view} onChange={setView} ariaLabel="Board sections" className="self-start" />
 

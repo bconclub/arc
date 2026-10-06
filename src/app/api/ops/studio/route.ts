@@ -8,10 +8,11 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const [brands, items, reels] = await Promise.all([
+  const [brands, items, reels, events] = await Promise.all([
     db.from("studio_brands").select("*").neq("status", "archived").order("updated_at", { ascending: false }),
     db.from("studio_items").select("brand_id, kind, status, image_path, pinned, created_at").order("created_at", { ascending: false }),
     db.from("brand_reels").select("brand, status"),
+    db.from("studio_events").select("brand_id, at, kind, voter").order("at", { ascending: false }).limit(1000),
   ])
   if (brands.error) return Response.json({ error: brands.error.message }, { status: 500 })
 
@@ -29,6 +30,11 @@ export async function GET() {
   const list = (brands.data || []) as any[]
   const urls = await signPaths([...Array.from(cover.values()), ...list.map((b) => b.logo_path)])
 
+  // Latest client action per brand, so the Studio home shows who is active on their link.
+  const lastEvent = new Map<string, { at: string; kind: string; voter: string | null }>()
+  for (const e of (events.data || []) as { brand_id: string; at: string; kind: string; voter: string | null }[]) {
+    if (!lastEvent.has(e.brand_id)) lastEvent.set(e.brand_id, e)
+  }
   const out = list.map((b) => {
     const mine = rows.filter((r) => r.brand_id === b.id)
     const myReels = reelRows.filter((r) => r.brand.toLowerCase() === b.name.toLowerCase())
@@ -36,6 +42,7 @@ export async function GET() {
       ...b,
       cover_url: cover.has(b.id) ? urls.get(cover.get(b.id)!) ?? null : null,
       logo_url: b.logo_path ? urls.get(b.logo_path) ?? null : null,
+      client_last: lastEvent.get(b.id) || null,
       counts: {
         requests_open: mine.filter((r) => r.kind === "request" && (r.status === "open" || r.status === "doing")).length,
         ideas: mine.filter((r) => r.kind === "idea").length,

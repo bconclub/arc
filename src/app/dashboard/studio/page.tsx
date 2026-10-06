@@ -14,6 +14,7 @@ import { StatusPill, type Tone } from "@/components/ui/StatusPill";
 type Brand = {
   id: string; slug: string; name: string; status: string; mood: string | null; palette: string[];
   cover_url: string | null; logo_url: string | null; updated_at: string;
+  client_last: { at: string; kind: string; voter: string | null } | null;
   counts: { requests_open: number; ideas: number; images: number; reels: number; live: number };
 };
 
@@ -97,6 +98,13 @@ function BrandCard({ b }: { b: Brand }) {
           <StatusPill status={b.status} tone={TONE[b.status]} />
         </div>
         <p className="line-clamp-2 min-h-[2.6em] text-[12.5px] leading-snug text-text-muted">{b.mood || "No mood set yet"}</p>
+        {b.client_last && Date.now() - new Date(b.client_last.at).getTime() < 7 * 864e5 && (
+          <p className="flex items-center gap-1.5 text-[11.5px] text-text">
+            <span className={`h-1.5 w-1.5 rounded-full ${Date.now() - new Date(b.client_last.at).getTime() < 3600e3 ? "bg-accent-green" : "bg-[var(--text-muted)]"}`} />
+            Client {b.client_last.kind === "send" ? "sent picks" : b.client_last.kind === "choose" ? "chose an idea" : "active"}
+            {b.client_last.voter ? ` (${b.client_last.voter})` : ""} · {ago(b.client_last.at)}
+          </p>
+        )}
         <p className="text-[11px] text-text-muted">
           {b.counts.images} images · {b.counts.ideas} ideas · {b.counts.reels} reels{b.counts.live ? ` (${b.counts.live} live)` : ""} · {ago(b.updated_at)}
         </p>

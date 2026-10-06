@@ -4,6 +4,7 @@
 // GET  ?k=<key>&voter=<name>  -> { brand, items, mine }   ideas + images only
 // POST { k, item_id, voter, choice?: "like"|"pass"|null, comment? }   one pick per person per item
 // POST { k, voter, submit: true }   "Send picks": posts a summary note to the admin board
+// POST { k, event: "open"|"name"|"view"|"tray", voter?, item_id?, session? }   activity ping
 // Comments on script/frame items count against the order's changes_allowed (3 by default).
 import { db, signPaths, isClientVisible, sameKey, CHANGE_KINDS, type StudioItem } from "@/lib/studio"
 
@@ -23,6 +24,17 @@ async function sharedBrand(slug: string, key: string | null) {
 }
 
 const cleanName = (s: unknown) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 60)
+
+const PING_KINDS = ["open", "name", "view", "tray"]
+
+/** One line in the admin activity feed. Never throws: tracking must not break the client page. */
+async function track(brandId: string, kind: string, voter: string | null, itemId: string | null, session: unknown, meta: Record<string, unknown> = {}) {
+  try {
+    await db.from("studio_events").insert({
+      brand_id: brandId, kind, voter: voter || null, item_id: itemId, session: typeof session === "string" ? session.slice(0, 40) : null, meta,
+    })
+  } catch { /* ignore */ }
+}
 
 export async function GET(req: Request, { params }: { params: { slug: string } }) {
   const url = new URL(req.url)
@@ -59,6 +71,18 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
   const brand = await sharedBrand(params.slug, body.k)
   if (!brand) return NOPE()
   const voter = cleanName(body.voter)
+
+  if (typeof body.event === "string") {
+    if (!PING_KINDS.includes(body.event)) return Response.json({ error: "unknown event" }, { status: 400 })
+    let itemId: string | null = null
+    if (typeof body.item_id === "string") {
+      const { data: it } = await db.from("studio_items").select("id, brand_id").eq("id", body.item_id).maybeSingle()
+      if (it && it.brand_id === brand.id) itemId = it.id
+    }
+    await track(brand.id, body.event, voter, itemId, body.session, { ua: (req.headers.get("user-agent") || "").slice(0, 160) })
+    return Response.json({ ok: true })
+  }
+
   if (!voter) return Response.json({ error: "Add your name first." }, { status: 400 })
 
   if (body.submit === true) {
@@ -84,6 +108,7 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       created_by: `client: ${voter}`, tags: ["client-picks"],
     })
     await db.from("studio_brands").update({ updated_at: new Date().toISOString() }).eq("id", brand.id)
+    await track(brand.id, "send", voter, null, body.session, { count: lines.length })
     return Response.json({ ok: true, sent: lines.length, sent_at: sentAt })
   }
 
@@ -112,6 +137,9 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
   if (comment !== undefined) row.comment = comment
   const { error } = await db.from("studio_votes").upsert(row, { onConflict: "item_id,voter" })
   if (error) return Response.json({ error: "Could not save that. Try again." }, { status: 500 })
+  if (comment) await track(brand.id, "note", voter, item.id, body.session, { text: comment.slice(0, 200) })
+  // A note save also re-sends the current choice; only a choice change is a choice event.
+  if (comment === undefined) await track(brand.id, choice === "like" ? "choose" : choice === "pass" ? "pass" : "unchoose", voter, item.id, body.session)
   return Response.json({ ok: true })
 }
 

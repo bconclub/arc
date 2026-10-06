@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronUp, Download, Loader2, MessageSquare, Send, X } from "lucide-react";
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 
@@ -49,7 +49,28 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const [tray, setTray] = useState(false);
   const [sent, setSent] = useState<"idle" | "sending" | "sent">("idle");
   const [zoom, setZoom] = useState<Item | null>(null);
+  const [profile, setProfile] = useState(false);
   const tone = useLogoTone(board?.brand.logo_url);
+  const session = useRef("");
+  const opened = useRef(false);
+
+  /** Activity ping for the BCON team's feed. Fire and forget: never blocks the page. */
+  const ping = useCallback((event: "open" | "name" | "view" | "tray", who: string, itemId?: string) => {
+    if (!session.current) {
+      try { session.current = sessionStorage.getItem("studio:session") || ""; } catch { /* private mode */ }
+      if (!session.current) {
+        session.current = Math.random().toString(36).slice(2, 12);
+        try { sessionStorage.setItem("studio:session", session.current); } catch { /* private mode */ }
+      }
+    }
+    fetch(`/api/public/studio/${params.slug}`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+      body: JSON.stringify({ k: key, event, voter: who, item_id: itemId, session: session.current }),
+    }).catch(() => {});
+  }, [params.slug, key]);
+
+  function view(i: Item) { setZoom(i); ping("view", name, i.id); }
+  function toggleTray() { setTray((t) => { if (!t) ping("tray", name); return !t; }); }
 
   useEffect(() => {
     try { const n = localStorage.getItem(NAME_KEY); if (n) { setName(n); setNameDraft(n); } } catch { /* private mode */ }
@@ -60,8 +81,9 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     if (!r.ok) return setGone(true);
     const b: Board = await r.json();
     setBoard(b);
+    if (!opened.current) { opened.current = true; ping("open", who); }
     setPicks(Object.fromEntries(b.mine.map((p) => [p.item_id, p])));
-  }, [params.slug, key]);
+  }, [params.slug, key, ping]);
   useEffect(() => { load(name); }, [load, name]);
 
   const v = useMemo(() => {
@@ -86,12 +108,13 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     if (!n) return;
     try { localStorage.setItem(NAME_KEY, n); } catch { /* private mode */ }
     setName(n); setNudge(false);
+    ping("name", n);
   }
 
   async function post(item: Item, next: Pick, patch: Partial<Pick>) {
     const r = await fetch(`/api/public/studio/${params.slug}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ k: key, item_id: item.id, voter: name, choice: next.choice, ...(patch.comment !== undefined ? { comment: patch.comment } : {}) }),
+      body: JSON.stringify({ k: key, item_id: item.id, voter: name, choice: next.choice, session: session.current, ...(patch.comment !== undefined ? { comment: patch.comment } : {}) }),
     });
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "That did not save. Check your connection and try again.");
   }
@@ -127,7 +150,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   async function sendPicks() {
     setSent("sending"); setErr(null);
     const r = await fetch(`/api/public/studio/${params.slug}`, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ k: key, voter: name, submit: true }),
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ k: key, voter: name, submit: true, session: session.current }),
     });
     if (r.ok) {
       const j = await r.json();
@@ -174,8 +197,17 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-[var(--bg)]" />
         <div className="relative mx-auto flex h-full max-w-[1200px] flex-col justify-between px-4 py-5 lg:px-8">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-2">
             <span className="rounded-pill bg-black/50 px-3 py-1 text-[12px] text-white/80">BCON Brand Reels</span>
+            {name && (
+              <button onClick={() => setProfile(true)} aria-label="Your picks"
+                className="flex h-9 items-center gap-2 rounded-pill bg-black/60 pl-1 pr-3 text-[13px] text-white hover:bg-black/80">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand)] text-[12px] font-bold text-[var(--brand-ink)]">
+                  {name.slice(0, 1).toUpperCase()}
+                </span>
+                {name}
+              </button>
+            )}
           </div>
           <div className="flex items-end gap-4 pb-2">
             {brand.logo_url && (
@@ -259,7 +291,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {v.frames.map((f, n) => (
               <article key={f.id} className="flex flex-col overflow-hidden rounded-soft border border-[var(--border)] bg-surface">
-                <button onClick={() => setZoom(f)} className="relative block" aria-label={`Frame ${n + 1} larger`}>
+                <button onClick={() => view(f)} className="relative block" aria-label={`Frame ${n + 1} larger`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={f.url || ""} alt={f.title || `Frame ${n + 1}`} loading="lazy" className="aspect-[9/16] w-full object-cover" />
                   <span className="absolute left-2 top-2 rounded-pill bg-black/70 px-2 py-0.5 font-mono text-[11px] text-white">{String(n + 1).padStart(2, "0")}</span>
@@ -334,7 +366,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                       // One clean row: 4 stills sit 2x2 on a phone and in a single row on desktop, no orphans.
                       <div className={`grid shrink-0 gap-2 lg:w-[560px] ${STILL_GRID[Math.min(stills.length, 6)]}`}>
                         {stills.slice(0, 6).map((s) => (
-                          <button key={s.id} onClick={() => setZoom(s)} className="overflow-hidden rounded-soft" aria-label={`View ${s.title || "still"} larger`}>
+                          <button key={s.id} onClick={() => view(s)} className="overflow-hidden rounded-soft" aria-label={`View ${s.title || "still"} larger`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={s.url || ""} alt={s.title || ""} loading="lazy" className="aspect-[9/16] w-full object-cover" />
                           </button>
@@ -381,7 +413,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           </div>
         )}
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-8">
-          <button onClick={() => setTray((t) => !t)} aria-expanded={tray} className="flex min-w-0 items-center gap-2 text-left text-[13.5px]">
+          <button onClick={toggleTray} aria-expanded={tray} className="flex min-w-0 items-center gap-2 text-left text-[13.5px]">
             <span className="flex h-8 min-w-8 items-center justify-center rounded-pill bg-[var(--brand)] px-2 text-[13px] font-bold text-[var(--brand-ink)]">{actionable.length}</span>
             <span className="min-w-0 truncate">
               {v.stage === "idea"
@@ -395,6 +427,11 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           </button>
           <div className="flex items-center gap-3">
             {err && <span className="text-[12.5px] text-accent-red">{err}</span>}
+            {everSent && (
+              <button onClick={() => setProfile(true)} className="hidden text-[13px] text-text-muted underline-offset-2 hover:text-text hover:underline sm:block">
+                See what you sent
+              </button>
+            )}
             <button onClick={sendPicks} disabled={!name || !actionable.length || allSent || sent === "sending" || (v.stage === "idea" && !v.chosen)}
               className="flex h-10 items-center gap-2 rounded-soft bg-[var(--brand)] px-4 text-[13.5px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
               {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : allSent ? <Check size={15} /> : <Send size={15} />}
@@ -403,6 +440,11 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           </div>
         </div>
       </div>
+
+      {profile && (
+        <ProfilePanel name={name} picks={Object.values(picks)} byId={byId} frames={v.frames}
+          onClose={() => setProfile(false)} onSwitch={() => { setProfile(false); setName(""); }} />
+      )}
 
       {zoom && (
         <div role="dialog" aria-modal="true" onClick={() => setZoom(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
@@ -432,5 +474,88 @@ function NoteBox({ label, placeholder, value, onSave, locked }: { label: string;
   return (
     <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} rows={2} aria-label={label} placeholder={placeholder}
       className="rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[14px] outline-none placeholder:text-text-muted focus:border-[var(--brand-line)]" />
+  );
+}
+
+/** The client's own record: what they have sent to BCON and what is still a draft. */
+function ProfilePanel({ name, picks, byId, frames, onClose, onSwitch }: {
+  name: string; picks: Pick[]; byId: Map<string, Item>; frames: Item[]; onClose: () => void; onSwitch: () => void;
+}) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
+  const real = picks.filter((p) => p.choice || p.comment);
+  const sent = real.filter((p) => p.sent_at).sort((a, b) => (b.sent_at || "").localeCompare(a.sent_at || ""));
+  const drafts = real.filter((p) => !p.sent_at);
+  const lastSent = sent[0]?.sent_at;
+  const stillsOf = (id: string) => Array.from(byId.values()).filter((i) => i.kind === "image" && i.parent_id === id).slice(0, 4);
+  const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+  const Row = ({ p }: { p: Pick }) => {
+    const it = byId.get(p.item_id);
+    if (!it) return null;
+    const what = it.kind === "idea" ? (p.choice === "like" ? "Chosen idea" : p.choice === "pass" ? "Not for us" : "Note on idea")
+      : it.kind === "script" ? (p.comment ? "Change to the script" : "Script approved")
+      : it.kind === "frame" ? `Change to frame ${frames.indexOf(it) + 1}` : "Pick";
+    return (
+      <li className="flex flex-col gap-2 border-t border-[var(--border)] py-3 first:border-t-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11.5px] font-medium text-text-muted">{what}</p>
+            <p className="text-[15px] font-semibold leading-snug">{it.title || (it.kind === "frame" ? `Frame ${frames.indexOf(it) + 1}` : it.kind)}</p>
+          </div>
+          {p.choice === "like" && <span className="shrink-0 rounded-pill bg-[var(--brand-soft)] px-2 py-0.5 text-[11.5px] font-semibold text-[var(--brand-text)]">{it.kind === "idea" ? "Chosen" : "Approved"}</span>}
+        </div>
+        {it.kind === "idea" && stillsOf(it.id).length > 0 && (
+          <div className="grid grid-cols-4 gap-1.5">
+            {stillsOf(it.id).map((s) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={s.id} src={s.url || ""} alt="" className="aspect-[9/16] w-full rounded-soft object-cover" />
+            ))}
+          </div>
+        )}
+        {it.kind === "frame" && it.url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={it.url} alt="" className="aspect-[9/16] w-20 rounded-soft object-cover" />
+        )}
+        {p.comment && <p className="rounded-soft bg-[var(--bg)] px-3 py-2 text-[13px] text-text-muted">&ldquo;{p.comment}&rdquo;</p>}
+      </li>
+    );
+  };
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Your picks" onClick={onClose} className="fixed inset-0 z-50 flex justify-end bg-black/60">
+      <aside onClick={(e) => e.stopPropagation()} className="flex h-full w-full max-w-[440px] flex-col overflow-hidden bg-surface">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] p-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-[15px] font-bold text-[var(--brand-ink)]">{name.slice(0, 1).toUpperCase()}</span>
+            <div>
+              <p className="text-[15px] font-semibold">{name}</p>
+              <p className={`text-[12.5px] ${lastSent ? "text-accent-green" : "text-text-muted"}`}>
+                {lastSent ? `Sent to BCON · ${when(lastSent)}` : "Nothing sent to BCON yet"}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-[var(--surface-hover)]"><X size={18} /></button>
+        </div>
+        <div className="flex-1 overflow-auto p-4">
+          <h3 className="mb-1 text-[13px] font-semibold">Sent to BCON</h3>
+          {sent.length ? <ul className="mb-6">{sent.map((p) => <Row key={p.item_id} p={p} />)}</ul>
+            : <p className="mb-6 text-[13px] text-text-muted">When you press Send, your picks show up here.</p>}
+          {drafts.length > 0 && (
+            <>
+              <h3 className="mb-1 text-[13px] font-semibold">Not sent yet</h3>
+              <p className="mb-2 text-[12.5px] text-text-muted">These changes reach us when you press Send at the bottom.</p>
+              <ul>{drafts.map((p) => <Row key={p.item_id} p={p} />)}</ul>
+            </>
+          )}
+        </div>
+        <div className="border-t border-[var(--border)] p-4">
+          <button onClick={onSwitch} className="text-[13px] text-text-muted underline-offset-2 hover:text-text hover:underline">Not {name}? Switch name</button>
+        </div>
+      </aside>
+    </div>
   );
 }

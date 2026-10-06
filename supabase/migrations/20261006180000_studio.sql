@@ -106,3 +106,18 @@ alter table public.studio_brands add column if not exists changes_allowed int no
 -- send and cleared again whenever they change that pick, so ARC only ever acts on
 -- what the client has actually sent.
 alter table public.studio_votes add column if not exists sent_at timestamptz;
+
+-- What the client does on their link: opened, entered a name, viewed a still,
+-- chose an idea, wrote a note, sent. Shown as a live feed on the admin board.
+create table if not exists public.studio_events (
+  id bigserial primary key,
+  brand_id uuid not null references public.studio_brands (id) on delete cascade,
+  at timestamptz not null default now(),
+  kind text not null,          -- open | name | view | choose | unchoose | note | tray | send
+  voter text,
+  item_id uuid references public.studio_items (id) on delete set null,
+  session text,                -- one browser visit, so repeat opens can be told apart
+  meta jsonb not null default '{}'::jsonb
+);
+create index if not exists studio_events_brand_idx on public.studio_events (brand_id, at desc);
+alter table public.studio_events enable row level security;
