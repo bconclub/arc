@@ -326,7 +326,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                       </div>
                     </div>
                     {stills.length > 0 && (
-                      <div className="grid shrink-0 grid-cols-3 gap-2 lg:w-[480px]">
+                      // One clean row: 4 stills sit 2x2 on a phone and in a single row on desktop, no orphans.
+                      <div className={`grid shrink-0 gap-2 lg:w-[560px] ${stills.length === 4 ? "grid-cols-2 sm:grid-cols-4" : stills.length >= 3 ? "grid-cols-3" : "grid-cols-2"}`}>
                         {stills.slice(0, 6).map((s) => (
                           <button key={s.id} onClick={() => setZoom(s)} className="overflow-hidden rounded-soft" aria-label={`View ${s.title || "still"} larger`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
