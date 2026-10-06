@@ -24,7 +24,10 @@ function LoginForm() {
       setError("Wrong password.");
       return;
     }
-    router.push(params.get("next") || "/dashboard");
+    const j = await res.json().catch(() => ({}));
+    // A studio login only lands on Studio pages, whatever `next` asked for.
+    const next = params.get("next");
+    router.push(j.role === "studio" ? (next?.startsWith("/dashboard/studio") ? next : j.home) : next || "/dashboard");
     router.refresh();
   }
 

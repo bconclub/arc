@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { COOKIE_NAME, verifySessionToken } from "@/lib/auth";
+import { COOKIE_NAME, STUDIO_COOKIE, verifySessionToken, verifyStudioToken, studioMayOpen } from "@/lib/auth";
 
 // api/agent/* and api/proxe/briefs are machine endpoints — they carry their own
 // bearer check (see lib/ingest-auth.ts) and fail closed without ARC_INGEST_SECRET.
@@ -48,6 +48,15 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const valid = await verifySessionToken(token);
   if (valid) return NextResponse.next();
+
+  // Studio-only login: its own paths pass, everything else goes back to the Studio.
+  if (await verifyStudioToken(req.cookies.get(STUDIO_COOKIE)?.value)) {
+    if (studioMayOpen(req.nextUrl.pathname)) return NextResponse.next();
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "not available for this login" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/dashboard/studio", req.url));
+  }
 
   if (req.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

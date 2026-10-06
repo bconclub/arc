@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Clapperboard, Loader2, Plus } from "lucide-react";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
+import { useRole } from "@/components/StudioShell";
 
 /**
  * Studio home: every brand we are creating for. Each card says what we are going
@@ -114,6 +115,7 @@ function BrandCard({ b }: { b: Brand }) {
 }
 
 export default function StudioPage() {
+  const role = useRole();
   const [brands, setBrands] = useState<Brand[] | null>(null);
   const load = useCallback(async () => {
     const r = await fetch("/api/ops/studio", { cache: "no-store" });
@@ -134,10 +136,10 @@ export default function StudioPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href="/dashboard/brand-reels"
+          {role === "owner" && <Link href="/dashboard/brand-reels"
             className="flex h-10 items-center gap-2 rounded-soft border border-[var(--border)] px-4 text-[13px] font-medium text-text hover:bg-[var(--surface-hover)]">
             <Clapperboard size={15} /> Reels
-          </Link>
+          </Link>}
           <NewBrand onMade={(slug) => (window.location.href = `/dashboard/studio/${slug}`)} />
         </div>
       </header>

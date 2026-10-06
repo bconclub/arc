@@ -2,6 +2,8 @@
 // Web Crypto only, no Buffer, must run in the Edge middleware runtime.
 
 const COOKIE_NAME = "arc_session";
+/** Studio-only login (social media team): sees /dashboard/studio and nothing else. */
+const STUDIO_COOKIE = "arc_studio";
 const SESSION_DAYS = 30;
 
 function b64urlEncode(buf: ArrayBuffer): string {
@@ -169,3 +171,42 @@ export async function verifyInvestorToken(token: string | undefined): Promise<st
 }
 
 export { COOKIE_NAME, INVESTOR_COOKIE, INVESTOR_DAYS };
+
+// ── Studio role ───────────────────────────────────────────────
+// A second, narrower login. Its token signs "studio.<expiry>", so an owner token
+// can never pass as a studio one or the other way round. Off until
+// STUDIO_PASSWORD_HASH is set (node scripts/hash-password.mjs "<password>").
+
+export { STUDIO_COOKIE };
+
+export async function createStudioToken(): Promise<string> {
+  const expiry = Math.floor(Date.now() / 1000) + SESSION_DAYS * 24 * 60 * 60;
+  const key = await hmacKey(getSecret());
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`studio.${expiry}`));
+  return `${expiry}.${b64urlEncode(sig)}`;
+}
+
+export async function verifyStudioToken(token: string | undefined): Promise<boolean> {
+  if (!token) return false;
+  const [expiryStr, sig] = token.split(".");
+  if (!expiryStr || !sig) return false;
+  const expiry = Number(expiryStr);
+  if (!Number.isFinite(expiry) || expiry < Math.floor(Date.now() / 1000)) return false;
+  const key = await hmacKey(getSecret());
+  try {
+    return await crypto.subtle.verify("HMAC", key, b64urlDecode(sig), new TextEncoder().encode(`studio.${expiryStr}`));
+  } catch {
+    return false;
+  }
+}
+
+export async function verifyStudioPassword(candidate: string): Promise<boolean> {
+  const stored = process.env.STUDIO_PASSWORD_HASH;
+  if (!stored) return false;
+  return verifyHash(candidate, stored);
+}
+
+/** Paths a studio login may open. Everything else bounces to the Studio. */
+export function studioMayOpen(pathname: string): boolean {
+  return /^\/dashboard\/studio(\/|$)/.test(pathname) || /^\/api\/ops\/studio(\/|$)/.test(pathname) || pathname === "/api/logout"
+}
