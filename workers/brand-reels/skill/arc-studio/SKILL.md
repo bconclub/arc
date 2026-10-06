@@ -59,6 +59,7 @@ A brand's board can be shared with the client (ARC: Client board > Share with cl
 
 - Write ideas, image titles and the mood as if the client is reading. Never mention other clients or brands, internal methods ("the Evernuts method"), costs, tools or risks there. Put that in a note.
 - Internal-only image or idea (tests, references from other brands, rejected directions): add `--hidden 1` to `images`, or run `hide <id>`.
+- **Ideas are the main thing the client sees.** Each idea needs 3 to 5 visual options made from the brand's real products: `images <slug> opt-a.png opt-b.png opt-c.png --for <idea-id> --prompt "..." --title "<short option name>"`. The client sees them as Option A, B, C under the idea and picks. Images without `--for` are reference only: they form the header collage ("where you are today").
 - Check picks before making more: `brand <slug>` shows them in ARC; the most loved items are what to make next.
 
 ## Rules

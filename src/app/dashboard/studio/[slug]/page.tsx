@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { SegmentedTabs, type Tab } from "@/components/ui/SegmentedTabs";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
+import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 
 /**
  * One brand's studio. The top states what we are going after (mood, palette); the
@@ -16,7 +17,7 @@ import { StatusPill, type Tone } from "@/components/ui/StatusPill";
 
 type Item = {
   id: string; kind: "request" | "idea" | "image" | "note"; title: string | null; body: string | null; status: string;
-  image_path: string | null; url: string | null; source: string | null; prompt: string | null; tags: string[];
+  image_path: string | null; url: string | null; source: string | null; prompt: string | null; tags: string[]; parent_id: string | null;
   created_by: string | null; assignee: string | null; pinned: boolean; created_at: string;
   hidden?: boolean; votes: Vote[];
 };
@@ -81,6 +82,7 @@ function Header({ brand, onSaved }: { brand: Brand; onSaved: () => void }) {
   const [editPalette, setEditPalette] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const tone = useLogoTone(brand.logo_url);
 
   async function save(body: Record<string, unknown>) {
     await fetch(`/api/ops/studio/${brand.slug}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -134,7 +136,7 @@ function Header({ brand, onSaved }: { brand: Brand; onSaved: () => void }) {
               // Logos arrive as full lockups (crest + wordmark), so the tile sizes to the
               // logo's width instead of cropping it into an icon square.
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={brand.logo_url} alt={`${brand.name} logo`} className="h-20 w-auto max-w-[180px] shrink-0 rounded-soft bg-white object-contain p-1.5" />
+              <img src={brand.logo_url} alt={`${brand.name} logo`} className={`h-20 w-auto max-w-[180px] shrink-0 rounded-soft object-contain p-1.5 ${logoTile(tone)}`} />
             )}
             <div className="min-w-0">
               <h1 className="truncate text-[28px] font-bold leading-tight tracking-tight text-text">{brand.name}</h1>
@@ -271,7 +273,8 @@ function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; 
 
 // ── Composer: drop a request, idea, note or images ─────────────
 
-function Composer({ slug, onAdded }: { slug: string; onAdded: () => void }) {
+function Composer({ slug, ideas, onAdded }: { slug: string; ideas: Item[]; onAdded: () => void }) {
+  const [forIdea, setForIdea] = useState("");
   const [kind, setKind] = useState<Kind>("request");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -304,7 +307,7 @@ function Composer({ slug, onAdded }: { slug: string; onAdded: () => void }) {
           const put = await fetch(u.signedUrl, { method: "PUT", headers: { "Content-Type": f.type || "image/jpeg" }, body: f });
           if (!put.ok) throw new Error(`Upload of ${f.name} failed.`);
           await fetch(`/api/ops/studio/${slug}/items`, { method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ kind: "image", image_path: u.path, title: title || f.name.replace(/\.[^.]+$/, ""), prompt, source: prompt ? "gpt" : "upload" }) });
+            body: JSON.stringify({ kind: "image", image_path: u.path, title: title || f.name.replace(/\.[^.]+$/, ""), prompt, source: prompt ? "gpt" : "upload", ...(forIdea ? { parent_id: forIdea } : {}) }) });
         }
       } else {
         const r = await fetch(`/api/ops/studio/${slug}/items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, title, body }) });
@@ -335,6 +338,13 @@ function Composer({ slug, onAdded }: { slug: string; onAdded: () => void }) {
             {files.length ? `${files.length} image${files.length > 1 ? "s" : ""} ready` : "Choose images (stills from GPT, refs, screenshots)"}
             <input ref={fileRef} type="file" accept="image/*" multiple className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
           </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11.5px] font-medium text-text-muted">Show these as options under an idea (the client picks between them)</span>
+            <select value={forIdea} onChange={(e) => setForIdea(e.target.value)} className={`h-10 ${field}`}>
+              <option value="">No, reference only (header collage)</option>
+              {ideas.map((i) => <option key={i.id} value={i.id}>Options for: {i.title || "Untitled idea"}</option>)}
+            </select>
+          </label>
           <textarea rows={2} value={prompt} onChange={(e) => setPrompt(e.target.value)} aria-label="Prompt used"
             placeholder="The prompt that made them (optional, so we can make more like it)" className={`py-2 ${field}`} />
         </>
@@ -354,7 +364,7 @@ function Composer({ slug, onAdded }: { slug: string; onAdded: () => void }) {
 
 // ── Board pieces ────────────────────────────────────────────────
 
-function TextCard({ item, onChanged }: { item: Item; onChanged: () => void }) {
+function TextCard({ item, options = [], onOpen, onChanged }: { item: Item; options?: Item[]; onOpen?: (i: Item) => void; onChanged: () => void }) {
   const set = async (b: Record<string, unknown>) => { await patchItem(item.id, b); onChanged(); };
   const remove = async () => { await fetch(`/api/ops/studio/items/${item.id}`, { method: "DELETE" }); onChanged(); };
   return (
@@ -367,6 +377,20 @@ function TextCard({ item, onChanged }: { item: Item; onChanged: () => void }) {
         {item.kind !== "note" && <StatusPill status={item.status} tone={ITEM_TONE[item.status]} />}
       </div>
       {item.body && <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-text-muted">{item.body}</p>}
+      {item.kind === "idea" && (options.length ? (
+        <div className="grid grid-cols-4 gap-1.5">
+          {options.map((o, j) => (
+            <button key={o.id} onClick={() => onOpen?.(o)} className="relative overflow-hidden rounded-soft" title={o.title || ""}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={o.url || ""} alt="" className={`aspect-[4/5] w-full object-cover ${o.hidden ? "opacity-40" : ""}`} />
+              <span className="absolute left-1 top-1 rounded bg-black/70 px-1 text-[10px] font-semibold text-white">{"ABCDEFGH"[j]}</span>
+              {likes(o) > 0 && <span className="absolute bottom-1 right-1 flex items-center gap-0.5 rounded-pill bg-[var(--brand)] px-1 text-[10px] font-semibold text-[var(--brand-ink)]"><Heart size={9} fill="currentColor" />{likes(o)}</span>}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-soft border border-dashed border-[var(--border)] px-2 py-2 text-[11.5px] text-text-muted">No options yet. Add 3 to 5 images with &quot;Options for: {item.title}&quot;; the client picks between them.</p>
+      ))}
       <VoteLine item={item} />
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-muted">
         <span>{item.created_by === "team" ? "team" : item.created_by} · {ago(item.created_at)}{item.assignee ? ` · ${item.assignee} on it` : ""}</span>
@@ -536,15 +560,16 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
     { value: "reels", label: "Reels", count: reels.length },
     { value: "brief", label: "Brief" },
   ];
+  const optionsOf = (id: string) => images.filter((i) => i.parent_id === id);
   const textList = (list: Item[], empty: string) => list.length
-    ? <div className="flex flex-col gap-2">{list.map((i) => <TextCard key={i.id} item={i} onChanged={load} />)}</div>
+    ? <div className="flex flex-col gap-2">{list.map((i) => <TextCard key={i.id} item={i} options={optionsOf(i.id)} onOpen={setOpen} onChanged={load} />)}</div>
     : <p className="py-6 text-center text-[12.5px] text-text-muted">{empty}</p>;
 
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-4 p-4 lg:p-6">
       <Header brand={brand} onSaved={load} />
       <SharePanel brand={brand} items={items} onChanged={load} />
-      <Composer slug={brand.slug} onAdded={load} />
+      <Composer slug={brand.slug} ideas={ideas} onAdded={load} />
       <SegmentedTabs tabs={tabs} value={view} onChange={setView} ariaLabel="Board sections" className="self-start" />
 
       {view === "board" && (
