@@ -28,7 +28,7 @@ type Brand = {
   id: string; slug: string; name: string; status: string; mood: string | null; palette: string[]; brief: string | null;
   site_url: string | null; instagram: string | null; drive_url: string | null; logo_url: string | null;
   share_enabled: boolean; share_token: string | null; share_intro: string | null;
-  reel_length: string | null; changes_allowed: number;
+  reel_length: string | null; changes_allowed: number; drafting?: string[];
 };
 type Data = { brand: Brand; items: Item[]; reels: Reel[] };
 type View = "board" | "reel" | "requests" | "ideas" | "images" | "picks" | "reels" | "brief";
@@ -250,7 +250,8 @@ function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; 
             {brand.share_enabled
               ? `Live. The client sees the mood, palette and ${shown} ideas and images. Requests, notes and hidden items stay here.`
               : "Off. Turn it on to send the client a link where they pick the ideas and looks they like."}
-            {voters > 0 && <span className="text-text"> {voters} {voters === 1 ? "person has" : "people have"} picked.</span>}
+            {voters > 0 && <span className="text-text"> {voters} {voters === 1 ? "person has" : "people have"} sent picks.</span>}
+            {!!brand.drafting?.length && <span className="text-text-muted"> {brand.drafting.join(", ")} {brand.drafting.length === 1 ? "is" : "are"} picking, not sent yet.</span>}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

@@ -101,3 +101,8 @@ alter table public.studio_items add constraint studio_items_kind_check
 alter table public.studio_items add column if not exists position int;
 alter table public.studio_brands add column if not exists reel_length text;   -- 30s | 60s | custom
 alter table public.studio_brands add column if not exists changes_allowed int not null default 3;
+
+-- A client's picks are a draft until they press "Send to BCON". sent_at is set on
+-- send and cleared again whenever they change that pick, so ARC only ever acts on
+-- what the client has actually sent.
+alter table public.studio_votes add column if not exists sent_at timestamptz;

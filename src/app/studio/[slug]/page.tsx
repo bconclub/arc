@@ -19,7 +19,7 @@ import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 
 type Kind = "idea" | "image" | "script" | "frame" | "video";
 type Item = { id: string; kind: Kind; title: string | null; body: string | null; url: string | null; featured: boolean; parent_id: string | null; position: number | null };
-type Pick = { item_id: string; choice: "like" | "pass" | null; comment: string | null };
+type Pick = { item_id: string; choice: "like" | "pass" | null; comment: string | null; sent_at?: string | null };
 type Brand = { name: string; mood: string | null; palette: string[]; intro: string | null; logo_url: string | null; reel_length: string | null; changes_allowed: number; changes_used: number };
 type Board = { brand: Brand; items: Item[]; mine: Pick[] };
 
@@ -94,7 +94,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   async function pick(item: Item, patch: Partial<Pick>) {
     if (!name) { setNudge(true); document.getElementById("who")?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     const prev = picks[item.id] || { item_id: item.id, choice: null, comment: null };
-    const next = { ...prev, ...patch };
+    const next = { ...prev, ...patch, sent_at: null }; // any change is a draft until sent
     setPicks((p) => ({ ...p, [item.id]: next }));
     setSaving(item.id); setErr(null); setSent("idle");
     try {
@@ -112,7 +112,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     if (on) return;
     for (const other of v.ideas) {
       if (other.id !== idea.id && picks[other.id]?.choice === "like") {
-        const o = { ...picks[other.id], choice: null };
+        const o = { ...picks[other.id], choice: null, sent_at: null };
         setPicks((p) => ({ ...p, [other.id]: o }));
         post(other, o, {}).catch(() => {});
       }
@@ -124,7 +124,11 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     const r = await fetch(`/api/public/studio/${params.slug}`, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ k: key, voter: name, submit: true }),
     });
-    if (r.ok) setSent("sent");
+    if (r.ok) {
+      const j = await r.json();
+      setPicks((p) => Object.fromEntries(Object.entries(p).map(([k, x]) => [k, { ...x, sent_at: j.sent_at }])));
+      setSent("sent");
+    }
     else { setSent("idle"); setErr((await r.json().catch(() => ({}))).error || "Could not send. Try again."); }
   }
 
@@ -144,6 +148,10 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const stepIdx = STEPS.findIndex((s) => s.key === v.stage);
   const changesLeft = Math.max(0, brand.changes_allowed - brand.changes_used);
   const actionable = Object.values(picks).filter((p) => p.choice || p.comment);
+  // Draft until sent: nothing reaches BCON before the client presses send.
+  const unsent = actionable.filter((p) => !p.sent_at);
+  const everSent = actionable.some((p) => p.sent_at);
+  const allSent = actionable.length > 0 && unsent.length === 0;
   const byId = new Map(board.items.map((i) => [i.id, i]));
   const showIdeas = !v.built; // once we are building on an idea, the others step aside
 
@@ -195,7 +203,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
         </h2>
         <p className="mt-3 max-w-[62ch] text-[16px] leading-relaxed text-text-muted">
           {brand.intro || (v.stage === "idea"
-            ? "We made these ideas from your products. Choose the one you want as your reel, add a note if you like, and send your pick to us. We write the script from it."
+            ? "We made these ideas from your products. Choose the one you want as your reel and add a note if you like. Nothing reaches us until you press Send at the bottom; then we write the script from your pick."
             : v.stage === "script" ? "Read it through. Approve it, or tell us what to change. The delivery clock starts once your script is final."
             : v.stage === "board" ? `Every frame of your reel, planned before we generate it. Ask for changes on any frame. Your order includes ${brand.changes_allowed} changes.`
             : "Here is your final reel, scored and captioned. Download it and post it.")}
@@ -373,16 +381,18 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
               {v.stage === "idea"
                 ? (v.chosen ? <>Your pick: <span className="font-semibold">{v.chosen.title}</span></> : "Choose an idea")
                 : `${brand.changes_used} of ${brand.changes_allowed} changes used`}
-              <span className="ml-1 text-text-muted">{sent === "sent" ? "· sent to BCON" : "· saved as you go"}</span>
+              <span className={`ml-1 ${allSent ? "text-accent-green" : "text-text-muted"}`}>
+                {allSent ? "· sent to BCON" : everSent ? "· changes not sent yet" : actionable.length ? "· draft, not sent yet" : ""}
+              </span>
             </span>
             <ChevronUp size={16} className={`shrink-0 text-text-muted transition-transform ${tray ? "" : "rotate-180"}`} />
           </button>
           <div className="flex items-center gap-3">
             {err && <span className="text-[12.5px] text-accent-red">{err}</span>}
-            <button onClick={sendPicks} disabled={!name || !actionable.length || sent === "sending" || (v.stage === "idea" && !v.chosen)}
+            <button onClick={sendPicks} disabled={!name || !actionable.length || allSent || sent === "sending" || (v.stage === "idea" && !v.chosen)}
               className="flex h-10 items-center gap-2 rounded-soft bg-[var(--brand)] px-4 text-[13.5px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
-              {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : sent === "sent" ? <Check size={15} /> : <Send size={15} />}
-              {sent === "sent" ? "Sent. Thank you" : v.stage === "idea" ? "Send my pick to BCON" : "Send to BCON"}
+              {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : allSent ? <Check size={15} /> : <Send size={15} />}
+              {allSent ? "Sent to BCON" : everSent ? "Send changes to BCON" : v.stage === "idea" ? "Send my pick to BCON" : "Send to BCON"}
             </button>
           </div>
         </div>

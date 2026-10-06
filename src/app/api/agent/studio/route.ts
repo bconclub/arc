@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       if (!brand) return bad("brand not found", 404)
       const [{ data }, { data: votes }] = await Promise.all([
         db.from("studio_items").select("*").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(300),
-        db.from("studio_votes").select("item_id, voter, choice, comment").eq("brand_id", brand.id),
+        db.from("studio_votes").select("item_id, voter, choice, comment").eq("brand_id", brand.id).not("sent_at", "is", null),
       ])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const picks = (votes || []) as any[]

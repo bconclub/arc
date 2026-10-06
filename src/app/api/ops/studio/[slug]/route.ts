@@ -15,12 +15,15 @@ export async function GET(_req: Request, { params }: { params: { slug: string } 
   const [items, reels, votes] = await Promise.all([
     db.from("studio_items").select("*").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(500),
     db.from("brand_reels").select("id, title, code, status, version, outputs, posted_url, updated_at").ilike("brand", brand.name).order("updated_at", { ascending: false }),
-    db.from("studio_votes").select("item_id, voter, choice, comment, updated_at").eq("brand_id", brand.id).order("updated_at", { ascending: false }),
+    db.from("studio_votes").select("item_id, voter, choice, comment, updated_at, sent_at").eq("brand_id", brand.id).order("updated_at", { ascending: false }),
   ])
   // Client picks from the shared board, grouped per item.
-  type Vote = { item_id: string; voter: string; choice: string | null; comment: string | null; updated_at: string }
+  // Only picks the client has sent count. Drafts are summarised, never acted on.
+  type Vote = { item_id: string; voter: string; choice: string | null; comment: string | null; updated_at: string; sent_at: string | null }
+  const all = (votes.data || []) as Vote[]
   const byItem = new Map<string, Vote[]>()
-  for (const v of (votes.data || []) as Vote[]) byItem.set(v.item_id, [...(byItem.get(v.item_id) || []), v])
+  for (const v of all.filter((x) => x.sent_at)) byItem.set(v.item_id, [...(byItem.get(v.item_id) || []), v])
+  const drafting = Array.from(new Set(all.filter((x) => !x.sent_at && (x.choice || x.comment)).map((x) => x.voter)))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reelRows = (reels.data || []) as any[]
@@ -30,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: { slug: string } 
 
   return Response.json(
     {
-      brand: { ...brand, logo_url: logo },
+      brand: { ...brand, logo_url: logo, drafting },
       items: (await withUrls((items.data || []) as StudioItem[])).map((i) => ({ ...i, votes: byItem.get(i.id) || [] })),
       reels: reelRows.map((r, i) => ({ id: r.id, title: r.title, code: r.code, status: r.status, version: r.version, posted_url: r.posted_url, updated_at: r.updated_at, final_url: finals[i] ? reelUrls.get(finals[i]!) ?? null : null })),
     },

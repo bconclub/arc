@@ -32,7 +32,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
 
   const [items, mine, comments] = await Promise.all([
     db.from("studio_items").select("id, kind, title, body, status, image_path, hidden, pinned, parent_id, position, created_at").eq("brand_id", brand.id).order("created_at", { ascending: true }),
-    voter ? db.from("studio_votes").select("item_id, choice, comment").eq("brand_id", brand.id).eq("voter", voter) : Promise.resolve({ data: [] }),
+    voter ? db.from("studio_votes").select("item_id, choice, comment, sent_at").eq("brand_id", brand.id).eq("voter", voter) : Promise.resolve({ data: [] }),
     db.from("studio_votes").select("item_id, comment").eq("brand_id", brand.id).not("comment", "is", null),
   ])
   const visible = ((items.data || []) as StudioItem[]).filter(isClientVisible)
@@ -77,12 +77,14 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       return `- ${verdict}: ${what}${v.comment ? ` (note: ${v.comment})` : ""}`
     })
     if (!lines.length) return Response.json({ error: "Pick at least one thing first." }, { status: 400 })
+    const sentAt = new Date().toISOString()
+    await db.from("studio_votes").update({ sent_at: sentAt }).eq("brand_id", brand.id).eq("voter", voter)
     await db.from("studio_items").insert({
       brand_id: brand.id, kind: "note", title: `${voter} sent their picks`, body: lines.join("\n"),
       created_by: `client: ${voter}`, tags: ["client-picks"],
     })
     await db.from("studio_brands").update({ updated_at: new Date().toISOString() }).eq("id", brand.id)
-    return Response.json({ ok: true, sent: lines.length })
+    return Response.json({ ok: true, sent: lines.length, sent_at: sentAt })
   }
 
   const { data: item } = await db.from("studio_items").select("id, brand_id, kind, hidden, status").eq("id", body.item_id).maybeSingle()
@@ -105,7 +107,8 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
 
   const choice = body.choice === "like" || body.choice === "pass" ? body.choice : null
   const comment = typeof body.comment === "string" ? body.comment.trim().slice(0, 1000) || null : undefined
-  const row: Record<string, unknown> = { brand_id: brand.id, item_id: item.id, voter, choice }
+  // Changing a pick makes it a draft again until the client sends.
+  const row: Record<string, unknown> = { brand_id: brand.id, item_id: item.id, voter, choice, sent_at: null }
   if (comment !== undefined) row.comment = comment
   const { error } = await db.from("studio_votes").upsert(row, { onConflict: "item_id,voter" })
   if (error) return Response.json({ error: "Could not save that. Try again." }, { status: 500 })
