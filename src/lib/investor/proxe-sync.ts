@@ -200,6 +200,11 @@ export type ProxeSales = {
  * count; a link waiting on a card is not a sale. Env: DODO_PAYMENTS_API_KEY
  * (+ DODO_ENVIRONMENT, "test_mode" for the sandbox).
  */
+// Checkouts made by the team to test the flow; never counted as sales or links.
+const OWN_TEST_EMAILS = new Set(
+  (process.env.PROXE_TEST_EMAILS ?? "bconclubx@gmail.com").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
+);
+
 export async function fetchProxeSales(): Promise<ProxeSales | null> {
   const key = process.env.DODO_PAYMENTS_API_KEY;
   if (!key) return null;
@@ -230,6 +235,8 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
       for (const p of all) {
         const who = p.customer?.customer_id ?? p.customer?.email;
         if (!who || !p.created_at) continue;
+        // The founder testing his own checkout is not a link sent to a business.
+        if (OWN_TEST_EMAILS.has((p.customer?.email ?? "").toLowerCase())) continue;
         const cur = first.get(who);
         if (!cur || p.created_at < cur) first.set(who, p.created_at);
       }
