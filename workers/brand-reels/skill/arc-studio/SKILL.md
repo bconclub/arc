@@ -53,6 +53,14 @@ node __STUDIO__ set <slug> --name "<Name>" --status intake|active|paused --mood 
 - **Mood** is the feeling we are going after in one or two lines (light, materials, energy, what never to do). Update it when the founder changes direction. It is the first thing the founder reads.
 - Palette: brand colours first, max 8 hex values.
 
+## The client can see part of it
+
+A brand's board can be shared with the client (ARC: Client board > Share with client). The client then sees the **mood, palette, ideas and images** (not requests, notes, prompts, sources or authors) and picks what they like. So:
+
+- Write ideas, image titles and the mood as if the client is reading. Never mention other clients or brands, internal methods ("the Evernuts method"), costs, tools or risks there. Put that in a note.
+- Internal-only image or idea (tests, references from other brands, rejected directions): add `--hidden 1` to `images`, or run `hide <id>`.
+- Check picks before making more: `brand <slug>` shows them in ARC; the most loved items are what to make next.
+
 ## Rules
 
 - Respect the brand's notes and brief before making anything (claims risks, real-product-only rules).

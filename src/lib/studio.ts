@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase"
 export const STUDIO_BUCKET = "studio"
 export const ITEM_KINDS = ["request", "idea", "image", "note"] as const
 export const ITEM_STATUSES = ["open", "doing", "done", "approved", "rejected", "parked"] as const
-export const BRAND_FIELDS = ["name", "status", "mood", "palette", "brief", "site_url", "instagram", "drive_url", "logo_path"] as const
+export const BRAND_FIELDS = ["name", "status", "mood", "palette", "brief", "site_url", "instagram", "drive_url", "logo_path", "share_intro"] as const
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const db = supabaseAdmin as any
@@ -13,7 +13,7 @@ export const db = supabaseAdmin as any
 export type StudioItem = {
   id: string; brand_id: string; kind: string; title: string | null; body: string | null; status: string
   image_path: string | null; source: string | null; prompt: string | null; tags: string[]
-  parent_id: string | null; created_by: string | null; assignee: string | null; pinned: boolean
+  parent_id: string | null; created_by: string | null; assignee: string | null; pinned: boolean; hidden?: boolean
   created_at: string; updated_at: string
 }
 
@@ -68,6 +68,7 @@ export function itemPatch(body: Record<string, unknown>) {
   if (typeof body.parent_id === "string") patch.parent_id = body.parent_id || null
   if (typeof body.assignee === "string") patch.assignee = body.assignee || null
   if (typeof body.pinned === "boolean") patch.pinned = body.pinned
+  if (typeof body.hidden === "boolean") patch.hidden = body.hidden
   if (Array.isArray(body.tags)) patch.tags = body.tags.map(String).slice(0, 12)
   if (typeof body.status === "string" && (ITEM_STATUSES as readonly string[]).includes(body.status)) patch.status = body.status
   return patch
@@ -77,4 +78,16 @@ export function itemPatch(body: Record<string, unknown>) {
 export async function withUrls(items: StudioItem[]) {
   const urls = await signPaths(items.map((i) => i.image_path))
   return items.map((i) => ({ ...i, url: i.image_path ? urls.get(i.image_path) ?? null : null }))
+}
+
+/** What a client may see on a shared board: ideas and images, minus hidden or rejected ones. */
+export const isClientVisible = (i: { kind: string; hidden?: boolean; status: string }) =>
+  (i.kind === "idea" || i.kind === "image") && !i.hidden && i.status !== "rejected" && i.status !== "parked"
+
+/** Constant-time compare for share keys. */
+export function sameKey(a: string | null | undefined, b: string | null | undefined) {
+  if (!a || !b || a.length !== b.length) return false
+  let d = 0
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return d === 0
 }

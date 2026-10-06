@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowUpRight, Check, ChevronLeft, Download, FolderOpen, Globe, ImagePlus, Loader2, Pin, Trash2, X,
+  ArrowUpRight, Check, ChevronLeft, Copy, Download, Eye, EyeOff, FolderOpen, Globe, Heart, ImagePlus, Link2, Loader2, Pin, RefreshCw, Trash2, X,
 } from "lucide-react";
 import { SegmentedTabs, type Tab } from "@/components/ui/SegmentedTabs";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
@@ -18,14 +18,17 @@ type Item = {
   id: string; kind: "request" | "idea" | "image" | "note"; title: string | null; body: string | null; status: string;
   image_path: string | null; url: string | null; source: string | null; prompt: string | null; tags: string[];
   created_by: string | null; assignee: string | null; pinned: boolean; created_at: string;
+  hidden?: boolean; votes: Vote[];
 };
+type Vote = { voter: string; choice: "like" | "pass" | null; comment: string | null; updated_at: string };
 type Reel = { id: string; title: string | null; code: string | null; status: string; version: number; posted_url: string | null; final_url: string | null };
 type Brand = {
   id: string; slug: string; name: string; status: string; mood: string | null; palette: string[]; brief: string | null;
   site_url: string | null; instagram: string | null; drive_url: string | null; logo_url: string | null;
+  share_enabled: boolean; share_token: string | null; share_intro: string | null;
 };
 type Data = { brand: Brand; items: Item[]; reels: Reel[] };
-type View = "board" | "requests" | "ideas" | "images" | "reels" | "brief";
+type View = "board" | "requests" | "ideas" | "images" | "picks" | "reels" | "brief";
 type Kind = "request" | "idea" | "note" | "image";
 
 const ITEM_TONE: Record<string, Tone> = { open: "warn", doing: "info", done: "good", approved: "good", rejected: "bad", parked: "neutral" };
@@ -136,6 +139,89 @@ function Header({ brand, onSaved }: { brand: Brand; onSaved: () => void }) {
   );
 }
 
+// ── Client sharing (admin only) ─────────────────────────────────
+
+const likes = (i: Item) => i.votes.filter((v) => v.choice === "like").length;
+const passes = (i: Item) => i.votes.filter((v) => v.choice === "pass").length;
+const notesOf = (i: Item) => i.votes.filter((v) => v.comment);
+
+function VoteLine({ item }: { item: Item }) {
+  if (!item.votes.length) return null;
+  return (
+    <div className="flex flex-col gap-1 rounded-soft bg-[var(--surface-hover)] px-2.5 py-2 text-[11.5px]">
+      <span className="text-text">
+        <Heart size={11} className="mr-1 inline text-[var(--brand-text)]" fill="currentColor" />{likes(item)} love{likes(item) === 1 ? "s" : ""} it
+        {passes(item) > 0 && <span className="text-text-muted"> · {passes(item)} not for us</span>}
+        <span className="text-text-muted"> · {item.votes.map((v) => v.voter).join(", ")}</span>
+      </span>
+      {notesOf(item).map((v) => <span key={v.voter} className="text-text-muted"><span className="text-text">{v.voter}:</span> {v.comment}</span>)}
+    </div>
+  );
+}
+
+function SharePanel({ brand, items, onChanged }: { brand: Brand; items: Item[]; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shown = items.filter((i) => (i.kind === "idea" || i.kind === "image") && !i.hidden && i.status !== "rejected" && i.status !== "parked").length;
+  const voters = new Set(items.flatMap((i) => i.votes.map((v) => v.voter))).size;
+  const link = brand.share_token && typeof window !== "undefined" ? `${window.location.origin}/studio/${brand.slug}?k=${brand.share_token}` : "";
+
+  async function share(body: Record<string, unknown>) {
+    setBusy(true);
+    await fetch(`/api/ops/studio/${brand.slug}/share`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    setBusy(false); onChanged();
+  }
+  async function copy() {
+    if (!link) return;
+    try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch { /* clipboard blocked */ }
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-panel border border-[var(--border)] bg-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-[13.5px] font-semibold text-text"><Link2 size={14} /> Client board</h2>
+          <p className="mt-0.5 text-[11.5px] text-text-muted">
+            {brand.share_enabled
+              ? `Live. The client sees the mood, palette and ${shown} ideas and images. Requests, notes and hidden items stay here.`
+              : "Off. Turn it on to send the client a link where they pick the ideas and looks they like."}
+            {voters > 0 && <span className="text-text"> {voters} {voters === 1 ? "person has" : "people have"} picked.</span>}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {brand.share_enabled && link && (
+            <>
+              <button onClick={copy} className="flex h-9 items-center gap-1.5 rounded-soft bg-[var(--brand)] px-3 text-[12.5px] font-semibold text-[var(--brand-ink)]">
+                {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy link"}
+              </button>
+              <a href={link} target="_blank" rel="noreferrer" className="flex h-9 items-center gap-1.5 rounded-soft border border-[var(--border)] px-3 text-[12.5px] text-text hover:bg-[var(--surface-hover)]">
+                <ArrowUpRight size={14} /> Preview
+              </a>
+              <button onClick={() => share({ rotate: true })} disabled={busy} title="The old link stops working"
+                className="flex h-9 items-center gap-1.5 rounded-soft px-2 text-[12.5px] text-text-muted hover:text-text disabled:opacity-50">
+                <RefreshCw size={13} /> New link
+              </button>
+            </>
+          )}
+          <button onClick={() => share({ enabled: !brand.share_enabled })} disabled={busy} role="switch" aria-checked={brand.share_enabled}
+            className={`flex h-9 items-center gap-2 rounded-soft border px-3 text-[12.5px] font-medium disabled:opacity-50 ${brand.share_enabled ? "border-[var(--border)] text-text hover:bg-[var(--surface-hover)]" : "border-[var(--brand-line)] text-[var(--brand-text)] hover:bg-[var(--brand-faint)]"}`}>
+            {busy && <Loader2 size={13} className="animate-spin" />}
+            {brand.share_enabled ? "Turn off" : "Share with client"}
+          </button>
+        </div>
+      </div>
+      {brand.share_enabled && (
+        <div>
+          <p className="mb-1 text-[11px] font-medium text-text-muted">Message at the top of their board</p>
+          <Editable value={brand.share_intro || ""} multiline
+            placeholder="Optional. e.g. Hi team, here is where we want to take Velqine this festive season. Tap what you love."
+            onSave={(v) => share({ intro: v })} className="px-1 py-1 text-[13px] leading-relaxed text-text" />
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ── Composer: drop a request, idea, note or images ─────────────
 
 function Composer({ slug, onAdded }: { slug: string; onAdded: () => void }) {
@@ -234,6 +320,7 @@ function TextCard({ item, onChanged }: { item: Item; onChanged: () => void }) {
         {item.kind !== "note" && <StatusPill status={item.status} tone={ITEM_TONE[item.status]} />}
       </div>
       {item.body && <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-text-muted">{item.body}</p>}
+      <VoteLine item={item} />
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-muted">
         <span>{item.created_by === "team" ? "team" : item.created_by} · {ago(item.created_at)}{item.assignee ? ` · ${item.assignee} on it` : ""}</span>
         <span className="flex-1" />
@@ -248,6 +335,12 @@ function TextCard({ item, onChanged }: { item: Item; onChanged: () => void }) {
         )}
         {item.kind === "idea" && item.status !== "parked" && (
           <button onClick={() => set({ status: "parked" })} className="rounded-pill px-2 py-1 hover:bg-[var(--surface-hover)] hover:text-text">Park</button>
+        )}
+        {item.kind === "idea" && (
+          <button onClick={() => set({ hidden: !item.hidden })} title={item.hidden ? "Hidden from the client board" : "Shown on the client board"}
+            className={`flex items-center gap-1 rounded-pill px-2 py-1 hover:bg-[var(--surface-hover)] hover:text-text ${item.hidden ? "text-accent-orange" : ""}`}>
+            {item.hidden ? <EyeOff size={12} /> : <Eye size={12} />} {item.hidden ? "Hidden" : "Client sees"}
+          </button>
         )}
         <button onClick={remove} aria-label="Delete" className="rounded-pill p-1 opacity-0 transition-opacity hover:bg-[var(--surface-hover)] hover:text-accent-red group-hover:opacity-100 focus:opacity-100">
           <Trash2 size={13} />
@@ -284,6 +377,7 @@ function Lightbox({ item, onClose, onChanged }: { item: Item; onClose: () => voi
             </div>
           )}
           {item.body && <p className="whitespace-pre-wrap text-[12.5px] text-text-muted">{item.body}</p>}
+          <VoteLine item={item} />
           <div className="flex flex-wrap gap-2">
             <button onClick={() => set({ status: item.status === "approved" ? "open" : "approved" })}
               className={`flex h-9 items-center gap-1.5 rounded-soft px-3 text-[12.5px] font-semibold ${item.status === "approved" ? "bg-[rgba(0,212,170,0.14)] text-accent-green" : "bg-[var(--brand)] text-[var(--brand-ink)]"}`}>
@@ -298,6 +392,10 @@ function Lightbox({ item, onClose, onChanged }: { item: Item; onClose: () => voi
                 <Download size={14} /> Open full size
               </a>
             )}
+            <button onClick={() => set({ hidden: !item.hidden })}
+              className={`flex h-9 items-center gap-1.5 rounded-soft border border-[var(--border)] px-3 text-[12.5px] hover:bg-[var(--surface-hover)] ${item.hidden ? "text-accent-orange" : "text-text"}`}>
+              {item.hidden ? <EyeOff size={14} /> : <Eye size={14} />} {item.hidden ? "Hidden from client" : "Hide from client"}
+            </button>
             <button onClick={remove} className="flex h-9 items-center gap-1.5 rounded-soft px-3 text-[12.5px] text-text-muted hover:text-accent-red">
               <Trash2 size={14} /> Delete
             </button>
@@ -315,7 +413,7 @@ function ImageGrid({ images, onOpen }: { images: Item[]; onOpen: (i: Item) => vo
       {images.map((i) => (
         <button key={i.id} onClick={() => onOpen(i)} className="group relative mb-3 block w-full overflow-hidden rounded-soft bg-[var(--bg)] text-left">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={i.url || ""} alt={i.title || ""} loading="lazy" className="w-full" />
+          <img src={i.url || ""} alt={i.title || ""} loading="lazy" className={`w-full ${i.hidden ? "opacity-40" : ""}`} />
           <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
             <span className="truncate text-[11.5px] text-white">{i.title}</span>
           </div>
@@ -323,7 +421,13 @@ function ImageGrid({ images, onOpen }: { images: Item[]; onOpen: (i: Item) => vo
             {i.pinned && <span className="rounded-pill bg-black/70 p-1 text-white"><Pin size={11} /></span>}
             {i.status === "approved" && <span className="rounded-pill bg-black/70 p-1 text-accent-green"><Check size={11} /></span>}
             {i.source === "gpt" && <span className="rounded-pill bg-black/70 px-1.5 py-0.5 text-[10px] text-white">GPT</span>}
+            {i.hidden && <span className="rounded-pill bg-black/70 p-1 text-accent-orange"><EyeOff size={11} /></span>}
           </div>
+          {likes(i) > 0 && (
+            <span className="absolute right-2 top-2 flex items-center gap-1 rounded-pill bg-[var(--brand)] px-1.5 py-0.5 text-[10.5px] font-semibold text-[var(--brand-ink)]">
+              <Heart size={10} fill="currentColor" /> {likes(i)}
+            </span>
+          )}
         </button>
       ))}
     </div>
@@ -374,11 +478,14 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
   const openReq = requests.filter((i) => i.status === "open" || i.status === "doing");
   const ideas = items.filter((i) => i.kind === "idea");
   const notes = items.filter((i) => i.kind === "note");
+  // Most loved first: what the client wants us to make next.
+  const picked = items.filter((i) => i.votes.length).sort((a, b) => likes(b) - likes(a) || passes(a) - passes(b));
   const tabs: Tab<View>[] = [
     { value: "board", label: "Board" },
     { value: "requests", label: "Requests", count: openReq.length },
     { value: "ideas", label: "Ideas", count: ideas.length },
     { value: "images", label: "Images", count: images.length },
+    { value: "picks", label: "Client picks", count: picked.length },
     { value: "reels", label: "Reels", count: reels.length },
     { value: "brief", label: "Brief" },
   ];
@@ -389,6 +496,7 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-4 p-4 lg:p-6">
       <Header brand={brand} onSaved={load} />
+      <SharePanel brand={brand} items={items} onChanged={load} />
       <Composer slug={brand.slug} onAdded={load} />
       <SegmentedTabs tabs={tabs} value={view} onChange={setView} ariaLabel="Board sections" className="self-start" />
 
@@ -419,6 +527,23 @@ export default function StudioBrandPage({ params }: { params: { slug: string } }
       {view === "requests" && textList(requests, "No requests yet.")}
       {view === "ideas" && textList([...ideas, ...notes], "No ideas yet.")}
       {view === "images" && <ImageGrid images={images} onOpen={setOpen} />}
+      {view === "picks" && (picked.length ? (
+        <div className="flex flex-col gap-2">
+          {picked.map((i) => (
+            <button key={i.id} onClick={() => i.kind === "image" ? setOpen(i) : setView("ideas")}
+              className="flex items-start gap-3 rounded-soft border border-[var(--border)] bg-surface p-3 text-left hover:bg-[var(--surface-hover)]">
+              {i.url
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={i.url} alt="" className="h-20 w-16 shrink-0 rounded-soft object-cover" />
+                : <span className="flex h-20 w-16 shrink-0 items-center justify-center rounded-soft bg-[var(--bg)] text-[10.5px] uppercase tracking-wide text-text-muted">Idea</span>}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <p className="text-[13px] font-medium text-text">{i.title || "Untitled"}</p>
+                <VoteLine item={i} />
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : <p className="py-10 text-center text-[12.5px] text-text-muted">No picks yet. Share the client board and their choices show up here.</p>)}
       {view === "reels" && <Reels reels={reels} />}
       {view === "brief" && (
         <section className="rounded-panel border border-[var(--border)] bg-surface p-4">

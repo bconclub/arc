@@ -12,10 +12,15 @@ export async function GET(_req: Request, { params }: { params: { slug: string } 
   const brand = await brandBySlug(params.slug)
   if (!brand) return Response.json({ error: "brand not found" }, { status: 404 })
 
-  const [items, reels] = await Promise.all([
+  const [items, reels, votes] = await Promise.all([
     db.from("studio_items").select("*").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(500),
     db.from("brand_reels").select("id, title, code, status, version, outputs, posted_url, updated_at").ilike("brand", brand.name).order("updated_at", { ascending: false }),
+    db.from("studio_votes").select("item_id, voter, choice, comment, updated_at").eq("brand_id", brand.id).order("updated_at", { ascending: false }),
   ])
+  // Client picks from the shared board, grouped per item.
+  type Vote = { item_id: string; voter: string; choice: string | null; comment: string | null; updated_at: string }
+  const byItem = new Map<string, Vote[]>()
+  for (const v of (votes.data || []) as Vote[]) byItem.set(v.item_id, [...(byItem.get(v.item_id) || []), v])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reelRows = (reels.data || []) as any[]
@@ -26,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: { slug: string } 
   return Response.json(
     {
       brand: { ...brand, logo_url: logo },
-      items: await withUrls((items.data || []) as StudioItem[]),
+      items: (await withUrls((items.data || []) as StudioItem[])).map((i) => ({ ...i, votes: byItem.get(i.id) || [] })),
       reels: reelRows.map((r, i) => ({ id: r.id, title: r.title, code: r.code, status: r.status, version: r.version, posted_url: r.posted_url, updated_at: r.updated_at, final_url: finals[i] ? reelUrls.get(finals[i]!) ?? null : null })),
     },
     { headers: { "Cache-Control": "no-store" } }

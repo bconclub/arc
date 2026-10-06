@@ -62,3 +62,28 @@ alter table public.studio_items enable row level security;
 insert into storage.buckets (id, name, public)
 values ('studio', 'studio', false)
 on conflict (id) do nothing;
+
+-- Client share: a brand's board can be opened by a client through a secret link
+-- (/studio/<slug>?k=<token>). They see mood, palette, ideas and images only (never
+-- requests or notes, never anything marked hidden) and can like/pass and comment.
+alter table public.studio_brands add column if not exists share_token text unique;
+alter table public.studio_brands add column if not exists share_enabled boolean not null default false;
+alter table public.studio_brands add column if not exists share_intro text;
+alter table public.studio_items add column if not exists hidden boolean not null default false;
+
+create table if not exists public.studio_votes (
+  id uuid primary key default gen_random_uuid(),
+  brand_id uuid not null references public.studio_brands (id) on delete cascade,
+  item_id uuid not null references public.studio_items (id) on delete cascade,
+  voter text not null,                        -- the name the client typed
+  choice text check (choice in ('like', 'pass')),
+  comment text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (item_id, voter)
+);
+create index if not exists studio_votes_brand_idx on public.studio_votes (brand_id, created_at desc);
+drop trigger if exists studio_votes_set_updated_at on public.studio_votes;
+create trigger studio_votes_set_updated_at before update on public.studio_votes
+  for each row execute function public.set_updated_at();
+alter table public.studio_votes enable row level security;

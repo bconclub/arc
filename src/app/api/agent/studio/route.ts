@@ -42,8 +42,17 @@ export async function POST(req: Request) {
     case "brand": {
       const brand = await brandBySlug(String(body.slug || ""))
       if (!brand) return bad("brand not found", 404)
-      const { data } = await db.from("studio_items").select("*").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(300)
-      return Response.json({ brand, items: await withUrls((data || []) as StudioItem[]) })
+      const [{ data }, { data: votes }] = await Promise.all([
+        db.from("studio_items").select("*").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(300),
+        db.from("studio_votes").select("item_id, voter, choice, comment").eq("brand_id", brand.id),
+      ])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const picks = (votes || []) as any[]
+      const items = (await withUrls((data || []) as StudioItem[])).map((i) => ({ ...i, votes: picks.filter((v) => v.item_id === i.id) }))
+      // share_token is the client's credential: editors don't need it.
+      const { share_token: _t, ...safe } = brand
+      void _t
+      return Response.json({ brand: safe, items })
     }
 
     case "take":

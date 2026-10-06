@@ -7,13 +7,15 @@ import { COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 // 401 on the session gate before their own auth ever runs.
 //
 // api/public is read by goproxe.com/pitch: live plan and round numbers only.
+// studio/<slug> is a client's view of one brand board; it needs the board's secret
+// share key (?k=) and shows ideas and images only. See api/public/studio.
 //
 // investor and api/investor are the investor portal: their own login, their own
 // cookie, checked in lib/investor/viewer.ts. The owner session still opens them
 // as a preview; nothing an investor holds passes the gate below.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|studio/|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
   ],
 };
 

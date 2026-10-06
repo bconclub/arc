@@ -7,10 +7,11 @@
  *   node studio.mjs brand <slug>                 one brand: brief, mood, board summary
  *   node studio.mjs take <request-id>            mark a request as yours (doing)
  *   node studio.mjs done <request-id> ["note"]   close it, with what you delivered
- *   node studio.mjs images <slug> <file...> [--title T] [--prompt P] [--for <request-id>] [--source gpt|asset|frame]
+ *   node studio.mjs images <slug> <file...> [--title T] [--prompt P] [--for <request-id>] [--source gpt|asset|frame] [--hidden 1]
  *   node studio.mjs idea <slug> "<title>" ["<body>"]
  *   node studio.mjs note <slug> "<title>" ["<body>"]
  *   node studio.mjs request <slug> "<title>" ["<body>"]
+ *   node studio.mjs hide <item-id> | show <item-id>   keep an idea/image off (or on) the client board
  *   node studio.mjs set <slug> [--name N] [--mood M] [--palette "#hex #hex"] [--brief-file F] [--site U] [--ig H] [--drive U] [--logo file] [--status S]
  */
 import fs from "node:fs";
@@ -74,7 +75,15 @@ const C = {
     if (brand.brief) console.log(brand.brief + "\n");
     const by = (k) => items.filter((i) => i.kind === k);
     console.log(`Board: ${by("image").length} images, ${by("idea").length} ideas, ${by("request").length} requests, ${by("note").length} notes`);
-    for (const i of [...by("request"), ...by("idea"), ...by("note")]) console.log(`  ${i.kind.padEnd(7)} [${i.status}] ${i.id}  ${i.title || ""}`);
+    const pick = (i) => {
+      const l = (i.votes || []).filter((v) => v.choice === "like").length, p = (i.votes || []).filter((v) => v.choice === "pass").length;
+      const notes = (i.votes || []).filter((v) => v.comment).map((v) => `${v.voter}: ${v.comment}`);
+      return (l || p ? `  [client: ${l} love, ${p} pass]` : "") + (i.hidden ? "  [hidden]" : "") + (notes.length ? "\n      " + notes.join("\n      ") : "");
+    };
+    for (const i of [...by("request"), ...by("idea"), ...by("note")]) console.log(`  ${i.kind.padEnd(7)} [${i.status}] ${i.id}  ${i.title || ""}${pick(i)}`);
+    const loved = by("image").filter((i) => (i.votes || []).some((v) => v.choice === "like"));
+    if (loved.length) { console.log("\nImages the client loved:"); for (const i of loved) console.log(`  ${i.id}  ${i.title || ""}${pick(i)}`); }
+    console.log(`\nClient board: ${brand.share_enabled ? "shared" : "not shared"}`);
   },
   async take([id]) { await api({ action: "take", id }); console.log("Taken."); },
   async done([id, ...note]) {
@@ -87,10 +96,12 @@ const C = {
     if (!slug || !files.length) throw new Error("usage: images <slug> <file...> [--title T] [--prompt P] [--for <request-id>] [--source gpt]");
     for (const f of files) {
       const image_path = await upload(slug, f);
-      await api({ action: "add", slug, kind: "image", image_path, title: o.title || path.basename(f).replace(/\.[^.]+$/, ""), prompt: o.prompt, source: o.source || (o.prompt ? "gpt" : "editor"), parent_id: o.for });
+      await api({ action: "add", slug, kind: "image", image_path, title: o.title || path.basename(f).replace(/\.[^.]+$/, ""), prompt: o.prompt, source: o.source || (o.prompt ? "gpt" : "editor"), parent_id: o.for, ...(o.hidden ? { hidden: true } : {}) });
       console.log("added", path.basename(f));
     }
   },
+  async hide([id]) { await api({ action: "update", id, hidden: true }); console.log("Hidden from the client board."); },
+  async show([id]) { await api({ action: "update", id, hidden: false }); console.log("Shown on the client board."); },
   async idea([slug, title, body]) { console.log((await api({ action: "add", slug, kind: "idea", title, body })).id); },
   async note([slug, title, body]) { console.log((await api({ action: "add", slug, kind: "note", title, body })).id); },
   async request([slug, title, body]) { console.log((await api({ action: "add", slug, kind: "request", title, body })).id); },
