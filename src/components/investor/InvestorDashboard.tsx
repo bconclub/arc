@@ -818,7 +818,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 { label: "In the bank", value: moneyShort(m.bank.balance), tone: "text-text", go: "money" as const },
                 { label: "Spent", value: moneyShort(f.spentTotal), tone: "text-text", go: "money" as const },
                 { label: "Sales", value: f.sales != null ? moneyShort(f.sales) : "–", tone: "text-accent-green", go: "money" as const },
-                { label: "Paying customers", value: String(f.activeSubs ?? "–"), tone: "text-accent-green", go: "growth" as const },
+                { label: "Paying customers", value: String(f.payingSubs ?? "–"), tone: "text-accent-green", go: "growth" as const },
               ].map((x) => (
                 <button key={x.label} onClick={() => go(x.go)} className="rounded-panel bg-surface p-4 text-left transition-colors active:bg-[var(--surface-hover)]">
                   <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.label}</p>
@@ -833,7 +833,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 { label: "Total leads", hint: "inbound + outbound reached", value: f.incoming != null ? String(f.incoming + f.outbound) : "–", tone: "text-text" },
                 { label: "Demos done", hint: "shown to prospects", value: String(f.demosDone), tone: "text-text" },
                 { label: "Payment links sent", hint: "to businesses ready to buy", value: String(f.linksShared), tone: "text-[#f0c84b]" },
-                { label: "Active subscriptions", hint: "paying every month", value: String(f.activeSubs ?? "–"), tone: "text-accent-green" },
+                { label: "On 7-day trial", hint: f.trials[0] ? `next payment ${fmtDate(f.trials[0].ends)}` : "active subscriptions in trial", value: String(f.trialSubs ?? "–"), tone: "text-[#f0c84b]" },
               ].map((x) => (
                 <button key={x.label} onClick={() => go("growth")} className="rounded-panel bg-surface p-4 text-left transition-colors active:bg-[var(--surface-hover)]">
                   <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.label}</p>
@@ -885,10 +885,20 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[12.5px] font-medium text-text">Active subscriptions</p>
-                  <p className="text-[10.5px] text-text-muted">customers paying every month, right now</p>
+                  <p className="text-[10.5px] text-text-muted">{f.payingSubs ?? 0} paying · {f.trialSubs ?? 0} on 7-day trial</p>
                 </div>
                 <p className="text-[24px] font-semibold tabular-nums text-accent-green">{f.activeSubs ?? "–"}</p>
               </div>
+              {f.trials.length > 0 && (
+                <ul className="mt-2 space-y-1.5">
+                  {f.trials.map((t) => (
+                    <li key={t.started} className="flex items-center justify-between gap-3 rounded-card bg-[#e8b931]/[0.08] px-3 py-2 text-[12px]">
+                      <span className="min-w-0 truncate text-text">{t.customer ?? "A business"} <span className="text-text-muted">· trial since {fmtDate(t.started)}</span></span>
+                      <span className="shrink-0 tabular-nums text-[#f0c84b]">pays {fmtDate(t.ends)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
             <div className="grid gap-4 md:grid-cols-2">
             {/* ══ Activity: demos booked and payment links, tracked over the window ══ */}

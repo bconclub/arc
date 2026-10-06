@@ -192,6 +192,10 @@ export type ProxeSales = {
   linkFirsts: string[];
   /** subscriptions billing right now */
   activeSubs: number;
+  /** active subscriptions still inside their free trial */
+  trialSubs: number;
+  /** each trial: who, when it started, when the first payment is due */
+  trials: { customer: string | null; started: string; ends: string }[];
 };
 
 /**
@@ -204,6 +208,15 @@ export type ProxeSales = {
 const OWN_TEST_EMAILS = new Set(
   (process.env.PROXE_TEST_EMAILS ?? "bconclubx@gmail.com").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
 );
+
+// The business behind a checkout: its email domain, unless it is a personal inbox.
+const PERSONAL = /^(gmail|googlemail|yahoo|outlook|hotmail|live|icloud|proton|protonmail|rediffmail)\./i;
+function businessOf(email?: string): string | null {
+  const domain = (email ?? "").split("@")[1]?.toLowerCase();
+  if (!domain || PERSONAL.test(domain)) return null;
+  const name = domain.split(".")[0] ?? "";
+  return name ? name[0]!.toUpperCase() + name.slice(1) : null;
+}
 
 export async function fetchProxeSales(): Promise<ProxeSales | null> {
   const key = process.env.DODO_PAYMENTS_API_KEY;
@@ -246,15 +259,27 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
       }
       return Array.from(first.values());
     })(),
-    activeSubs: await (async () => {
+    ...(await (async () => {
       const res = await fetch(`${base}/subscriptions?page_size=100&status=active`, {
         headers: { Authorization: `Bearer ${key}` },
         cache: "no-store",
       });
-      if (!res.ok) return 0;
-      const j = (await res.json()) as { items?: { status?: string }[] };
-      return (j.items ?? []).filter((s) => s.status === "active").length;
-    })(),
+      if (!res.ok) return { activeSubs: 0, trialSubs: 0, trials: [] };
+      type S = { status?: string; created_at?: string; trial_period_days?: number; customer?: { name?: string; email?: string } };
+      const active = (((await res.json()) as { items?: S[] }).items ?? [])
+        .filter((s) => s.status === "active" && !OWN_TEST_EMAILS.has((s.customer?.email ?? "").toLowerCase()));
+      // In trial until created + trial days; after that the subscription is paying.
+      const trials = active
+        .filter((s) => (s.trial_period_days ?? 0) > 0 && s.created_at)
+        .map((s) => ({
+          customer: businessOf(s.customer?.email) ?? (s.customer?.name?.trim() || null),
+          started: s.created_at!,
+          ends: new Date(Date.parse(s.created_at!) + (s.trial_period_days ?? 0) * 864e5).toISOString(),
+        }))
+        .filter((t) => Date.parse(t.ends) > Date.now())
+        .sort((a, b) => a.ends.localeCompare(b.ends));
+      return { activeSubs: active.length, trialSubs: trials.length, trials };
+    })()),
     items: ok
       .map((p) => ({ at: p.created_at ?? "", amount: Number(p.total_amount ?? 0) / 100, customer: p.customer?.name?.trim() || null }))
       .filter((p) => p.at)

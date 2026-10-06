@@ -151,6 +151,10 @@ export type InvestorOverview = {
     linksShared: number;
     /** billing right now, not windowed */
     activeSubs: number | null;
+    /** of those, still in their 7-day trial; the rest are paying */
+    trialSubs: number | null;
+    payingSubs: number | null;
+    trials: { customer: string | null; started: string; ends: string }[];
     sales: number | null;
     salesCount: number;
     spentTotal: number;
@@ -940,6 +944,9 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
           demosDone,
           linksShared: links.length,
           activeSubs: sales ? sales.activeSubs : null,
+          trialSubs: sales ? sales.trialSubs : null,
+          payingSubs: sales ? sales.activeSubs - sales.trialSubs : null,
+          trials: sales?.trials ?? [],
           sales: sales ? paid.reduce((t, p) => t + p.amount, 0) : null,
           salesCount: paid.length,
           spentTotal: spent.reduce((t, e) => t + Number(e.amount), 0),
