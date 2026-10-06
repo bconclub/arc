@@ -833,7 +833,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 { label: "Total leads", hint: "inbound + outbound reached", value: f.incoming != null ? String(f.incoming + f.outbound) : "–", tone: "text-text" },
                 { label: "Demos done", hint: "shown to prospects", value: String(f.demosDone), tone: "text-text" },
                 { label: "Payment links sent", hint: "to businesses ready to buy", value: String(f.linksShared), tone: "text-[#f0c84b]" },
-                { label: "On 7-day trial", hint: f.trials[0] ? `next payment ${fmtDate(f.trials[0].ends)}` : "active subscriptions in trial", value: String(f.trialSubs ?? "–"), tone: "text-[#f0c84b]" },
+                { label: "Active trials", hint: f.trials[0] ? `next payment ${fmtDate(f.trials[0].ends)}` : "on the 7-day trial, not paying yet", value: String(f.trialSubs ?? "–"), tone: "text-[#f0c84b]" },
               ].map((x) => (
                 <button key={x.label} onClick={() => go("growth")} className="rounded-panel bg-surface p-4 text-left transition-colors active:bg-[var(--surface-hover)]">
                   <p className="text-[10.5px] uppercase tracking-[0.08em] text-text-muted">{x.label}</p>
@@ -879,15 +879,29 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                   </li>
                 ))}
               </ol>
-              <div className="mt-2 flex items-center gap-3 rounded-card bg-accent-green/[0.10] p-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-green/15 text-accent-green">
-                  <Repeat size={14} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[12.5px] font-medium text-text">Active subscriptions</p>
-                  <p className="text-[10.5px] text-text-muted">{f.payingSubs ?? 0} paying · {f.trialSubs ?? 0} on 7-day trial</p>
+              {/* Paying customers are the active subscriptions: paying and live. Trials are
+                  counted on their own, never folded into that number. */}
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="flex items-center gap-3 rounded-card bg-accent-green/[0.10] p-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-green/15 text-accent-green">
+                    <Repeat size={14} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] font-medium text-text">Paying customers</p>
+                    <p className="text-[10.5px] text-text-muted">active, paying subscriptions</p>
+                  </div>
+                  <p className="text-[24px] font-semibold tabular-nums text-accent-green">{f.payingSubs ?? "–"}</p>
                 </div>
-                <p className="text-[24px] font-semibold tabular-nums text-accent-green">{f.activeSubs ?? "–"}</p>
+                <div className="flex items-center gap-3 rounded-card bg-[#e8b931]/[0.10] p-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8b931]/15 text-[#f0c84b]">
+                    <Repeat size={14} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] font-medium text-text">Active trials</p>
+                    <p className="text-[10.5px] text-text-muted">{f.trials[0] ? `next payment ${fmtDate(f.trials[0].ends)}` : "on the 7-day trial, not paying yet"}</p>
+                  </div>
+                  <p className="text-[24px] font-semibold tabular-nums text-[#f0c84b]">{f.trialSubs ?? "–"}</p>
+                </div>
               </div>
               {f.trials.length > 0 && (
                 <ul className="mt-2 space-y-1.5">
