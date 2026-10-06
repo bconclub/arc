@@ -11,6 +11,7 @@
  *   node studio.mjs idea <slug> "<title>" ["<body>"]
  *   node studio.mjs note <slug> "<title>" ["<body>"]
  *   node studio.mjs request <slug> "<title>" ["<body>"]
+ *   node studio.mjs retitle <item-id> "<title>"
  *   node studio.mjs hide <item-id> | show <item-id>   keep an idea/image off (or on) the client board
  *   Reel order (client chose an idea):
  *   node studio.mjs script <slug> --for <idea-id> --file script.txt
@@ -129,6 +130,7 @@ const C = {
     const image_path = await upload(slug, file);
     console.log((await api({ action: "add", slug, kind: "video", parent_id: o.for, image_path, title: o.title || "Final reel" })).id);
   },
+  async retitle([id, ...t]) { await api({ action: "update", id, title: t.join(" ") }); console.log("Retitled."); },
   async hide([id]) { await api({ action: "update", id, hidden: true }); console.log("Hidden from the client board."); },
   async show([id]) { await api({ action: "update", id, hidden: false }); console.log("Shown on the client board."); },
   async idea([slug, title, body]) { console.log((await api({ action: "add", slug, kind: "idea", title, body })).id); },
