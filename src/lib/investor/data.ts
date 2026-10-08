@@ -77,6 +77,8 @@ export type InvestorOverview = {
     dailyBurn: number;
     /** the company's cash right now, whatever the window: round money in + sales in - everything spent since */
     bank: { balance: number; raised: number; sales: number; spent: number; since: string | null };
+    /** refundable deposits paid out: not spend, but not in the bank either */
+    deposits: { total: number; items: { vendor: string | null; description: string | null; amount: number; on: string }[] };
   };
   spend: Section<{
     total: number;
@@ -467,7 +469,11 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   // day the cash moves into Meta; Meta's own daily delivery is shown on the
   // ads card and never added on top, so no rupee is counted twice.
   const adRows = (adRowsRes.data ?? []) as { day: string; spend: number; leads: number; impressions: number; clicks: number }[];
-  const allExpenses = (expRes.data ?? []) as { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number; daily_budget: number | null; approved_by?: string | null; department?: string | null }[];
+  const ledgerRows = (expRes.data ?? []) as { id: string; spent_on: string; category: string; vendor: string | null; description: string | null; amount: number; daily_budget: number | null; approved_by?: string | null; department?: string | null }[];
+  // A refundable deposit is money held, not money spent: it stays out of every
+  // spend figure, but it has left the bank, so the bank counts it.
+  const deposits = ledgerRows.filter((e) => e.category === "deposit");
+  const allExpenses = ledgerRows.filter((e) => e.category !== "deposit");
   const topups = allExpenses.filter((e) => e.category === "ad_topup");
 
   const counted = allExpenses.filter((e) => !investedOn || e.spent_on >= investedOn);
@@ -846,8 +852,13 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       bank: (() => {
         const out = allExpenses.filter((e) => !roundStart || e.spent_on >= roundStart).reduce((t, e) => t + Number(e.amount), 0);
         const salesIn = (sales?.items ?? []).filter((p) => !roundStart || p.at.slice(0, 10) >= roundStart).reduce((t, p) => t + p.amount, 0);
-        return { balance: roundReceived + salesIn - out, raised: roundReceived, sales: salesIn, spent: out, since: roundStart };
+        const held = deposits.filter((e) => !roundStart || e.spent_on >= roundStart).reduce((t, e) => t + Number(e.amount), 0);
+        return { balance: roundReceived + salesIn - out - held, raised: roundReceived, sales: salesIn, spent: out, since: roundStart };
       })(),
+      deposits: {
+        total: deposits.reduce((t, e) => t + Number(e.amount), 0),
+        items: deposits.map((e) => ({ vendor: e.vendor, description: e.description, amount: Number(e.amount), on: e.spent_on })),
+      },
     },
     spend,
     adWallet,

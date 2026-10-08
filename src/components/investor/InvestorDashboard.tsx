@@ -1080,6 +1080,9 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 </>
               )}
               <MoneyLine label="Total spends" value={money(f.spentTotal)} tone="total" />
+              {m.deposits.total > 0 && (
+                <MoneyLine label="Refundable deposits held" hint={m.deposits.items.map((d) => d.vendor).filter(Boolean).join(", ") + " · comes back, not spent"} value={money(m.deposits.total)} />
+              )}
               {sp && (
                 <p className="mt-1.5 text-[10.5px] tabular-nums text-text-muted">
                   Burn {moneyShort(m.dailyBurn)}/day, averaged over {sp.burnDays} day{sp.burnDays === 1 ? "" : "s"} since {fmtDate(sp.since)}
