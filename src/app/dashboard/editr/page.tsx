@@ -6,6 +6,8 @@ import { money, timeAgo } from "@/lib/format";
 import { SegmentedTabs, type Tab } from "@/components/ui/SegmentedTabs";
 import { StatStrip, type Stat } from "@/components/ui/StatStrip";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
+import { ComfyPanel } from "@/components/ops/ComfyPanel";
+import { OutputBreakdown } from "@/components/ops/OutputBreakdown";
 
 /**
  * Editr: what the video and content agents cost, made and are doing.
@@ -156,6 +158,8 @@ export default function EditrPage() {
 
       <StatStrip stats={stats} />
 
+      <OutputBreakdown outputs={d.outputs || []} tasks={d.tasks || []} usage={d.usage || []} />
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Panel title="Last 30 days" sub="API value is list price for the same tokens; the plan is what's billed.">
           <div className="mb-3"><SegmentedTabs tabs={metricTabs} value={metric} onChange={setMetric} /></div>
@@ -193,6 +197,8 @@ export default function EditrPage() {
         </Panel>
       </div>
 
+      <ComfyPanel />
+
       <Panel title="Tasks" sub="From tasks/*/TASK.md in bconclub/editor. Status changes are logged below.">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
           {STATUS.map((col) => {
@@ -226,7 +232,7 @@ export default function EditrPage() {
         </div>
       </Panel>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Panel title="History" sub="Every status change, as each sync saw it.">
           <ol className="flex max-h-[420px] flex-col gap-2 overflow-auto">
             {(d.events || []).map((e) => (
@@ -241,18 +247,6 @@ export default function EditrPage() {
             ))}
             {!d.events?.length && <li className="text-[12px] text-text-muted">No events yet.</li>}
           </ol>
-        </Panel>
-
-        <Panel title="Outputs" sub="Every rendered file, measured with ffprobe.">
-          <ul className="flex max-h-[420px] flex-col overflow-auto text-[12px]">
-            {(d.outputs || []).map((x) => (
-              <li key={x.id} className="flex items-center gap-2 border-t border-[var(--border)] py-1.5 first:border-t-0">
-                <StatusPill status={x.kind} tone={x.kind === "final" ? "good" : x.kind === "draft" ? "neutral" : "info"} />
-                <span className="min-w-0 flex-1 truncate text-text" title={x.file}>{x.file.split(/[\\/]/).pop()}</span>
-                <span className="tabular-nums text-text-muted">{Number(x.seconds).toFixed(0)}s</span>
-              </li>
-            ))}
-          </ul>
         </Panel>
 
         <Panel title="By model" sub="API value at list price, including cache reads and writes.">
