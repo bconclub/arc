@@ -2,14 +2,15 @@ import { callCosts } from "@/lib/outreach-costs";
 import {
   BDR_AGENTS,
   callProvider,
-  callSession,
+  callViewer,
   callDetail,
   TEST_PHONE,
 } from "@/lib/outreach-calls";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 export async function GET() {
-  if (!(await callSession()))
+  const viewer = await callViewer();
+  if (!viewer)
     return Response.json({ error: "Sign in to view calls." }, { status: 401 });
   try {
     const groups = await Promise.all(
@@ -83,7 +84,10 @@ export async function GET() {
           }),
         )),
       );
-    return Response.json({ calls: enriched });
+    // Costs are the owner's business; a team login gets the calls without them.
+    return Response.json({
+      calls: viewer === "owner" ? enriched : enriched.map((c) => ({ ...c, costs: undefined })),
+    });
   } catch (e) {
     return Response.json(
       { error: e instanceof Error ? e.message : "Call history unavailable." },

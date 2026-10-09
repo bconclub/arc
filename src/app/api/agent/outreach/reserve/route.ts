@@ -10,7 +10,8 @@ export async function POST(req: Request) {
   const manual = b?.manual_override === true && auth.agent === 'bdr-bdr';
   const matches: { id: string; phone: string; status: string }[] = [];
   for (let offset=0; ; offset+=1000) {
-    const {data,error} = await supabaseAdmin.from('outreach_targets').select('id,phone,status').order('id').range(offset,offset+999);
+    // Inbound PROXe leads are never cold-called: they don't count as dialable targets.
+    const {data,error} = await supabaseAdmin.from('outreach_targets').select('id,phone,status').or('source.is.null,source.neq.proxe_inbound').order('id').range(offset,offset+999);
     if (error) return Response.json({ error: 'Target lookup unavailable' }, { status: 503 });
     matches.push(...(data || []).filter(t => String(t.phone || '').replace(/\D/g,'').slice(-10) === phone && (!b.target_id || t.id === b.target_id)));
     if ((data || []).length < 1000) break;

@@ -45,6 +45,8 @@ export async function GET(req: Request) {
   let q = supabaseAdmin
     .from("outreach_targets")
     .select("*")
+    // Inbound PROXe leads are people who came to us; the AI cold-caller never gets them.
+    .or("source.is.null,source.neq.proxe_inbound")
     .order("created_at", { ascending: false });
 
   if (kind && KINDS.includes(kind)) q = q.eq("kind", kind);

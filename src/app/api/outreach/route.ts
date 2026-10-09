@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getViewer } from "@/lib/team";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -30,6 +31,10 @@ export async function POST(req: NextRequest) {
     if (key in body) row[key] = body[key] === "" ? null : body[key];
   }
   if (STATUSES.includes(body.status)) row.status = body.status;
+  // A team member's new lead is theirs; the owner may assign one on creation.
+  const viewer = await getViewer();
+  if (viewer?.kind === "team") row.owner_id = viewer.member.id;
+  else if (typeof body.owner_id === "string" && /^[0-9a-f-]{36}$/i.test(body.owner_id)) row.owner_id = body.owner_id;
 
   const { data, error } = await supabaseAdmin.from("outreach_targets").insert(row).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

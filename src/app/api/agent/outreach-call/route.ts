@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     // Phones are stored free-form; match on the normalized tail.
     const hits: {id: string; status: string; phone: string}[] = [];
     for (let offset=0; ; offset+=1000) {
-      const { data, error } = await supabaseAdmin.from('outreach_targets').select('id,status,phone').order('id').range(offset,offset+999);
+      // The AI caller only dials outbound targets, so an inbound PROXe lead sharing the phone is not a match.
+      const { data, error } = await supabaseAdmin.from('outreach_targets').select('id,status,phone').or('source.is.null,source.neq.proxe_inbound').order('id').range(offset,offset+999);
       if (error) return NextResponse.json({ error: 'Target lookup unavailable' }, { status: 503 });
       hits.push(...(data || []).filter(t => String(t.phone || '').replace(/\D/g,'').slice(-10) === key));
       if ((data || []).length < 1000) break;

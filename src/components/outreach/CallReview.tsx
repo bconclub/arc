@@ -92,7 +92,8 @@ export function CallReview({
             </p>
             {detail.outcome && <p>Outcome: {detail.outcome.replace(/_/g, " ")}. Qualification requires review.</p>}
             {detail.callback_request && <p>Callback request: {detail.callback_request}</p>}
-            <CallCostBreakdown costs={detail.costs} />
+            {/* Costs only come back for the owner; a team login sees the call without them. */}
+            {detail.costs && <CallCostBreakdown costs={detail.costs} />}
             <section aria-label="Recording">
               <h3 className="mb-2 font-medium">Recording</h3>
               {detail.has_audio ? (

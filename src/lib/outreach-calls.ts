@@ -1,11 +1,17 @@
 import { cookies } from "next/headers";
 import { COOKIE_NAME, verifySessionToken } from "@/lib/auth";
+import { getViewer } from "@/lib/team";
 export async function callSession() {
   try {
     return await verifySessionToken(cookies().get(COOKIE_NAME)?.value);
   } catch {
     return false;
   }
+}
+/** Who may review calls: the owner sees costs, a team login sees calls without them. */
+export async function callViewer(): Promise<"owner" | "team" | null> {
+  const v = await getViewer().catch(() => null);
+  return v?.kind ?? null;
 }
 export const BDR_AGENTS: Record<string, string> = {
   agent_9901m0sn70f1ejn84enhccrns2kt: "Intro DM",

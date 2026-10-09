@@ -382,6 +382,14 @@ export type OutreachStatus =
   | "replied" | "meeting" | "won" | "lost" | "no_reply";
 
 export type OutreachTarget = {
+  /** team member working the lead; null = unassigned */
+  owner_id?: string | null;
+  /** inbound PROXe lead (source 'proxe_inbound'): PROXe's side as of the last sync */
+  inbound?: {
+    stage: string | null; sub_stage?: string | null; score: number | null; brand: string | null;
+    channel: string | null; last_channel?: string | null; came_in_at: string; last_at: string | null;
+    booking: string | null; needs_human: boolean;
+  } | null;
   promoted_at?: string | null;
   proxe_lead_id?: string | null;
   qualified_at?: string | null;

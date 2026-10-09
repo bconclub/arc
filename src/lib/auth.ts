@@ -206,6 +206,53 @@ export async function verifyStudioPassword(candidate: string): Promise<boolean> 
   return verifyHash(candidate, stored);
 }
 
+// ── Team logins ──────────────────────────────────────────────
+// One account per person (team_members). The token signs "team:<id>:<expiry>",
+// so it can never pass as an owner, studio or investor token. Middleware also
+// checks the member is still active, so switching someone off takes effect at once.
+
+const TEAM_COOKIE = "arc_team";
+const TEAM_DAYS = 14;
+export { TEAM_COOKIE, TEAM_DAYS };
+
+export async function createTeamToken(memberId: string): Promise<string> {
+  const expiry = Math.floor(Date.now() / 1000) + TEAM_DAYS * 24 * 60 * 60;
+  const key = await hmacKey(getSecret());
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`team:${memberId}:${expiry}`));
+  return `${memberId}.${expiry}.${b64urlEncode(sig)}`;
+}
+
+/** The member id the token was issued to, or null if forged or expired. */
+export async function verifyTeamToken(token: string | undefined): Promise<string | null> {
+  if (!token) return null;
+  const [id, expiryStr, sig] = token.split(".");
+  const expiry = Number(expiryStr);
+  if (!id || !sig || !Number.isFinite(expiry) || expiry < Math.floor(Date.now() / 1000)) return null;
+  const key = await hmacKey(getSecret());
+  try {
+    const ok = await crypto.subtle.verify("HMAC", key, b64urlDecode(sig), new TextEncoder().encode(`team:${id}:${expiryStr}`));
+    return ok ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What a sales login may open: its own /team pages and APIs, and the outreach
+ * tools it works leads with. Never deleting a lead, the PROXe handoff
+ * (qualification, promote), or anything else in ARC.
+ */
+export function teamMayOpen(pathname: string, method: string): boolean {
+  if (/^\/team(\/|$)/.test(pathname) || /^\/api\/team(\/|$)/.test(pathname) || pathname === "/api/logout") return true;
+  if (pathname === "/api/outreach") return method === "GET" || method === "POST";
+  if (pathname === "/api/outreach/workspace") return method === "GET";
+  if (pathname === "/api/outreach/activity" || pathname === "/api/outreach/suggest") return method === "POST";
+  if (/^\/api\/outreach\/calls(\/[^/]+(\/audio)?)?$/.test(pathname)) return method === "GET";
+  const m = pathname.match(/^\/api\/outreach\/[0-9a-f-]{36}(\/(research|draft|messages|whatsapp))?$/i);
+  if (m) return m[1] ? method === "POST" : method === "PATCH";
+  return false;
+}
+
 /** Paths a studio login may open. Everything else bounces to the Studio. */
 export function studioMayOpen(pathname: string): boolean {
   return /^\/dashboard\/studio(\/|$)/.test(pathname) || /^\/api\/ops\/studio(\/|$)/.test(pathname) || pathname === "/api/logout"

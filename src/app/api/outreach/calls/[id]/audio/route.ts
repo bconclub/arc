@@ -1,10 +1,10 @@
-import { callDetail, callProvider, callSession } from "@/lib/outreach-calls";
+import { callDetail, callProvider, callViewer } from "@/lib/outreach-calls";
 export const dynamic = "force-dynamic";
 export async function GET(
   req: Request,
   { params }: { params: { id: string } },
 ) {
-  if (!(await callSession()))
+  if (!(await callViewer()))
     return Response.json(
       { error: "Sign in to play recordings." },
       { status: 401 },

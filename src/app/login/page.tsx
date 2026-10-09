@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -17,17 +18,21 @@ function LoginForm() {
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password, username }),
     });
     setBusy(false);
     if (!res.ok) {
-      setError("Wrong password.");
+      setError(username.trim() ? "Wrong name or password." : "Wrong password.");
       return;
     }
     const j = await res.json().catch(() => ({}));
-    // A studio login only lands on Studio pages, whatever `next` asked for.
+    // Studio and team logins only land on their own pages, whatever `next` asked for.
     const next = params.get("next");
-    router.push(j.role === "studio" ? (next?.startsWith("/dashboard/studio") ? next : j.home) : next || "/dashboard");
+    router.push(
+      j.role === "studio" ? (next?.startsWith("/dashboard/studio") ? next : j.home)
+      : j.role === "team" ? (next?.startsWith("/team") ? next : j.home)
+      : next || "/dashboard",
+    );
     router.refresh();
   }
 
@@ -41,7 +46,17 @@ function LoginForm() {
         <span className="text-[11px] text-text-muted">the twin</span>
       </div>
       <input
+        type="text"
+        autoComplete="username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Your login name (team)"
+        aria-label="Login name, for team accounts"
+        className="w-full rounded-full border border-[var(--border)] bg-transparent px-4 py-2.5 text-sm text-text outline-none placeholder:text-text-muted focus:border-[var(--border-strong)]"
+      />
+      <input
         type="password"
+        autoComplete="current-password"
         autoFocus
         value={password}
         onChange={(e) => setPassword(e.target.value)}

@@ -2,7 +2,7 @@ import { callCosts } from "@/lib/outreach-costs";
 import {
   BDR_AGENTS,
   callDetail,
-  callSession,
+  callViewer,
   TEST_PHONE,
 } from "@/lib/outreach-calls";
 export const dynamic = "force-dynamic";
@@ -10,7 +10,8 @@ export async function GET(
   _req: Request,
   { params }: { params: { id: string } },
 ) {
-  if (!(await callSession()))
+  const viewer = await callViewer();
+  if (!viewer)
     return Response.json({ error: "Sign in to view calls." }, { status: 401 });
   try {
     const d = await callDetail(params.id);
@@ -18,7 +19,7 @@ export async function GET(
       return Response.json({ error: "BDR call not found." }, { status: 404 });
     const phone = d.metadata?.phone_call?.external_number || null;
     return Response.json({
-      costs: callCosts(d),
+      costs: viewer === "owner" ? callCosts(d) : undefined,
       id: d.conversation_id,
       agent: BDR_AGENTS[d.agent_id],
       phone,

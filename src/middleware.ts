@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { COOKIE_NAME, STUDIO_COOKIE, verifySessionToken, verifyStudioToken, studioMayOpen } from "@/lib/auth";
+import {
+  COOKIE_NAME, STUDIO_COOKIE, TEAM_COOKIE, verifySessionToken, verifyStudioToken, studioMayOpen,
+  verifyTeamToken, teamMayOpen,
+} from "@/lib/auth";
+
+/** A signed team token is not enough: the member must still be active. One indexed read. */
+async function teamMemberActive(id: string): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key || !/^[0-9a-f-]{36}$/i.test(id)) return false;
+  try {
+    const r = await fetch(`${url}/rest/v1/team_members?select=id&id=eq.${id}&active=eq.true`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store",
+    });
+    return r.ok && ((await r.json()) as unknown[]).length === 1;
+  } catch {
+    return false;
+  }
+}
 
 // api/agent/* and api/proxe/briefs are machine endpoints — they carry their own
 // bearer check (see lib/ingest-auth.ts) and fail closed without ARC_INGEST_SECRET.
@@ -56,6 +73,16 @@ export async function middleware(req: NextRequest) {
       return NextResponse.json({ error: "not available for this login" }, { status: 403 });
     }
     return NextResponse.redirect(new URL("/dashboard/studio", req.url));
+  }
+
+  // Team login (sales): its /team pages plus the outreach tools, nothing else.
+  const memberId = await verifyTeamToken(req.cookies.get(TEAM_COOKIE)?.value);
+  if (memberId && (await teamMemberActive(memberId))) {
+    if (teamMayOpen(req.nextUrl.pathname, req.method)) return NextResponse.next();
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "not available for this login" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/team", req.url));
   }
 
   if (req.nextUrl.pathname.startsWith("/api/")) {

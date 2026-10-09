@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, ExternalLink } from "lucide-react";
 import { btnCls, btnPrimaryCls, inputCls } from "@/components/ops/Modal";
 import type { OutreachTarget } from "@/types/ops";
@@ -78,6 +78,29 @@ export function LeadDetail({
     [reply, setReply] = useState("");
   const [eventId, setEventId] = useState<string | null>(null),
     [eventTime, setEventTime] = useState<string | null>(null);
+  const [team, setTeam] = useState<{
+    role: "owner" | "team";
+    me: { id: string; name: string } | null;
+    members: { id: string; name: string }[];
+  } | null>(null);
+  useEffect(() => {
+    fetch("/api/team/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setTeam)
+      .catch(() => setTeam(null));
+  }, []);
+  const isTeam = team?.role === "team";
+  const inbound = target.source === "proxe_inbound";
+  const ownerName = (id?: string | null) =>
+    id ? team?.members.find((m) => m.id === id)?.name || "Someone" : "Unassigned";
+  async function assign(ownerId: string | null) {
+    await action("assign", async () => {
+      await request("/api/outreach/" + target.id, { owner_id: ownerId }, "PATCH");
+      setNotice(ownerId ? "Assigned to " + ownerName(ownerId) + "." : "Lead released.");
+      onSaved();
+    });
+  }
+  const [draft, setDraft] = useState<{ subject: string; body: string } | null>(null);
   const phone = (target.phone || "").replace(/\D/g, "").slice(-10);
   const targetCalls = calls.filter(
     (c) =>
@@ -243,6 +266,62 @@ export function LeadDetail({
                 </p>
               )}
             </div>
+            {team && target.id && (
+              <section className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4 text-sm">
+                <span className="text-text-muted">Working this lead:</span>
+                <span className="font-medium">{ownerName(target.owner_id)}</span>
+                {!isTeam && team.members.length > 0 && (
+                  <select
+                    aria-label="Assign lead"
+                    className={inputCls + " ml-auto max-w-[200px]"}
+                    value={target.owner_id || ""}
+                    disabled={!!busy}
+                    onChange={(e) => assign(e.target.value || null)}
+                  >
+                    <option value="">Unassigned</option>
+                    {team.members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {isTeam && !target.owner_id && (
+                  <button className={btnCls + " ml-auto"} disabled={!!busy} onClick={() => assign(team.me!.id)}>
+                    Take this lead
+                  </button>
+                )}
+                {isTeam && target.owner_id === team.me?.id && (
+                  <button className={btnCls + " ml-auto"} disabled={!!busy} onClick={() => assign(null)}>
+                    Let go
+                  </button>
+                )}
+              </section>
+            )}
+            {inbound && target.inbound && (
+              <section className="space-y-1 border-t border-[var(--border)] pt-4 text-sm">
+                <h3 className="font-medium">Came in through PROXe</h3>
+                <p>
+                  {[
+                    target.inbound.channel && "via " + target.inbound.channel,
+                    "on " + new Date(target.inbound.came_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+                    target.inbound.brand && target.inbound.brand !== "proxe" && "brand " + target.inbound.brand,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                <p className="text-text-muted">
+                  PROXe stage: {target.inbound.stage || "New"}
+                  {target.inbound.sub_stage ? " (" + target.inbound.sub_stage + ")" : ""}
+                  {target.inbound.score != null ? " · score " + target.inbound.score : ""}
+                  {target.inbound.last_at ? " · last active " + new Date(target.inbound.last_at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                </p>
+                {target.inbound.booking && <p>Booked: {target.inbound.booking}</p>}
+                {target.inbound.needs_human && (
+                  <p className="text-accent-red">PROXe flagged this lead for a human follow-up.</p>
+                )}
+              </section>
+            )}
             <section className="space-y-2 border-t border-[var(--border)] pt-4">
               <h3 className="font-medium">Where things stand</h3>
               <p className="text-sm">
@@ -296,7 +375,7 @@ export function LeadDetail({
                 </p>
               )}
             </section>
-            {target.kind === "business" && !testTarget && (
+            {target.kind === "business" && !testTarget && !isTeam && !inbound && (
               <details>
                 <summary className="cursor-pointer py-2 text-sm">
                   {target.qualified_at
@@ -425,9 +504,13 @@ export function LeadDetail({
                             "/api/outreach/" + target.id + "/" + a,
                             a === "draft" ? { instructions } : {},
                           );
+                          if (a === "draft" && d.message?.body)
+                            setDraft({ subject: d.message.subject || "", body: d.message.body });
                           setNotice(
                             a === "draft"
-                              ? "Draft saved. " +
+                              ? isTeam
+                                ? "Draft ready below. Copy it into your email."
+                                : "Draft saved. " +
                                   (d.gmail === "drafted"
                                     ? "Available in Gmail Drafts."
                                     : "Gmail: " + d.gmail)
@@ -444,15 +527,33 @@ export function LeadDetail({
                           : "Research"}
                     </button>
                   ))}
-                  <a
-                    className={btnCls}
-                    href="https://mail.google.com/mail/u/0/#drafts"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open Gmail drafts
-                  </a>
+                  {!isTeam && (
+                    <a
+                      className={btnCls}
+                      href="https://mail.google.com/mail/u/0/#drafts"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open Gmail drafts
+                    </a>
+                  )}
                 </div>
+                {draft && (
+                  <div className="space-y-2 rounded-lg border border-[var(--border)] p-3 text-sm">
+                    {draft.subject && <p className="font-medium">{draft.subject}</p>}
+                    <p className="whitespace-pre-wrap">{draft.body}</p>
+                    <button
+                      className={btnCls}
+                      onClick={() =>
+                        navigator.clipboard
+                          ?.writeText((draft.subject ? draft.subject + "\n\n" : "") + draft.body)
+                          .then(() => setNotice("Draft copied."))
+                      }
+                    >
+                      Copy draft
+                    </button>
+                  </div>
+                )}
                 <Label name="Paste an email reply">
                   <textarea
                     rows={2}
