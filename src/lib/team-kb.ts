@@ -6,6 +6,7 @@ import { tdb } from "@/lib/team"
 export const KB_SECTIONS = [
   { key: "pipeline", label: "Pipeline", blurb: "Every stage a lead goes through, what you do at each one, and when it moves on." },
   { key: "product", label: "What PROXe is", blurb: "What it does, who buys it, and what not to promise." },
+  { key: "bcon", label: "BCON Club", blurb: "Who we are and what else BCON builds, from PROXe's knowledge base." },
   { key: "links", label: "Links to share", blurb: "What to send, and the moment to send it." },
   { key: "rebuttals", label: "Rebuttals", blurb: "What they say, and what you say back." },
   { key: "pricing", label: "Pricing", blurb: "Plans, top-ups and billing. Never quote anything else." },

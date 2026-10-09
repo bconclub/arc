@@ -32,6 +32,57 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 /** Plain text of a rebuttal answer, for copying: drop markdown bold and the coaching notes after a blank line. */
 const answerText = (body: string) => body.split(/\n\s*\n/)[0].replace(/\*\*/g, "").replace(/^"|"$/g, "").trim();
 
+type Live = { id: string; section: string; name: string; stage: string | null; card: string | null; next_step: string | null; words: number | null; actions: number | null };
+
+/** PROXe's live pipeline: who is where right now, what's next, and how committed they are. */
+function LivePipeline() {
+  const [rows, setRows] = useState<Live[] | null>(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    fetch("/api/team/pipeline", { cache: "no-store" }).then(async (r) => {
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Couldn't load the pipeline.");
+      setRows(j.rows || []);
+    }).catch((e) => setErr(e.message));
+  }, []);
+  if (err) return <p className="text-[12.5px] text-accent-red">{err}</p>;
+  if (!rows) return <div className="flex h-24 items-center justify-center text-text-muted"><Loader2 className="animate-spin" size={16} /></div>;
+  if (!rows.length) return null;
+  const groups: [string, string, Live[]][] = [
+    ["customer", "Customers and trials", rows.filter((r) => r.section === "customer")],
+    ["prospect", "Prospects", rows.filter((r) => r.section !== "customer")],
+  ];
+  return (
+    <section className="flex flex-col gap-3 rounded-panel border border-[var(--border)] bg-surface p-4">
+      <div>
+        <h2 className="text-[15px] font-semibold tracking-tight text-text">The pipeline right now</h2>
+        <p className="text-[11.5px] text-text-muted">Live from PROXe. Commitment is what they said vs what they did (time, effort, money, out of 5): actions count more than words.</p>
+      </div>
+      {groups.filter(([, , g]) => g.length).map(([key, label, g]) => (
+        <div key={key} className="flex flex-col gap-1.5">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">{label} · {g.length}</p>
+          <ul className="flex flex-col">
+            {g.map((r) => (
+              <li key={r.id} className="grid grid-cols-1 gap-x-3 gap-y-0.5 border-t border-[var(--border)] py-2 first:border-t-0 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_auto]">
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold text-text">{r.name}</p>
+                  <p className="text-[12px] text-text-muted">{r.stage || "No stage yet"}{r.card ? ` · ${r.card}` : ""}</p>
+                </div>
+                <p className="text-[12.5px] text-text">{r.next_step ? <><span className="text-text-muted">Next: </span>{r.next_step}</> : <span className="text-text-muted">No next step</span>}</p>
+                {(r.words != null || r.actions != null) && (
+                  <p className="whitespace-nowrap text-[11.5px] tabular-nums text-text-muted" title="Commitment: words / actions, out of 5">
+                    said {r.words ?? "-"} · did <span className={r.actions != null && r.actions >= 4 ? "font-semibold text-accent-green" : "text-text"}>{r.actions ?? "-"}</span>
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 function Pipeline({ entries }: { entries: Entry[] }) {
   return (
     <ol className="flex flex-col">
@@ -204,7 +255,11 @@ function PlaybookInner() {
         <section className="flex flex-col gap-3">
           {current && <p className="text-[12.5px] text-text-muted">{current.blurb}</p>}
           {tab === "pipeline" ? (
-            <Pipeline entries={inTab} />
+            <>
+              <LivePipeline />
+              <h2 className="mt-2 text-[15px] font-semibold tracking-tight text-text">The stages, and what you do at each</h2>
+              <Pipeline entries={inTab} />
+            </>
           ) : (
             <div className={tab === "links" || tab === "rebuttals" ? "grid grid-cols-1 gap-3 md:grid-cols-2" : "flex flex-col gap-3"}>
               {inTab.map((e) => <Card key={e.id} e={e} />)}

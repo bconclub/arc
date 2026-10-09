@@ -1,11 +1,16 @@
 import { forbidden, getViewer, tdb, unauthorized } from "@/lib/team";
 import { KB_SECTIONS, kbPatch, listKb } from "@/lib/team-kb";
+import { syncProxeKnowledge } from "@/lib/team-proxe";
 
-/** The knowledge base: every team login reads it; the owner adds entries. */
+/**
+ * The knowledge base: every team login reads it; the owner adds entries. A read
+ * first refreshes the entries mirrored from PROXe's knowledge base (at most every 10 minutes).
+ */
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!(await getViewer())) return unauthorized();
+  await syncProxeKnowledge({ ifStale: true }).catch(() => null);
   try {
     return Response.json({ sections: KB_SECTIONS, entries: await listKb() });
   } catch (e) {

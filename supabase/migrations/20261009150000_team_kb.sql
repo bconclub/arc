@@ -6,7 +6,7 @@
 
 create table if not exists public.team_kb (
   id uuid primary key default gen_random_uuid(),
-  section text not null check (section in ('pipeline', 'product', 'pricing', 'links', 'rebuttals', 'process', 'faq')),
+  section text not null check (section in ('pipeline', 'product', 'bcon', 'pricing', 'links', 'rebuttals', 'process', 'faq')),
   title text not null,
   body text not null default '',          -- markdown
   url text,                               -- links: the thing to share
