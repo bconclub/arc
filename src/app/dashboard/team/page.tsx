@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ExternalLink, Loader2, Plus, Trash2 } from "lucide-react";
 import { timeAgo } from "@/lib/format";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { MiniMarkdown } from "@/components/team/MiniMarkdown";
+import { KbEditor } from "@/components/team/KbEditor";
 
 /**
  * Team: the people who work inside ARC with their own login (sales first).
@@ -69,6 +69,7 @@ function MemberCard({ m, onChanged }: { m: Member; onChanged: () => void }) {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [t, setT] = useState({ title: "", details: "", due_on: "" });
   const [pw, setPw] = useState("");
+  const [nm, setNm] = useState(m.name);
   const [give, setGive] = useState({ count: 10, from: "inbound" });
   const [busy, setBusy] = useState(""), [note, setNote] = useState(""), [err, setErr] = useState("");
   const loadTasks = useCallback(async () => {
@@ -166,6 +167,16 @@ function MemberCard({ m, onChanged }: { m: Member; onChanged: () => void }) {
             <p className="mt-1 text-[11px] text-text-muted">Or assign one lead at a time from its panel (Outreach or the sales view).</p>
           </div>
           <div>
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-text-muted">Name</p>
+            <div className="flex gap-2">
+              <input className={input + " flex-1"} value={nm} onChange={(e) => setNm(e.target.value)} aria-label="Name" />
+              <button className={btn} disabled={!!busy || !nm.trim() || nm.trim() === m.name}
+                onClick={() => run("name", async () => { await call(`/api/team/members/${m.id}`, "PATCH", { name: nm.trim() }); onChanged(); return "Name updated."; })}>
+                Rename
+              </button>
+            </div>
+          </div>
+          <div>
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-text-muted">New password</p>
             <div className="flex gap-2">
               <input type="password" autoComplete="new-password" className={input + " flex-1"} placeholder="8+ characters" value={pw} onChange={(e) => setPw(e.target.value)} aria-label="New password" />
@@ -178,37 +189,6 @@ function MemberCard({ m, onChanged }: { m: Member; onChanged: () => void }) {
         </div>
       </div>
       {(note || err) && <p className={`mt-3 text-[12px] ${err ? "text-accent-red" : "text-accent-green"}`}>{err || note}</p>}
-    </div>
-  );
-}
-
-function Playbook() {
-  const [text, setText] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
-  const [preview, setPreview] = useState(false);
-  const [busy, setBusy] = useState(false), [msg, setMsg] = useState("");
-  useEffect(() => { fetch("/api/team/playbook").then((r) => r.json()).then((j) => { setText(j.text || ""); setSaved(j.text || ""); }); }, []);
-  async function save() {
-    setBusy(true); setMsg("");
-    try { await call("/api/team/playbook", "PUT", { text }); setSaved(text); setMsg("Saved. The team sees it now, and Ask answers from it."); }
-    catch (x) { setMsg((x as Error).message); }
-    setBusy(false);
-  }
-  if (text === null) return <div className="flex h-24 items-center justify-center text-text-muted"><Loader2 className="animate-spin" size={16} /></div>;
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <button className={btn} onClick={() => setPreview(!preview)}>{preview ? "Edit" : "Preview"}</button>
-        <button className={primary} disabled={busy || text === saved} onClick={save}>{busy ? "Saving…" : text === saved ? "Saved" : "Save playbook"}</button>
-        {msg && <span className="text-[12px] text-text-muted">{msg}</span>}
-      </div>
-      {preview ? (
-        <div className="max-h-[560px] overflow-auto rounded-lg border border-[var(--border)] p-4"><MiniMarkdown text={text} /></div>
-      ) : (
-        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={22} aria-label="Playbook"
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 font-mono text-[12.5px] leading-relaxed text-text outline-none focus:border-[var(--brand-line)]" />
-      )}
-      <p className="text-[11px] text-text-muted">Markdown: # headings, - lists, **bold**. Put prices, offers and rules here; the assistant won&apos;t answer what isn&apos;t written.</p>
     </div>
   );
 }
@@ -230,7 +210,7 @@ export default function TeamPage() {
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-text">Team</h1>
           <p className="max-w-[70ch] text-[12.5px] text-text-muted">
-            People with their own ARC login. They sign in at arc.bconclub.com/login with their login name and password, and land in the sales view: Today, Leads, AI calls, Ask and Getting started. They can&apos;t open the rest of ARC, delete leads or see call costs.
+            People with their own ARC login. They sign in at arc.bconclub.com/login with their login name and password, and land in the sales view: Today, Leads, AI calls, Ask and Playbook. They can&apos;t open the rest of ARC, delete leads or see call costs.
           </p>
         </div>
         <Link href="/team" className={btn}><ExternalLink size={14} /> Open the sales view</Link>
@@ -249,8 +229,8 @@ export default function TeamPage() {
         </div>
       </Panel>
 
-      <Panel title="Playbook" sub="Their onboarding reading (Getting started) and the only source the Ask assistant answers from.">
-        <Playbook />
+      <Panel title="Playbook (knowledge base)" sub="What the team sees under Playbook: the pipeline, what PROXe is, links to share and when, rebuttals, pricing, process and FAQ. The Ask assistant answers only from this.">
+        <KbEditor />
       </Panel>
     </div>
   );

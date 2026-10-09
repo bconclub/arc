@@ -1,19 +1,22 @@
 /**
  * Just enough Markdown for the playbook: #/##/### headings, - and 1. lists,
- * **bold**, [links](https://…) and paragraphs. Builds React elements, never HTML
- * strings, so nothing in the text can inject markup.
+ * **bold**, *italic*, [links](https://…), > quotes and paragraphs (a single line
+ * break inside a paragraph is kept). Builds React elements, never HTML strings,
+ * so nothing in the text can inject markup.
  */
 import { Fragment } from "react";
 
 function inline(text: string, key: string) {
   const out: React.ReactNode[] = [];
-  const re = /\*\*([^*]+)\*\*|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
+  const re = /\*\*([^*]+)\*\*|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)|\*([^*\s][^*]*)\*/g;
   let last = 0, m: RegExpExecArray | null, i = 0;
   while ((m = re.exec(text))) {
     if (m.index > last) out.push(text.slice(last, m.index));
     out.push(m[1]
       ? <strong key={`${key}-${i++}`} className="font-semibold text-text">{m[1]}</strong>
-      : <a key={`${key}-${i++}`} href={m[3]} target="_blank" rel="noreferrer" className="underline">{m[2]}</a>);
+      : m[4]
+        ? <em key={`${key}-${i++}`}>{m[4]}</em>
+        : <a key={`${key}-${i++}`} href={m[3]} target="_blank" rel="noreferrer" className="underline">{m[2]}</a>);
     last = m.index + m[0].length;
   }
   if (last < text.length) out.push(text.slice(last));
@@ -26,7 +29,7 @@ export function MiniMarkdown({ text }: { text: string }) {
   let list: { ordered: boolean; items: string[] } | null = null;
   let para: string[] = [];
   const flush = (k: number) => {
-    if (para.length) { blocks.push(<p key={`p${k}`} className="text-[13.5px] leading-relaxed text-text">{inline(para.join(" "), `p${k}`)}</p>); para = []; }
+    if (para.length) { blocks.push(<p key={`p${k}`} className="whitespace-pre-line text-[13.5px] leading-relaxed text-text">{inline(para.join("\n"), `p${k}`)}</p>); para = []; }
     if (list) {
       const L = list.ordered ? "ol" : "ul";
       blocks.push(<L key={`l${k}`} className={`${list.ordered ? "list-decimal" : "list-disc"} space-y-1 pl-5 text-[13.5px] leading-relaxed text-text`}>

@@ -24,7 +24,7 @@ export async function GET() {
   const stats = members.map((m) => {
     const mine = ((leads.data || []) as L[]).filter((l) => l.owner_id === m.id);
     const t = ((tasks.data || []) as T[]).filter((x) => x.member_id === m.id);
-    const a = ((acts.data || []) as A[]).filter((x) => x.worker === m.name);
+    const a = ((acts.data || []) as A[]).filter((x) => x.worker === m.username);
     return {
       ...m,
       leads: mine.length,

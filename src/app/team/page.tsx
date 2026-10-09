@@ -70,7 +70,7 @@ export default function TeamToday() {
     [all, myId, since],
   );
   const loggedToday = useMemo(
-    () => (leads?.activity || []).filter((a) => a.occurred_at.slice(0, 10) === today && (me?.me ? a.worker === me.me.name : a.worker === "manual")),
+    () => (leads?.activity || []).filter((a) => a.occurred_at.slice(0, 10) === today && (me?.me ? a.worker === me.me.username : a.worker === "manual")),
     [leads, today, me],
   );
   const openTasks = (tasks || []).filter((t) => t.status !== "done");

@@ -1,11 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { HAIKU } from "@/lib/llm/models";
 import { recordUsage } from "@/lib/arc/usage";
-import { getPlaybook, getViewer, tdb, unauthorized } from "@/lib/team";
+import { getViewer, tdb, unauthorized } from "@/lib/team";
+import { kbAsText, listKb } from "@/lib/team-kb";
 
 /**
  * "Ask": the team's onboarding assistant. Answers questions about PROXe, BCON,
- * the sales process and how to use ARC, from the owner's playbook only, and
+ * the sales process and how to use ARC, from the team knowledge base (team_kb) only, and
  * knows the asker's own tasks and lead counts. A member's thread is kept so it
  * reads like one ongoing conversation; the owner can try it out (not stored).
  */
@@ -65,10 +66,11 @@ export async function POST(req: Request) {
     history = b.history.slice(-HISTORY).filter((m: { role: string; content: string }) => ["user", "assistant"].includes(m.role) && typeof m.content === "string");
   }
 
-  const [{ text: playbook }, ctx] = await Promise.all([getPlaybook(), context(memberId)]);
+  const [entries, ctx] = await Promise.all([listKb().catch(() => []), context(memberId)]);
+  const playbook = kbAsText(entries);
   const system = `You are the onboarding and sales assistant inside ARC for BCON's sales team. You are talking to ${name}, who handles inbound leads and makes outbound calls for PROXe.
 
-Answer from the PLAYBOOK below. It is the only source of facts about PROXe, BCON, prices, plans, offers, policies and the sales process. If the playbook does not cover something (a price, a feature, a promise to a customer), say plainly that it isn't in the playbook and that they should ask Z (the founder) before telling a customer. Never invent prices, discounts, features, timelines, guarantees or certifications.
+Answer from the PLAYBOOK below (the team knowledge base: pipeline, product, links to share and when, rebuttals, pricing, process, FAQ). When a link would help, give the exact URL from the playbook and say when to send it. It is the only source of facts about PROXe, BCON, prices, plans, offers, policies and the sales process. If the playbook does not cover something (a price, a feature, a promise to a customer), say plainly that it isn't in the playbook and that they should ask Z (the founder) before telling a customer. Never invent prices, discounts, features, timelines, guarantees or certifications.
 
 You can also coach: how to open a call, handle an objection, follow up, write a short WhatsApp or email, and how to use ARC (Today shows tasks and due follow-ups; Leads is the list with inbound and outbound; open a lead to call, log what happened, set a follow-up, research the business or draft an email; AI calls has the AI caller's recordings and transcripts).
 
@@ -78,7 +80,7 @@ ABOUT THEM
 ${ctx}
 
 PLAYBOOK
-${playbook || "(The owner has not written the playbook yet. Say so if asked about PROXe specifics, and point them to Z.)"}`;
+${playbook || "(The knowledge base is empty. Say so if asked about PROXe specifics, and point them to Z.)"}`;
 
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

@@ -5,7 +5,7 @@ import { Loader2, Send } from "lucide-react";
 import { MiniMarkdown } from "@/components/team/MiniMarkdown";
 
 /**
- * Ask: a chat with the onboarding assistant. It answers from the playbook
+ * Ask: a chat with the onboarding assistant. It answers from the Playbook (team_kb)
  * (PROXe, prices, how we sell, how to use ARC) and knows your tasks and leads.
  * If the playbook doesn't say, it tells you to check with Z instead of guessing.
  */
@@ -17,6 +17,7 @@ const STARTERS = [
   "How should I open a call with an inbound lead?",
   "A clinic says it's too expensive. What do I say?",
   "What should I do first today?",
+  "What do I send someone who says send me details?",
 ];
 
 export default function TeamAsk() {
@@ -26,7 +27,12 @@ export default function TeamAsk() {
   const [err, setErr] = useState("");
   const end = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { fetch("/api/team/chat").then((r) => r.json()).then((j) => setMsgs(j.messages || [])).catch(() => setMsgs([])); }, []);
+  useEffect(() => {
+    fetch("/api/team/chat").then((r) => r.json()).then((j) => setMsgs(j.messages || [])).catch(() => setMsgs([]));
+    // Arriving from a Playbook search with no results: start with that question typed in.
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setText(q);
+  }, []);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, busy]);
 
   async function ask(q: string) {
@@ -50,7 +56,7 @@ export default function TeamAsk() {
       <header>
         <h1 className="text-[22px] font-bold tracking-tight text-text">Ask</h1>
         <p className="text-[12.5px] text-text-muted">
-          Ask anything about PROXe, our customers, prices, how to handle a call, or how to use this. It answers from Z&apos;s playbook and says so when it doesn&apos;t know.
+          Ask anything about PROXe, our customers, prices, how to handle a call, or how to use this. It answers from the Playbook and says so when it doesn&apos;t know.
         </p>
       </header>
 

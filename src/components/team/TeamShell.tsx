@@ -14,7 +14,7 @@ const NAV = [
   { href: "/team/leads", label: "Leads", icon: Users },
   { href: "/team/calls", label: "AI calls", icon: PhoneCall },
   { href: "/team/ask", label: "Ask", icon: MessageCircle },
-  { href: "/team/start", label: "Getting started", icon: BookOpen },
+  { href: "/team/playbook", label: "Playbook", icon: BookOpen },
 ];
 
 export function TeamShell({ name, owner, children }: { name: string; owner: boolean; children: React.ReactNode }) {
@@ -59,7 +59,7 @@ export function TeamShell({ name, owner, children }: { name: string; owner: bool
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} aria-current={on(n) ? "page" : undefined}
             className={`flex flex-col items-center gap-0.5 py-2 text-[10.5px] ${on(n) ? "font-semibold text-text" : "text-text-muted"}`}>
-            <n.icon size={18} /> {n.label === "Getting started" ? "Start" : n.label}
+            <n.icon size={18} /> {n.label}
           </Link>
         ))}
       </nav>

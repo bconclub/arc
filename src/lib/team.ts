@@ -36,13 +36,8 @@ export async function listMembers(includeInactive = false): Promise<TeamMember[]
 export const forbidden = (msg = "Not available for this login.") => Response.json({ error: msg }, { status: 403 })
 export const unauthorized = () => Response.json({ error: "Sign in again." }, { status: 401 })
 
-/** The `worker` label an activity row records: the member's name, or "manual" for the owner. */
-export const workerLabel = (v: Viewer | null) => (v?.kind === "team" ? v.member.name : "manual")
-
-// ── Playbook: what the team learns from, and what the assistant answers from ──
-export const PLAYBOOK_KEY = "team_playbook"
-
-export async function getPlaybook(): Promise<{ text: string; updated_at: string | null }> {
-  const { data } = await tdb.from("arc_context").select("value,updated_at").eq("key", PLAYBOOK_KEY).maybeSingle()
-  return { text: (data?.value as string) || "", updated_at: data?.updated_at ?? null }
-}
+/**
+ * The `worker` label an activity row records: the member's login name (it never
+ * changes, unlike their display name), or "manual" for the owner.
+ */
+export const workerLabel = (v: Viewer | null) => (v?.kind === "team" ? v.member.username : "manual")
