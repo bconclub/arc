@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useBackToClose } from "./useBackToClose";
 
 /**
  * Full-screen image viewer for the client page. Opens on one image of a set
  * (an idea's scenes, the visual board), then: swipe or arrow keys to move,
- * Escape / tap outside / X to close. Shows "2 / 5", the scene's caption, and a
+ * Escape, the phone's Back gesture, swipe down, the X or the Close button closes it. Shows "2 / 5", the scene's caption, and a
  * thumbnail strip to jump around.
  */
 export type ViewerImage = { id: string; url: string | null; title?: string | null; caption?: string | null };
@@ -19,6 +20,7 @@ export function Viewer({ images, start, label, onClose, onSeen }: {
   const n = images.length;
   const go = useCallback((d: number) => setI((x) => (x + d + n) % n), [n]);
   const cur = images[i];
+  useBackToClose(onClose);
 
   useEffect(() => { if (cur) onSeen?.(cur); }, [cur, onSeen]);
   useEffect(() => {
@@ -78,7 +80,7 @@ export function Viewer({ images, start, label, onClose, onSeen }: {
           </div>
         )}
         {n > 1 && (
-          <div className="flex items-center justify-center gap-3">
+          <div className="mb-3 flex items-center justify-center gap-3">
             <button onClick={() => go(-1)} aria-label="Previous" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 sm:hidden"><ChevronLeft size={18} /></button>
             <div className="flex max-w-full gap-1.5 overflow-x-auto">
               {images.map((im, j) => (
@@ -92,6 +94,9 @@ export function Viewer({ images, start, label, onClose, onSeen }: {
             <button onClick={() => go(1)} aria-label="Next" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 sm:hidden"><ChevronRight size={18} /></button>
           </div>
         )}
+        <button onClick={onClose} className="mx-auto flex h-11 items-center gap-2 rounded-full bg-white px-6 text-[14px] font-semibold text-black">
+          <X size={16} /> Close
+        </button>
       </div>
     </div>
   );

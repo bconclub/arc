@@ -5,6 +5,8 @@ import { Check, Download, Home, ListChecks, Loader2, MessageSquare, MessageSquar
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 import { Viewer, type ViewerImage } from "@/components/studio/Viewer";
 import { IdeaDeck } from "@/components/studio/IdeaDeck";
+import { StepTimeline } from "@/components/studio/StepTimeline";
+import { useBackToClose } from "@/components/studio/useBackToClose";
 import { VERSION } from "@/lib/version";
 
 /**
@@ -29,10 +31,10 @@ type Board = { brand: Brand; items: Item[]; mine: Pick[]; inputs?: Input[] };
 
 const NAME_KEY = "studio:voter";
 const STEPS = [
-  { key: "idea", n: "01", label: "Idea" },
-  { key: "script", n: "02", label: "Script" },
-  { key: "board", n: "03", label: "Visual board" },
-  { key: "final", n: "04", label: "Final reel" },
+  { key: "idea", n: "01", label: "Idea", detail: "Say yes to the ideas that excite you." },
+  { key: "script", n: "02", label: "Script", detail: "We write it from your yes. You approve it." },
+  { key: "board", n: "03", label: "Visual board", detail: "Every frame planned before we make it." },
+  { key: "final", n: "04", label: "Final reel", detail: "Scored, captioned, ready to post." },
 ] as const;
 
 export default function ReelOrder({ params, searchParams }: { params: { slug: string }; searchParams: { k?: string } }) {
@@ -84,6 +86,13 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
       if (next === "picks") ping("tray", name);
       return next;
     });
+  }
+  /** "Not you?": forget this person on this device and start the page fresh for the next one. */
+  function switchPerson() {
+    try { localStorage.removeItem(NAME_KEY); } catch { /* private mode */ }
+    setName(""); setNameDraft(""); setPicks({}); setSheet(null); setProfile(false);
+    setSent("idle"); setErr(null); setNudge(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function askName() {
     setSheet(null); setNudge(true);
@@ -241,23 +250,14 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       {/* ── Where the order is ── */}
       <section className="mx-auto max-w-[1200px] px-4 pt-8 lg:px-8">
-        <ol className="grid grid-cols-4 gap-2">
-          {STEPS.map((s, i) => (
-            <li key={s.key} className="flex flex-col gap-2">
-              <div className={`h-1 rounded-full ${i < stepIdx ? "bg-[var(--brand)]" : i === stepIdx ? "bg-[var(--brand)]" : "bg-[var(--surface-hover)]"}`} />
-              <span className={`text-[12px] sm:text-[13px] ${i <= stepIdx ? "text-text" : "text-text-muted"}`}>
-                <span className="mr-1.5 font-mono text-text-muted">{s.n}</span>{s.label}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <StepTimeline steps={STEPS} current={stepIdx} compact />
 
         <h2 className="mt-10 max-w-[24ch] text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[42px]">
-          {v.stage === "idea" ? `Pick the idea for your reel` : v.stage === "script" ? "Your script is ready" : v.stage === "board" ? "Your visual board is ready" : "Your reel is ready"}
+          {v.stage === "idea" ? `Which ideas excite you?` : v.stage === "script" ? "Your script is ready" : v.stage === "board" ? "Your visual board is ready" : "Your reel is ready"}
         </h2>
         <p className="mt-3 max-w-[62ch] text-[16px] leading-relaxed text-text-muted">
           {brand.intro || (v.stage === "idea"
-            ? "We made these ideas from your products. Choose the one you want as your reel and add a note if you like. Nothing reaches us until you press Send at the bottom; then we write the script from your pick."
+            ? "We made these ideas from your products. Swipe through them: yes to the ones that excite you, nope to the rest, and add a note if you like. Nothing reaches us until you press Send; then we write the script from your yes."
             : v.stage === "script" ? "Read it through. Approve it, or tell us what to change. The delivery clock starts once your script is final."
             : v.stage === "board" ? `Every frame of your reel, planned before we generate it. Ask for changes on any frame. Your order includes ${brand.changes_allowed} changes.`
             : "Here is your final reel, scored and captioned. Download it and post it.")}
@@ -283,7 +283,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           className={`mt-6 flex flex-wrap items-center gap-2 rounded-panel border p-4 transition-colors ${nudge ? "border-[var(--brand)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
           {name ? (
             <p className="text-[14px]">Reviewing as <span className="font-semibold">{name}</span>.{" "}
-              <button type="button" onClick={() => setName("")} className="text-text-muted underline-offset-2 hover:text-text hover:underline">Not you?</button>
+              <button type="button" onClick={switchPerson} className="text-text-muted underline-offset-2 hover:text-text hover:underline">Not you?</button>
             </p>
           ) : (
             <>
@@ -377,6 +377,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           <p className="mb-5 text-[14px] text-text-muted">One card per idea. Swipe right if it excites you, left if it is not for you.</p>
           {v.ideas.length === 0 && <p className="text-[14px] text-text-muted">Your ideas are being made. We will send you this link again when they are ready.</p>}
           <IdeaDeck
+            key={name || "anon"}
             ideas={v.ideas.map((i) => ({ id: i.id, title: i.title, body: i.body, image: v.childrenOf(i.id, "image")[0]?.url ?? null }))}
             decisions={Object.fromEntries(v.ideas.map((i) => [i.id, picks[i.id]?.choice ?? null]))}
             palette={brand.palette}
@@ -389,7 +390,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
         </section>
       )}
 
-      <SiteFooter brand={brand.name} />
+      <SiteFooter brand={brand.name} current={stepIdx} />
 
       {/* ── Bottom: a send strip while something is unsent, then the tab bar ── */}
       <div className="fixed inset-x-0 bottom-0 z-40">
@@ -476,7 +477,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       {profile && (
         <ProfilePanel name={name} picks={Object.values(picks)} byId={byId} frames={v.frames}
-          onClose={() => setProfile(false)} onSwitch={() => { setProfile(false); setName(""); }} />
+          onClose={() => setProfile(false)} onSwitch={switchPerson} />
       )}
 
       {viewer && (
@@ -506,6 +507,7 @@ function TabButton({ label, active, onClick, badge = 0, dot = false, children }:
 
 /** A sheet that slides up over the page from the tab bar. Escape or the backdrop closes it. */
 function BottomSheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  useBackToClose(onClose);
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", k);
@@ -575,35 +577,16 @@ function InputsPanel({ name, inputs, onSend, onNeedName }: { name: string; input
   );
 }
 
-/** What sits under the order: how it works, who made it, and how to reach us. */
-function SiteFooter({ brand }: { brand: string }) {
+/** The page ends where the order is: the four steps with the light beam on, then one quiet line. */
+function SiteFooter({ brand, current }: { brand: string; current: number }) {
   return (
     <footer className="mx-auto mt-20 max-w-[1200px] px-4 lg:px-8">
-      <div className="grid gap-8 border-t border-[var(--border)] pt-10 md:grid-cols-[1.3fr_1fr_1fr]">
-        <div>
-          <p className="text-[22px] font-bold tracking-[-0.02em]">BCON Club</p>
-          <p className="mt-2 max-w-[38ch] text-[14px] leading-relaxed text-text-muted">
-            Brand reels made with AI and finished by people. Made for {brand}, from your own products and voice.
-          </p>
-        </div>
-        <div>
-          <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.12em] text-text-muted">How it works</p>
-          <ol className="flex flex-col gap-2 text-[14px]">
-            {STEPS.map((s) => (
-              <li key={s.key} className="flex gap-2"><span className="font-mono text-text-muted">{s.n}</span>{s.label}</li>
-            ))}
-          </ol>
-        </div>
-        <div>
-          <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.12em] text-text-muted">Talk to us</p>
-          <ul className="flex flex-col gap-2 text-[14px]">
-            <li><a href="mailto:brands@bconclub.com" className="underline-offset-2 hover:underline">brands@bconclub.com</a></li>
-            <li><a href="https://bconclub.com" target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline">bconclub.com</a></li>
-          </ul>
-        </div>
+      <div className="rounded-panel border border-[var(--border)] bg-surface px-4 py-6 sm:px-8">
+        <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.14em] text-text-muted">Your reel, step by step</p>
+        <StepTimeline steps={STEPS} current={current} />
       </div>
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] py-5 text-[12px] text-text-muted">
-        <p>This page is private to {brand}. Please don&apos;t share the link outside your team. © {new Date().getFullYear()} BCON Club.</p>
+      <div className="flex flex-wrap items-center justify-between gap-2 py-5 text-[11.5px] text-text-muted">
+        <p>Private to {brand} · <a href="mailto:brands@bconclub.com" className="underline-offset-2 hover:underline">brands@bconclub.com</a></p>
         <p className="font-mono text-[11px]" title={`ARC v${VERSION}`}>ARC v{VERSION}</p>
       </div>
     </footer>
@@ -632,6 +615,7 @@ function NoteBox({ label, placeholder, value, onSave, locked }: { label: string;
 function ProfilePanel({ name, picks, byId, frames, onClose, onSwitch }: {
   name: string; picks: Pick[]; byId: Map<string, Item>; frames: Item[]; onClose: () => void; onSwitch: () => void;
 }) {
+  useBackToClose(onClose);
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", k);

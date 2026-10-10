@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.37";
+export const VERSION = "0.0.38";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.38",
+    date: "2026-10-11",
+    notes: "Studio client page: the idea deck reads as a carousel (big Idea 2 / 5, a progress bar, cards stacked behind) and nudges left and right the first two times to show the swipe; big Nope and Yes buttons with their directions. A light-beam timeline of the four steps at the top and as the footer. The phone Back gesture closes the full-screen view and sheets, with a Close button too. Not you? starts the page fresh.",
+  },
   {
     version: "0.0.37",
     date: "2026-10-10",

@@ -444,3 +444,18 @@ button:focus-visible,
 }
 /* pointer clicks shouldn't paint the ring */
 :focus:not(:focus-visible) { outline: none; }
+
+/* ─── Studio: the light beam on the order timeline ─── */
+@keyframes beamSweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(360%); }
+}
+.beam-sweep { animation: beamSweep 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes beamPulse {
+  0% { transform: scale(0.6); opacity: 0.55; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.beam-pulse { animation: beamPulse 1.8s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .beam-sweep, .beam-pulse { animation: none; }
+}
