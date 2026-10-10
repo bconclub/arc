@@ -294,6 +294,7 @@ function SharePanel({ brand, items, activity, onChanged }: { brand: Brand; items
 const ACT_VERB: Record<string, string> = {
   open: "opened the link", name: "entered their name", view: "looked at", choose: "chose", unchoose: "unchose",
   pass: "passed on", note: "left a note on", tray: "reviewed their picks", send: "sent their picks to BCON",
+  input: "sent inputs",
 };
 
 function ActivityFeed({ activity, items }: { activity: Activity[]; items: Item[] }) {
@@ -303,7 +304,7 @@ function ActivityFeed({ activity, items }: { activity: Activity[]; items: Item[]
     const it = a.item_id ? byId.get(a.item_id) : null;
     const parent = it?.parent_id ? byId.get(it.parent_id) : null;
     const what = it ? (it.kind === "image" && parent ? `a still of "${parent.title}"` : `"${it.title || it.kind}"`) : "";
-    return `${ACT_VERB[a.kind] || a.kind}${what ? ` ${what}` : ""}${a.kind === "note" && a.meta?.text ? `: "${a.meta.text}"` : ""}`;
+    return `${ACT_VERB[a.kind] || a.kind}${what ? ` ${what}` : ""}${(a.kind === "note" || a.kind === "input") && a.meta?.text ? `: "${a.meta.text}"` : ""}`;
   };
   if (!activity.length) return <p className="text-[12px] text-text-muted">No client activity yet. Every open, view, choice, note and send on their link shows up here.</p>;
   const visits = new Set(activity.filter((a) => a.kind === "open").map((a) => a.session)).size;

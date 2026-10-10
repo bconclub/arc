@@ -4,6 +4,7 @@
 // GET  ?k=<key>&voter=<name>  -> { brand, items, mine }   ideas + images only
 // POST { k, item_id, voter, choice?: "like"|"pass"|null, comment? }   one pick per person per item
 // POST { k, voter, submit: true }   "Send picks": posts a summary note to the admin board
+// POST { k, voter, input: "..." }   "Give inputs": a general note to BCON (offers, do's and don'ts, references)
 // POST { k, event: "open"|"name"|"view"|"tray", voter?, item_id?, session? }   activity ping
 // Comments on script/frame items count against the order's changes_allowed (3 by default).
 import { db, signPaths, isClientVisible, sameKey, CHANGE_KINDS, type StudioItem } from "@/lib/studio"
@@ -42,10 +43,14 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
   if (!brand) return NOPE()
   const voter = cleanName(url.searchParams.get("voter"))
 
-  const [items, mine, comments] = await Promise.all([
+  const [items, mine, comments, inputs] = await Promise.all([
     db.from("studio_items").select("id, kind, title, body, status, image_path, hidden, pinned, parent_id, position, created_at").eq("brand_id", brand.id).order("created_at", { ascending: true }),
     voter ? db.from("studio_votes").select("item_id, choice, comment, sent_at").eq("brand_id", brand.id).eq("voter", voter) : Promise.resolve({ data: [] }),
     db.from("studio_votes").select("item_id, comment").eq("brand_id", brand.id).not("comment", "is", null),
+    // Only this person's own inputs come back, never another reviewer's.
+    voter ? db.from("studio_items").select("id, body, created_at").eq("brand_id", brand.id).eq("kind", "note")
+      .eq("created_by", `client: ${voter}`).contains("tags", ["client-input"]).order("created_at", { ascending: false }).limit(50)
+      : Promise.resolve({ data: [] }),
   ])
   const visible = ((items.data || []) as StudioItem[]).filter(isClientVisible)
   const urls = await signPaths([...visible.map((i) => i.image_path), brand.logo_path])
@@ -61,6 +66,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
         .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.created_at.localeCompare(b.created_at))
         .map((i) => ({ id: i.id, kind: i.kind, title: i.title, body: i.kind === "image" ? null : i.body, url: i.image_path ? urls.get(i.image_path) ?? null : null, featured: i.pinned, parent_id: i.parent_id, position: i.position })),
       mine: mine.data || [],
+      inputs: inputs.data || [],
     },
     { headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } }
   )
@@ -85,6 +91,19 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
 
   if (!voter) return Response.json({ error: "Add your name first." }, { status: 400 })
 
+  if (typeof body.input === "string") {
+    const text = body.input.trim().slice(0, 4000)
+    if (!text) return Response.json({ error: "Write something first." }, { status: 400 })
+    const { data, error } = await db.from("studio_items").insert({
+      brand_id: brand.id, kind: "note", title: `${voter} sent inputs`, body: text,
+      created_by: `client: ${voter}`, tags: ["client-input"],
+    }).select("id, body, created_at").single()
+    if (error) return Response.json({ error: "Could not send that. Try again." }, { status: 500 })
+    await db.from("studio_brands").update({ updated_at: new Date().toISOString() }).eq("id", brand.id)
+    await track(brand.id, "input", voter, null, body.session, { text: text.slice(0, 200) })
+    return Response.json({ ok: true, input: data })
+  }
+
   if (body.submit === true) {
     const [{ data: votes }, { data: items }] = await Promise.all([
       db.from("studio_votes").select("item_id, choice, comment").eq("brand_id", brand.id).eq("voter", voter),
@@ -107,6 +126,23 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       brand_id: brand.id, kind: "note", title: `${voter} sent their picks`, body: lines.join("\n"),
       created_by: `client: ${voter}`, tags: ["client-picks"],
     })
+    // A chosen idea starts the order: queue "write the script" for the editors (once per idea),
+    // carrying the client's note, so the pick lands in the Studio inbox without anyone copying it.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chosen = ((votes || []) as any[]).filter((v) => v.choice === "like" && byId.get(v.item_id)?.kind === "idea")
+    for (const c of chosen) {
+      const idea = byId.get(c.item_id)
+      const { data: open } = await db.from("studio_items").select("id").eq("brand_id", brand.id).eq("kind", "request")
+        .eq("parent_id", c.item_id).in("status", ["open", "doing"]).limit(1)
+      if (open?.length) continue
+      await db.from("studio_items").insert({
+        brand_id: brand.id, kind: "request", parent_id: c.item_id, status: "open",
+        title: `Write the script for "${idea?.title || "the chosen idea"}": ${voter} picked it`,
+        body: [`${voter} chose this idea on the client page.`, c.comment ? `Their note: ${c.comment}` : "",
+          "Next: post the script under the idea (kind script). The client sees it and approves or asks for a change."].filter(Boolean).join("\n"),
+        created_by: `client: ${voter}`, tags: ["client-pick"],
+      })
+    }
     await db.from("studio_brands").update({ updated_at: new Date().toISOString() }).eq("id", brand.id)
     await track(brand.id, "send", voter, null, body.session, { count: lines.length })
     return Response.json({ ok: true, sent: lines.length, sent_at: sentAt })

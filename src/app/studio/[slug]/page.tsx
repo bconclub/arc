@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronUp, Download, Loader2, MessageSquare, Send, X } from "lucide-react";
+import { Check, Download, Home, ListChecks, Loader2, MessageSquare, MessageSquarePlus, Send, User, X } from "lucide-react";
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 import { Viewer, type ViewerImage } from "@/components/studio/Viewer";
 import { Storyboard } from "@/components/studio/Storyboard";
@@ -24,7 +24,8 @@ type Kind = "idea" | "image" | "script" | "frame" | "video";
 type Item = { id: string; kind: Kind; title: string | null; body: string | null; url: string | null; featured: boolean; parent_id: string | null; position: number | null };
 type Pick = { item_id: string; choice: "like" | "pass" | null; comment: string | null; sent_at?: string | null };
 type Brand = { name: string; mood: string | null; palette: string[]; intro: string | null; logo_url: string | null; reel_length: string | null; changes_allowed: number; changes_used: number };
-type Board = { brand: Brand; items: Item[]; mine: Pick[] };
+type Input = { id: string; body: string; created_at: string };
+type Board = { brand: Brand; items: Item[]; mine: Pick[]; inputs?: Input[] };
 
 const NAME_KEY = "studio:voter";
 const STEPS = [
@@ -44,7 +45,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const [saving, setSaving] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [nudge, setNudge] = useState(false);
-  const [tray, setTray] = useState(false);
+  // The bottom tab bar opens one sheet at a time: your picks, or inputs for BCON.
+  const [sheet, setSheet] = useState<"picks" | "inputs" | null>(null);
   const [sent, setSent] = useState<"idle" | "sending" | "sent">("idle");
   // The full-screen viewer: one set of images (an idea's scenes, the visual board) and where to start.
   const [viewer, setViewer] = useState<{ images: ViewerImage[]; start: number; label: string } | null>(null);
@@ -77,7 +79,28 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     seen.current.add(img.id);
     ping("view", name, img.id);
   }, [ping, name]);
-  function toggleTray() { setTray((t) => { if (!t) ping("tray", name); return !t; }); }
+  function openSheet(which: "picks" | "inputs") {
+    setSheet((cur) => {
+      const next = cur === which ? null : which;
+      if (next === "picks") ping("tray", name);
+      return next;
+    });
+  }
+  function askName() {
+    setSheet(null); setNudge(true);
+    document.getElementById("who")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  async function sendInput(text: string): Promise<boolean> {
+    if (!name) { askName(); return false; }
+    const res = await fetch(`/api/public/studio/${params.slug}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ k: key, voter: name, input: text, session: session.current }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) { setErr(j.error || "Could not send that. Try again."); return false; }
+    setBoard((b) => (b ? { ...b, inputs: [j.input, ...(b.inputs || [])] } : b));
+    return true;
+  }
 
   useEffect(() => {
     try { const n = localStorage.getItem(NAME_KEY); if (n) { setName(n); setNameDraft(n); } } catch { /* private mode */ }
@@ -191,7 +214,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const showIdeas = !v.built; // once we are building on an idea, the others step aside
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] pb-28 text-text">
+    <main className="min-h-screen bg-[var(--bg)] pb-40 text-text">
       {/* ── Header: their brand today ── */}
       <header className="relative h-[320px] overflow-hidden sm:h-[400px]">
         {v.pulled.length > 0 && (
@@ -253,6 +276,19 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
             : "Here is your final reel, scored and captioned. Download it and post it.")}
         </p>
 
+        {v.stage === "idea" && v.chosen && picks[v.chosen.id]?.sent_at && (
+          <div className="mt-6 flex items-start gap-3 rounded-panel border border-[var(--brand-line)] bg-[var(--brand-faint)] p-4">
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-ink)]"><Check size={15} /></span>
+            <div>
+              <p className="text-[15px] font-semibold">Your pick is with us: {v.chosen.title}</p>
+              <p className="mt-1 text-[14px] leading-relaxed text-text-muted">
+                Next we write your script. It appears on this page for you to approve or change, and we message you when it is ready.
+                You can still change your pick or add inputs until then.
+              </p>
+            </div>
+          </div>
+        )}
+
         <form id="who" onSubmit={saveName}
           className={`mt-6 flex flex-wrap items-center gap-2 rounded-panel border p-4 transition-colors ${nudge ? "border-[var(--brand)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
           {name ? (
@@ -262,9 +298,11 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           ) : (
             <>
               <label htmlFor="voter" className="w-full text-[14px] sm:w-auto">{nudge ? "Add your name first, so we know who picked:" : "Your name, so we know who picked:"}</label>
-              <input id="voter" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} autoComplete="name" placeholder="e.g. Priya"
-                className="h-11 w-full rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 text-[15px] outline-none focus:border-[var(--brand-line)] sm:w-60" />
-              <button className="h-11 rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)]">Start</button>
+              <div className="flex w-full gap-2 sm:w-auto">
+                <input id="voter" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} autoComplete="name" placeholder="e.g. Priya"
+                  className="h-11 min-w-0 flex-1 rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 text-[15px] outline-none focus:border-[var(--brand-line)] sm:w-60 sm:flex-none" />
+                <button className="h-11 shrink-0 rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)]">Start</button>
+              </div>
             </>
           )}
         </form>
@@ -384,13 +422,53 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       <SiteFooter brand={brand.name} />
 
-      {/* ── Bottom bar ── */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--bg)]">
-        {tray && (
-          <div className="mx-auto max-h-[55vh] max-w-[1200px] overflow-auto px-4 pt-4 lg:px-8">
-            {actionable.length === 0 ? (
-              <p className="pb-2 text-[13px] text-text-muted">Nothing yet.</p>
-            ) : (
+      {/* ── Bottom: a send strip while something is unsent, then the tab bar ── */}
+      <div className="fixed inset-x-0 bottom-0 z-40">
+        {name && actionable.length > 0 && !allSent && (
+          <div className="border-t border-[var(--brand-line)] bg-[var(--bg)]">
+            <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 bg-[var(--brand-faint)] px-4 py-2.5 lg:px-8">
+              <p className="min-w-0 truncate text-[13px]">
+                {err ? <span className="text-accent-red">{err}</span>
+                  : v.stage === "idea" ? (v.chosen ? <>Your pick: <span className="font-semibold">{v.chosen.title}</span> · not sent yet</> : "Choose an idea, then send it")
+                  : `${unsent.length} change${unsent.length === 1 ? "" : "s"} not sent yet`}
+              </p>
+              <button onClick={sendPicks} disabled={sent === "sending" || (v.stage === "idea" && !v.chosen)}
+                className="flex h-10 shrink-0 items-center gap-2 rounded-soft bg-[var(--brand)] px-4 text-[13.5px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
+                {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                {everSent ? "Send changes" : v.stage === "idea" ? "Send my pick" : "Send to BCON"}
+              </button>
+            </div>
+          </div>
+        )}
+        <nav aria-label="Page" className="border-t border-[var(--border)] bg-[var(--bg)] pb-[env(safe-area-inset-bottom)]">
+          <div className="mx-auto grid max-w-[560px] grid-cols-4">
+            <TabButton label="Home" active={!sheet && !profile} onClick={() => { setSheet(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+              <Home size={20} />
+            </TabButton>
+            <TabButton label="Inputs" active={sheet === "inputs"} onClick={() => openSheet("inputs")} badge={board.inputs?.length || 0}>
+              <MessageSquarePlus size={20} />
+            </TabButton>
+            <TabButton label="Picks" active={sheet === "picks"} onClick={() => openSheet("picks")} badge={actionable.length} dot={actionable.length > 0 && !allSent}>
+              <ListChecks size={20} />
+            </TabButton>
+            <TabButton label={name ? name.split(" ")[0] : "Profile"} active={profile} onClick={() => { if (name) { setSheet(null); setProfile(true); } else askName(); }}>
+              {name
+                ? <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--brand)] text-[11.5px] font-bold text-[var(--brand-ink)]">{name.slice(0, 1).toUpperCase()}</span>
+                : <User size={20} />}
+            </TabButton>
+          </div>
+        </nav>
+      </div>
+
+      {sheet && (
+        <BottomSheet title={sheet === "picks" ? "Your picks" : "Inputs for BCON"} onClose={() => setSheet(null)}>
+          {sheet === "picks" ? (
+            <>
+              <p className={`mb-3 text-[13px] ${allSent ? "text-accent-green" : "text-text-muted"}`}>
+                {!actionable.length ? "Nothing yet. Choose an idea and it shows up here."
+                  : allSent ? "Everything here is sent to BCON."
+                  : everSent ? "Some changes are not sent yet. Send them below." : "Draft: nothing reaches BCON until you send."}
+              </p>
               <ul className="flex flex-col">
                 {actionable.map((p) => {
                   const it = byId.get(p.item_id);
@@ -402,7 +480,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                       {it.url
                         // eslint-disable-next-line @next/next/no-img-element
                         ? <img src={it.url} alt="" className="h-12 w-9 shrink-0 rounded-soft object-cover" />
-                        : <span className="flex h-12 w-9 shrink-0 items-center justify-center rounded-soft bg-surface text-[10px] capitalize text-text-muted">{it.kind}</span>}
+                        : <span className="flex h-12 w-9 shrink-0 items-center justify-center rounded-soft bg-[var(--bg)] text-[10px] capitalize text-text-muted">{it.kind}</span>}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13.5px]">{it.title || (it.kind === "frame" ? `Frame ${(v.frames.indexOf(it) + 1) || ""}` : it.kind)}</p>
                         {p.comment && <p className="truncate text-[12px] text-text-muted">“{p.comment}”</p>}
@@ -412,37 +490,20 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                   );
                 })}
               </ul>
-            )}
-          </div>
-        )}
-        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-8">
-          <button onClick={toggleTray} aria-expanded={tray} className="flex min-w-0 items-center gap-2 text-left text-[13.5px]">
-            <span className="flex h-8 min-w-8 items-center justify-center rounded-pill bg-[var(--brand)] px-2 text-[13px] font-bold text-[var(--brand-ink)]">{actionable.length}</span>
-            <span className="min-w-0 truncate">
-              {v.stage === "idea"
-                ? (v.chosen ? <>Your pick: <span className="font-semibold">{v.chosen.title}</span></> : "Choose an idea")
-                : `${brand.changes_used} of ${brand.changes_allowed} changes used`}
-              <span className={`ml-1 ${allSent ? "text-accent-green" : "text-text-muted"}`}>
-                {allSent ? "· sent to BCON" : everSent ? "· changes not sent yet" : actionable.length ? "· draft, not sent yet" : ""}
-              </span>
-            </span>
-            <ChevronUp size={16} className={`shrink-0 text-text-muted transition-transform ${tray ? "" : "rotate-180"}`} />
-          </button>
-          <div className="flex items-center gap-3">
-            {err && <span className="text-[12.5px] text-accent-red">{err}</span>}
-            {everSent && (
-              <button onClick={() => setProfile(true)} className="hidden text-[13px] text-text-muted underline-offset-2 hover:text-text hover:underline sm:block">
-                See what you sent
-              </button>
-            )}
-            <button onClick={sendPicks} disabled={!name || !actionable.length || allSent || sent === "sending" || (v.stage === "idea" && !v.chosen)}
-              className="flex h-10 items-center gap-2 rounded-soft bg-[var(--brand)] px-4 text-[13.5px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
-              {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : allSent ? <Check size={15} /> : <Send size={15} />}
-              {allSent ? "Sent to BCON" : everSent ? "Send changes to BCON" : v.stage === "idea" ? "Send my pick to BCON" : "Send to BCON"}
-            </button>
-          </div>
-        </div>
-      </div>
+              {actionable.length > 0 && (
+                <button onClick={sendPicks} disabled={!name || allSent || sent === "sending" || (v.stage === "idea" && !v.chosen)}
+                  className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-soft bg-[var(--brand)] text-[14px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
+                  {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : allSent ? <Check size={15} /> : <Send size={15} />}
+                  {allSent ? "Sent to BCON" : everSent ? "Send changes to BCON" : v.stage === "idea" ? "Send my pick to BCON" : "Send to BCON"}
+                </button>
+              )}
+              {err && <p className="mt-2 text-[12.5px] text-accent-red">{err}</p>}
+            </>
+          ) : (
+            <InputsPanel name={name} inputs={board.inputs || []} onSend={sendInput} onNeedName={askName} />
+          )}
+        </BottomSheet>
+      )}
 
       {profile && (
         <ProfilePanel name={name} picks={Object.values(picks)} byId={byId} frames={v.frames}
@@ -453,6 +514,95 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
         <Viewer images={viewer.images} start={viewer.start} label={viewer.label} onSeen={onSeen} onClose={() => setViewer(null)} />
       )}
     </main>
+  );
+}
+
+function TabButton({ label, active, onClick, badge = 0, dot = false, children }: {
+  label: string; active: boolean; onClick: () => void; badge?: number; dot?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <button onClick={onClick} aria-current={active ? "page" : undefined}
+      className={`relative flex flex-col items-center gap-1 py-2.5 text-[11px] transition-colors ${active ? "text-text" : "text-text-muted hover:text-text"}`}>
+      <span className="relative">
+        {children}
+        {badge > 0 && (
+          <span className={`absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold ${dot ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-[var(--surface-hover)] text-text"}`}>{badge}</span>
+        )}
+      </span>
+      <span className="max-w-[80px] truncate">{label}</span>
+      {active && <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-[var(--brand)]" />}
+    </button>
+  );
+}
+
+/** A sheet that slides up over the page from the tab bar. Escape or the backdrop closes it. */
+function BottomSheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
+  return (
+    <div role="dialog" aria-modal="true" aria-label={title} onClick={onClose} className="fixed inset-0 z-50 flex items-end justify-center bg-black/60">
+      <div onClick={(e) => e.stopPropagation()}
+        className="relative flex max-h-[80vh] w-full max-w-[560px] animate-fade-in flex-col overflow-hidden rounded-t-[20px] border border-b-0 border-[var(--border)] bg-surface pb-[env(safe-area-inset-bottom)]">
+        <span aria-hidden className="absolute left-1/2 top-1.5 h-1 w-10 -translate-x-1/2 rounded-full bg-[var(--surface-hover)]" />
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 pb-3 pt-4">
+          <p className="text-[15px] font-semibold">{title}</p>
+          <button onClick={onClose} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-[var(--surface-hover)]"><X size={17} /></button>
+        </div>
+        <div className="overflow-auto p-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Anything the client wants us to know that is not about one idea: offers, do's and don'ts, references. */
+function InputsPanel({ name, inputs, onSend, onNeedName }: { name: string; inputs: Input[]; onSend: (t: string) => Promise<boolean>; onNeedName: () => void }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name) return onNeedName();
+    setBusy(true); setDone(false);
+    const ok = await onSend(text);
+    setBusy(false);
+    if (ok) { setText(""); setDone(true); }
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <form onSubmit={submit} className="flex flex-col gap-2">
+        <label htmlFor="input-text" className="text-[13.5px] text-text-muted">
+          Tell us anything that helps: an offer to push, what to show or avoid, your best seller, a reel you love (paste the link).
+        </label>
+        <textarea id="input-text" value={text} onChange={(e) => { setText(e.target.value); setDone(false); }} rows={4}
+          placeholder="e.g. Push the Diwali gift box. Our kaju katli is the hero."
+          className="rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[14.5px] outline-none placeholder:text-text-muted focus:border-[var(--brand-line)]" />
+        <div className="flex items-center gap-3">
+          <button disabled={busy || !text.trim()}
+            className="flex h-11 items-center gap-2 rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
+            {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Send to BCON
+          </button>
+          {done && <span className="text-[13px] text-accent-green">Sent. The team has it.</span>}
+          {!name && <span className="text-[12.5px] text-text-muted">Add your name first.</span>}
+        </div>
+      </form>
+      {inputs.length > 0 && (
+        <div>
+          <p className="mb-1 text-[12px] font-medium uppercase tracking-[0.1em] text-text-muted">You sent</p>
+          <ul className="flex flex-col">
+            {inputs.map((i) => (
+              <li key={i.id} className="border-t border-[var(--border)] py-2.5 first:border-t-0">
+                <p className="whitespace-pre-wrap text-[14px]">{i.body}</p>
+                <p className="mt-0.5 text-[11.5px] text-text-muted">{when(i.created_at)}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
