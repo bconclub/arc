@@ -503,7 +503,7 @@ function LoadingScreen({ slug }: { slug: string }) {
       <div className="relative h-[3px] w-56 overflow-hidden rounded-full bg-[var(--surface-hover)]">
         <span className="beam-sweep absolute inset-y-0 left-0 w-1/3 rounded-full bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent shadow-[0_0_12px_var(--brand)]" />
       </div>
-      <p className="text-[13.5px] text-text-muted">Loading your reel ideas…</p>
+      <p className="text-[13.5px] text-text-muted">Loading your reel workspace…</p>
     </main>
   );
 }
