@@ -10,9 +10,39 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.29";
+export const VERSION = "0.0.35";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.35",
+    date: "2026-10-10",
+    notes: "Studio client page: each idea's scenes read as one storyboard, every scene and board frame opens in a full-screen viewer (swipe, arrows, swipe down to close), and a footer with the steps, contact and the ARC version.",
+  },
+  {
+    version: "0.0.34",
+    date: "2026-10-10",
+    notes: "Studio boards can pin a brand's product photos straight from their own site. Team Mithai set up for the client.",
+  },
+  {
+    version: "0.0.33",
+    date: "2026-10-09",
+    notes: "Playbook opens with PROXe's live pipeline (customers, trials, prospects, next steps, commitment). PROXe's knowledge base flows into the Playbook, with a BCON Club section.",
+  },
+  {
+    version: "0.0.32",
+    date: "2026-10-09",
+    notes: "Sales Playbook: a searchable knowledge base with the pipeline first, what PROXe is, links to share and when, rebuttals, pricing, process and FAQ. Owner edits it on Sales team; Ask answers from it; PROXe can push entries.",
+  },
+  {
+    version: "0.0.31",
+    date: "2026-10-09",
+    notes: "Sales team logins at /team: Today, Leads (inbound PROXe leads and outbound in one list), AI calls, Ask. Owner adds people, tasks and hands out leads on Sales team. The AI caller never dials inbound leads.",
+  },
+  {
+    version: "0.0.30",
+    date: "2026-10-09",
+    notes: "Editr: output breakdown by agent (finals, drafts, sources and minutes), brand by agent, every file by task; Comfy Cloud clips and spend, read live.",
+  },
   {
     version: "0.0.29",
     date: "2026-10-03",

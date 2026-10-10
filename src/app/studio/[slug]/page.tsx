@@ -5,6 +5,7 @@ import { Check, ChevronUp, Download, Loader2, MessageSquare, Send, X } from "luc
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 import { Viewer, type ViewerImage } from "@/components/studio/Viewer";
 import { Storyboard } from "@/components/studio/Storyboard";
+import { VERSION } from "@/lib/version";
 
 /**
  * A client's Brand Reels order page (bconclub.com/brand-reels), opened from a share
@@ -482,9 +483,10 @@ function SiteFooter({ brand }: { brand: string }) {
           </ul>
         </div>
       </div>
-      <p className="mt-10 pb-6 text-[12px] text-text-muted">
-        This page is private to {brand}. Please don&apos;t share the link outside your team. © {new Date().getFullYear()} BCON Club.
-      </p>
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] py-5 text-[12px] text-text-muted">
+        <p>This page is private to {brand}. Please don&apos;t share the link outside your team. © {new Date().getFullYear()} BCON Club.</p>
+        <p className="font-mono text-[11px]" title={`ARC v${VERSION}`}>ARC v{VERSION}</p>
+      </div>
     </footer>
   );
 }

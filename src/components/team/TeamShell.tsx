@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, CalendarCheck, LogOut, MessageCircle, PhoneCall, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VERSION } from "@/lib/version";
 
 /**
  * The whole chrome for a team login (sales): one bar with their five places,
@@ -55,6 +56,10 @@ export function TeamShell({ name, owner, children }: { name: string; owner: bool
         </div>
       </header>
       <main className="mx-auto min-w-0 max-w-[1200px] px-4 py-5 lg:px-6">{children}</main>
+      <footer className="mx-auto flex max-w-[1200px] items-center justify-between gap-2 border-t border-[var(--border)] px-4 py-4 text-[11px] text-text-muted lg:px-6">
+        <span>BCON Club · Sales</span>
+        <span className="font-mono" title={`ARC v${VERSION}`}>ARC v{VERSION}</span>
+      </footer>
       <nav aria-label="Sales sections" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--border)] bg-[var(--bg)] md:hidden">
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} aria-current={on(n) ? "page" : undefined}
