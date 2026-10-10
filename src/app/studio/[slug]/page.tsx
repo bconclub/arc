@@ -29,7 +29,9 @@ type Brand = { name: string; mood: string | null; palette: string[]; intro: stri
 type Input = { id: string; body: string; created_at: string };
 type Board = { brand: Brand; items: Item[]; mine: Pick[]; inputs?: Input[] };
 
-const NAME_KEY = "studio:voter";
+// The reviewer name is remembered per brand link, so one phone opening two brands never shows
+// a name from the other brand. (The old shared "studio:voter" key is cleared on load.)
+const nameKey = (slug: string) => `studio:voter:${slug}`;
 const STEPS = [
   { key: "idea", n: "01", label: "Idea", detail: "Say yes to the ideas that excite you." },
   { key: "script", n: "02", label: "Script", detail: "We write it from your yes. You approve it." },
@@ -89,7 +91,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   }
   /** "Not you?": forget this person on this device and start the page fresh for the next one. */
   function switchPerson() {
-    try { localStorage.removeItem(NAME_KEY); } catch { /* private mode */ }
+    try { localStorage.removeItem(nameKey(params.slug)); } catch { /* private mode */ }
     setName(""); setNameDraft(""); setPicks({}); setSheet(null); setProfile(false);
     setSent("idle"); setErr(null); setNudge(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -111,8 +113,12 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   }
 
   useEffect(() => {
-    try { const n = localStorage.getItem(NAME_KEY); if (n) { setName(n); setNameDraft(n); } } catch { /* private mode */ }
-  }, []);
+    try {
+      localStorage.removeItem("studio:voter");
+      const n = localStorage.getItem(nameKey(params.slug));
+      if (n) { setName(n); setNameDraft(n); }
+    } catch { /* private mode */ }
+  }, [params.slug]);
 
   const load = useCallback(async (who: string) => {
     const r = await fetch(`/api/public/studio/${params.slug}?k=${encodeURIComponent(key)}&voter=${encodeURIComponent(who)}`, { cache: "no-store" });
@@ -144,7 +150,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     e.preventDefault();
     const n = nameDraft.replace(/\s+/g, " ").trim();
     if (!n) return;
-    try { localStorage.setItem(NAME_KEY, n); } catch { /* private mode */ }
+    try { localStorage.setItem(nameKey(params.slug), n); } catch { /* private mode */ }
     setName(n); setNudge(false);
     ping("name", n);
   }
