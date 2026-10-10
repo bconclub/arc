@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronUp, Download, Loader2, MessageSquare, Send, X } from "lucide-react";
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
+import { Viewer, type ViewerImage } from "@/components/studio/Viewer";
+import { Storyboard } from "@/components/studio/Storyboard";
 
 /**
  * A client's Brand Reels order page (bconclub.com/brand-reels), opened from a share
@@ -24,11 +26,6 @@ type Brand = { name: string; mood: string | null; palette: string[]; intro: stri
 type Board = { brand: Brand; items: Item[]; mine: Pick[] };
 
 const NAME_KEY = "studio:voter";
-// Stills per idea sit in one row on desktop and wrap evenly on a phone: never a lone orphan tile.
-const STILL_GRID: Record<number, string> = {
-  1: "grid-cols-1 max-w-[180px]", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-2 sm:grid-cols-4",
-  5: "grid-cols-5", 6: "grid-cols-3 sm:grid-cols-6",
-};
 const STEPS = [
   { key: "idea", n: "01", label: "Idea" },
   { key: "script", n: "02", label: "Script" },
@@ -48,7 +45,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const [nudge, setNudge] = useState(false);
   const [tray, setTray] = useState(false);
   const [sent, setSent] = useState<"idle" | "sending" | "sent">("idle");
-  const [zoom, setZoom] = useState<Item | null>(null);
+  // The full-screen viewer: one set of images (an idea's scenes, the visual board) and where to start.
+  const [viewer, setViewer] = useState<{ images: ViewerImage[]; start: number; label: string } | null>(null);
   const [profile, setProfile] = useState(false);
   const tone = useLogoTone(board?.brand.logo_url);
   const session = useRef("");
@@ -69,7 +67,15 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     }).catch(() => {});
   }, [params.slug, key]);
 
-  function view(i: Item) { setZoom(i); ping("view", name, i.id); }
+  function openSet(items: Item[], start: number, label: string, caption?: (i: Item) => string | null) {
+    setViewer({ images: items.map((i) => ({ id: i.id, url: i.url, title: i.title, caption: caption ? caption(i) : null })), start, label });
+  }
+  const seen = useRef(new Set<string>());
+  const onSeen = useCallback((img: ViewerImage) => {
+    if (seen.current.has(img.id)) return;
+    seen.current.add(img.id);
+    ping("view", name, img.id);
+  }, [ping, name]);
   function toggleTray() { setTray((t) => { if (!t) ping("tray", name); return !t; }); }
 
   useEffect(() => {
@@ -291,7 +297,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {v.frames.map((f, n) => (
               <article key={f.id} className="flex flex-col overflow-hidden rounded-soft border border-[var(--border)] bg-surface">
-                <button onClick={() => view(f)} className="relative block" aria-label={`Frame ${n + 1} larger`}>
+                <button onClick={() => openSet(v.frames, n, "Visual board", (i) => i.body)} className="relative block" aria-label={`Frame ${n + 1} larger`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={f.url || ""} alt={f.title || `Frame ${n + 1}`} loading="lazy" className="aspect-[9/16] w-full object-cover" />
                   <span className="absolute left-2 top-2 rounded-pill bg-black/70 px-2 py-0.5 font-mono text-[11px] text-white">{String(n + 1).padStart(2, "0")}</span>
@@ -348,6 +354,11 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
               return (
                 <article key={idea.id} className={`rounded-panel border-2 p-5 transition-colors lg:p-6 ${on ? "border-[var(--brand)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
                   <div className="flex flex-col gap-5 lg:flex-row">
+                    {stills.length > 0 && (
+                      <div className="order-first shrink-0 lg:order-last lg:w-[560px]">
+                        <Storyboard scenes={stills} onOpen={(i) => openSet(stills.slice(0, 6), i, idea.title || `Idea ${n + 1}`)} />
+                      </div>
+                    )}
                     <div className="flex min-w-0 flex-1 flex-col gap-3">
                       <p className="text-[12px] font-medium text-text-muted">Idea {n + 1}</p>
                       <h4 className="text-[24px] font-semibold leading-snug tracking-tight">{idea.title}</h4>
@@ -362,17 +373,6 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                           onSave={(comment) => pick(idea, { comment })} />
                       </div>
                     </div>
-                    {stills.length > 0 && (
-                      // One clean row: 4 stills sit 2x2 on a phone and in a single row on desktop, no orphans.
-                      <div className={`grid shrink-0 gap-2 lg:w-[560px] ${STILL_GRID[Math.min(stills.length, 6)]}`}>
-                        {stills.slice(0, 6).map((s) => (
-                          <button key={s.id} onClick={() => view(s)} className="overflow-hidden rounded-soft" aria-label={`View ${s.title || "still"} larger`}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={s.url || ""} alt={s.title || ""} loading="lazy" className="aspect-[9/16] w-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </article>
               );
@@ -380,6 +380,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           </div>
         </section>
       )}
+
+      <SiteFooter brand={brand.name} />
 
       {/* ── Bottom bar ── */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--bg)]">
@@ -446,16 +448,44 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           onClose={() => setProfile(false)} onSwitch={() => { setProfile(false); setName(""); }} />
       )}
 
-      {zoom && (
-        <div role="dialog" aria-modal="true" onClick={() => setZoom(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
-          <div onClick={(e) => e.stopPropagation()} className="relative max-h-full max-w-4xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={zoom.url || ""} alt={zoom.title || ""} className="max-h-[85vh] rounded-soft object-contain" />
-            <button onClick={() => setZoom(null)} aria-label="Close" className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white"><X size={18} /></button>
-          </div>
-        </div>
+      {viewer && (
+        <Viewer images={viewer.images} start={viewer.start} label={viewer.label} onSeen={onSeen} onClose={() => setViewer(null)} />
       )}
     </main>
+  );
+}
+
+/** What sits under the order: how it works, who made it, and how to reach us. */
+function SiteFooter({ brand }: { brand: string }) {
+  return (
+    <footer className="mx-auto mt-20 max-w-[1200px] px-4 lg:px-8">
+      <div className="grid gap-8 border-t border-[var(--border)] pt-10 md:grid-cols-[1.3fr_1fr_1fr]">
+        <div>
+          <p className="text-[22px] font-bold tracking-[-0.02em]">BCON Club</p>
+          <p className="mt-2 max-w-[38ch] text-[14px] leading-relaxed text-text-muted">
+            Brand reels made with AI and finished by people. Made for {brand}, from your own products and voice.
+          </p>
+        </div>
+        <div>
+          <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.12em] text-text-muted">How it works</p>
+          <ol className="flex flex-col gap-2 text-[14px]">
+            {STEPS.map((s) => (
+              <li key={s.key} className="flex gap-2"><span className="font-mono text-text-muted">{s.n}</span>{s.label}</li>
+            ))}
+          </ol>
+        </div>
+        <div>
+          <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.12em] text-text-muted">Talk to us</p>
+          <ul className="flex flex-col gap-2 text-[14px]">
+            <li><a href="mailto:brands@bconclub.com" className="underline-offset-2 hover:underline">brands@bconclub.com</a></li>
+            <li><a href="https://bconclub.com" target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline">bconclub.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <p className="mt-10 pb-6 text-[12px] text-text-muted">
+        This page is private to {brand}. Please don&apos;t share the link outside your team. © {new Date().getFullYear()} BCON Club.
+      </p>
+    </footer>
   );
 }
 
