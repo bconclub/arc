@@ -23,12 +23,20 @@ export function slugify(s: string) {
 
 export const safeFile = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 120)
 
-/** Signed GET URLs for a batch of storage paths in one call. Missing paths map to nothing. */
+/**
+ * Signed GET URLs for a batch of storage paths in one call. Missing paths map to nothing.
+ * An image_path that is already a public https URL (e.g. a brand's own product photo on
+ * their site, pulled at intake) maps to itself.
+ */
 export async function signPaths(paths: (string | null | undefined)[], bucket = STUDIO_BUCKET, ttl = 3600) {
   const unique = Array.from(new Set(paths.filter(Boolean) as string[]))
-  if (!unique.length) return new Map<string, string>()
-  const { data } = await supabaseAdmin.storage.from(bucket).createSignedUrls(unique, ttl)
-  return new Map((data || []).filter((d) => d.signedUrl).map((d) => [d.path as string, d.signedUrl]))
+  const external = unique.filter((p) => /^https:\/\//i.test(p))
+  const stored = unique.filter((p) => !/^https:\/\//i.test(p))
+  const out = new Map<string, string>(external.map((p) => [p, p]))
+  if (!stored.length) return out
+  const { data } = await supabaseAdmin.storage.from(bucket).createSignedUrls(stored, ttl)
+  for (const d of data || []) if (d.signedUrl) out.set(d.path as string, d.signedUrl)
+  return out
 }
 
 export async function brandBySlug(slug: string) {

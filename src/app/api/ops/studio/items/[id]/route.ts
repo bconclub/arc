@@ -19,7 +19,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const { data: item } = await db.from("studio_items").select("image_path").eq("id", params.id).maybeSingle()
   if (!item) return Response.json({ error: "not found" }, { status: 404 })
-  if (item.image_path) await supabaseAdmin.storage.from(STUDIO_BUCKET).remove([item.image_path])
+  // A public https image (pulled from the brand's own site) isn't ours to delete.
+  if (item.image_path && !/^https:\/\//i.test(item.image_path)) await supabaseAdmin.storage.from(STUDIO_BUCKET).remove([item.image_path])
   await db.from("studio_items").delete().eq("id", params.id)
   return Response.json({ ok: true })
 }
