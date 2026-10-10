@@ -152,7 +152,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   async function post(item: Item, next: Pick, patch: Partial<Pick>): Promise<{ changes_used?: number }> {
     const r = await fetch(`/api/public/studio/${params.slug}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ k: key, item_id: item.id, voter: name, choice: next.choice, session: session.current, ...(patch.comment !== undefined ? { comment: patch.comment } : {}) }),
+      // Send only what changed: a note save must not resend (and overwrite) the yes/no, and the other way round.
+      body: JSON.stringify({ k: key, item_id: item.id, voter: name, session: session.current, ...(patch.choice !== undefined ? { choice: next.choice } : {}), ...(patch.comment !== undefined ? { comment: patch.comment } : {}) }),
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || "That did not save. Check your connection and try again.");

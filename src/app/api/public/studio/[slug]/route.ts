@@ -181,7 +181,9 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
   const choice = body.choice === "like" || body.choice === "pass" ? body.choice : null
   const comment = typeof body.comment === "string" ? body.comment.trim().slice(0, 1000) || null : undefined
   // Changing a pick makes it a draft again until the client sends.
-  const row: Record<string, unknown> = { brand_id: brand.id, item_id: item.id, voter, choice, sent_at: null }
+  // Only the fields sent change: a note save leaves the yes/no alone (two quick taps used to overwrite each other).
+  const row: Record<string, unknown> = { brand_id: brand.id, item_id: item.id, voter, sent_at: null }
+  if ("choice" in body) row.choice = choice
   if (comment !== undefined) row.comment = comment
   const { error } = await db.from("studio_votes").upsert(row, { onConflict: "item_id,voter" })
   if (error) return Response.json({ error: "Could not save that. Try again." }, { status: 500 })
@@ -196,7 +198,7 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
     changesUsed = changeCount((all || []) as { id: string; kind: string }[], (cs || []) as { item_id: string; comment: string | null }[])
   }
   // A note save also re-sends the current choice; only a choice change is a choice event.
-  if (comment === undefined) await track(brand.id, choice === "like" ? "choose" : choice === "pass" ? "pass" : "unchoose", voter, item.id, body.session)
+  if ("choice" in body && comment === undefined) await track(brand.id, choice === "like" ? "choose" : choice === "pass" ? "pass" : "unchoose", voter, item.id, body.session)
   return Response.json({ ok: true, ...(changesUsed !== undefined ? { changes_used: changesUsed } : {}) })
 }
 
