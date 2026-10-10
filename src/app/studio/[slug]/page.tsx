@@ -261,7 +261,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
         </h2>
         <p className="mt-3 max-w-[62ch] text-[16px] leading-relaxed text-text-muted">
           {brand.intro || (v.stage === "idea"
-            ? "We made these ideas from your products. Swipe through them: yes to the ones that excite you, nope to the rest, and add a note if you like. Nothing reaches us until you press Send; then we write the script from your yes."
+            ? "Swipe right on the ideas you love, left on the rest. Hit Send when you are done."
             : v.stage === "script" ? "Read it through. Approve it, or tell us what to change. The delivery clock starts once your script is final."
             : v.stage === "board" ? `Every frame of your reel, planned before we generate it. Ask for changes on any frame. Your order includes ${brand.changes_allowed} changes.`
             : "Here is your final reel, scored and captioned. Download it and post it.")}
@@ -378,7 +378,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
       ) : showIdeas && (
         <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
           <h3 className="mb-1 text-[22px] font-semibold tracking-tight">The ideas</h3>
-          <p className="mb-5 text-[14px] text-text-muted">One card per idea. Swipe right if it excites you, left if it is not for you.</p>
+          <p className="mb-5 text-[14px] text-text-muted">Made from your products.</p>
           {v.ideas.length === 0 && <p className="text-[14px] text-text-muted">Your ideas are being made. We will send you this link again when they are ready.</p>}
           <IdeaDeck
             key={name || "anon"}
