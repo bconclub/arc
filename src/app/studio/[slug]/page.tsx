@@ -210,11 +210,13 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const everSent = actionable.some((p) => p.sent_at);
   const allSent = actionable.length > 0 && unsent.length === 0;
   const byId = new Map(board.items.map((i) => [i.id, i]));
+  // Room at the bottom for the tab bar, plus the send strip only while it shows.
+  const showStrip = !!name && actionable.length > 0 && !allSent;
   const showIdeas = !v.built; // once we are building on an idea, the others step aside
   const yesIdeas = v.ideas.filter((i) => picks[i.id]?.choice === "like");
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] pb-40 text-text">
+    <main className={`min-h-screen bg-[var(--bg)] text-text ${showStrip ? "pb-36" : "pb-[72px]"}`}>
       {/* ── Header: their brand today ── */}
       <header className="relative h-[320px] overflow-hidden sm:h-[400px]">
         {v.pulled.length > 0 && (
@@ -398,7 +400,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       {/* ── Bottom: a send strip while something is unsent, then the tab bar ── */}
       <div className="fixed inset-x-0 bottom-0 z-40">
-        {name && actionable.length > 0 && !allSent && (
+        {showStrip && (
           <div className="border-t border-[var(--brand-line)] bg-[var(--bg)]">
             <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 bg-[var(--brand-faint)] px-4 py-2.5 lg:px-8">
               <p className="min-w-0 truncate text-[13px]">
@@ -599,12 +601,12 @@ function InputsPanel({ name, inputs, onSend, onNeedName }: { name: string; input
 /** The page ends where the order is: the four steps with the light beam on, then one quiet line. */
 function SiteFooter({ brand, current }: { brand: string; current: number }) {
   return (
-    <footer className="mx-auto mt-20 max-w-[1200px] px-4 lg:px-8">
+    <footer className="mx-auto mt-12 max-w-[1200px] px-4 lg:px-8">
       <div className="rounded-panel border border-[var(--border)] bg-surface px-4 py-6 sm:px-8">
         <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.14em] text-text-muted">Your reel, step by step</p>
         <StepTimeline steps={STEPS} current={current} />
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 py-5 text-[11.5px] text-text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-2 pt-4 text-[11.5px] text-text-muted">
         <p>Private to {brand} · <a href="mailto:brands@bconclub.com" className="underline-offset-2 hover:underline">brands@bconclub.com</a></p>
         <p className="font-mono text-[11px]" title={`ARC v${VERSION}`}>ARC v{VERSION}</p>
       </div>
