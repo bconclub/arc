@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Download, Home, ListChecks, Loader2, MessageSquare, MessageSquarePlus, Send, User, X } from "lucide-react";
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 import { Viewer, type ViewerImage } from "@/components/studio/Viewer";
-import { Storyboard } from "@/components/studio/Storyboard";
+import { IdeaDeck } from "@/components/studio/IdeaDeck";
 import { VERSION } from "@/lib/version";
 
 /**
@@ -42,7 +42,6 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const [name, setName] = useState("");
   const [nameDraft, setNameDraft] = useState("");
   const [picks, setPicks] = useState<Record<string, Pick>>({});
-  const [saving, setSaving] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [nudge, setNudge] = useState(false);
   // The bottom tab bar opens one sheet at a time: your picks, or inputs for BCON.
@@ -154,28 +153,15 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     const prev = picks[item.id] || { item_id: item.id, choice: null, comment: null };
     const next = { ...prev, ...patch, sent_at: null }; // any change is a draft until sent
     setPicks((p) => ({ ...p, [item.id]: next }));
-    setSaving(item.id); setErr(null); setSent("idle");
+    setErr(null); setSent("idle");
     try {
       await post(item, next, patch);
       if (patch.comment !== undefined) load(name); // refresh the changes counter
     } catch (e) {
       setPicks((p) => ({ ...p, [item.id]: prev })); setErr((e as Error).message);
-    } finally { setSaving(null); }
-  }
-
-  /** One idea only: choosing it clears the choice on the others. */
-  async function chooseIdea(idea: Item) {
-    const on = picks[idea.id]?.choice === "like";
-    await pick(idea, { choice: on ? null : "like" });
-    if (on) return;
-    for (const other of v.ideas) {
-      if (other.id !== idea.id && picks[other.id]?.choice === "like") {
-        const o = { ...picks[other.id], choice: null, sent_at: null };
-        setPicks((p) => ({ ...p, [other.id]: o }));
-        post(other, o, {}).catch(() => {});
-      }
     }
   }
+
 
   async function sendPicks() {
     setSent("sending"); setErr(null);
@@ -212,6 +198,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const allSent = actionable.length > 0 && unsent.length === 0;
   const byId = new Map(board.items.map((i) => [i.id, i]));
   const showIdeas = !v.built; // once we are building on an idea, the others step aside
+  const yesIdeas = v.ideas.filter((i) => picks[i.id]?.choice === "like");
 
   return (
     <main className="min-h-screen bg-[var(--bg)] pb-40 text-text">
@@ -276,14 +263,17 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
             : "Here is your final reel, scored and captioned. Download it and post it.")}
         </p>
 
-        {v.stage === "idea" && v.chosen && picks[v.chosen.id]?.sent_at && (
+        {v.stage === "idea" && allSent && (
           <div className="mt-6 flex items-start gap-3 rounded-panel border border-[var(--brand-line)] bg-[var(--brand-faint)] p-4">
             <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-ink)]"><Check size={15} /></span>
             <div>
-              <p className="text-[15px] font-semibold">Your pick is with us: {v.chosen.title}</p>
+              <p className="text-[15px] font-semibold">
+                {yesIdeas.length ? `Your answers are with us: yes to ${yesIdeas.map((i) => i.title).join(", ")}` : "Your answers are with us"}
+              </p>
               <p className="mt-1 text-[14px] leading-relaxed text-text-muted">
-                Next we write your script. It appears on this page for you to approve or change, and we message you when it is ready.
-                You can still change your pick or add inputs until then.
+                {yesIdeas.length
+                  ? "Next we write the script. It appears on this page for you to approve or change, and we message you when it is ready. You can still change your answers or add inputs until then."
+                  : "None of these felt right, and that helps. Tell us what you want under Inputs and we will come back with new ideas."}
               </p>
             </div>
           </div>
@@ -384,39 +374,18 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
       ) : showIdeas && (
         <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
           <h3 className="mb-1 text-[22px] font-semibold tracking-tight">The ideas</h3>
-          <p className="mb-5 text-[14px] text-text-muted">Choose one. That is the reel we make.</p>
+          <p className="mb-5 text-[14px] text-text-muted">One card per idea. Swipe right if it excites you, left if it is not for you.</p>
           {v.ideas.length === 0 && <p className="text-[14px] text-text-muted">Your ideas are being made. We will send you this link again when they are ready.</p>}
-          <div className="flex flex-col gap-5">
-            {v.ideas.map((idea, n) => {
-              const on = picks[idea.id]?.choice === "like";
-              const stills = v.childrenOf(idea.id, "image");
-              return (
-                <article key={idea.id} className={`rounded-panel border-2 p-5 transition-colors lg:p-6 ${on ? "border-[var(--brand)] bg-[var(--brand-faint)]" : "border-[var(--border)] bg-surface"}`}>
-                  <div className="flex flex-col gap-5 lg:flex-row">
-                    {stills.length > 0 && (
-                      <div className="order-first shrink-0 lg:order-last lg:w-[560px]">
-                        <Storyboard scenes={stills} onOpen={(i) => openSet(stills.slice(0, 6), i, idea.title || `Idea ${n + 1}`)} />
-                      </div>
-                    )}
-                    <div className="flex min-w-0 flex-1 flex-col gap-3">
-                      <p className="text-[12px] font-medium text-text-muted">Idea {n + 1}</p>
-                      <h4 className="text-[24px] font-semibold leading-snug tracking-tight">{idea.title}</h4>
-                      {idea.body && <p className="max-w-[60ch] text-[15.5px] leading-relaxed text-text-muted">{idea.body}</p>}
-                      <div className="mt-auto flex flex-col gap-3 pt-2">
-                        <button onClick={() => chooseIdea(idea)} aria-pressed={on}
-                          className={`flex h-12 items-center gap-2 self-start rounded-soft px-5 text-[15px] font-semibold transition-colors ${on ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "border border-[var(--border)] hover:bg-[var(--surface-hover)]"}`}>
-                          {saving === idea.id ? <Loader2 size={16} className="animate-spin" /> : on ? <Check size={17} /> : null}
-                          {on ? "This is my pick" : "Choose this idea"}
-                        </button>
-                        <NoteBox label="Add a note" placeholder="Anything to add? e.g. love it, but use our bridal set" value={picks[idea.id]?.comment || ""}
-                          onSave={(comment) => pick(idea, { comment })} />
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          <IdeaDeck
+            ideas={v.ideas.map((i) => ({ id: i.id, title: i.title, body: i.body, image: v.childrenOf(i.id, "image")[0]?.url ?? null }))}
+            decisions={Object.fromEntries(v.ideas.map((i) => [i.id, picks[i.id]?.choice ?? null]))}
+            palette={brand.palette}
+            ready={!!name}
+            onNeedName={askName}
+            onDecide={(id, choice) => { const it = byId.get(id); if (it) pick(it, { choice }); }}
+            onOpenImage={(n) => { const idea = v.ideas[n]; const imgs = idea ? v.childrenOf(idea.id, "image") : []; if (imgs.length) openSet(imgs, 0, idea.title || `Idea ${n + 1}`); }}
+            renderNote={(id) => { const it = byId.get(id); return it ? <NoteBox label="Add a note" placeholder="Anything to add? e.g. love it, but use our gift box" value={picks[id]?.comment || ""} onSave={(comment) => pick(it, { comment })} /> : null; }}
+          />
         </section>
       )}
 
@@ -429,13 +398,13 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
             <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 bg-[var(--brand-faint)] px-4 py-2.5 lg:px-8">
               <p className="min-w-0 truncate text-[13px]">
                 {err ? <span className="text-accent-red">{err}</span>
-                  : v.stage === "idea" ? (v.chosen ? <>Your pick: <span className="font-semibold">{v.chosen.title}</span> · not sent yet</> : "Choose an idea, then send it")
+                  : v.stage === "idea" ? <>{yesIdeas.length} yes · {v.ideas.filter((i) => picks[i.id]?.choice === "pass").length} no · <span className="text-text-muted">not sent yet</span></>
                   : `${unsent.length} change${unsent.length === 1 ? "" : "s"} not sent yet`}
               </p>
-              <button onClick={sendPicks} disabled={sent === "sending" || (v.stage === "idea" && !v.chosen)}
+              <button onClick={sendPicks} disabled={sent === "sending"}
                 className="flex h-10 shrink-0 items-center gap-2 rounded-soft bg-[var(--brand)] px-4 text-[13.5px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
                 {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                {everSent ? "Send changes" : v.stage === "idea" ? "Send my pick" : "Send to BCON"}
+                {everSent ? "Send changes" : v.stage === "idea" ? "Send my answers" : "Send to BCON"}
               </button>
             </div>
           </div>
@@ -473,7 +442,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                 {actionable.map((p) => {
                   const it = byId.get(p.item_id);
                   if (!it) return null;
-                  const label = it.kind === "idea" ? (p.choice === "like" ? "Chosen idea" : p.choice === "pass" ? "Not for us" : "Note")
+                  const label = it.kind === "idea" ? (p.choice === "like" ? "Yes, excited" : p.choice === "pass" ? "Not for us" : "Note")
                     : it.kind === "script" ? (p.comment ? "Change asked" : "Approved") : it.kind === "frame" ? "Change asked" : p.choice === "like" ? "Liked" : "Note";
                   return (
                     <li key={p.item_id} className="flex items-center gap-3 border-t border-[var(--border)] py-2.5 first:border-t-0">
@@ -491,10 +460,10 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                 })}
               </ul>
               {actionable.length > 0 && (
-                <button onClick={sendPicks} disabled={!name || allSent || sent === "sending" || (v.stage === "idea" && !v.chosen)}
+                <button onClick={sendPicks} disabled={!name || allSent || sent === "sending"}
                   className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-soft bg-[var(--brand)] text-[14px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">
                   {sent === "sending" ? <Loader2 size={15} className="animate-spin" /> : allSent ? <Check size={15} /> : <Send size={15} />}
-                  {allSent ? "Sent to BCON" : everSent ? "Send changes to BCON" : v.stage === "idea" ? "Send my pick to BCON" : "Send to BCON"}
+                  {allSent ? "Sent to BCON" : everSent ? "Send changes to BCON" : v.stage === "idea" ? "Send my answers to BCON" : "Send to BCON"}
                 </button>
               )}
               {err && <p className="mt-2 text-[12.5px] text-accent-red">{err}</p>}

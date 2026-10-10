@@ -126,22 +126,27 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       brand_id: brand.id, kind: "note", title: `${voter} sent their picks`, body: lines.join("\n"),
       created_by: `client: ${voter}`, tags: ["client-picks"],
     })
-    // A chosen idea starts the order: queue "write the script" for the editors (once per idea),
-    // carrying the client's note, so the pick lands in the Studio inbox without anyone copying it.
+    // The client's yes/no on the ideas starts the order: one "write the script" task per reviewer
+    // in the editors' inbox, listing every yes with notes (and the noes). Re-sending updates it.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const chosen = ((votes || []) as any[]).filter((v) => v.choice === "like" && byId.get(v.item_id)?.kind === "idea")
-    for (const c of chosen) {
-      const idea = byId.get(c.item_id)
+    const ideaVotes = ((votes || []) as any[]).filter((v) => byId.get(v.item_id)?.kind === "idea" && v.choice)
+    const yesVotes = ideaVotes.filter((v) => v.choice === "like")
+    if (yesVotes.length) {
+      const t = (v: { item_id: string }) => byId.get(v.item_id)?.title || "untitled"
+      const task = {
+        title: yesVotes.length === 1 ? `Write the script for "${t(yesVotes[0])}": ${voter} said yes` : `${voter} said yes to ${yesVotes.length} ideas: pick one and write the script`,
+        body: [
+          `${voter} answered on the client page.`,
+          ...yesVotes.map((v) => `YES: ${t(v)}${v.comment ? ` (note: ${v.comment})` : ""}`),
+          ...ideaVotes.filter((v) => v.choice === "pass").map((v) => `no: ${t(v)}${v.comment ? ` (note: ${v.comment})` : ""}`),
+          "Next: post the script under the idea (kind script). The client sees it and approves or asks for a change.",
+        ].join("\n"),
+        parent_id: yesVotes.length === 1 ? yesVotes[0].item_id : null,
+      }
       const { data: open } = await db.from("studio_items").select("id").eq("brand_id", brand.id).eq("kind", "request")
-        .eq("parent_id", c.item_id).in("status", ["open", "doing"]).limit(1)
-      if (open?.length) continue
-      await db.from("studio_items").insert({
-        brand_id: brand.id, kind: "request", parent_id: c.item_id, status: "open",
-        title: `Write the script for "${idea?.title || "the chosen idea"}": ${voter} picked it`,
-        body: [`${voter} chose this idea on the client page.`, c.comment ? `Their note: ${c.comment}` : "",
-          "Next: post the script under the idea (kind script). The client sees it and approves or asks for a change."].filter(Boolean).join("\n"),
-        created_by: `client: ${voter}`, tags: ["client-pick"],
-      })
+        .eq("created_by", `client: ${voter}`).contains("tags", ["client-pick"]).in("status", ["open", "doing"]).limit(1)
+      if (open?.length) await db.from("studio_items").update(task).eq("id", open[0].id)
+      else await db.from("studio_items").insert({ ...task, brand_id: brand.id, kind: "request", status: "open", created_by: `client: ${voter}`, tags: ["client-pick"] })
     }
     await db.from("studio_brands").update({ updated_at: new Date().toISOString() }).eq("id", brand.id)
     await track(brand.id, "send", voter, null, body.session, { count: lines.length })

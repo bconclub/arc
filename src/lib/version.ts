@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.36";
+export const VERSION = "0.0.37";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.37",
+    date: "2026-10-10",
+    notes: "Studio client page: the ideas are a swipe deck, one card per idea with its storyboard image. Swipe right or tap Yes, I am excited; left or X for not for us. A summary lets them flip any answer, then send. All the yeses reach the editors as one script task.",
+  },
   {
     version: "0.0.36",
     date: "2026-10-10",
