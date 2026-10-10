@@ -174,8 +174,12 @@ export function IdeaDeck({ ideas, decisions, palette, ready, onNeedName, onDecid
           className="relative touch-pan-y select-none overflow-hidden rounded-panel border border-[var(--border)] bg-surface shadow-card">
           <div className="relative">
             {cur.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={cur.image} alt={cur.title || ""} draggable={false} className="h-[44svh] max-h-[560px] w-full bg-black object-cover sm:h-[520px]" />
+              <div className="relative h-[44svh] max-h-[560px] w-full overflow-hidden bg-black sm:h-[520px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cur.image} alt="" aria-hidden draggable={false} className="absolute inset-0 h-full w-full scale-110 object-cover opacity-40 blur-xl" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cur.image} alt={cur.title || ""} draggable={false} className="relative h-full w-full object-contain" />
+              </div>
             ) : (
               <div className="flex h-[44svh] max-h-[560px] w-full items-end p-5 sm:h-[520px]" style={{ background: `linear-gradient(160deg, ${palette[0] || "#222"}, ${palette[1] || "#444"})` }}>
                 <p className="text-[13px] text-white/80">Storyboard coming soon</p>

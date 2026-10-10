@@ -23,7 +23,7 @@ import { VERSION } from "@/lib/version";
  */
 
 type Kind = "idea" | "image" | "script" | "frame" | "video";
-type Item = { id: string; kind: Kind; title: string | null; body: string | null; url: string | null; featured: boolean; parent_id: string | null; position: number | null };
+type Item = { id: string; kind: Kind; title: string | null; body: string | null; url: string | null; download_url?: string | null; featured: boolean; parent_id: string | null; position: number | null };
 type Pick = { item_id: string; choice: "like" | "pass" | null; comment: string | null; sent_at?: string | null };
 type Brand = { name: string; mood: string | null; palette: string[]; intro: string | null; logo_url: string | null; reel_length: string | null; changes_allowed: number; changes_used: number };
 type Input = { id: string; body: string; created_at: string };
@@ -149,12 +149,14 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     ping("name", n);
   }
 
-  async function post(item: Item, next: Pick, patch: Partial<Pick>) {
+  async function post(item: Item, next: Pick, patch: Partial<Pick>): Promise<{ changes_used?: number }> {
     const r = await fetch(`/api/public/studio/${params.slug}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ k: key, item_id: item.id, voter: name, choice: next.choice, session: session.current, ...(patch.comment !== undefined ? { comment: patch.comment } : {}) }),
     });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "That did not save. Check your connection and try again.");
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "That did not save. Check your connection and try again.");
+    return j;
   }
 
   async function pick(item: Item, patch: Partial<Pick>) {
@@ -164,8 +166,9 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     setPicks((p) => ({ ...p, [item.id]: next }));
     setErr(null); setSent("idle");
     try {
-      await post(item, next, patch);
-      if (patch.comment !== undefined) load(name); // refresh the changes counter
+      const res = await post(item, next, patch);
+      // The counter comes back with the save; no reload, which used to race with the next tap.
+      if (typeof res.changes_used === "number") setBoard((b) => (b ? { ...b, brand: { ...b.brand, changes_used: res.changes_used! } } : b));
     } catch (e) {
       setPicks((p) => ({ ...p, [item.id]: prev })); setErr((e as Error).message);
     }
@@ -195,7 +198,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
       </main>
     );
   }
-  if (!board) return <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] text-text-muted"><Loader2 className="animate-spin" size={20} /></main>;
+  if (!board) return <LoadingScreen slug={params.slug} />;
 
   const { brand } = board;
   const stepIdx = STEPS.findIndex((s) => s.key === v.stage);
@@ -215,9 +218,9 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
       <header className="relative h-[320px] overflow-hidden sm:h-[400px]">
         {v.pulled.length > 0 && (
           <div aria-hidden className="absolute inset-0 grid grid-cols-3 gap-1 sm:grid-cols-5 lg:grid-cols-7">
-            {v.pulled.slice(0, 21).map((i) => (
+            {Array.from({ length: 21 }, (_, k) => v.pulled[k % v.pulled.length]).map((i, k) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i.id} src={i.url || ""} alt="" className="h-full min-h-[140px] w-full object-cover" />
+              <img key={k} src={i.url || ""} alt="" loading={k < 7 ? "eager" : "lazy"} className="h-full min-h-[140px] w-full object-cover" />
             ))}
           </div>
         )}
@@ -306,7 +309,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
             <video src={v.video.url} controls playsInline className="aspect-[9/16] w-full max-w-[360px] rounded-panel bg-black object-contain" />
             <div className="flex flex-col gap-3">
               {v.video.title && <p className="text-[16px]">{v.video.title}</p>}
-              <a href={v.video.url} download className="flex h-11 items-center gap-2 self-start rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)]">
+              <a href={v.video.download_url || v.video.url} download className="flex h-11 items-center gap-2 self-start rounded-soft bg-[var(--brand)] px-5 text-[14px] font-semibold text-[var(--brand-ink)]">
                 <Download size={16} /> Download reel
               </a>
             </div>
@@ -385,7 +388,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
             onNeedName={askName}
             onDecide={(id, choice) => { const it = byId.get(id); if (it) pick(it, { choice }); }}
             onOpenImage={(n) => { const idea = v.ideas[n]; const imgs = idea ? v.childrenOf(idea.id, "image") : []; if (imgs.length) openSet(imgs, 0, idea.title || `Idea ${n + 1}`); }}
-            renderNote={(id) => { const it = byId.get(id); return it ? <NoteBox label="Add a note" placeholder="Anything to add? e.g. love it, but use our gift box" value={picks[id]?.comment || ""} onSave={(comment) => pick(it, { comment })} /> : null; }}
+            renderNote={(id) => { const it = byId.get(id); return it ? <NoteBox key={id} label="Add a note" placeholder="Anything to add? e.g. love it, but use our gift box" value={picks[id]?.comment || ""} onSave={(comment) => pick(it, { comment })} /> : null; }}
           />
         </section>
       )}
@@ -483,6 +486,21 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
       {viewer && (
         <Viewer images={viewer.images} start={viewer.start} label={viewer.label} onSeen={onSeen} onClose={() => setViewer(null)} />
       )}
+    </main>
+  );
+}
+
+/** While the board loads: the brand's name and a beam running along a track, so the link feels alive at once. */
+function LoadingScreen({ slug }: { slug: string }) {
+  const brand = decodeURIComponent(slug || "").split(/[-_]+/).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[var(--bg)] px-6 text-center text-text">
+      <span className="rounded-pill border border-[var(--border)] px-3 py-1 text-[12px] text-text-muted">BCON Brand Reels</span>
+      <h1 className="text-[30px] font-bold tracking-[-0.03em]">{brand || "Your brand reel"}</h1>
+      <div className="relative h-[3px] w-56 overflow-hidden rounded-full bg-[var(--surface-hover)]">
+        <span className="beam-sweep absolute inset-y-0 left-0 w-1/3 rounded-full bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent shadow-[0_0_12px_var(--brand)]" />
+      </div>
+      <p className="text-[13.5px] text-text-muted">Loading your reel ideas…</p>
     </main>
   );
 }
@@ -596,18 +614,20 @@ function SiteFooter({ brand, current }: { brand: string; current: number }) {
 function NoteBox({ label, placeholder, value, onSave, locked }: { label: string; placeholder: string; value: string; onSave: (v: string) => void; locked?: boolean }) {
   const [v, setV] = useState(value);
   const [open, setOpen] = useState(!!value);
+  const [focus, setFocus] = useState(false); // opened by a tap: put the cursor in
   useEffect(() => { setV(value); if (value) setOpen(true); }, [value]);
   if (locked) return <p className="text-[12.5px] text-text-muted">All included changes are used. Message us for more.</p>;
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="flex items-center gap-1.5 self-start text-[13px] text-text-muted underline-offset-2 hover:text-text hover:underline">
+      <button onClick={() => { setOpen(true); setFocus(true); }} className="flex items-center gap-1.5 self-start text-[13px] text-text-muted underline-offset-2 hover:text-text hover:underline">
         <MessageSquare size={13} /> {label}
       </button>
     );
   }
   return (
     <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} rows={2} aria-label={label} placeholder={placeholder}
-      className="rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[14px] outline-none placeholder:text-text-muted focus:border-[var(--brand-line)]" />
+      autoFocus={focus}
+      className="w-full rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[14px] outline-none placeholder:text-text-muted focus:border-[var(--brand-line)]" />
   );
 }
 
@@ -631,7 +651,7 @@ function ProfilePanel({ name, picks, byId, frames, onClose, onSwitch }: {
   const Row = ({ p }: { p: Pick }) => {
     const it = byId.get(p.item_id);
     if (!it) return null;
-    const what = it.kind === "idea" ? (p.choice === "like" ? "Chosen idea" : p.choice === "pass" ? "Not for us" : "Note on idea")
+    const what = it.kind === "idea" ? (p.choice === "like" ? "Yes, excited" : p.choice === "pass" ? "Not for us" : "Note on idea")
       : it.kind === "script" ? (p.comment ? "Change to the script" : "Script approved")
       : it.kind === "frame" ? `Change to frame ${frames.indexOf(it) + 1}` : "Pick";
     return (
@@ -641,7 +661,7 @@ function ProfilePanel({ name, picks, byId, frames, onClose, onSwitch }: {
             <p className="text-[11.5px] font-medium text-text-muted">{what}</p>
             <p className="text-[15px] font-semibold leading-snug">{it.title || (it.kind === "frame" ? `Frame ${frames.indexOf(it) + 1}` : it.kind)}</p>
           </div>
-          {p.choice === "like" && <span className="shrink-0 rounded-pill bg-[var(--brand-soft)] px-2 py-0.5 text-[11.5px] font-semibold text-[var(--brand-text)]">{it.kind === "idea" ? "Chosen" : "Approved"}</span>}
+          {p.choice === "like" && <span className="shrink-0 rounded-pill bg-[var(--brand-soft)] px-2 py-0.5 text-[11.5px] font-semibold text-[var(--brand-text)]">{it.kind === "idea" ? "Yes" : "Approved"}</span>}
         </div>
         {it.kind === "idea" && stillsOf(it.id).length > 0 && (
           <div className="grid grid-cols-4 gap-1.5">

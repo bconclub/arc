@@ -7,7 +7,8 @@
 // POST { k, voter, input: "..." }   "Give inputs": a general note to BCON (offers, do's and don'ts, references)
 // POST { k, event: "open"|"name"|"view"|"tray", voter?, item_id?, session? }   activity ping
 // Comments on script/frame items count against the order's changes_allowed (3 by default).
-import { db, signPaths, isClientVisible, sameKey, CHANGE_KINDS, type StudioItem } from "@/lib/studio"
+import { db, signPaths, isClientVisible, sameKey, CHANGE_KINDS, STUDIO_BUCKET, type StudioItem } from "@/lib/studio"
+import { supabaseAdmin } from "@/lib/supabase"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -54,6 +55,12 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
   ])
   const visible = ((items.data || []) as StudioItem[]).filter(isClientVisible)
   const urls = await signPaths([...visible.map((i) => i.image_path), brand.logo_path])
+  // The final reel gets a link that downloads instead of opening (Content-Disposition: attachment).
+  const downloads = new Map<string, string>()
+  for (const i of visible.filter((x) => x.kind === "video" && x.image_path && !/^https:\/\//i.test(x.image_path))) {
+    const { data } = await supabaseAdmin.storage.from(STUDIO_BUCKET).createSignedUrl(i.image_path!, 3600, { download: `${brand.slug}-reel.mp4` })
+    if (data?.signedUrl) downloads.set(i.id, data.signedUrl)
+  }
   const changesUsed = changeCount(visible, (comments.data || []) as { item_id: string; comment: string | null }[])
 
   return Response.json(
@@ -64,7 +71,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
       // reference material (what we were given), shown as context, not to pick from.
       items: visible
         .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.created_at.localeCompare(b.created_at))
-        .map((i) => ({ id: i.id, kind: i.kind, title: i.title, body: i.kind === "image" ? null : i.body, url: i.image_path ? urls.get(i.image_path) ?? null : null, featured: i.pinned, parent_id: i.parent_id, position: i.position })),
+        .map((i) => ({ id: i.id, kind: i.kind, title: i.title, body: i.kind === "image" ? null : i.body, url: i.image_path ? urls.get(i.image_path) ?? null : null, download_url: downloads.get(i.id) ?? null, featured: i.pinned, parent_id: i.parent_id, position: i.position })),
       mine: mine.data || [],
       inputs: inputs.data || [],
     },
@@ -116,7 +123,7 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       const it = byId.get(v.item_id)
       const parent = it?.parent_id ? byId.get(it.parent_id) : null
       const what = parent ? `${parent.title}: option "${it?.title || "untitled"}"` : it?.title || "untitled"
-      const verdict = v.choice === "like" ? "LOVE" : v.choice === "pass" ? "not for us" : "note"
+      const verdict = v.choice === "like" ? "YES" : v.choice === "pass" ? "nope" : "note"
       return `- ${verdict}: ${what}${v.comment ? ` (note: ${v.comment})` : ""}`
     })
     if (!lines.length) return Response.json({ error: "Pick at least one thing first." }, { status: 400 })
@@ -179,9 +186,18 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
   const { error } = await db.from("studio_votes").upsert(row, { onConflict: "item_id,voter" })
   if (error) return Response.json({ error: "Could not save that. Try again." }, { status: 500 })
   if (comment) await track(brand.id, "note", voter, item.id, body.session, { text: comment.slice(0, 200) })
+  // A note on the script or a frame changes the counter: send it back so the page needn't reload.
+  let changesUsed: number | undefined
+  if (comment !== undefined && CHANGE_KINDS.includes(item.kind)) {
+    const [{ data: all }, { data: cs }] = await Promise.all([
+      db.from("studio_items").select("id, kind").eq("brand_id", brand.id),
+      db.from("studio_votes").select("item_id, comment").eq("brand_id", brand.id).not("comment", "is", null),
+    ])
+    changesUsed = changeCount((all || []) as { id: string; kind: string }[], (cs || []) as { item_id: string; comment: string | null }[])
+  }
   // A note save also re-sends the current choice; only a choice change is a choice event.
   if (comment === undefined) await track(brand.id, choice === "like" ? "choose" : choice === "pass" ? "pass" : "unchoose", voter, item.id, body.session)
-  return Response.json({ ok: true })
+  return Response.json({ ok: true, ...(changesUsed !== undefined ? { changes_used: changesUsed } : {}) })
 }
 
 /** Distinct script/frame items carrying at least one client comment. */

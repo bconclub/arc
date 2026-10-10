@@ -292,8 +292,8 @@ function SharePanel({ brand, items, activity, onChanged }: { brand: Brand; items
 // ── Client activity: everything they do on their link ──────────
 
 const ACT_VERB: Record<string, string> = {
-  open: "opened the link", name: "entered their name", view: "looked at", choose: "chose", unchoose: "unchose",
-  pass: "passed on", note: "left a note on", tray: "reviewed their picks", send: "sent their picks to BCON",
+  open: "opened the link", name: "entered their name", view: "looked at", choose: "said yes to", unchoose: "took back their answer on",
+  pass: "said nope to", note: "left a note on", tray: "reviewed their picks", send: "sent their picks to BCON",
   input: "sent inputs",
 };
 

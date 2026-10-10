@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { useBackToClose } from "./useBackToClose";
 
 /**
@@ -20,6 +20,7 @@ export function Viewer({ images, start, label, onClose, onSeen }: {
   const n = images.length;
   const go = useCallback((d: number) => setI((x) => (x + d + n) % n), [n]);
   const cur = images[i];
+  const [loaded, setLoaded] = useState<Record<string, boolean>>({});
   useBackToClose(onClose);
 
   useEffect(() => { if (cur) onSeen?.(cur); }, [cur, onSeen]);
@@ -59,8 +60,10 @@ export function Viewer({ images, start, label, onClose, onSeen }: {
       </div>
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 sm:px-16">
+        {!loaded[cur.id] && <Loader2 size={26} className="absolute animate-spin text-white/60" />}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={cur.id} src={cur.url || ""} alt={cur.title || ""} onClick={(e) => e.stopPropagation()}
+          onLoad={() => setLoaded((l) => ({ ...l, [cur.id]: true }))}
           className="max-h-full max-w-full animate-fade-in rounded-soft object-contain shadow-2xl" />
         {n > 1 && (
           <>
