@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { RegisterSW } from "@/components/RegisterSW";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -19,6 +20,18 @@ export const metadata: Metadata = {
   description: "GTM Command Center",
   // Favicon comes from src/app/icon.svg (App Router file convention), it is
   // theme-aware, so the mark stays visible on both light and dark browser chrome.
+  // The manifest (src/app/manifest.ts) and the apple icon make ARC installable on a phone.
+  manifest: "/manifest.webmanifest",
+  icons: { apple: "/pwa-apple-180.png" },
+  appleWebApp: { capable: true, title: "ARC", statusBarStyle: "black" },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0B0C0E",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -40,6 +53,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
         {children}
+        <RegisterSW />
       </body>
     </html>
   );

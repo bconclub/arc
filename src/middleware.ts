@@ -27,12 +27,15 @@ async function teamMemberActive(id: string): Promise<boolean> {
 // studio/<slug> is a client's view of one brand board; it needs the board's secret
 // share key (?k=) and shows ideas and images only. See api/public/studio.
 //
+// manifest.webmanifest, sw.js and offline.html make ARC installable on a phone;
+// they hold nothing private and must load before anyone has signed in.
+//
 // investor and api/investor are the investor portal: their own login, their own
 // cookie, checked in lib/investor/viewer.ts. The owner session still opens them
 // as a preview; nothing an investor holds passes the gate below.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|studio/|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|studio/|manifest\\.webmanifest|sw\\.js|offline\\.html|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
   ],
 };
 

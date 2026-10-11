@@ -459,3 +459,8 @@ button:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .beam-sweep, .beam-pulse { animation: none; }
 }
+
+/* Mobile bottom bars clear the iPhone home indicator, in the browser and as an installed app. */
+.safe-area-pb {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}

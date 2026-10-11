@@ -60,7 +60,7 @@ export function TeamShell({ name, owner, children }: { name: string; owner: bool
         <span>BCON Club · Sales</span>
         <span className="font-mono" title={`ARC v${VERSION}`}>ARC v{VERSION}</span>
       </footer>
-      <nav aria-label="Sales sections" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--border)] bg-[var(--bg)] md:hidden">
+      <nav aria-label="Sales sections" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--border)] bg-[var(--bg)] pb-[env(safe-area-inset-bottom)] md:hidden">
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} aria-current={on(n) ? "page" : undefined}
             className={`flex flex-col items-center gap-0.5 py-2 text-[10.5px] ${on(n) ? "font-semibold text-text" : "text-text-muted"}`}>
