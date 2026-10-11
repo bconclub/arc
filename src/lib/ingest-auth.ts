@@ -8,13 +8,19 @@
 export type AuthFailure = { ok: false; status: 401 | 503; error: string }
 export type AuthSuccess = { ok: true; agent: string }
 
-export function checkIngestAuth(req: Request): AuthFailure | AuthSuccess {
+// `fleet` routes (heartbeat, next, result) also take ARC_FLEET_SECRET: the key every
+// machine's session reporter carries (workers/fleet). It opens only those routes, so
+// a leaked reporter config can't reach outreach, briefs or anything else.
+export function checkIngestAuth(req: Request, opts: { fleet?: boolean } = {}): AuthFailure | AuthSuccess {
   const secret = process.env.ARC_INGEST_SECRET
-  if (!secret) {
+  const fleetSecret = opts.fleet ? process.env.ARC_FLEET_SECRET : undefined
+  if (!secret && !fleetSecret) {
     return { ok: false, status: 503, error: "ingest disabled (no ARC_INGEST_SECRET)" }
   }
   const header = req.headers.get("authorization")
-  if (header !== `Bearer ${secret}`) {
+  const okMain = !!secret && header === `Bearer ${secret}`
+  const okFleet = !!fleetSecret && header === `Bearer ${fleetSecret}`
+  if (!okMain && !okFleet) {
     return { ok: false, status: 401, error: "unauthorized" }
   }
   // Identifies which worker is calling — used for job claims and heartbeats.

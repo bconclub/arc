@@ -17,7 +17,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export async function POST(req: Request) {
-  const auth = checkIngestAuth(req)
+  const auth = checkIngestAuth(req, { fleet: true })
   if (!auth.ok) return authError(auth)
 
   let body: {
