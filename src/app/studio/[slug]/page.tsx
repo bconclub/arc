@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, Home, ListChecks, Loader2, MessageSquare, MessageSquarePlus, Send, User, X } from "lucide-react";
+import { Check, Download, Home, ListChecks, Loader2, LogOut, MessageSquare, MessageSquarePlus, Send, User, X } from "lucide-react";
 import { useLogoTone, logoTile } from "@/lib/use-logo-tone";
 import { Viewer, type ViewerImage } from "@/components/studio/Viewer";
 import { IdeaDeck } from "@/components/studio/IdeaDeck";
 import { StepTimeline } from "@/components/studio/StepTimeline";
 import { useBackToClose } from "@/components/studio/useBackToClose";
 import { VERSION } from "@/lib/version";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /**
  * A client's Brand Reels order page (bconclub.com/brand-reels), opened from a share
@@ -246,6 +247,13 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
                 {name}
               </button>
             )}
+            {name && (
+              <button onClick={switchPerson} aria-label="Not you? Sign out" title="Not you? Sign out"
+                className="flex h-9 items-center gap-1.5 rounded-pill bg-black/60 px-3 text-[12.5px] text-white/85 hover:bg-black/80 hover:text-white">
+                <LogOut size={14} /> <span className="hidden sm:inline">Not you?</span>
+              </button>
+            )}
+            <ThemeToggle className="flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white/85 hover:bg-black/80 hover:text-white" />
           </div>
           <div className="flex items-end gap-4 pb-2">
             {brand.logo_url && (

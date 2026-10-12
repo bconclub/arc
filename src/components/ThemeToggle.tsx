@@ -5,7 +5,8 @@ import { Sun, Moon } from "lucide-react";
 
 type Theme = "light" | "dark";
 
-export function ThemeToggle() {
+/** `className` replaces the default look, e.g. a white icon on a dark pill over a photo. */
+export function ThemeToggle({ className }: { className?: string } = {}) {
   const [theme, setTheme] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
@@ -26,13 +27,13 @@ export function ThemeToggle() {
 
   // Avoid hydration mismatch, render a stable placeholder until mounted.
   if (!mounted) {
-    return <div className="w-8 h-8" aria-hidden />;
+    return <div className={className || "w-8 h-8"} aria-hidden />;
   }
 
   return (
     <button
       onClick={toggle}
-      className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-[var(--glow-white)] transition-all duration-150"
+      className={className || "p-2 rounded-lg text-text-muted hover:text-text hover:bg-[var(--glow-white)] transition-all duration-150"}
       title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       aria-label="Toggle theme"
     >
