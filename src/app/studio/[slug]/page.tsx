@@ -137,6 +137,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     const ideaIds = new Set(ideas.map((i) => i.id));
     const childrenOf = (id: string, kind: Kind) => items.filter((i) => i.kind === kind && i.parent_id === id);
     const pulled = items.filter((i) => i.kind === "image" && !(i.parent_id && ideaIds.has(i.parent_id)));
+    // Header backdrop: their own pulled images, or the idea storyboards when a brand has none of its own.
+    const cover = pulled.length ? pulled : items.filter((i) => i.kind === "image" && i.parent_id && ideaIds.has(i.parent_id));
     // The idea the order is built on: the one that has a script/board/reel, else the client's choice.
     const built = ideas.find((i) => childrenOf(i.id, "script").length || childrenOf(i.id, "frame").length || childrenOf(i.id, "video").length);
     const chosen = built || ideas.find((i) => picks[i.id]?.choice === "like") || null;
@@ -144,7 +146,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     const frames = chosen ? childrenOf(chosen.id, "frame") : items.filter((i) => i.kind === "frame");
     const video = chosen ? childrenOf(chosen.id, "video")[0] : items.find((i) => i.kind === "video");
     const stage = video ? "final" : frames.length ? "board" : script ? "script" : "idea";
-    return { ideas, childrenOf, pulled, built, chosen, script, frames, video, stage };
+    return { ideas, childrenOf, pulled, cover, built, chosen, script, frames, video, stage };
   }, [board, picks]);
 
   function saveName(e: React.FormEvent) {
@@ -226,9 +228,9 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     <main className={`min-h-screen bg-[var(--bg)] text-text ${showStrip ? "pb-36" : "pb-[72px]"}`}>
       {/* ── Header: their brand today ── */}
       <header className="relative h-[320px] overflow-hidden sm:h-[400px]" style={{ background: brand.palette?.[0] || "#111" }}>
-        {v.pulled.length > 0 && (
+        {v.cover.length > 0 && (
           <div aria-hidden className="absolute inset-0 grid grid-cols-3 gap-1 sm:grid-cols-5 lg:grid-cols-7">
-            {Array.from({ length: 21 }, (_, k) => v.pulled[k % v.pulled.length]).map((i, k) => (
+            {Array.from({ length: 21 }, (_, k) => v.cover[k % v.cover.length]).map((i, k) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={k} src={i.url || ""} alt="" loading={k < 7 ? "eager" : "lazy"} className="h-full min-h-[140px] w-full object-cover" />
             ))}
