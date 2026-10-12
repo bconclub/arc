@@ -181,8 +181,11 @@ export function IdeaDeck({ ideas, decisions, palette, ready, onNeedName, onDecid
                 <img src={cur.image} alt={cur.title || ""} draggable={false} className="relative h-full w-full object-contain" />
               </div>
             ) : (
-              <div className="flex h-[44svh] max-h-[560px] w-full items-end p-5 sm:h-[520px]" style={{ background: `linear-gradient(160deg, ${palette[0] || "#222"}, ${palette[1] || "#444"})` }}>
-                <p className="text-[13px] text-white/80">Storyboard coming soon</p>
+              // No storyboard yet: the idea itself is the card, big, on the brand's darkest colour
+              <div className="flex h-[44svh] max-h-[560px] w-full flex-col justify-end gap-3 p-6 sm:h-[520px]" style={{ background: `linear-gradient(165deg, ${palette[0] || "#222"}, #0b0b0b)` }}>
+                <span className="text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: palette[2] || palette[1] || "#ddd" }}>Idea {at + 1}</span>
+                <h4 className="text-[28px] font-semibold leading-tight tracking-tight text-white">{cur.title}</h4>
+                {cur.body && <p className="text-[15.5px] leading-relaxed text-white/85">{cur.body}</p>}
               </div>
             )}
             {cur.image && (
@@ -195,8 +198,8 @@ export function IdeaDeck({ ideas, decisions, palette, ready, onNeedName, onDecid
             <span style={{ opacity: noGlow }} className="pointer-events-none absolute right-4 top-14 rotate-12 rounded-soft border-4 border-white bg-black/30 px-3 py-1 text-[26px] font-black uppercase tracking-wide text-white">Nope</span>
           </div>
           <div className="flex flex-col gap-1.5 p-4">
-            <h4 className="text-[21px] font-semibold leading-snug tracking-tight">{cur.title}</h4>
-            {cur.body && <p className="line-clamp-3 text-[14.5px] leading-relaxed text-text-muted">{cur.body}</p>}
+            {cur.image && <h4 className="text-[21px] font-semibold leading-snug tracking-tight">{cur.title}</h4>}
+            {cur.image && cur.body && <p className="line-clamp-3 text-[14.5px] leading-relaxed text-text-muted">{cur.body}</p>}
             <div>{renderNote(cur.id)}</div>
           </div>
         </article>
