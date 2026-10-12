@@ -225,7 +225,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   return (
     <main className={`min-h-screen bg-[var(--bg)] text-text ${showStrip ? "pb-36" : "pb-[72px]"}`}>
       {/* ── Header: their brand today ── */}
-      <header className="relative h-[320px] overflow-hidden sm:h-[400px]">
+      <header className="relative h-[320px] overflow-hidden sm:h-[400px]" style={{ background: brand.palette?.[0] || "#111" }}>
         {v.pulled.length > 0 && (
           <div aria-hidden className="absolute inset-0 grid grid-cols-3 gap-1 sm:grid-cols-5 lg:grid-cols-7">
             {Array.from({ length: 21 }, (_, k) => v.pulled[k % v.pulled.length]).map((i, k) => (
@@ -234,7 +234,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-[var(--bg)]" />
+        {/* Dark mode fades into the page; light mode stays dark under the white title */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/75 [[data-theme=dark]_&]:to-[var(--bg)]" />
         <div className="relative mx-auto flex h-full max-w-[1200px] flex-col justify-between px-4 py-5 lg:px-8">
           <div className="flex items-center justify-end gap-2">
             <span className="rounded-pill bg-black/50 px-3 py-1 text-[12px] text-white/80">BCON Brand Reels</span>
