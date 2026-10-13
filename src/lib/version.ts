@@ -10,9 +10,14 @@
 // Every shipped batch bumps the patch by one, regardless of size. Do not jump
 // the number to match a design mockup.
 
-export const VERSION = "0.0.48";
+export const VERSION = "0.0.49";
 
 export const CHANGELOG = [
+  {
+    version: "0.0.49",
+    date: "2026-10-13",
+    notes: "Studio client page: a pinned brand image (the mood board) fills the whole header on its own, under a light fade, instead of the tiled collage.",
+  },
   {
     version: "0.0.48",
     date: "2026-10-12",

@@ -139,6 +139,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     const pulled = items.filter((i) => i.kind === "image" && !(i.parent_id && ideaIds.has(i.parent_id)));
     // Header backdrop: their own pulled images, or the idea storyboards when a brand has none of its own.
     const cover = pulled.length ? pulled : items.filter((i) => i.kind === "image" && i.parent_id && ideaIds.has(i.parent_id));
+    // A pinned brand image (the mood board) fills the whole header on its own instead of the tiled collage.
+    const moodBoard = pulled.find((i) => i.featured) || null;
     // The idea the order is built on: the one that has a script/board/reel, else the client's choice.
     const built = ideas.find((i) => childrenOf(i.id, "script").length || childrenOf(i.id, "frame").length || childrenOf(i.id, "video").length);
     const chosen = built || ideas.find((i) => picks[i.id]?.choice === "like") || null;
@@ -146,7 +148,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     const frames = chosen ? childrenOf(chosen.id, "frame") : items.filter((i) => i.kind === "frame");
     const video = chosen ? childrenOf(chosen.id, "video")[0] : items.find((i) => i.kind === "video");
     const stage = video ? "final" : frames.length ? "board" : script ? "script" : "idea";
-    return { ideas, childrenOf, pulled, cover, built, chosen, script, frames, video, stage };
+    return { ideas, childrenOf, pulled, cover, moodBoard, built, chosen, script, frames, video, stage };
   }, [board, picks]);
 
   function saveName(e: React.FormEvent) {
@@ -228,7 +230,10 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
     <main className={`min-h-screen bg-[var(--bg)] text-text ${showStrip ? "pb-36" : "pb-[72px]"}`}>
       {/* ── Header: their brand today ── */}
       <header className="relative h-[320px] overflow-hidden sm:h-[400px]" style={{ background: brand.palette?.[0] || "#111" }}>
-        {v.cover.length > 0 && (
+        {v.moodBoard?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={v.moodBoard.url} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" />
+        ) : v.cover.length > 0 && (
           <div aria-hidden className="absolute inset-0 grid grid-cols-3 gap-1 sm:grid-cols-5 lg:grid-cols-7">
             {Array.from({ length: 21 }, (_, k) => v.cover[k % v.cover.length]).map((i, k) => (
               // eslint-disable-next-line @next/next/no-img-element
@@ -237,7 +242,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
           </div>
         )}
         {/* Dark mode fades into the page; light mode stays dark under the white title */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/75 [[data-theme=dark]_&]:to-[var(--bg)]" />
+        <div className={`absolute inset-0 bg-gradient-to-b ${v.moodBoard ? "from-black/10 via-transparent to-black/80" : "from-black/40 via-black/55 to-black/75 [[data-theme=dark]_&]:to-[var(--bg)]"}`} />
         <div className="relative mx-auto flex h-full max-w-[1200px] flex-col justify-between px-4 py-5 lg:px-8">
           <div className="flex items-center justify-end gap-2">
             <span className="rounded-pill bg-black/50 px-3 py-1 text-[12px] text-white/80">BCON Brand Reels</span>
