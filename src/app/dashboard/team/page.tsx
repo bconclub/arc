@@ -6,15 +6,16 @@ import { ExternalLink, Loader2, Plus, Trash2 } from "lucide-react";
 import { timeAgo } from "@/lib/format";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { KbEditor } from "@/components/team/KbEditor";
+import { AREAS } from "@/lib/access";
 
 /**
- * Team: the people who work inside ARC with their own login (sales first).
- * Add someone and set their password, switch them off, give them tasks, hand
- * them leads, and write the playbook they learn from and the Ask assistant
- * answers from. They sign in at /login with their login name and see /team.
+ * Team & access: the people who work inside ARC with their own login. Add
+ * someone, choose what they can open (Studio, Sales; lib/access.ts), switch them
+ * off, and for Sales give them tasks, hand them leads, and write the playbook
+ * they learn from and the Ask assistant answers from.
  */
 type Member = {
-  id: string; name: string; username: string; active: boolean; last_login_at: string | null; created_at: string;
+  id: string; name: string; username: string; active: boolean; last_login_at: string | null; created_at: string; access: string[];
   leads: number; leads_open: number; tasks_open: number; updates_7d: number; calls_7d: number;
 };
 type Task = { id: string; member_id: string; title: string; details: string | null; due_on: string | null; status: string };
@@ -42,12 +43,31 @@ function Panel({ title, sub, children }: { title: string; sub?: string; children
   );
 }
 
+/** One tick box per area of ARC. At least one stays on. */
+function AccessPicker({ value, onChange, disabled }: { value: string[]; onChange: (v: string[]) => void; disabled?: boolean }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {AREAS.map((a) => {
+        const on = value.includes(a.key);
+        return (
+          <label key={a.key} title={a.desc}
+            className={`flex cursor-pointer items-center gap-2 rounded-soft border px-3 py-1.5 text-[12.5px] ${on ? "border-[var(--brand-line)] bg-[var(--brand-soft)] text-text" : "border-[var(--border)] text-text-muted"} ${disabled ? "opacity-60" : ""}`}>
+            <input type="checkbox" className="accent-[var(--brand)]" checked={on} disabled={disabled || (on && value.length === 1)}
+              onChange={() => onChange(on ? value.filter((k) => k !== a.key) : AREAS.map((x) => x.key).filter((k) => k === a.key || value.includes(k)))} />
+            {a.label}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 function AddMember({ onDone }: { onDone: () => void }) {
-  const [f, setF] = useState({ name: "", username: "", password: "" });
+  const [f, setF] = useState({ name: "", username: "", password: "", access: ["studio"] as string[] });
   const [busy, setBusy] = useState(false), [err, setErr] = useState("");
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setErr("");
-    try { await call("/api/team/members", "POST", f); setF({ name: "", username: "", password: "" }); onDone(); }
+    try { await call("/api/team/members", "POST", f); setF({ name: "", username: "", password: "", access: ["studio"] }); onDone(); }
     catch (x) { setErr((x as Error).message); }
     setBusy(false);
   }
@@ -59,6 +79,10 @@ function AddMember({ onDone }: { onDone: () => void }) {
         onChange={(e) => setF({ ...f, username: e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, "") })} />
       <input required type="password" autoComplete="new-password" className={input} placeholder="Password (8+ characters)" value={f.password} aria-label="Password"
         onChange={(e) => setF({ ...f, password: e.target.value })} />
+      <div className="flex items-center gap-2">
+        <span className="text-[11.5px] text-text-muted">Can open</span>
+        <AccessPicker value={f.access} onChange={(access) => setF({ ...f, access })} />
+      </div>
       <button disabled={busy} className={primary}>{busy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add person</button>
       {err && <p className="w-full text-[12px] text-accent-red">{err}</p>}
     </form>
@@ -66,6 +90,7 @@ function AddMember({ onDone }: { onDone: () => void }) {
 }
 
 function MemberCard({ m, onChanged }: { m: Member; onChanged: () => void }) {
+  const sales = m.access.includes("sales");
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [t, setT] = useState({ title: "", details: "", due_on: "" });
   const [pw, setPw] = useState("");
@@ -76,7 +101,7 @@ function MemberCard({ m, onChanged }: { m: Member; onChanged: () => void }) {
     const r = await fetch(`/api/team/tasks?member=${m.id}`, { cache: "no-store" });
     if (r.ok) setTasks((await r.json()).tasks);
   }, [m.id]);
-  useEffect(() => { loadTasks(); }, [loadTasks]);
+  useEffect(() => { if (sales) loadTasks(); }, [loadTasks, sales]);
 
   async function run(key: string, fn: () => Promise<string | void>) {
     setBusy(key); setErr(""); setNote("");
@@ -101,6 +126,13 @@ function MemberCard({ m, onChanged }: { m: Member; onChanged: () => void }) {
         </button>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-text-muted">Can open</span>
+        <AccessPicker value={m.access} disabled={!!busy}
+          onChange={(access) => run("access", async () => { await call(`/api/team/members/${m.id}`, "PATCH", { access }); onChanged(); return "Access updated. It applies on their next click."; })} />
+      </div>
+
+      {sales && (<>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[["Leads", `${m.leads_open} open`, `${m.leads} in all`], ["Tasks open", m.tasks_open, ""], ["Updates, 7 days", m.updates_7d, ""], ["Calls logged, 7 days", m.calls_7d, ""]].map(([l, v, h]) => (
           <div key={String(l)} className="rounded-lg bg-[var(--surface-hover)] px-3 py-2">
@@ -166,6 +198,12 @@ function MemberCard({ m, onChanged }: { m: Member; onChanged: () => void }) {
             </div>
             <p className="mt-1 text-[11px] text-text-muted">Or assign one lead at a time from its panel (Outreach or the sales view).</p>
           </div>
+        </div>
+      </div>
+      </>)}
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">
           <div>
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-text-muted">Name</p>
             <div className="flex gap-2">
@@ -208,15 +246,17 @@ export default function TeamPage() {
     <div className="mx-auto flex max-w-[1200px] flex-col gap-4 p-4 lg:p-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-text">Team</h1>
-          <p className="max-w-[70ch] text-[12.5px] text-text-muted">
-            People with their own ARC login. They sign in at arc.bconclub.com/login with their login name and password, and land in the sales view: Today, Leads, AI calls, Ask and Playbook. They can&apos;t open the rest of ARC, delete leads or see call costs.
+          <h1 className="text-[22px] font-bold tracking-tight text-text">Team & access</h1>
+          <p className="max-w-[75ch] text-[12.5px] text-text-muted">
+            People with their own ARC login. They sign in at arc.bconclub.com/login with their login name and password and can open only what you tick.
+            Studio: every brand board, with full control inside it. Sales: Today, Leads, AI calls, Ask and Playbook (never deleting leads or seeing call costs).
+            Nobody but you sees the rest of ARC.
           </p>
         </div>
         <Link href="/team" className={btn}><ExternalLink size={14} /> Open the sales view</Link>
       </header>
 
-      <Panel title="People" sub="Add someone, then tell them their login name and password in person.">
+      <Panel title="People" sub="Add someone (Studio is ticked by default), then tell them their login name and password in person. Changes to what they can open apply on their next click.">
         <div className="flex flex-col gap-3">
           <AddMember onDone={load} />
           {err && <p className="text-[12px] text-accent-red">{err}</p>}

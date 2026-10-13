@@ -4,9 +4,10 @@ import {
   verifyHash, verifyPassword, verifyStudioPassword,
 } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { homeFor } from "@/lib/access";
 
 // Three ways in. With a username: a team member's own account (team_members),
-// landing on /team. Without one: the owner password opens everything, the studio
+// landing on their first area (Studio or the sales view, see lib/access.ts). Without one: the owner password opens everything, the studio
 // password (STUDIO_PASSWORD_HASH, optional) only the Studio. Each login clears
 // the other cookies so a shared browser never holds two.
 const cookieOpts = {
@@ -29,13 +30,13 @@ export async function POST(req: NextRequest) {
     if (!/^[a-z0-9.]{2,32}$/i.test(username.trim())) return NextResponse.json({ error: "Wrong name or password" }, { status: 401 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: m } = await (supabaseAdmin as any).from("team_members")
-      .select("id,password_hash,active").ilike("username", username.trim()).maybeSingle();
+      .select("id,password_hash,active,access").ilike("username", username.trim()).maybeSingle();
     // Hash anyway on a miss so a wrong name and a wrong password take the same time.
     const ok = await verifyHash(password, m?.password_hash || "00:00");
-    if (!m || !m.active || !ok) return NextResponse.json({ error: "Wrong name or password" }, { status: 401 });
+    if (!m || !m.active || !ok || !m.access?.length) return NextResponse.json({ error: "Wrong name or password" }, { status: 401 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseAdmin as any).from("team_members").update({ last_login_at: new Date().toISOString() }).eq("id", m.id);
-    const res = NextResponse.json({ ok: true, role: "team", home: "/team" });
+    const res = NextResponse.json({ ok: true, role: "team", home: homeFor(m.access) });
     res.cookies.set(TEAM_COOKIE, await createTeamToken(m.id), { ...cookieOpts, maxAge: 60 * 60 * 24 * TEAM_DAYS });
     res.cookies.set(COOKIE_NAME, "", clear);
     res.cookies.set(STUDIO_COOKIE, "", clear);

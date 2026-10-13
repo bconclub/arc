@@ -87,7 +87,7 @@ const nav: NavSection[] = [
     items: [
       { label: "GTM", href: "/dashboard/gtm", icon: Target, exact: true },
       { label: "Outreach", href: "/dashboard/outreach", icon: Send, exact: true },
-      { label: "Sales team", href: "/dashboard/team", icon: Headset },
+      { label: "Team & access", href: "/dashboard/team", icon: Headset },
     ],
   },
   {

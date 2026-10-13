@@ -7,12 +7,14 @@ import { supabaseAdmin } from "@/lib/supabase";
 export type TeamMember = {
   id: string; name: string; username: string; role: string; active: boolean
   last_login_at: string | null; created_at: string
+  /** Areas of ARC this person may open (lib/access.ts). */
+  access: string[]
 }
 export type Viewer = { kind: "owner" } | { kind: "team"; member: TeamMember }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const tdb = supabaseAdmin as any
-const PUBLIC_COLS = "id,name,username,role,active,last_login_at,created_at"
+export const PUBLIC_COLS = "id,name,username,role,active,last_login_at,created_at,access"
 
 /** The owner session wins; otherwise an active team member; otherwise null. */
 export async function getViewer(): Promise<Viewer | null> {

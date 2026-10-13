@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarCheck, LogOut, MessageCircle, PhoneCall, Users } from "lucide-react";
+import { BookOpen, CalendarCheck, LayoutGrid, LogOut, MessageCircle, PhoneCall, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { VERSION } from "@/lib/version";
 
@@ -18,7 +18,7 @@ const NAV = [
   { href: "/team/playbook", label: "Playbook", icon: BookOpen },
 ];
 
-export function TeamShell({ name, owner, children }: { name: string; owner: boolean; children: React.ReactNode }) {
+export function TeamShell({ name, owner, studio, children }: { name: string; owner: boolean; studio?: boolean; children: React.ReactNode }) {
   const path = usePathname();
   const on = (n: (typeof NAV)[number]) => (n.exact ? path === n.href : path === n.href || path.startsWith(n.href + "/"));
   async function logout() {
@@ -47,6 +47,11 @@ export function TeamShell({ name, owner, children }: { name: string; owner: bool
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            {studio && (
+              <a href="/dashboard/studio" className="flex h-9 items-center gap-1.5 rounded-soft px-3 text-[12.5px] text-text-muted hover:bg-[var(--surface-hover)] hover:text-text">
+                <LayoutGrid size={14} /> Studio
+              </a>
+            )}
             <span className="hidden text-[12.5px] text-text-muted sm:inline">{name}</span>
             <ThemeToggle />
             <button onClick={logout} className="flex h-9 items-center gap-1.5 rounded-soft px-3 text-[12.5px] text-text-muted hover:bg-[var(--surface-hover)] hover:text-text">

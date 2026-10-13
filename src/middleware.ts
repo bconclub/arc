@@ -1,20 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   COOKIE_NAME, STUDIO_COOKIE, TEAM_COOKIE, verifySessionToken, verifyStudioToken, studioMayOpen,
-  verifyTeamToken, teamMayOpen,
+  verifyTeamToken,
 } from "@/lib/auth";
+import { homeFor, memberMayOpen } from "@/lib/access";
 
-/** A signed team token is not enough: the member must still be active. One indexed read. */
-async function teamMemberActive(id: string): Promise<boolean> {
+/**
+ * A signed team token is not enough: the member must still be active, and what
+ * they may open is read fresh each time (their access list). One indexed read.
+ * Null means not active (or not found).
+ */
+async function teamMemberAccess(id: string): Promise<string[] | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key || !/^[0-9a-f-]{36}$/i.test(id)) return false;
+  if (!url || !key || !/^[0-9a-f-]{36}$/i.test(id)) return null;
   try {
-    const r = await fetch(`${url}/rest/v1/team_members?select=id&id=eq.${id}&active=eq.true`, {
+    const r = await fetch(`${url}/rest/v1/team_members?select=access&id=eq.${id}&active=eq.true`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store",
     });
-    return r.ok && ((await r.json()) as unknown[]).length === 1;
+    if (!r.ok) return null;
+    const rows = (await r.json()) as { access: string[] | null }[];
+    return rows.length === 1 ? rows[0].access || [] : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -78,14 +85,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard/studio", req.url));
   }
 
-  // Team login (sales): its /team pages plus the outreach tools, nothing else.
+  // Team login: only the areas the owner gave this person (lib/access.ts), nothing else.
   const memberId = await verifyTeamToken(req.cookies.get(TEAM_COOKIE)?.value);
-  if (memberId && (await teamMemberActive(memberId))) {
-    if (teamMayOpen(req.nextUrl.pathname, req.method)) return NextResponse.next();
+  const access = memberId ? await teamMemberAccess(memberId) : null;
+  if (access) {
+    if (memberMayOpen(access, req.nextUrl.pathname, req.method)) return NextResponse.next();
     if (req.nextUrl.pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "not available for this login" }, { status: 403 });
     }
-    return NextResponse.redirect(new URL("/team", req.url));
+    return NextResponse.redirect(new URL(homeFor(access), req.url));
   }
 
   if (req.nextUrl.pathname.startsWith("/api/")) {

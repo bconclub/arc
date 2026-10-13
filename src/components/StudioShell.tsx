@@ -16,8 +16,11 @@ export function RoleProvider({ role, children }: { role: Role; children: React.R
   return <RoleContext.Provider value={role}>{children}</RoleContext.Provider>;
 }
 
-/** The whole chrome for a studio login: one slim bar, no sidebar, no ARC chat. */
-export function StudioShell({ children }: { children: React.ReactNode }) {
+/**
+ * The whole chrome for a studio login: one slim bar, no sidebar, no ARC chat.
+ * A named team login shows their name, and a Sales link when they have that area too.
+ */
+export function StudioShell({ name, sales, children }: { name?: string; sales?: boolean; children: React.ReactNode }) {
   async function logout() {
     await fetch("/api/logout", { method: "POST" });
     window.location.href = "/login";
@@ -31,6 +34,10 @@ export function StudioShell({ children }: { children: React.ReactNode }) {
               <span className="h-2.5 w-2.5 rounded-full bg-[var(--brand)]" /> BCON Studio
             </a>
             <div className="flex items-center gap-2">
+              {sales && (
+                <a href="/team" className="flex h-9 items-center rounded-soft px-3 text-[12.5px] text-text-muted hover:bg-[var(--surface-hover)] hover:text-text">Sales</a>
+              )}
+              {name && <span className="hidden text-[12.5px] text-text-muted sm:inline">{name}</span>}
               <ThemeToggle />
               <button onClick={logout} className="flex h-9 items-center gap-1.5 rounded-soft px-3 text-[12.5px] text-text-muted hover:bg-[var(--surface-hover)] hover:text-text">
                 <LogOut size={14} /> Log out

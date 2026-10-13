@@ -18,12 +18,13 @@ function brandName(slug: string): string {
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
   const name = brandName(params.slug);
   const title = name ? `${name} Brand Reels · BCON` : "Brand Reels · BCON";
-  const description = `${STEPS}. Choose your reel idea, approve the script, review the visual board, then get your final reel.`;
+  // The invite comes first; the steps follow. The picture is opengraph-image.tsx (the brand's own).
+  const description = `Your reel ideas are ready. Swipe through them and pick your favourites. ${STEPS}.`;
   return {
     title,
     description,
     openGraph: { title, description, siteName: "BCON Club", type: "website" },
-    twitter: { card: "summary", title, description },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

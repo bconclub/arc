@@ -1,5 +1,6 @@
 import { hashPassword } from "@/lib/auth";
-import { forbidden, getViewer, listMembers, tdb, unauthorized } from "@/lib/team";
+import { PUBLIC_COLS, forbidden, getViewer, listMembers, tdb, unauthorized } from "@/lib/team";
+import { cleanAccess } from "@/lib/access";
 
 /**
  * The owner's Team page: every member with what they're carrying (leads owned,
@@ -48,9 +49,12 @@ export async function POST(req: Request) {
   if (!name) return Response.json({ error: "Add their name." }, { status: 400 });
   if (!/^[a-z0-9.]{2,32}$/.test(username)) return Response.json({ error: "Login name: 2 to 32 letters, digits or dots." }, { status: 400 });
   if (password.length < 8) return Response.json({ error: "Password: at least 8 characters." }, { status: 400 });
+  // Studio by default; the owner ticks more on the Team page.
+  const access = b.access === undefined ? cleanAccess(["studio"]) : cleanAccess(b.access);
+  if (!access.length) return Response.json({ error: "Give them at least one area." }, { status: 400 });
   const { data, error } = await tdb.from("team_members")
-    .insert({ name, username, password_hash: await hashPassword(password), role: "sales" })
-    .select("id,name,username,role,active,last_login_at,created_at").single();
+    .insert({ name, username, password_hash: await hashPassword(password), role: access.includes("sales") ? "sales" : "studio", access })
+    .select(PUBLIC_COLS).single();
   if (error) {
     const taken = error.code === "23505";
     return Response.json({ error: taken ? "That login name is taken." : error.message }, { status: taken ? 409 : 500 });

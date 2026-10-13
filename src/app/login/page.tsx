@@ -30,7 +30,7 @@ function LoginForm() {
     const next = params.get("next");
     router.push(
       j.role === "studio" ? (next?.startsWith("/dashboard/studio") ? next : j.home)
-      : j.role === "team" ? (next?.startsWith("/team") ? next : j.home)
+      : j.role === "team" ? (next?.startsWith("/team") || next?.startsWith("/dashboard/studio") ? next : j.home)
       : next || "/dashboard",
     );
     router.refresh();

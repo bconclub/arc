@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { OpsChat } from "@/components/ops/OpsChat";
 import { StudioShell, RoleProvider } from "@/components/StudioShell";
 import { COOKIE_NAME, verifySessionToken } from "@/lib/auth";
+import { getViewer } from "@/lib/team";
 
 /**
  * The shell is the sidebar and the page, nothing else.
@@ -18,10 +19,15 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Middleware already let only the owner or a studio login through. Anyone who
-  // is not the owner is a studio login: Studio chrome only, no sidebar, no ARC chat.
+  // Middleware already let only the owner, the shared studio login, or a team
+  // member with Studio access through. Anyone who is not the owner gets Studio
+  // chrome only: no sidebar, no ARC chat. A member who also has Sales gets a link to it.
   const owner = await verifySessionToken(cookies().get(COOKIE_NAME)?.value);
-  if (!owner) return <StudioShell>{children}</StudioShell>;
+  if (!owner) {
+    const v = await getViewer().catch(() => null);
+    const member = v?.kind === "team" ? v.member : null;
+    return <StudioShell name={member?.name} sales={!!member?.access.includes("sales")}>{children}</StudioShell>;
+  }
 
   return (
     <RoleProvider role="owner">

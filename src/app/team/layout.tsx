@@ -10,7 +10,8 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
   const viewer = await getViewer();
   if (!viewer) redirect("/login?next=/team");
   return (
-    <TeamShell name={viewer.kind === "team" ? viewer.member.name : "Owner"} owner={viewer.kind === "owner"}>
+    <TeamShell name={viewer.kind === "team" ? viewer.member.name : "Owner"} owner={viewer.kind === "owner"}
+      studio={viewer.kind === "team" && viewer.member.access.includes("studio")}>
       {children}
     </TeamShell>
   );
