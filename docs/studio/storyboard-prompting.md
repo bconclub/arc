@@ -67,13 +67,13 @@ stock-photo smiles, any text or lettering, invented logos or packaging.
 
 ## 3. Workflow
 
-1. **Known shapes and sizes are fixed.** Spell out the geometry and real size (cm) of every product and pack in block B, not just its name, and keep a pack identical wherever it appears. A name alone lets the model guess, and it guesses wrong (Mithai v1 drew kaju katli as triangles; Cravio v1 drew coffee bean dragées as big round balls).
+1. **Known shapes and sizes are fixed.** Spell out the geometry and real size (cm) of every product and pack in block B, not just its name. A name alone lets the model guess, and it guesses wrong (Mithai v1 drew kaju katli as triangles; Cravio v1 drew coffee bean dragées as big round balls).
 2. **Intake facts first.** Write block B only from the brand's real photos or their own words.
    - If their posts are AI renders, they are not proof of what the product looks like. Cravio's reels showed big round balls; the real product is a small oval coffee bean dragée.
    - If unsure, ask the client before making anything.
 3. **One approved image first.** Make storyboard 1, check it (section 4), and get Z's OK on the look before making the rest.
 4. **Same chat for the whole brand.** Upload the approved storyboard as the reference for the rest ("same product, people, light and grade as the reference").
-5. **Fix with small edits.** Change one thing per retry ("make the dragées smaller and oval, keep everything else") instead of rewriting the prompt.
+5. **Fix only what was flagged.** Change exactly what Z (or the check) named and keep everything else as it was ("make the kaju katli long thin diamonds, keep everything else"). Do not "improve" other parts of an approved frame.
 6. **Export:**
    - Get the image out of ChatGPT. Use a download if the browser allows it; otherwise draw it full-width in thirds, screenshot each third, and stitch the thirds back on the PC (scratchpad `imgtool/stitch.js`).
    - Compress the stitched image to a 1080-wide JPEG.
@@ -89,7 +89,7 @@ Reject and regenerate if any of these fail:
 |---|---|
 | Format | One image, six tall 9:16 frames, 3x2, cream margins, no text |
 | Product truth | Shape, size and colour match block B in every frame where it appears |
-| Scale and sameness | Every product and pack is true to real size against hands and faces, and the SAME size in every frame. A box the brand sells is drawn identical (size, shape, colour, lid) wherever it appears; boxes and pieces never grow or shrink between frames. Put real sizes in cm in block B |
+| Scale | Every product and pack is true to real size against hands and faces. The same piece or the same box never grows or shrinks between frames. Put real sizes in cm in block B |
 | Product geometry | Every known product is its real shape (kaju katli a flat diamond, laddu a round ball, a coffee bean dragée a small oval). Wrong geometry is an automatic reject: we know the shapes, the model does not get to invent them |
 | Real photo | Would pass as a phone or film photo at a glance: grain, real skin, imperfect surfaces |
 | Hands and bodies | Five fingers, natural grip, no melted or extra limbs |
