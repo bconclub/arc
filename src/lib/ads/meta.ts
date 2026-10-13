@@ -250,6 +250,64 @@ export async function fetchMetaDaily(accountId: string, since: string, until: st
   }));
 }
 
+/** One campaign or ad over a window: what it spent and what it brought. */
+export type MetaRow = {
+  id: string;
+  name: string;
+  campaign: string | null;
+  status: string;
+  objective: string | null;
+  spend: number;
+  impressions: number;
+  /** link clicks, not all clicks: the ones that reach the site or WhatsApp */
+  clicks: number;
+  leads: number;
+  /** WhatsApp conversations started (click-to-WhatsApp campaigns) */
+  conversations: number;
+};
+
+/**
+ * Spend and results per campaign and per ad for a date range, with each one's
+ * current status. Feeds the investor Ads tab snapshot. Two insights calls and
+ * two status calls, all read-only.
+ */
+export async function fetchMetaBreakdown(accountId: string, since: string, until: string): Promise<{ campaigns: MetaRow[]; ads: MetaRow[] }> {
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) throw new Error("META_ACCESS_TOKEN is not set.");
+  const act = actId(accountId);
+  const range = JSON.stringify({ since, until });
+  const fields = "campaign_id,campaign_name,ad_id,ad_name,objective,spend,impressions,inline_link_clicks,actions";
+  const convo = (a: Action[] | undefined) =>
+    num(a?.find((x) => x.action_type === "onsite_conversion.messaging_conversation_started_7d")?.value);
+
+  const [campIns, adIns, campMeta, adMeta] = await Promise.all([
+    call(`${act}/insights`, { level: "campaign", time_range: range, fields, limit: "200" }, token),
+    call(`${act}/insights`, { level: "ad", time_range: range, fields, limit: "500" }, token),
+    call(`${act}/campaigns`, { fields: "id,effective_status", limit: "200" }, token).catch(() => ({ data: [] })),
+    call(`${act}/ads`, { fields: "id,effective_status", limit: "500" }, token).catch(() => ({ data: [] })),
+  ]);
+  const status = (res: { data?: Record<string, string>[] }) =>
+    new Map((res.data ?? []).map((r) => [r.id, r.effective_status ?? ""]));
+  const campStatus = status(campMeta), adStatus = status(adMeta);
+
+  const row = (r: Record<string, unknown>, level: "campaign" | "ad"): MetaRow => ({
+    id: String(level === "ad" ? r.ad_id : r.campaign_id),
+    name: String((level === "ad" ? r.ad_name : r.campaign_name) ?? "Unnamed"),
+    campaign: level === "ad" ? String(r.campaign_name ?? "") || null : null,
+    status: (level === "ad" ? adStatus : campStatus).get(String(level === "ad" ? r.ad_id : r.campaign_id)) ?? "",
+    objective: (r.objective as string) ?? null,
+    spend: num(r.spend),
+    impressions: num(r.impressions),
+    clicks: num(r.inline_link_clicks),
+    leads: leadsOf(r.actions as Action[] | undefined),
+    conversations: convo(r.actions as Action[] | undefined),
+  });
+  return {
+    campaigns: ((campIns.data ?? []) as Record<string, unknown>[]).map((r) => row(r, "campaign")),
+    ads: ((adIns.data ?? []) as Record<string, unknown>[]).map((r) => row(r, "ad")),
+  };
+}
+
 export type MetaRunningAd = {
   id: string;
   name: string;

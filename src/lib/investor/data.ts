@@ -9,6 +9,7 @@
 import { unstable_cache } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 import { adAccountsByBrand, fetchMetaDaily, fetchMetaRunningAds, type MetaRunningAd } from "@/lib/ads/meta";
+import { refreshAdsSnapshot } from "@/lib/investor/ads-snapshot";
 import { isTestTarget } from "@/lib/outreach-workflow";
 import {
   fetchProxeDemoNotes, fetchProxeFunnel, fetchProxeLeads, fetchProxeSales, fetchProxeTraction, syncProxeDemos,
@@ -556,6 +557,9 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
   // ── ads desk: the routine's newest snapshot, 1 Oct onwards ──
   let adsDesk: InvestorOverview["adsDesk"];
   {
+    // Rebuild the report from Meta + PROXe when it is over six hours old (never throws).
+    const refresh = await refreshAdsSnapshot(PRODUCT, ADS_FROM);
+    if (!refresh.refreshed && refresh.reason !== "fresh") console.error("[investor] ads report not refreshed:", refresh.reason);
     const [snapRes, dailyRes] = await Promise.all([
       supabaseAdmin.from("ad_reports").select("taken_at,since,until,source,payload")
         .eq("product", PRODUCT).order("taken_at", { ascending: false }).limit(1),
