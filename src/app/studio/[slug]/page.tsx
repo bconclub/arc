@@ -55,6 +55,8 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   // The full-screen viewer: one set of images (an idea's scenes, the visual board) and where to start.
   const [viewer, setViewer] = useState<{ images: ViewerImage[]; start: number; label: string } | null>(null);
   const [profile, setProfile] = useState(false);
+  // Once we build on one idea the others step aside, but the client can always open them again.
+  const [ideasOpen, setIdeasOpen] = useState(false);
   const tone = useLogoTone(board?.brand.logo_url);
   const session = useRef("");
   const opened = useRef(false);
@@ -223,7 +225,12 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
   const byId = new Map(board.items.map((i) => [i.id, i]));
   // Room at the bottom for the tab bar, plus the send strip only while it shows.
   const showStrip = !!name && actionable.length > 0 && !allSent;
-  const showIdeas = !v.built; // once we are building on an idea, the others step aside
+  const showIdeas = !v.built || ideasOpen; // once we are building on an idea, the others step aside until asked for
+  /** Tap a step in the timeline: jump to it. Ideas opens the full deck again. */
+  const goStep = (key: string) => {
+    if (key === "idea") setIdeasOpen(true);
+    setTimeout(() => document.getElementById(`step-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
   const yesIdeas = v.ideas.filter((i) => picks[i.id]?.choice === "like");
 
   return (
@@ -278,7 +285,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       {/* ── Where the order is ── */}
       <section className="mx-auto max-w-[1200px] px-4 pt-8 lg:px-8">
-        <StepTimeline steps={STEPS} current={stepIdx} compact />
+        <StepTimeline steps={STEPS} current={stepIdx} compact onStep={goStep} />
 
         <h2 className="mt-10 max-w-[24ch] text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[42px]">
           {v.stage === "idea" ? `Which ideas excite you?` : v.stage === "script" ? "Your script is ready" : v.stage === "board" ? "Your visual board is ready" : "Your reel is ready"}
@@ -328,7 +335,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       {/* ── 04 Final reel ── */}
       {v.video?.url && (
-        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+        <section id="step-final" className="mx-auto max-w-[1200px] scroll-mt-4 px-4 pt-12 lg:px-8">
           <h3 className="mb-4 text-[22px] font-semibold tracking-tight">Final reel</h3>
           <div className="flex flex-col items-start gap-4 sm:flex-row">
             <video src={v.video.url} controls playsInline className="aspect-[9/16] w-full max-w-[360px] rounded-panel bg-black object-contain" />
@@ -344,7 +351,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       {/* ── 03 Visual board ── */}
       {v.frames.length > 0 && (
-        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+        <section id="step-board" className="mx-auto max-w-[1200px] scroll-mt-4 px-4 pt-12 lg:px-8">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
             <h3 className="text-[22px] font-semibold tracking-tight">Visual board</h3>
             <span className={`rounded-pill px-3 py-1 text-[12.5px] font-medium ${changesLeft ? "bg-surface text-text" : "bg-[rgba(245,158,11,0.14)] text-accent-orange"}`}>
@@ -373,7 +380,7 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
 
       {/* ── 02 Script ── */}
       {v.script && (
-        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+        <section id="step-script" className="mx-auto max-w-[1200px] scroll-mt-4 px-4 pt-12 lg:px-8">
           <h3 className="mb-4 text-[22px] font-semibold tracking-tight">Script</h3>
           <article className={`rounded-panel border p-5 lg:p-6 ${picks[v.script.id]?.choice === "like" ? "border-[var(--brand-line)]" : "border-[var(--border)]"} bg-surface`}>
             {v.script.title && <p className="mb-2 text-[13px] text-text-muted">{v.script.title}</p>}
@@ -391,17 +398,24 @@ export default function ReelOrder({ params, searchParams }: { params: { slug: st
       )}
 
       {/* ── 01 Ideas ── */}
-      {v.built ? (
-        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
+      {v.built && (
+        <section id={ideasOpen ? undefined : "step-idea"} className="mx-auto max-w-[1200px] scroll-mt-4 px-4 pt-12 lg:px-8">
           <h3 className="mb-3 text-[22px] font-semibold tracking-tight">Your idea</h3>
           <div className="rounded-panel border border-[var(--border)] bg-surface p-5">
             <p className="text-[18px] font-semibold">{v.built.title}</p>
             {v.built.body && <p className="mt-1 text-[14.5px] text-text-muted">{v.built.body}</p>}
           </div>
+          {!ideasOpen && v.ideas.length > 1 && (
+            <button onClick={() => goStep("idea")}
+              className="mt-3 flex h-11 items-center gap-2 rounded-soft border border-[var(--border)] px-4 text-[14px] font-medium hover:bg-[var(--surface-hover)]">
+              See all the ideas again
+            </button>
+          )}
         </section>
-      ) : showIdeas && (
-        <section className="mx-auto max-w-[1200px] px-4 pt-12 lg:px-8">
-          <h3 className="mb-1 text-[22px] font-semibold tracking-tight">The ideas</h3>
+      )}
+      {showIdeas && (
+        <section id="step-idea" className="mx-auto max-w-[1200px] scroll-mt-4 px-4 pt-12 lg:px-8">
+          <h3 className="mb-1 text-[22px] font-semibold tracking-tight">{v.built ? "All the ideas" : "The ideas"}</h3>
           <p className="mb-5 text-[14px] text-text-muted">Made from your products.</p>
           {v.ideas.length === 0 && <p className="text-[14px] text-text-muted">Your ideas are being made. We will send you this link again when they are ready.</p>}
           <IdeaDeck
