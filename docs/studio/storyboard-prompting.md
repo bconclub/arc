@@ -67,7 +67,7 @@ stock-photo smiles, any text or lettering, invented logos or packaging.
 
 ## 3. Workflow
 
-1. **Known shapes are fixed.** Spell out the geometry of every product in block B, not just its name. A name alone lets the model guess, and it guesses wrong (Mithai v1 drew kaju katli as triangles; Cravio v1 drew coffee bean dragées as big round balls).
+1. **Known shapes and sizes are fixed.** Spell out the geometry and real size (cm) of every product and pack in block B, not just its name, and keep a pack identical wherever it appears. A name alone lets the model guess, and it guesses wrong (Mithai v1 drew kaju katli as triangles; Cravio v1 drew coffee bean dragées as big round balls).
 2. **Intake facts first.** Write block B only from the brand's real photos or their own words.
    - If their posts are AI renders, they are not proof of what the product looks like. Cravio's reels showed big round balls; the real product is a small oval coffee bean dragée.
    - If unsure, ask the client before making anything.
@@ -89,6 +89,7 @@ Reject and regenerate if any of these fail:
 |---|---|
 | Format | One image, six tall 9:16 frames, 3x2, cream margins, no text |
 | Product truth | Shape, size and colour match block B in every frame where it appears |
+| Scale and sameness | Every product and pack is true to real size against hands and faces, and the SAME size in every frame. A box the brand sells is drawn identical (size, shape, colour, lid) wherever it appears; boxes and pieces never grow or shrink between frames. Put real sizes in cm in block B |
 | Product geometry | Every known product is its real shape (kaju katli a flat diamond, laddu a round ball, a coffee bean dragée a small oval). Wrong geometry is an automatic reject: we know the shapes, the model does not get to invent them |
 | Real photo | Would pass as a phone or film photo at a glance: grain, real skin, imperfect surfaces |
 | Hands and bodies | Five fingers, natural grip, no melted or extra limbs |
