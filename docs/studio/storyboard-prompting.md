@@ -24,8 +24,9 @@ bottom. Every frame is a real photograph. No text, numbers, captions, logos or p
 [B] PRODUCT TRUTH  (written from real photos or the client's own words, never from their AI renders)
 For EVERY product that appears: exact geometry (shape, outline, thickness), size in cm, colour,
 surface, how it sits (flat, stacked, in rows) and how it is held or eaten. The variants and how
-they differ visually. Example: "kaju katli: flat, thin (5-6 mm) DIAMOND / RHOMBUS pieces, 3-4 cm
-across, pale cream with silver varq, laid flat in neat rows; never triangles, wedges or stacks".
+they differ visually. Example: "kaju katli: flat, thin (5-6 mm) ELONGATED DIAMOND pieces about twice as
+long as wide, 4-5 cm long, pale cream with silver varq, laid flat in neat rows or a star; never
+triangles, wedges, squares or stacks".
 
 [C] LOOK  (the brand's camera and grade, fixed for the whole board)
 Real candid photograph, not a render. Shot on <35mm film, Kodak Portra 400 | an iPhone>, natural
