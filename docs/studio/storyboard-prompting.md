@@ -22,8 +22,10 @@ Storyboard for a vertical Instagram reel: ONE image containing SIX tall vertical
 bottom. Every frame is a real photograph. No text, numbers, captions, logos or packaging anywhere.
 
 [B] PRODUCT TRUTH  (written from real photos or the client's own words, never from their AI renders)
-<what it is, size in cm, shape, surface, colour, how it is held or eaten; the variants and how
-they differ visually>
+For EVERY product that appears: exact geometry (shape, outline, thickness), size in cm, colour,
+surface, how it sits (flat, stacked, in rows) and how it is held or eaten. The variants and how
+they differ visually. Example: "kaju katli: flat, thin (5-6 mm) DIAMOND / RHOMBUS pieces, 3-4 cm
+across, pale cream with silver varq, laid flat in neat rows; never triangles, wedges or stacks".
 
 [C] LOOK  (the brand's camera and grade, fixed for the whole board)
 Real candid photograph, not a render. Shot on <35mm film, Kodak Portra 400 | an iPhone>, natural
@@ -64,18 +66,19 @@ stock-photo smiles, any text or lettering, invented logos or packaging.
 
 ## 3. Workflow
 
-1. **Intake facts first.** Write block B only from the brand's real photos or their own words.
+1. **Known shapes are fixed.** Spell out the geometry of every product in block B, not just its name. A name alone lets the model guess, and it guesses wrong (Mithai v1 drew kaju katli as triangles; Cravio v1 drew coffee bean dragées as big round balls).
+2. **Intake facts first.** Write block B only from the brand's real photos or their own words.
    - If their posts are AI renders, they are not proof of what the product looks like. Cravio's reels showed big round balls; the real product is a small oval coffee bean dragée.
    - If unsure, ask the client before making anything.
-2. **One approved image first.** Make storyboard 1, check it (section 4), and get Z's OK on the look before making the rest.
-3. **Same chat for the whole brand.** Upload the approved storyboard as the reference for the rest ("same product, people, light and grade as the reference").
-4. **Fix with small edits.** Change one thing per retry ("make the dragées smaller and oval, keep everything else") instead of rewriting the prompt.
-5. **Export:**
+3. **One approved image first.** Make storyboard 1, check it (section 4), and get Z's OK on the look before making the rest.
+4. **Same chat for the whole brand.** Upload the approved storyboard as the reference for the rest ("same product, people, light and grade as the reference").
+5. **Fix with small edits.** Change one thing per retry ("make the dragées smaller and oval, keep everything else") instead of rewriting the prompt.
+6. **Export:**
    - Get the image out of ChatGPT. Use a download if the browser allows it; otherwise draw it full-width in thirds, screenshot each third, and stitch the thirds back on the PC (scratchpad `imgtool/stitch.js`).
    - Compress the stitched image to a 1080-wide JPEG.
    - Upload it to storage `studio/<brand>/boards/`.
    - Attach it to the idea.
-6. **Write house notes on the board** for anything done differently from this file, so the next editor knows.
+7. **Write house notes on the board** for anything done differently from this file, so the next editor knows.
 
 ## 4. The check (every storyboard, before it goes on a board)
 
@@ -85,6 +88,7 @@ Reject and regenerate if any of these fail:
 |---|---|
 | Format | One image, six tall 9:16 frames, 3x2, cream margins, no text |
 | Product truth | Shape, size and colour match block B in every frame where it appears |
+| Product geometry | Every known product is its real shape (kaju katli a flat diamond, laddu a round ball, a coffee bean dragée a small oval). Wrong geometry is an automatic reject: we know the shapes, the model does not get to invent them |
 | Real photo | Would pass as a phone or film photo at a glance: grain, real skin, imperfect surfaces |
 | Hands and bodies | Five fingers, natural grip, no melted or extra limbs |
 | Consistency | Same people, clothes, place and grade across all six frames |
