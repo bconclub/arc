@@ -7,7 +7,8 @@ import { brandBySlug, db, signPaths } from "@/lib/studio";
 // it. Only for a board whose share link is switched on, and only what the client
 // will see anyway (hidden items never appear).
 export const alt = "Your brand reel ideas";
-export const size = { width: 1200, height: 630 };
+// 900x473 keeps the PNG well under WhatsApp's preview size limit (1200x630 came out at 770 KB).
+export const size = { width: 900, height: 473 };
 export const contentType = "image/png";
 export const revalidate = 300;
 
@@ -38,23 +39,23 @@ export default async function Image({ params }: { params: { slug: string } }) {
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: dark, color: "#fff" }}>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "64px 56px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "44px 40px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
             {logo && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="" width={120} height={120} style={{ borderRadius: 20, objectFit: "contain", background: "#F2EBDD" }} />
+              <img src={logo} alt="" width={88} height={88} style={{ borderRadius: 16, objectFit: "contain", background: "#F2EBDD" }} />
             )}
-            <div style={{ display: "flex", fontSize: 64, fontWeight: 700, letterSpacing: -2 }}>{name}</div>
+            <div style={{ display: "flex", fontSize: 46, fontWeight: 700, letterSpacing: -1.5 }}>{name}</div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "flex", fontSize: 48, fontWeight: 700, lineHeight: 1.1 }}>Your reel ideas are ready</div>
-            <div style={{ display: "flex", fontSize: 28, color: accent }}>Swipe through them and pick your favourites</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", fontSize: 36, fontWeight: 700, lineHeight: 1.1 }}>Your reel ideas are ready</div>
+            <div style={{ display: "flex", fontSize: 21, color: accent }}>Swipe through them and pick your favourites</div>
           </div>
-          <div style={{ display: "flex", fontSize: 22, color: "rgba(255,255,255,0.6)" }}>BCON Club · Brand Reels</div>
+          <div style={{ display: "flex", fontSize: 16, color: "rgba(255,255,255,0.6)" }}>BCON Club · Brand Reels</div>
         </div>
         {board && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={board} alt="" width={532} height={630} style={{ objectFit: "cover" }} />
+          <img src={board} alt="" width={400} height={473} style={{ objectFit: "cover" }} />
         )}
       </div>
     ),
