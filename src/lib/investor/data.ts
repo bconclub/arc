@@ -865,20 +865,20 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
         const out = allExpenses.filter((e) => !roundStart || e.spent_on >= roundStart).reduce((t, e) => t + Number(e.amount), 0);
         const held = deposits.filter((e) => !roundStart || e.spent_on >= roundStart).reduce((t, e) => t + Number(e.amount), 0);
         // Customer money reaches the bank only when Dodo pays it out; until then it is in Dodo.
-        const rate = sales?.dodo.inrPerUsd ?? null;
+        const rate = sales?.dodo?.inrPerUsd ?? null;
         const payoutsIn = rate
-          ? (sales?.dodo.payouts ?? []).filter((x) => !roundStart || x.at.slice(0, 10) >= roundStart).reduce((t, x) => t + x.usd * rate, 0)
+          ? (sales?.dodo?.payouts ?? []).filter((x) => !roundStart || x.at.slice(0, 10) >= roundStart).reduce((t, x) => t + x.usd * rate, 0)
           : 0;
         return { balance: roundReceived + payoutsIn - out - held, raised: roundReceived, payouts: Math.round(payoutsIn), spent: out, held, since: roundStart };
       })(),
-      revenue: sales
+      revenue: sales?.revenue
         ? {
             total: sales.revenue.total,
             payments: sales.revenue.payments,
             sinceRound: sales.revenue.items.filter((p) => !roundStart || p.at.slice(0, 10) >= roundStart).reduce((t, p) => t + p.amount, 0),
           }
         : null,
-      dodo: sales
+      dodo: sales?.dodo
         ? {
             balanceUsd: sales.dodo.balanceUsd,
             balanceInr: sales.dodo.inrPerUsd ? Math.round(sales.dodo.balanceUsd * sales.dodo.inrPerUsd) : null,
