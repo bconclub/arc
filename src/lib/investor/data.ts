@@ -76,8 +76,16 @@ export type InvestorOverview = {
     runwayLeft: number | null;
     /** average daily burn over the selected window */
     dailyBurn: number;
-    /** the company's cash right now, whatever the window: round money in + sales in - everything spent since */
-    bank: { balance: number; raised: number; sales: number; spent: number; since: string | null };
+    /**
+     * The company's bank cash right now, whatever the window: round money in +
+     * Dodo payouts received - everything spent - deposits held, since the round
+     * opened. Customer payments are not here: they stay in Dodo until paid out.
+     */
+    bank: { balance: number; raised: number; payouts: number; spent: number; held: number; since: string | null };
+    /** every rupee customers have paid, all time and since the round opened */
+    revenue: { total: number; payments: number; sinceRound: number } | null;
+    /** money sitting in Dodo (customer payments not yet paid out), before Dodo's fees */
+    dodo: { balanceUsd: number; balanceInr: number | null; settledUsd: number; payoutsUsd: number; inrPerUsd: number | null; lastPayout: string | null } | null;
     /** refundable deposits paid out: not spend, but not in the bank either */
     deposits: { total: number; items: { vendor: string | null; description: string | null; amount: number; on: string }[] };
   };
@@ -855,10 +863,31 @@ export async function buildInvestorOverview(viewer: Viewer, days: number): Promi
       dailyBurn,
       bank: (() => {
         const out = allExpenses.filter((e) => !roundStart || e.spent_on >= roundStart).reduce((t, e) => t + Number(e.amount), 0);
-        const salesIn = (sales?.items ?? []).filter((p) => !roundStart || p.at.slice(0, 10) >= roundStart).reduce((t, p) => t + p.amount, 0);
         const held = deposits.filter((e) => !roundStart || e.spent_on >= roundStart).reduce((t, e) => t + Number(e.amount), 0);
-        return { balance: roundReceived + salesIn - out - held, raised: roundReceived, sales: salesIn, spent: out, since: roundStart };
+        // Customer money reaches the bank only when Dodo pays it out; until then it is in Dodo.
+        const rate = sales?.dodo.inrPerUsd ?? null;
+        const payoutsIn = rate
+          ? (sales?.dodo.payouts ?? []).filter((x) => !roundStart || x.at.slice(0, 10) >= roundStart).reduce((t, x) => t + x.usd * rate, 0)
+          : 0;
+        return { balance: roundReceived + payoutsIn - out - held, raised: roundReceived, payouts: Math.round(payoutsIn), spent: out, held, since: roundStart };
       })(),
+      revenue: sales
+        ? {
+            total: sales.revenue.total,
+            payments: sales.revenue.payments,
+            sinceRound: sales.revenue.items.filter((p) => !roundStart || p.at.slice(0, 10) >= roundStart).reduce((t, p) => t + p.amount, 0),
+          }
+        : null,
+      dodo: sales
+        ? {
+            balanceUsd: sales.dodo.balanceUsd,
+            balanceInr: sales.dodo.inrPerUsd ? Math.round(sales.dodo.balanceUsd * sales.dodo.inrPerUsd) : null,
+            settledUsd: sales.dodo.settledUsd,
+            payoutsUsd: sales.dodo.payoutsUsd,
+            inrPerUsd: sales.dodo.inrPerUsd,
+            lastPayout: sales.dodo.payouts.map((x) => x.at).sort().pop() ?? null,
+          }
+        : null,
       deposits: {
         total: deposits.reduce((t, e) => t + Number(e.amount), 0),
         items: deposits.map((e) => ({ vendor: e.vendor, description: e.description, amount: Number(e.amount), on: e.spent_on })),

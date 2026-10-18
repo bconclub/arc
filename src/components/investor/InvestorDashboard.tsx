@@ -1029,7 +1029,7 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text)]">In the bank</p>
                 <p className="mt-1 text-[34px] font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[40px]">{money(Math.round(m.bank.balance))}</p>
                 <p className="mt-1.5 text-[12px] tabular-nums text-text-muted">
-                  {moneyShort(m.bank.raised)} raised{m.bank.sales ? ` + ${moneyShort(m.bank.sales)} sales` : ""} − {moneyShort(m.bank.spent)} spent{m.bank.since ? ` since ${fmtDate(m.bank.since)}` : ""}
+                  {moneyShort(m.bank.raised)} raised{m.bank.payouts ? ` + ${moneyShort(m.bank.payouts)} Dodo payouts` : ""} − {moneyShort(m.bank.spent)} spent{m.bank.held ? ` − ${moneyShort(m.bank.held)} deposits held` : ""}{m.bank.since ? ` since ${fmtDate(m.bank.since)}` : ""}
                 </p>
               </div>
               <div className="p-4 sm:p-5">
@@ -1038,6 +1038,39 @@ export function InvestorDashboard({ role, viewAs = null }: { role: "owner" | "in
                 <p className="mt-1.5 text-[12px] tabular-nums text-text-muted">{f.salesCount ? `${moneyShort(f.sales ?? 0)} came in from sales` : "money out of the bank in this window"}</p>
               </div>
             </section>
+            {/* Revenue so far, and the customer money that is still sitting in Dodo (not withdrawn) */}
+            {(m.revenue || m.dodo) && (
+              <section className="grid gap-2 sm:grid-cols-3">
+                {m.revenue && (
+                  <div className="rounded-panel bg-surface p-4">
+                    <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-text-muted">Revenue so far</p>
+                    <p className="mt-1 text-[24px] font-semibold leading-none tabular-nums text-accent-green">{money(Math.round(m.revenue.total))}</p>
+                    <p className="mt-1.5 text-[12px] tabular-nums text-text-muted">
+                      {m.revenue.payments} customer payment{m.revenue.payments === 1 ? "" : "s"}, all time{m.bank.since ? ` · ${moneyShort(m.revenue.sinceRound)} since ${fmtDate(m.bank.since)}` : ""}
+                    </p>
+                  </div>
+                )}
+                {m.dodo && (
+                  <div className="rounded-panel bg-surface p-4">
+                    <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-text-muted">In Dodo</p>
+                    <p className="mt-1 text-[24px] font-semibold leading-none tabular-nums text-text">
+                      ${m.dodo.balanceUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <p className="mt-1.5 text-[12px] tabular-nums text-text-muted">
+                      {m.dodo.balanceInr != null ? `about ${moneyShort(m.dodo.balanceInr)} · ` : ""}kept in Dodo and reinvested, before Dodo&apos;s fees
+                      {m.dodo.lastPayout ? ` · last payout ${fmtDate(m.dodo.lastPayout)}` : ""}
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-panel bg-surface p-4">
+                  <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-text-muted">Bank + Dodo</p>
+                  <p className="mt-1 text-[24px] font-semibold leading-none tabular-nums text-text">{money(Math.round(m.bank.balance + (m.dodo?.balanceInr ?? 0)))}</p>
+                  <p className="mt-1.5 text-[12px] tabular-nums text-text-muted">
+                    all cash available{m.deposits.total ? `, plus ${moneyShort(m.deposits.total)} in refundable deposits` : ""}
+                  </p>
+                </div>
+              </section>
+            )}
             <div className="grid items-start gap-4 md:grid-cols-2">
             {/* Money: in, then out by department, then by kind */}
             <Card title="Money" icon={Wallet} sub={RANGE_LABEL[range]} className="md:sticky md:top-20">

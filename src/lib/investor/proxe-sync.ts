@@ -188,6 +188,21 @@ export type ProxeSales = {
   last: string | null;
   /** each succeeded payment, newest first, for the feed */
   items: { at: string; amount: number; customer: string | null }[];
+  /** every rupee customers paid, card checks included: what has come in, all time */
+  revenue: { total: number; payments: number; items: { at: string; amount: number }[] };
+  /**
+   * What sits in Dodo. Payments settle there in USD; payouts move money to the
+   * bank. Balance = settled - paid out, before Dodo's own fees, which Dodo
+   * deducts at payout and the API does not expose.
+   */
+  dodo: {
+    settledUsd: number;
+    payoutsUsd: number;
+    balanceUsd: number;
+    /** rupees per dollar implied by our own settled payments */
+    inrPerUsd: number | null;
+    payouts: { at: string; usd: number; status: string }[];
+  };
   /** when each person a checkout link reached first opened one, paid or not */
   linkFirsts: string[];
   /** subscriptions billing right now */
@@ -224,7 +239,7 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
   const base = (process.env.DODO_ENVIRONMENT ?? "").includes("test")
     ? "https://test.dodopayments.com"
     : "https://live.dodopayments.com";
-  type P = { status?: string; total_amount?: number; currency?: string; created_at?: string; customer?: { customer_id?: string; email?: string; name?: string } };
+  type P = { payment_id?: string; status?: string; total_amount?: number; currency?: string; created_at?: string; customer?: { customer_id?: string; email?: string; name?: string } };
   const all: P[] = [];
   for (let page = 0; page < 20; page++) {
     const res = await fetch(`${base}/payments?page_size=100&page_number=${page}`, {
@@ -284,6 +299,40 @@ export async function fetchProxeSales(): Promise<ProxeSales | null> {
       .map((p) => ({ at: p.created_at ?? "", amount: Number(p.total_amount ?? 0) / 100, customer: p.customer?.name?.trim() || null }))
       .filter((p) => p.at)
       .sort((a, b) => b.at.localeCompare(a.at)),
+    revenue: {
+      total: succeeded.reduce((t, p) => t + Number(p.total_amount ?? 0), 0) / 100,
+      payments: succeeded.length,
+      items: succeeded.filter((p) => p.created_at).map((p) => ({ at: p.created_at!, amount: Number(p.total_amount ?? 0) / 100 })),
+    },
+    dodo: await (async () => {
+      const get = async (path: string) => {
+        const r = await fetch(`${base}/${path}`, { headers: { Authorization: `Bearer ${key}` }, cache: "no-store" });
+        if (!r.ok) throw new Error(`Dodo answered ${r.status}`);
+        return r.json();
+      };
+      // The list omits the settled amount; each payment's detail carries it (a handful of calls).
+      const ids = succeeded.map((p) => p.payment_id).filter(Boolean) as string[];
+      const details = await Promise.all(ids.map((id) => get(`payments/${id}`).catch(() => null)));
+      let settled = 0, inr = 0, usdForRate = 0;
+      for (const d of details as { settlement_amount?: number; settlement_currency?: string; total_amount?: number; currency?: string }[]) {
+        if (!d || (d.settlement_currency ?? "USD") !== "USD") continue;
+        settled += Number(d.settlement_amount ?? 0) / 100;
+        if ((d.currency ?? "INR") === "INR" && Number(d.total_amount) > 100 * 100) { inr += Number(d.total_amount) / 100; usdForRate += Number(d.settlement_amount ?? 0) / 100; }
+      }
+      type Pay = { status?: string; amount?: number; fee?: number; currency?: string; created_at?: string };
+      const payouts = (((await get("payouts?page_size=100").catch(() => ({ items: [] }))) as { items?: Pay[] }).items ?? [])
+        .filter((x) => x.status !== "failed")
+        // What left Dodo: the amount sent plus the payout fee.
+        .map((x) => ({ at: x.created_at ?? "", usd: (Number(x.amount ?? 0) + Number(x.fee ?? 0)) / 100, status: x.status ?? "" }));
+      const out = payouts.reduce((t, x) => t + x.usd, 0);
+      return {
+        settledUsd: Math.round(settled * 100) / 100,
+        payoutsUsd: Math.round(out * 100) / 100,
+        balanceUsd: Math.round((settled - out) * 100) / 100,
+        inrPerUsd: usdForRate ? Math.round((inr / usdForRate) * 100) / 100 : null,
+        payouts,
+      };
+    })(),
   };
 }
 
