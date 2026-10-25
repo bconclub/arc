@@ -30,6 +30,16 @@ Seedance 2.5, 9:16: cost = floor(perFrame x (24 x seconds + 1)) / 1000 x rate, r
 - The formula lives in the node's `price_badge.expr` (jsonata) in `/object_info`; billing history in
   `/billing/events?page=1&limit=100` (`params.credits_used`, 211 credits = $1).
 
+## First Seedance 2.5 test (2026-10-25)
+One talking shot, 480p, 4s, still + Cass's line as `reference_audios.audio_1`, generate_audio on: **$0.59**, exactly the
+formula price. Mouth shapes follow the line, the gesture lands on cue, the face holds. Seedance returns its own audio
+track (32 kHz); compare it with the real VO laid over the picture before choosing.
+**Founder note on the still used:** the round-6 clinic "looks really bad"; realism must not mean a shabby business.
+Keep the business looking good (clean, well-kept, professional) and get realism from the camera, the person and
+honest light instead.
+
 ## Queueing gotcha
-Queueing a prompt over the raw API without the page's auth failed "Please login first" (not billed). Queue through the
-ComfyUI page (`comfyAPI.api.api.queuePrompt(0, ...)`), never `queuePrompt(-1, ...)` (silently dropped on Cloud).
+Queueing a prompt over the raw API without the page's auth failed "Please login first" (not billed). Load the API prompt into
+the canvas with `app.loadApiJson(prompt)` and run `app.queuePrompt(0)`: that path carries the sign-in. Never
+`queuePrompt(-1, ...)` (silently dropped on Cloud). Results: `/api/jobs?limit=1` for status, `/api/history_v2/<id>` for
+outputs (plain `/history` is not available on Cloud), `/view?filename=...&type=output` to download.

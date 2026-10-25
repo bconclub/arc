@@ -1,5 +1,10 @@
 # Founder feedback in the PROXe editor thread (newest first)
 
+- **2026-10-25** "You should be using the BCON Club browser... it's already open there, but you are using a different
+  browser." → re-check the in-use browser by deviceId before every browser batch.
+- **2026-10-25** "Go ahead with 480p... The second one does not look like a good clinic. It looks really bad. You cannot
+  make it look this bad." → Seedance 2.5 480p test run ($0.59); next stills keep a good-looking clinic.
+
 - **2026-10-25** "There is no common place where all these threads are putting their learnings." → this folder.
 - **2026-10-25** "20 missed into 150 is not how estate agents' numbers work... that also being shown in the clinic one
   is a bit heavy... When she's saying missed messages, the screen can show money lost." → money beat removed; clinic

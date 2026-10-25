@@ -1,6 +1,10 @@
 # Tool quirks hit in this thread
 
 ## Claude in Chrome (BCON Club browser only)
+- **Go by deviceId f28429cc..., never the display name** (names reshuffle: "Browser 1/2", "BCON Club"). A new
+  browser connected mid-task on 2026-10-25 and became "in use" by itself; the founder caught it. Check `inUse` before
+  every batch of browser steps and `select_browser` back if needed. BCON Club = all company tools (ChatGPT, ComfyUI,
+  ElevenLabs, Drive, ARC Studio); the built-in browser = local dev previews only.
 - The BCON Club extension disconnects now and then; then only other browsers are listed. Stop browser work and ask
   the founder to reconnect it. Never switch to another browser.
 - **Typing into a background tab hangs** ("Input.dispatchKeyEvent timed out") when another tab (e.g. ComfyUI) is in
