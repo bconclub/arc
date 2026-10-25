@@ -33,3 +33,10 @@
 - The founder is often on Remote Control (phone): send every result as a file, keep messages short, and finish each
   turn with one clear choice.
 - Voice-to-text garbles words ("C Dance" = Seedance, "ting" = chime). Read for intent; ask if a line can't be decoded.
+
+## Uploading >10 MB videos to Drive from the browser (2026-10-25)
+The Drive connector can't carry big binaries and Claude-in-Chrome `file_upload` caps one call at 10 MB, and only
+reads files inside the working folders (not the scratchpad). What worked: `split -b 7000000` the mp4 into parts in
+the repo, `file_upload` each part (one per call) into a hidden `<input type=file>` on the Drive folder page, rejoin in
+JS (`new File(parts, name)`), then patch `HTMLInputElement.prototype.click` so Drive's own New › File upload input
+gets those files and a `change` event. A synthetic drop event did NOT work. Check sizes after with the connector.
