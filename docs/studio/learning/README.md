@@ -19,6 +19,12 @@ live jobs (Team Mithai, Calvary "The Chai", Tesla trend, Coca-Cola, mods reel).
 | [06-tools.md](06-tools.md) | How to pull a reel, analyse audio, split shots, drive ChatGPT / ComfyUI / ElevenLabs / Drive |
 | [07-founder-feedback.md](07-founder-feedback.md) | Dated corrections from the founder, in their words, and what changed |
 
+## Other agents' sections
+- [`editr-main/`](editr-main/README.md): EDITR Main (client ads and films): house rules, pipeline, stills and realism.
+- [`../learnings/proxe-editor/`](../learnings/proxe-editor/README.md): the PROXe editor (PROXe ads, UGC, lip-sync,
+  voice). Note the folder is `learnings/`, not `learning/`.
+Files 01-07 above are Insta Daemon's (references, social reels, Calvary, Tesla trend).
+
 The storyboard standard (six 9:16 frames, prompt blocks A-F, the check table) stays in
 [`../storyboard-prompting.md`](../storyboard-prompting.md); 03-stills.md builds on it.
 
