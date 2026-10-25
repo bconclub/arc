@@ -1,5 +1,9 @@
 # Founder feedback in the PROXe editor thread (newest first)
 
+- **2026-10-25** "The voice is not matching with the face at all... look at a different voice" → audition on the face; picked
+  F, Seedance's own voice, for all lines. "The music is overpowering, not going well with the setup" → music out until a
+  much quieter bed is picked. "Background music is so messed up" → the V1 bed cut to 37s doesn't fit; score new beds per ad.
+
 - **2026-10-25** "You should be using the BCON Club browser... it's already open there, but you are using a different
   browser." → re-check the in-use browser by deviceId before every browser batch.
 - **2026-10-25** "Go ahead with 480p... The second one does not look like a good clinic. It looks really bad. You cannot

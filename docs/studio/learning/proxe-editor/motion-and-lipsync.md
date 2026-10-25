@@ -38,6 +38,14 @@ track (32 kHz); compare it with the real VO laid over the picture before choosin
 Keep the business looking good (clean, well-kept, professional) and get realism from the camera, the person and
 honest light instead.
 
+## Lip-sync rule learned the hard way (2026-10-25)
+Seedance does NOT follow the reference audio's timing: it re-speaks the line at its own pace (0.4s late, different
+pauses). Laying our VO over its clip will never sync, and the founder hears it at once ("the voice is not matching").
+Use the clip's OWN audio timing. Either keep Seedance's own voice (founder picked this: it also suits the face), or run
+that audio through ElevenLabs Voice Changer to another voice (keeps the timing). For off-camera lines in the same
+voice, clone it with ComfyUI `ByteDanceSeedAudio` (reference_mode "audio reference", up to 3 clips; $0.21/min;
+sample_rate must be the string "44100"). Audition voices ON the face (same shot, different voices) before choosing.
+
 ## Queueing gotcha
 Queueing a prompt over the raw API without the page's auth failed "Please login first" (not billed). Load the API prompt into
 the canvas with `app.loadApiJson(prompt)` and run `app.queuePrompt(0)`: that path carries the sign-in. Never
