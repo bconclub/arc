@@ -21,8 +21,8 @@ live jobs (Team Mithai, Calvary "The Chai", Tesla trend, Coca-Cola, mods reel).
 
 ## Other agents' sections
 - [`editr-main/`](editr-main/README.md): EDITR Main (client ads and films): house rules, pipeline, stills and realism.
-- [`../learnings/proxe-editor/`](../learnings/proxe-editor/README.md): the PROXe editor (PROXe ads, UGC, lip-sync,
-  voice). Note the folder is `learnings/`, not `learning/`.
+- [`proxe-editor/`](proxe-editor/README.md): PROXe editor (PROXe UK ads): UGC industry ads, stills realism, Seedance/Kling
+  lip-sync and prices, reusing the PROXe V1/Brain pieces, voice, tool quirks, founder feedback.
 Files 01-07 above are Insta Daemon's (references, social reels, Calvary, Tesla trend).
 
 The storyboard standard (six 9:16 frames, prompt blocks A-F, the check table) stays in
