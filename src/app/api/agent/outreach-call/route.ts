@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { checkIngestAuth, authError } from "@/lib/ingest-auth";
+import { mirrorCallToProxe } from "@/lib/proxe-outbound-mirror";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,5 +104,17 @@ export async function POST(req: NextRequest) {
     if (stageError) return NextResponse.json({ error: "Call logged, stage update failed. Retry with the same conversation_id." }, { status: 503 });
   }
 
-  return NextResponse.json({ ok: true, target_id: target.id, message_id: messageId, duplicate, stage: stage ?? null });
+  // Copy to BCON PROXe (proxe_outbound_*; interested -> all_leads). ARC already
+  // holds the call, so a mirror failure is reported, not fatal: a retry with the
+  // same conversation_id re-runs it, and /api/agent/outreach/mirror catches up.
+  const mirror = messageId
+    ? await mirrorCallToProxe({
+        targetId: target.id, messageId, disposition, body: lines || "(call logged, no details)", occurredAt,
+        conversationId: providerId, recordingUrl: recording || null,
+        agentId: typeof body.agent_id === "string" ? body.agent_id : null,
+      })
+    : { ok: false as const, error: "no message id" };
+  if (!mirror.ok) console.error("[outreach-call] PROXe mirror failed", target.id, mirror.error);
+
+  return NextResponse.json({ ok: true, target_id: target.id, message_id: messageId, duplicate, stage: stage ?? null, mirror });
 }

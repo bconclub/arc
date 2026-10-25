@@ -1,0 +1,204 @@
+/**
+ * ARC -> PROXe outbound mirror. SERVER ONLY.
+ *
+ * ARC stays the source of truth for cold outreach. Every call logged through
+ * /api/agent/outreach-call is copied into BCON PROXe (PROXE_DB_URL +
+ * PROXE_DB_SERVICE_KEY) so the PROXe dashboard sees the same history:
+ *
+ * - proxe_outbound_prospects: one row per ARC target (external_system 'arc',
+ *   external_id = target id), the shape the 28 Sep backfill used.
+ * - proxe_outbound_activity: one row per ARC call message
+ *   (external_id 'message:<outreach_messages.id>', same as the backfill).
+ * - disposition "interested" on a real (non-test) prospect promotes it into
+ *   all_leads, linked both ways (prospect.lead_id, target.proxe_lead_id).
+ *
+ * Until 26 Oct nothing ran this after the one-off backfill, so PROXe stopped
+ * at 23 Sep. Every write is idempotent on the unique (brand, external_system,
+ * external_id) keys, so a retry or a backfill run never duplicates.
+ */
+import { supabaseAdmin } from "@/lib/supabase"
+import { isTestTarget } from "@/lib/outreach-workflow"
+import { proxeSyncConfigured } from "@/lib/investor/proxe-sync"
+
+type Target = {
+  id: string; kind: string | null; name: string | null; org: string | null; segment: string | null; city: string | null
+  email: string | null; phone: string | null; linkedin: string | null; website: string | null; why_them: string | null
+  research: string | null; notes: string | null; status: string | null; source: string | null; created_at: string | null
+  proxe_lead_id: string | null
+}
+type Prospect = { id: string; status: string; lead_id: string | null; promoted_at: string | null }
+
+export type MirrorInput = {
+  targetId: string
+  messageId: string
+  disposition: string
+  body: string
+  occurredAt: string
+  conversationId?: string | null
+  recordingUrl?: string | null
+  agentId?: string | null
+}
+export type MirrorResult =
+  | { ok: true; prospect_id: string; activity: "inserted" | "exists"; test: boolean; lead_id: string | null; promoted: boolean }
+  | { ok: false; error: string }
+
+async function px<T = unknown>(path: string, init: RequestInit & { prefer?: string } = {}): Promise<T> {
+  const url = process.env.PROXE_DB_URL!, key = process.env.PROXE_DB_SERVICE_KEY!
+  const r = await fetch(`${url}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json",
+      ...(init.prefer ? { Prefer: init.prefer } : {}),
+    },
+    cache: "no-store",
+  })
+  const text = await r.text()
+  if (!r.ok) throw new Error(`PROXe ${init.method || "GET"} ${path.split("?")[0]} ${r.status}: ${text.slice(0, 200)}`)
+  return (text ? JSON.parse(text) : null) as T
+}
+
+const tail10 = (p: string | null | undefined) => String(p || "").replace(/\D/g, "").slice(-10)
+
+/** Call disposition -> proxe_outbound_prospects.status. Never walks back a handoff. */
+function prospectStatus(disposition: string, prior: string | null): string {
+  if (prior === "handed_off" || prior === "qualified") return prior
+  switch (disposition) {
+    case "interested": case "callback": case "connected": return "connected"
+    case "not_interested": case "wrong_number": return "lost"
+    default: return prior === "connected" ? "connected" : "attempted"
+  }
+}
+
+export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResult> {
+  if (!proxeSyncConfigured()) return { ok: false, error: "PROXe mirror not configured (PROXE_DB_URL / PROXE_DB_SERVICE_KEY)" }
+  try {
+    const { data: t, error } = await supabaseAdmin.from("outreach_targets")
+      .select("id,kind,name,org,segment,city,email,phone,linkedin,website,why_them,research,notes,status,source,created_at,proxe_lead_id")
+      .eq("id", input.targetId).maybeSingle()
+    if (error || !t) return { ok: false, error: `target ${input.targetId} unreadable` }
+    const target = t as Target
+    const test = isTestTarget(target as unknown as Parameters<typeof isTestTarget>[0])
+    const key = `brand=eq.proxe&external_system=eq.arc&external_id=eq.${target.id}`
+
+    // 1. Prospect: insert on first sight, else refresh the status only.
+    const found = await px<Prospect[]>(`proxe_outbound_prospects?select=id,status,lead_id,promoted_at&${key}`)
+    let prospect = found[0]
+    const status = prospectStatus(input.disposition, prospect?.status ?? null)
+    if (!prospect) {
+      const rows = await px<Prospect[]>("proxe_outbound_prospects?on_conflict=brand,external_system,external_id&select=id,status,lead_id,promoted_at", {
+        method: "POST", prefer: "resolution=merge-duplicates,return=representation",
+        body: JSON.stringify({
+          brand: "proxe", external_system: "arc", external_id: target.id,
+          source: test ? "test" : target.source || "arc", source_batch: target.source || null,
+          name: test && !/\[TEST\]/.test(target.name || "") ? `${target.name || "Test"} [TEST]` : target.name || target.org || "Unknown",
+          organization: target.org, segment: test ? "test_dial" : target.segment, city: target.city,
+          phone: target.phone, email: target.email, website: target.website, linkedin: target.linkedin,
+          why_them: target.why_them, research: target.research, notes: target.notes, status,
+          source_payload: { arc_kind: target.kind, arc_status: target.status, ...(test ? { test: true } : {}) },
+          source_observed_at: target.created_at || new Date().toISOString(),
+        }),
+      })
+      prospect = rows[0]
+    } else if (status !== prospect.status) {
+      await px(`proxe_outbound_prospects?id=eq.${prospect.id}`, {
+        method: "PATCH", body: JSON.stringify({ status, updated_at: new Date().toISOString() }),
+      })
+    }
+
+    // 2. Activity, keyed on the ARC message so a re-run is a no-op.
+    const inserted = await px<unknown[]>("proxe_outbound_activity?on_conflict=brand,external_system,external_id", {
+      method: "POST", prefer: "resolution=ignore-duplicates,return=representation",
+      body: JSON.stringify({
+        brand: "proxe", prospect_id: prospect.id, external_system: "arc", external_id: `message:${input.messageId}`,
+        channel: "call", outcome: input.disposition || "unknown",
+        summary: `${test ? "[TEST CALL] " : ""}${input.body}`.slice(0, 8000),
+        evidence_url: input.recordingUrl || null, occurred_at: input.occurredAt,
+        payload: {
+          ...(test ? { test: true } : {}), arc_target_id: target.id, arc_message_id: input.messageId,
+          conversation_id: input.conversationId || null, agent_id: input.agentId || null,
+        },
+      }),
+    })
+
+    // 3. Interested real prospect -> PROXe lead.
+    let leadId = prospect.lead_id
+    let promoted = false
+    if (input.disposition === "interested" && !test && !prospect.promoted_at) {
+      leadId = await promote(target, prospect.id, input)
+      promoted = !!leadId
+    }
+    return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+async function promote(target: Target, prospectId: string, input: MirrorInput): Promise<string | null> {
+  const phoneKey = tail10(target.phone)
+  if (phoneKey.length !== 10) return null
+  const now = new Date().toISOString()
+  const note = `Said interested on the AI intro call${input.conversationId ? ` (${input.conversationId})` : ""}. Needs a human follow-up to book the demo.`
+  const outreach = {
+    prospect_id: prospectId, contact_channel: "voice", external_system: "arc", external_id: target.id,
+    source: target.source, organization: target.org, segment: target.segment, city: target.city,
+    why_them: target.why_them, qualification_note: note, qualified_at: now, promoted_at: now,
+    conversation_id: input.conversationId || null,
+  }
+  type Lead = { id: string; customer_name: string | null; unified_context: Record<string, unknown> | null }
+  const matches = await px<Lead[]>(`all_leads?select=id,customer_name,unified_context&brand=eq.proxe&customer_phone_normalized=eq.${phoneKey}&limit=2`)
+  if (matches.length > 1) return null // ambiguous: leave for a human, same rule as the dashboard promote route
+  let leadId: string
+  if (matches[0]) {
+    const ctx = matches[0].unified_context || {}
+    const prior = Array.isArray(ctx.lead_sources) ? (ctx.lead_sources as string[]) : []
+    await px(`all_leads?id=eq.${matches[0].id}`, {
+      method: "PATCH", body: JSON.stringify({
+        unified_context: { ...ctx, outreach: { ...((ctx.outreach as object) || {}), ...outreach }, lead_sources: Array.from(new Set([...prior, "proxe_outbound"])) },
+        last_touchpoint: "voice", last_interaction_at: now,
+        ...(matches[0].customer_name ? {} : { customer_name: target.name }),
+      }),
+    })
+    leadId = matches[0].id
+  } else {
+    const rows = await px<{ id: string }[]>("all_leads?select=id", {
+      method: "POST", prefer: "return=representation",
+      body: JSON.stringify({
+        brand: "proxe", customer_name: target.name || target.org, email: target.email, phone: target.phone,
+        customer_phone_normalized: phoneKey, first_touchpoint: "voice", last_touchpoint: "voice",
+        last_interaction_at: input.occurredAt, lead_stage: "New",
+        unified_context: { outreach, lead_sources: ["proxe_outbound"], attribution: { source: "proxe_outbound", source_label: "PROXe Outreach", original_source: target.source } },
+      }),
+    })
+    leadId = rows[0].id
+  }
+  await px(`proxe_outbound_prospects?id=eq.${prospectId}`, {
+    method: "PATCH", body: JSON.stringify({ status: "handed_off", qualified_at: now, qualification_note: note, lead_id: leadId, promoted_at: now, updated_at: now }),
+  })
+  await px("proxe_outbound_activity?on_conflict=brand,external_system,external_id", {
+    method: "POST", prefer: "resolution=ignore-duplicates",
+    body: JSON.stringify({ brand: "proxe", prospect_id: prospectId, external_system: "arc", external_id: `handoff:${prospectId}`, channel: "handoff", outcome: "handed_off", summary: `Interested on call. Moved to PROXe Leads as ${leadId}.`, occurred_at: now }),
+  })
+  await supabaseAdmin.from("outreach_targets").update({ proxe_lead_id: leadId, promoted_at: now, qualified_at: now, qualification_note: note }).eq("id", target.id)
+  return leadId
+}
+
+/** Re-mirror every ARC call message since `since`. Idempotent; used to catch up after an outage. */
+export async function backfillCallsToProxe(since: string): Promise<{ scanned: number; mirrored: number; errors: string[] }> {
+  const { data, error } = await supabaseAdmin.from("outreach_messages")
+    .select("id,target_id,body,sent_at,provider_conversation_id").eq("channel", "call").gte("sent_at", since).order("sent_at").limit(500)
+  if (error) return { scanned: 0, mirrored: 0, errors: [error.message] }
+  const errors: string[] = []
+  let mirrored = 0
+  for (const m of data || []) {
+    const body = String(m.body || "")
+    const r = await mirrorCallToProxe({
+      targetId: m.target_id, messageId: m.id, body, occurredAt: m.sent_at || new Date().toISOString(),
+      disposition: body.match(/^DISPOSITION: (\S+)/m)?.[1] || "unknown",
+      recordingUrl: body.match(/^RECORDING: (\S+)/m)?.[1] || null,
+      conversationId: m.provider_conversation_id,
+    })
+    if (r.ok) mirrored++
+    else errors.push(`${m.id}: ${r.error}`)
+  }
+  return { scanned: (data || []).length, mirrored, errors }
+}
