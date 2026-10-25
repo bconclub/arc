@@ -1,5 +1,14 @@
 # Founder feedback in the PROXe editor thread (newest first)
 
+- **2026-10-25** "Use normal doctors, normal people from the UK... we are trying to make her so beautiful. That's not
+  needed." → cast ordinary owners (52, 45, 40; glasses, scrubs, no make-up look); three picked, one per industry
+  (aesthetics, dental, weight loss) as three angles of the same ad.
+- **2026-10-25** "The blank screen should have a screen inside it... showing messages coming in" → every phone in a still
+  shows a real screen (lock screen piling up, PROXe inbox booked), rendered in code and warped onto the blank phone.
+- **2026-10-25** "Count in dollars... also tell me how many credits" → every cost and balance in $ and credits (211 = $1).
+- **2026-10-25** "Go 720p for all... it should be final" → no test takes; voice locked by feeding the approved voice-test
+  audio back as Seedance reference audio.
+
 - **2026-10-25** "The voice is not matching with the face at all... look at a different voice" → audition on the face; picked
   F, Seedance's own voice, for all lines. "The music is overpowering, not going well with the setup" → music out until a
   much quieter bed is picked. "Background music is so messed up" → the V1 bed cut to 37s doesn't fit; score new beds per ad.

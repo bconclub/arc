@@ -31,3 +31,11 @@ ChatGPT only. Every round was judged by the founder; "still looks like AI, so th
 - Phone and laptop screens: "a plain blank glow, no app, no text, facing the camera straight on" so our coded UI can
   go on top later.
 - Check every frame zoomed in on the hands before sending.
+
+## Phones need real screens (2026-10-25)
+A blank white phone reads as unfinished; the founder wants the screen to tell the story (messages piling up, PROXe
+answering). Don't let ChatGPT draw UI text (it garbles it). Ask for the phone "screen lit plain white, nothing on it",
+render the screen in Remotion from the PROXe pieces (proxe-clips `src/uk/Screens.tsx`), then warp it onto the white
+area (`scripts/screen_in.py`: finds the most phone-shaped near-white region, fits 4 corners, pastes only inside the
+white so fingers, rounded corners and the notch stay from the photo). Upright phones: top is always up (the notch
+guess flipped one). Do this BEFORE animating, so the talking shot carries the screen.

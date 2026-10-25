@@ -46,6 +46,12 @@ that audio through ElevenLabs Voice Changer to another voice (keeps the timing).
 voice, clone it with ComfyUI `ByteDanceSeedAudio` (reference_mode "audio reference", up to 3 clips; $0.21/min;
 sample_rate must be the string "44100"). Audition voices ON the face (same shot, different voices) before choosing.
 
+## Same voice across several talking shots (2026-10-25)
+With generate_audio on and no reference audio, Seedance invents a voice per clip. To keep one person's voice across
+shots 1, 3 and 6, feed their approved voice-test audio as `reference_audios.audio_1` and write the new line in the
+prompt: it speaks the new line in that voice (720p re-run of shot 1: same timing and a 0.99 spectrum match to the
+approved 480p test). Jobs queued back to back run one at a time on Cloud (~3 min per 6s 720p clip).
+
 ## Queueing gotcha
 Queueing a prompt over the raw API without the page's auth failed "Please login first" (not billed). Load the API prompt into
 the canvas with `app.loadApiJson(prompt)` and run `app.queuePrompt(0)`: that path carries the sign-in. Never
