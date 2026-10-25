@@ -1,4 +1,8 @@
-# Social Editr: learnings (thread "Social Editr", written 2026-10-25)
+# Social Editr: learnings (thread "Social Editr", session local_36e07f26, written 2026-10-25)
+
+> Not the same thread as `docs/studio/learnings/social-editr.md` (another session also titled Social EDITR, which
+> covers Team Mithai storyboards). This folder is the Social Editr session that has run since 2026-10-09: cheesecake
+> reel, Coke AI ad, Claude mods, Cravio, Tesla Roadster, ARC teaser, trend scans and the code-films skill upgrade.
 
 Social Editr makes organic Instagram reels for BCON and its clients (Cravio, Calvary, PROXe, ARC, frwdslash...).
 Working repo: `C:\dev\builds\EDITR` (specs in `content/social/`, hub `SOCIAL-EDITR.md`, shared `LEARNINGS.md`);
