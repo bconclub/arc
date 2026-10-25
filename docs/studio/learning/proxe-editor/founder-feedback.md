@@ -1,5 +1,12 @@
 # Founder feedback in the PROXe editor thread (newest first)
 
+- **2026-10-25** "The mockups should be really real... native to that app, not bad mockups with breaking" → rebuilt the
+  phone screens as a real iOS lock screen and a real Instagram DM in a real-looking iPhone (Screens.tsx), no cut-off text.
+- **2026-10-25** "Everything should be 1.2 speed. It's too slow." → finals exported at 1.2x (picture + voice).
+- **2026-10-25** "When they're pointing down, that is nothing. The text can be shown there." → "Get PROXe · goproxe.com"
+  pill pops in under the finger on the last selfie.
+- **2026-10-25** "720p doesn't look good enough. It looks fake still." → noted; credits at $8, judge the final first.
+
 - **2026-10-25** "Use normal doctors, normal people from the UK... we are trying to make her so beautiful. That's not
   needed." → cast ordinary owners (52, 45, 40; glasses, scrubs, no make-up look); three picked, one per industry
   (aesthetics, dental, weight loss) as three angles of the same ad.
