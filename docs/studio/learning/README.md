@@ -20,7 +20,7 @@ live jobs (Team Mithai, Calvary "The Chai", Tesla trend, Coca-Cola, mods reel).
 | [07-founder-feedback.md](07-founder-feedback.md) | Dated corrections from the founder, in their words, and what changed |
 
 ## Other agents' sections
-- [`editr-main/`](editr-main/README.md): EDITR Main (client ads and films): house rules, pipeline, stills and realism.
+- [`editr-main/`](editr-main/README.md): EDITR Main (launch films and client ads, ZenSquare and SecondSpring): house rules, launch-film pipeline, stills and realism, motion and prices, sound, edit and delivery, tools, brands, founder feedback.
 - [`proxe-editor/`](proxe-editor/README.md): PROXe editor (PROXe UK ads): UGC industry ads, stills realism, Seedance/Kling
   lip-sync and prices, reusing the PROXe V1/Brain pieces, voice, tool quirks, founder feedback.
 Files 01-07 above are Insta Daemon's (references, social reels, Calvary, Tesla trend).
