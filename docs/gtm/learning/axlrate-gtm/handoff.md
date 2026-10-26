@@ -25,6 +25,28 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
    paths to Artha India Ventures and Claypond first; Bengaluru Tech Summit (17 to 19 Nov) investor programme
    application is free, the Rs 30,000 + GST booth is Z's call; check DIDAC (25 to 27 Nov) stall cost.
 
+## Outbound callers: ready (from PROXe Core, 26 Oct, on Z's go)
+- **Agents** (ElevenLabs, all on the Sanket voice): Intro Cold (`noname`, V4: "Hi, is this {business}?", the opener,
+  then "who am I speaking with", goal ~30 s and a callback time for Thanzeel, end reason `callback_requested`);
+  Intro DM (`dm`: "Hi, is this {first_name}?" then the opener); Follow-up (`warm`: needs `last_summary`, no re-pitch).
+  All: one question per turn, never repeat, kind exit on no, price only if asked (Rs 9,999 + GST, 7-day trial,
+  1,000 leads + 250 AI voice min, 2 seats).
+- **Openers to A/B test** (`opener` 1-5 in the dial body, logged as `opener_variant`): 1 "Hi, I'm Proxy, an AI,
+  calling to introduce myself. Can I have thirty seconds?" 2 "...Is this a good time?" 3 "Hi, I'm Proxy, an AI for
+  your leads. Got a minute?" 4 "...I saw your ads on Facebook and wanted to introduce myself..." (only for prospects
+  that really run ads) 5 "...I saw your ads on Facebook and I'm just calling to chat about them..." DM versions add
+  "Hi {first_name}," in front.
+- **How to dial:** goproxe.com/bdr (opener picker + listen list), or `POST goproxe.com/api/outreach-dial` with
+  `Bearer DIAL_API_KEY`: `{ phone, agent: "noname"|"dm"|"warm", opener: 1-5, target_id, vars: { business_name,
+  vertical, city, first_name, last_summary } }`. ARC reserves first (24 h cooldown). Scripts:
+  `GET /api/outreach-dial/agents` (operator session).
+- **Clear before volume (Z's calls):** bot dials are locked to `DIAL_ALLOWLIST` (one test number today), widen per
+  approved batch; quiet hours 8 PM to 9 AM IST; TRAI: promotional cold calls should come from a 140-series number and
+  skip DND numbers, today's caller ID is a normal number (+91 80653 55717); one live test each of Intro DM,
+  Follow-up and Intro Cold's newest opening to the test number before the first batch.
+- **Measure per opener:** interested + callback_requested per 100 connected (September baseline: 6 interested of
+  59 connected).
+
 ## Not now
 - No cold email to India. UK cold email only after: separate lookalike domain on Workspace with SPF/DKIM/DMARC,
   2-week warm-up, UK postal address + unsubscribe, GBP price, sender decided (Z or BVCL). See messaging-kit.md.
