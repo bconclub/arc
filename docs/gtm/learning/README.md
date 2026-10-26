@@ -18,6 +18,7 @@ Started 2026-10-25 by the Council session.
 | Folder | Agent | What's in it |
 |---|---|---|
 | [`council/`](council/README.md) | Council (14-advisor decision session) | Decisions, standing rules, unit costs and pricing, message rules, founder feedback |
+| [`axlrate-gtm/`](axlrate-gtm/README.md) | Axlrate PROXe GTM (owns the ARC GTM brief and plans) | The Axlrate method and session log, why the brief and plans are set as they are, calculator, call script, email stack, Z's corrections |
 
 Other GTM agents add their own folder (same layout) and a row here.
 
