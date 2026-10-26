@@ -46,7 +46,7 @@ The founder sends reels while scrolling (to Insta Daemon). Our job is to **under
 - **Saturation check.** If two of three brand versions of a trend are the same template (Roadster delivers to a
   window), skip that template.
 
-## Formats on file (full breakdowns in EDITR REFERENCE-REELS.md; 22 so far)
+## Formats on file (full breakdowns in EDITR REFERENCE-REELS.md; 23 so far)
 | Brand type | Reference # | Format | Best for |
 |---|---|---|---|
 | Famous-brand AI spec ad | 1, 2, 6, 10 | Prompt reveal split / cards board (title + video + storyboard + prompt cards + comment CTA) | AI-ad tutorials, growing our account |
@@ -55,7 +55,7 @@ The founder sends reels while scrolling (to Insta Daemon). Our job is to **under
 | Food: menu / studio | 4 | "___ MOOD" ingredient montage series | Restaurants, cafés, our own showcase |
 | Fashion / beauty | 8, 9, 11 | Keyframe morph chain (stills → first-last frame loops), pop-art collage, two-colour sculptural morph | Lookbooks, signature colour, cheap loops |
 | Jewellery / accessories | 10 | "One product, nine views" with a LOADING-grid hook | Launches, DM-keyword campaigns |
-| Tech launch | 7 | Horizon launch film | Version launches (PROXe V1) |
+| Tech launch | 23, 7 | "Everything evolves... until now": archival word montage → the problem → "Until now." → real UI → a gallery of evolved objects (23, 11K likes); horizon launch film (7) | Version launches (PROXe V1), client product launches |
 | Agency sales ad | 12 | Manifesto: problem → promise → method → transformations → proof → CTA | BCON's own ads |
 | AI-tool tutorial | 13 | Result first → "what if I told you" → 2 real steps → "comment VOX for the skill" (~9K comments) | Our account, setup files |
 | Trend jack: famous product, local place | 14, 16, 17 | Product + real local street + local joke; one annoyance beaten; a product doing the real stunt | City versions (Bangalore), brand stunts |
