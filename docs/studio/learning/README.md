@@ -29,7 +29,7 @@ The storyboard standard (six 9:16 frames, prompt blocks A-F, the check table) st
 [`../storyboard-prompting.md`](../storyboard-prompting.md); 03-stills.md builds on it.
 
 ## Where the detail lives (EDITR repo, `C:\dev\builds\EDITR`)
-- Every reference breakdown (23 so far): `content/social/REFERENCE-REELS.md`, indexed by brand type.
+- Every reference breakdown (24 so far): `content/social/REFERENCE-REELS.md`, indexed by brand type.
 - Every reference's sound + measured analysis: `content/social/AUDIO-LIBRARY.md`.
 - One spec per reel: `content/social/<date>-<reel>.md`. Client work: `content/clients/<brand>/`.
 - Agent-to-agent lessons: `LEARNINGS.md`. Social rules + changelog: `SOCIAL-EDITR.md`.
