@@ -44,6 +44,20 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
   approved batch; quiet hours 8 PM to 9 AM IST; TRAI: promotional cold calls should come from a 140-series number and
   skip DND numbers, today's caller ID is a normal number (+91 80653 55717); one live test each of Intro DM,
   Follow-up and Intro Cold's newest opening to the test number before the first batch.
+- **26 Oct, after the pause (PROXe Core 2e5c601, calling resumed on Z's go):**
+  - Intro Cold never says the business name ("Hi, am I speaking with the {vertical}?").
+  - All three agents wait for "Hello?" before speaking, hang up silently on IVR menus, never speak their reasoning,
+    and ask once for a time ("tomorrow morning or afternoon?") instead of ending on "thank you".
+  - The model stays as ElevenLabs has it (Z: don't plug in our own).
+  - Send `vertical` as the plain type ("dental clinic", "coaching centre"), never "business"; spokenBusinessName
+    drops areas, commas and slash words.
+  - On every booking, send `industry` (or `vertical`) and `city` to PROXe `/api/agent/outreach/call-booking`; it
+    sends WhatsApp template `proxe_demo_confirm_v1` (date + time) and sets Last touch to WhatsApp.
+  - Calls tab shows opener chips, "Connected · Call booked", "IVR drop", and why a call didn't ring (SIP code + side).
+  - Known, unfixed: one-way audio on some calls (prospect keeps saying "Hello?"); a fair share of SIP 403 / timeouts
+    on our line. Watch "Didn't ring" reasons and tell PROXe Core if 403 ("Network refused our call", our side) climbs.
+  - Earlier on 26 Oct (~4:30 PM) calls went out that did not pass ARC's reservation step and Z paused calling;
+    every dial must go through `/api/outreach-dial` so ARC reserves it.
 - **Measure per opener:** interested + callback_requested per 100 connected (September baseline: 6 interested of
   59 connected).
 
