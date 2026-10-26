@@ -27,7 +27,7 @@ brand (estimate from invoices).
 
 ## Billing system status (repo, 2026-10-18)
 The credits engine and ledger exist but are not wired. Nothing caps leads, replies or minutes for paying customers.
-The PROXe agent prompts still quote Rs 9,999 = 500 leads + 100 minutes, while gtm_brief says 1,000 leads + 250 minutes.
+The PROXe agent prompts quoted Rs 9,999 = 500 leads + 100 minutes. **Z confirmed 2026-10-26: Core is Rs 9,999/month + GST = 1,000 managed leads + 250 AI voice minutes, across all channels.** Fix requested in the PROXe and PROXe Core sessions.
 
 ## Pricing card (#8)
 Rs 9,999/month platform + Rs 6 per lead + Rs 10 per call minute, plus GST; fixed monthly commitment; Meta fees on the

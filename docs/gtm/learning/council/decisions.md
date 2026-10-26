@@ -4,6 +4,9 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-10-26: Core plan contents confirmed by Z.** Rs 9,999/month + GST = 1,000 managed leads + 250 minutes of AI voice,
+usable across all channels. Replaces every "500 leads + 100 minutes" mention. Every page, prompt, script and email must say this.
+
 **2026-10-25 #15: Sprint to 15 Nov: 10 more paying PROXe accounts.** (Open)
 - India 8: Dream 100 outbound + aligned leads (Genie Bikes, booked demos). UK 2 via partner BVCL (bvcl.uk, contact
   Nishaf, also a pre-seed investor). Partner terms and the GBP price are not set yet: Z decides.
