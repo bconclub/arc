@@ -46,7 +46,7 @@ The founder sends reels while scrolling (to Insta Daemon). Our job is to **under
 - **Saturation check.** If two of three brand versions of a trend are the same template (Roadster delivers to a
   window), skip that template.
 
-## Formats on file (full breakdowns in EDITR REFERENCE-REELS.md; 24 so far)
+## Formats on file (full breakdowns in EDITR REFERENCE-REELS.md; 25 so far)
 | Brand type | Reference # | Format | Best for |
 |---|---|---|---|
 | Famous-brand AI spec ad | 1, 2, 6, 10 | Prompt reveal split / cards board (title + video + storyboard + prompt cards + comment CTA) | AI-ad tutorials, growing our account |
@@ -61,6 +61,7 @@ The founder sends reels while scrolling (to Insta Daemon). Our job is to **under
 | Trend jack: famous product, local place | 14, 16, 17 | Product + real local street + local joke; one annoyance beaten; a product doing the real stunt | City versions (Bangalore), brand stunts |
 | Product grab / collision | 20, 21 | Locked in-car POV smash-and-grab; collision → macro slow-mo of each object mid-air | Craved products (the monkey reel) |
 | Kinetic typography / motion poem | 24, 22 | "Change" (24, 490K likes, no AI): tiny typed words in big space, pixel-art icons, thermal-gradient silhouettes, one red accent, one word per beat. HEADLOCK (22): the words are the picture, one object pun per word on a beat grid. Both built in code + ChatGPT cut-outs, ~$0-2 | Manifestos, brand values, launches, Indian-script brands, our own craft posts |
+| Hyper-montage / match-cut story | 25 | "Time feels this fast" (1.24M likes): birth to death in 12s, 57 cuts, one shape overlay held while the picture under it changes (spiral, circle, eye), red flash frames, "THE END" | Brand or category history in 12s, launch hooks, craft posts |
 
 ## Client briefs from references (example: Team Mithai, 22 references)
 Group the client's references by what they're asking for (brand film, premium heritage, food close-ups, AI spec
