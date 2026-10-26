@@ -11,6 +11,11 @@
  *   (external_id 'message:<outreach_messages.id>', same as the backfill).
  * - disposition "interested" on a real (non-test) prospect promotes it into
  *   all_leads, linked both ways (prospect.lead_id, target.proxe_lead_id).
+ * - "callback" or "interested" WITH a clock time in callback_request is a
+ *   booking: PROXe's /api/agent/outreach/call-booking creates the lead, sets
+ *   Booking Made and sends its connected-callback confirmation, the same as a
+ *   teammate logging the call. Idempotent on the conversation id there, so a
+ *   webhook replay never makes a second lead or a second message.
  *
  * Until 26 Oct nothing ran this after the one-off backfill, so PROXe stopped
  * at 23 Sep. Every write is idempotent on the unique (brand, external_system,
@@ -19,6 +24,7 @@
 import { supabaseAdmin } from "@/lib/supabase"
 import { isTestTarget } from "@/lib/outreach-workflow"
 import { proxeSyncConfigured } from "@/lib/investor/proxe-sync"
+import { parseCallbackTime, contactNameFromTranscript } from "@/lib/callback-time"
 
 type Target = {
   id: string; kind: string | null; name: string | null; org: string | null; segment: string | null; city: string | null
@@ -37,9 +43,12 @@ export type MirrorInput = {
   conversationId?: string | null
   recordingUrl?: string | null
   agentId?: string | null
+  callbackRequest?: string | null
+  contactName?: string | null
 }
+type Booking = { date: string; time: string; duplicate: boolean; message: { sent: boolean; template: string | null; mode: string | null; wa_message_id: string | null; error: string | null } | null }
 export type MirrorResult =
-  | { ok: true; prospect_id: string; activity: "inserted" | "exists"; test: boolean; lead_id: string | null; promoted: boolean }
+  | { ok: true; prospect_id: string; activity: "inserted" | "exists"; test: boolean; lead_id: string | null; promoted: boolean; booking?: (Booking & { lead_id: string }) | { error: string } }
   | { ok: false; error: string }
 
 async function px<T = unknown>(path: string, init: RequestInit & { prefer?: string } = {}): Promise<T> {
@@ -120,14 +129,20 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
       }),
     })
 
-    // 3. Interested real prospect -> PROXe lead.
+    // 3. Agreed a time -> PROXe booking. Interested without one -> PROXe lead.
     let leadId = prospect.lead_id
     let promoted = false
-    if (input.disposition === "interested" && !test && !prospect.promoted_at) {
+    let booking: (Booking & { lead_id: string }) | { error: string } | undefined
+    const slot = ["callback", "interested"].includes(input.disposition) && !test
+      ? parseCallbackTime(input.callbackRequest, input.occurredAt) : null
+    if (slot && Date.parse(slot.at) > Date.now()) {
+      booking = await bookInProxe(target, prospect.id, input, slot)
+      if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
+    } else if (input.disposition === "interested" && !test && !prospect.promoted_at) {
       leadId = await promote(target, prospect.id, input)
       promoted = !!leadId
     }
-    return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted }
+    return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted, ...(booking ? { booking } : {}) }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
   }
@@ -182,6 +197,43 @@ async function promote(target: Target, prospectId: string, input: MirrorInput): 
   return leadId
 }
 
+/** "Glam 'N' Smile - Face, Hair & Dental Clinic" -> "Glam 'N' Smile": the brand, not the listing title. */
+const shortOrg = (org: string | null) => (org || "").split(/\s+[-|–]\s+/)[0].trim() || null
+
+async function bookInProxe(target: Target, prospectId: string, input: MirrorInput, slot: { date: string; time: string }): Promise<(Booking & { lead_id: string }) | { error: string }> {
+  const base = process.env.PROXE_INTENT_BASE, key = process.env.PROXE_INBOUND_API_KEY
+  if (!base || !key) return { error: "PROXE_INTENT_BASE / PROXE_INBOUND_API_KEY not set" }
+  const name = input.contactName || contactNameFromTranscript(input.body) || target.name || target.org || "there"
+  const summary = input.body.match(/^SUMMARY: (.+)$/m)?.[1] || ""
+  try {
+    const r = await fetch(base.replace(/\/$/, "") + "/api/agent/outreach/call-booking", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-api-key": key }, cache: "no-store",
+      signal: AbortSignal.timeout(25000),
+      body: JSON.stringify({
+        phone: target.phone, name, company: shortOrg(target.org), date: slot.date, time: slot.time,
+        conversation_id: input.conversationId || `message:${input.messageId}`, source: "outbound_call",
+        original_source: target.source, external_id: target.id, prospect_id: prospectId, summary,
+        recording_url: input.recordingUrl || null,
+      }),
+    })
+    const d = await r.json().catch(() => ({}))
+    if (!r.ok || !d.lead_id) return { error: `PROXe call-booking ${r.status}: ${String(d.error || "").slice(0, 200)}` }
+    const now = new Date().toISOString()
+    const note = `Agreed a call on ${slot.date} ${slot.time} IST on the AI intro call${input.conversationId ? ` (${input.conversationId})` : ""}. Booked in PROXe.`
+    await px(`proxe_outbound_prospects?id=eq.${prospectId}`, {
+      method: "PATCH", body: JSON.stringify({ status: "handed_off", qualified_at: now, qualification_note: note, lead_id: d.lead_id, promoted_at: now, updated_at: now }),
+    })
+    await px("proxe_outbound_activity?on_conflict=brand,external_system,external_id", {
+      method: "POST", prefer: "resolution=ignore-duplicates",
+      body: JSON.stringify({ brand: "proxe", prospect_id: prospectId, external_system: "arc", external_id: `handoff:${prospectId}`, channel: "handoff", outcome: "handed_off", summary: `Booked ${slot.date} ${slot.time} IST. Moved to PROXe Leads as ${d.lead_id}.`, occurred_at: now }),
+    })
+    await supabaseAdmin.from("outreach_targets").update({ proxe_lead_id: d.lead_id, promoted_at: now, qualified_at: now, qualification_note: note }).eq("id", target.id)
+    return { lead_id: d.lead_id, date: slot.date, time: slot.time, duplicate: !!d.duplicate, message: d.message || null }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
 /** Re-mirror every ARC call message since `since`. Idempotent; used to catch up after an outage. */
 export async function backfillCallsToProxe(since: string): Promise<{ scanned: number; mirrored: number; errors: string[] }> {
   const { data, error } = await supabaseAdmin.from("outreach_messages")
@@ -195,6 +247,7 @@ export async function backfillCallsToProxe(since: string): Promise<{ scanned: nu
       targetId: m.target_id, messageId: m.id, body, occurredAt: m.sent_at || new Date().toISOString(),
       disposition: body.match(/^DISPOSITION: (\S+)/m)?.[1] || "unknown",
       recordingUrl: body.match(/^RECORDING: (\S+)/m)?.[1] || null,
+      callbackRequest: body.match(/^CALLBACK REQUEST \(pending review\): (.+)$/m)?.[1] || null,
       conversationId: m.provider_conversation_id,
     })
     if (r.ok) mirrored++

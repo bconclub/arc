@@ -20,6 +20,8 @@ export const dynamic = "force-dynamic";
  *   recording_url?: string,
  *   disposition?: "no_answer" | "callback" | "interested" | "not_interested" | "wrong_number",
  *   stage?: OutreachStatus,       // explicit stage override; else derived from disposition
+ *   callback_request?: string,    // "tomorrow 10 a.m.": with callback/interested, books it in PROXe
+ *   contact_name?: string,        // who picked up, when the caller knows it
  * }
  */
 const DISPOSITION_STAGE: Record<string, string> = {
@@ -112,6 +114,8 @@ export async function POST(req: NextRequest) {
         targetId: target.id, messageId, disposition, body: lines || "(call logged, no details)", occurredAt,
         conversationId: providerId, recordingUrl: recording || null,
         agentId: typeof body.agent_id === "string" ? body.agent_id : null,
+        callbackRequest: callbackRequest || null,
+        contactName: typeof body.contact_name === "string" ? body.contact_name.trim().slice(0, 120) || null : null,
       })
     : { ok: false as const, error: "no message id" };
   if (!mirror.ok) console.error("[outreach-call] PROXe mirror failed", target.id, mirror.error);
