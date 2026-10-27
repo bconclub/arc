@@ -66,3 +66,24 @@ export function contactNameFromTranscript(transcript: string | null | undefined)
   }
   return null
 }
+/**
+ * The day only, when no clock time was agreed ("call me Thursday"): the IST
+ * date counted from the call, or null when no day was said. Used to put a
+ * follow-up on the calendar instead of dropping the call (Z, 27 Oct 2026:
+ * Arjunaa Academy agreed to Thursday and nothing reached PROXe).
+ */
+export function parseCallbackDay(text: string | null | undefined, callAt: string | Date): { date: string } | null {
+  const s = String(text || "").toLowerCase().replace(/\s+/g, " ")
+  if (!s.trim()) return null
+  const base = new Date(callAt)
+  if (!Number.isFinite(base.getTime())) return null
+  const callIst = new Date(base.getTime() + IST_MS)
+  const day = new Date(Date.UTC(callIst.getUTCFullYear(), callIst.getUTCMonth(), callIst.getUTCDate()))
+  const named = DAYS.findIndex((d) => new RegExp(`\\b${d}\\b`).test(s))
+  if (/\bday after tomorrow\b/.test(s)) day.setUTCDate(day.getUTCDate() + 2)
+  else if (/\b(tomorrow|tmrw|tmw)\b/.test(s)) day.setUTCDate(day.getUTCDate() + 1)
+  else if (named >= 0) day.setUTCDate(day.getUTCDate() + (((named - day.getUTCDay() + 7) % 7) || 7))
+  else if (/\b(next week)\b/.test(s)) day.setUTCDate(day.getUTCDate() + 7)
+  else if (!/\b(today|later today|this (morning|afternoon|evening))\b/.test(s)) return null
+  return { date: day.toISOString().slice(0, 10) }
+}

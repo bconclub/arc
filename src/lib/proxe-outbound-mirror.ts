@@ -24,7 +24,7 @@
 import { supabaseAdmin } from "@/lib/supabase"
 import { isTestTarget } from "@/lib/outreach-workflow"
 import { proxeSyncConfigured } from "@/lib/investor/proxe-sync"
-import { parseCallbackTime, contactNameFromTranscript } from "@/lib/callback-time"
+import { parseCallbackTime, parseCallbackDay, contactNameFromTranscript } from "@/lib/callback-time"
 
 type Target = {
   id: string; kind: string | null; name: string | null; org: string | null; segment: string | null; city: string | null
@@ -138,8 +138,13 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     if (slot && Date.parse(slot.at) > Date.now()) {
       booking = await bookInProxe(target, prospect.id, input, slot)
       if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
-    } else if (input.disposition === "interested" && !test && !prospect.promoted_at) {
-      leadId = await promote(target, prospect.id, input)
+    } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at) {
+      // Interested, or asked for a call back without a clock time: still a
+      // PROXe lead, with a follow-up on the day they named (11 am IST, to be
+      // confirmed) so it sits on the calendar (Z, 27 Oct 2026: "once the
+      // lead is done, it should move").
+      const day = parseCallbackDay(input.callbackRequest, input.occurredAt)
+      leadId = await promote(target, prospect.id, input, day?.date || null)
       promoted = !!leadId
     }
     return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted, ...(booking ? { booking } : {}) }
@@ -148,11 +153,13 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
   }
 }
 
-async function promote(target: Target, prospectId: string, input: MirrorInput): Promise<string | null> {
+async function promote(target: Target, prospectId: string, input: MirrorInput, followUpDate: string | null = null): Promise<string | null> {
   const phoneKey = tail10(target.phone)
   if (phoneKey.length !== 10) return null
   const now = new Date().toISOString()
-  const note = `Said interested on the AI intro call${input.conversationId ? ` (${input.conversationId})` : ""}. Needs a human follow-up to book the demo.`
+  const note = input.disposition === "callback"
+    ? `Asked for a call back${followUpDate ? ` on ${followUpDate}` : ""}${input.callbackRequest ? ` ("${input.callbackRequest}")` : ""} on the AI intro call${input.conversationId ? ` (${input.conversationId})` : ""}. No time fixed: confirm the time.`
+    : `Said interested on the AI intro call${input.conversationId ? ` (${input.conversationId})` : ""}. Needs a human follow-up to book the demo.`
   const outreach = {
     prospect_id: prospectId, contact_channel: "voice", external_system: "arc", external_id: target.id,
     source: target.source, organization: target.org, segment: target.segment, city: target.city,
@@ -194,6 +201,15 @@ async function promote(target: Target, prospectId: string, input: MirrorInput): 
     body: JSON.stringify({ brand: "proxe", prospect_id: prospectId, external_system: "arc", external_id: `handoff:${prospectId}`, channel: "handoff", outcome: "handed_off", summary: `Interested on call. Moved to PROXe Leads as ${leadId}.`, occurred_at: now }),
   })
   await supabaseAdmin.from("outreach_targets").update({ proxe_lead_id: leadId, promoted_at: now, qualified_at: now, qualification_note: note }).eq("id", target.id)
+  // The day they named goes on PROXe's calendar as a follow-up (the store the
+  // pipeline focus list and Telegram reminders read).
+  const at = new Date(Date.parse(`${followUpDate || ""}T11:00:00+05:30`))
+  if (followUpDate && Number.isFinite(at.getTime()) && at.getTime() > Date.now()) {
+    await px("activities", {
+      method: "POST",
+      body: JSON.stringify({ lead_id: leadId, activity_type: "followup", note: `Call ${target.name || target.org || "them"} back - ${note}`, next_follow_up_date: at.toISOString(), created_by: null }),
+    }).catch(() => null)
+  }
   return leadId
 }
 
