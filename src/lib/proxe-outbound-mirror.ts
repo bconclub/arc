@@ -133,8 +133,14 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     let leadId = prospect.lead_id
     let promoted = false
     let booking: (Booking & { lead_id: string }) | { error: string } | undefined
-    const slot = ["callback", "interested"].includes(input.disposition) && !test
+    // A day with no clock time ("Thursday") books 11 am that day: the demo
+    // confirmation goes out with Confirmed / Reschedule so they can fix the
+    // time themselves and the WhatsApp conversation starts (Z, 27 Oct 2026).
+    const exact = ["callback", "interested"].includes(input.disposition) && !test
       ? parseCallbackTime(input.callbackRequest, input.occurredAt) : null
+    const dayOnly = !exact && ["callback", "interested"].includes(input.disposition) && !test
+      ? parseCallbackDay(input.callbackRequest, input.occurredAt) : null
+    const slot = exact || (dayOnly ? { date: dayOnly.date, time: "11:00", at: new Date(Date.parse(`${dayOnly.date}T11:00:00+05:30`)).toISOString() } : null)
     if (slot && Date.parse(slot.at) > Date.now()) {
       booking = await bookInProxe(target, prospect.id, input, slot)
       if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
