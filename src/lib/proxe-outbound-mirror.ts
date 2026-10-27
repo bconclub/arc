@@ -218,6 +218,17 @@ async function promote(target: Target, prospectId: string, input: MirrorInput, f
 Recording: ${input.recordingUrl}` : ""}`,
     }),
   }).catch(() => null)
+  // ...and in the lead's chat, the same call-summary entry the inbox renders
+  // for website calls (Z, 27 Oct 2026: "I can't see the conversation").
+  const conv = input.conversationId || null
+  await px("conversations", {
+    method: "POST",
+    body: JSON.stringify({
+      lead_id: leadId, channel: "voice", sender: "agent", message_type: "call_summary",
+      content: `AI outbound call: ${summary || "see the recording"}`, created_at: input.occurredAt,
+      metadata: { engine: "elevenlabs", source: "outbound_call", call_id: conv, summary: true, direction: "outbound", recording_url: conv ? `/api/dashboard/outreach/calls/${conv}/audio` : null },
+    }),
+  }).catch(() => null)
   // The day they named goes on PROXe's calendar as a follow-up (the store the
   // pipeline focus list and Telegram reminders read).
   const at = new Date(Date.parse(`${followUpDate || ""}T11:00:00+05:30`))
