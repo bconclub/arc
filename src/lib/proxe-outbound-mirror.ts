@@ -207,6 +207,17 @@ async function promote(target: Target, prospectId: string, input: MirrorInput, f
     body: JSON.stringify({ brand: "proxe", prospect_id: prospectId, external_system: "arc", external_id: `handoff:${prospectId}`, channel: "handoff", outcome: "handed_off", summary: `Interested on call. Moved to PROXe Leads as ${leadId}.`, occurred_at: now }),
   })
   await supabaseAdmin.from("outreach_targets").update({ proxe_lead_id: leadId, promoted_at: now, qualified_at: now, qualification_note: note }).eq("id", target.id)
+  // The call itself as a note on the lead, so opening it shows what was said
+  // (Z, 27 Oct 2026: "there should be a note based on what happened").
+  const summary = input.body.match(/^SUMMARY: (.+)$/m)?.[1] || ""
+  await px("activities", {
+    method: "POST",
+    body: JSON.stringify({
+      lead_id: leadId, activity_type: "call", created_by: null,
+      note: `[Connected] AI outbound call (${input.disposition.replace(/_/g, " ")}): ${summary || "see the recording"}${input.recordingUrl ? `
+Recording: ${input.recordingUrl}` : ""}`,
+    }),
+  }).catch(() => null)
   // The day they named goes on PROXe's calendar as a follow-up (the store the
   // pipeline focus list and Telegram reminders read).
   const at = new Date(Date.parse(`${followUpDate || ""}T11:00:00+05:30`))
