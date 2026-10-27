@@ -258,6 +258,8 @@ async function bookInProxe(target: Target, prospectId: string, input: MirrorInpu
         conversation_id: input.conversationId || `message:${input.messageId}`, source: "outbound_call",
         original_source: target.source, external_id: target.id, prospect_id: prospectId, summary,
         recording_url: input.recordingUrl || null,
+        // Leads > Industry and the city on the PROXe lead (Z, 27 Oct 2026).
+        industry: target.segment || null, city: target.city || null,
       }),
     })
     const d = await r.json().catch(() => ({}))
