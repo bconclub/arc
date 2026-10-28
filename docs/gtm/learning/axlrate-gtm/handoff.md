@@ -26,8 +26,11 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
    application is free, the Rs 30,000 + GST booth is Z's call; check DIDAC (25 to 27 Nov) stall cost.
 
 4. **From session 08 (28 Oct, [session-08.md](session-08.md)):**
-   - TEMQ Money (Actions) = 1 until finance/invoice/payment actions; rescore the sheet and `proxe_commitment_matrix`
-     on that rule (Gravity Academy's 4 was price talk, not action). PROXe's note scorer needs the same rule (PROXe Core).
+   - TEMQ Money (Actions) = 1 until finance/invoice/payment actions. The sheet's TEMQ tab was rebuilt on this rule
+     on 28 Oct (new columns: Perceives us as (VPP), Pain in Rs, Last money action, Outcome for next conversation; a
+     "How to score" key at the bottom). Keep it that way. Still to do: `proxe_commitment_matrix` (waits on Z) and
+     PROXe's note scorer (PROXe Core), which scored Gravity's price talk as a 4.
+   - Niranjan = Next Page (one account). Sudhir Mangrulkar (physiotherapy) is not Dr Sudhir (Frank Public School).
    - Cold or stalled pipeline (Genie Bikez first, then Frank Public School, Vidya, AsquareB): draft one pain-trigger
      message each, with their own numbers (Genie: ~Rs 40K a day at stake). Outcome is a reply. Z sends.
    - Before every call or visit, write its one outcome in the account note. Z walks into 3 businesses this week.
