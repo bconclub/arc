@@ -140,7 +140,15 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
       ? parseCallbackTime(input.callbackRequest, input.occurredAt) : null
     const dayOnly = !exact && ["callback", "interested"].includes(input.disposition) && !test
       ? parseCallbackDay(input.callbackRequest, input.occurredAt) : null
-    const slot = exact || (dayOnly ? { date: dayOnly.date, time: "11:00", at: new Date(Date.parse(`${dayOnly.date}T11:00:00+05:30`)).toISOString() } : null)
+    // A BOOKING only when they agreed to a call / demo with the founder after
+    // hearing what PROXe is. "I'm busy, call after 2" is a call-back request,
+    // not a demo: it becomes a follow-up at that time, with no "your demo is
+    // confirmed" WhatsApp (Z, 28 Oct 2026: Vijaya Orthopaedics was told their
+    // demo was confirmed after saying "No, I'm busy, after 2").
+    const summaryLine = input.body.match(/^SUMMARY: (.+)$/m)?.[1] || ""
+    const demoAgreed = /\b(founder|thanzeel|demo|demonstrat|walk (you|them) through|show (you|them))/i.test(summaryLine)
+      && /\b(agree|agreed|accept|accepted|interested|yes|sure|okay|fine)\b/i.test(summaryLine)
+    const slot = demoAgreed ? (exact || (dayOnly ? { date: dayOnly.date, time: "11:00", at: new Date(Date.parse(`${dayOnly.date}T11:00:00+05:30`)).toISOString() } : null)) : null
     if (slot && Date.parse(slot.at) > Date.now()) {
       booking = await bookInProxe(target, prospect.id, input, slot)
       if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
@@ -150,7 +158,7 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
       // confirmed) so it sits on the calendar (Z, 27 Oct 2026: "once the
       // lead is done, it should move").
       const day = parseCallbackDay(input.callbackRequest, input.occurredAt)
-      leadId = await promote(target, prospect.id, input, day?.date || null)
+      leadId = await promote(target, prospect.id, input, exact?.date || day?.date || null, exact?.time || null)
       promoted = !!leadId
     }
     return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted, ...(booking ? { booking } : {}) }
@@ -159,7 +167,7 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
   }
 }
 
-async function promote(target: Target, prospectId: string, input: MirrorInput, followUpDate: string | null = null): Promise<string | null> {
+async function promote(target: Target, prospectId: string, input: MirrorInput, followUpDate: string | null = null, followUpTime: string | null = null): Promise<string | null> {
   const phoneKey = tail10(target.phone)
   if (phoneKey.length !== 10) return null
   const now = new Date().toISOString()
@@ -231,7 +239,7 @@ Recording: ${input.recordingUrl}` : ""}`,
   }).catch(() => null)
   // The day they named goes on PROXe's calendar as a follow-up (the store the
   // pipeline focus list and Telegram reminders read).
-  const at = new Date(Date.parse(`${followUpDate || ""}T11:00:00+05:30`))
+  const at = new Date(Date.parse(`${followUpDate || ""}T${followUpTime || "11:00"}:00+05:30`))
   if (followUpDate && Number.isFinite(at.getTime()) && at.getTime() > Date.now()) {
     await px("activities", {
       method: "POST",
