@@ -87,3 +87,16 @@ export function parseCallbackDay(text: string | null | undefined, callAt: string
   else if (!/\b(today|later today|this (morning|afternoon|evening))\b/.test(s)) return null
   return { date: day.toISOString().slice(0, 10) }
 }
+
+/**
+ * The clock time a part of day stands for, when no clock time was said:
+ * "tomorrow evening" -> "18:00", not 11 am (Z, 28 Oct 2026: Padma Clinic said
+ * tomorrow evening and the follow-up sat at 11 am).
+ */
+export function partOfDayTime(text: string | null | undefined): string {
+  const s = String(text || "").toLowerCase()
+  if (/\b(evening|tonight)\b/.test(s)) return "18:00"
+  if (/\bnight\b/.test(s)) return "19:00"
+  if (/\bafternoon\b/.test(s)) return "15:00"
+  return "11:00"
+}

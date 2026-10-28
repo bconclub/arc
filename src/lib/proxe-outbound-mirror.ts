@@ -24,7 +24,7 @@
 import { supabaseAdmin } from "@/lib/supabase"
 import { isTestTarget } from "@/lib/outreach-workflow"
 import { proxeSyncConfigured } from "@/lib/investor/proxe-sync"
-import { parseCallbackTime, parseCallbackDay, contactNameFromTranscript } from "@/lib/callback-time"
+import { parseCallbackTime, parseCallbackDay, partOfDayTime, contactNameFromTranscript } from "@/lib/callback-time"
 
 type Target = {
   id: string; kind: string | null; name: string | null; org: string | null; segment: string | null; city: string | null
@@ -147,8 +147,11 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     // demo was confirmed after saying "No, I'm busy, after 2").
     const summaryLine = input.body.match(/^SUMMARY: (.+)$/m)?.[1] || ""
     const demoAgreed = /\b(founder|thanzeel|demo|demonstrat|walk (you|them) through|show (you|them))/i.test(summaryLine)
-      && /\b(agree|agreed|accept|accepted|interested|yes|sure|okay|fine)\b/i.test(summaryLine)
-    const slot = demoAgreed ? (exact || (dayOnly ? { date: dayOnly.date, time: "11:00", at: new Date(Date.parse(`${dayOnly.date}T11:00:00+05:30`)).toISOString() } : null)) : null
+      && /\b(agree|agreed|accept|accepted|interested|yes|sure|okay|fine|requested|asked for|confirmed)\b/i.test(summaryLine)
+    // A day with only a part of day keeps it: "tomorrow evening" is 6 pm
+    // (Z, 28 Oct 2026: Padma Clinic's "tomorrow evening" sat at 11 am).
+    const dayTime = partOfDayTime(input.callbackRequest)
+    const slot = demoAgreed ? (exact || (dayOnly ? { date: dayOnly.date, time: dayTime, at: new Date(Date.parse(`${dayOnly.date}T${dayTime}:00+05:30`)).toISOString() } : null)) : null
     if (slot && Date.parse(slot.at) > Date.now()) {
       booking = await bookInProxe(target, prospect.id, input, slot)
       if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
@@ -158,7 +161,7 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
       // confirmed) so it sits on the calendar (Z, 27 Oct 2026: "once the
       // lead is done, it should move").
       const day = parseCallbackDay(input.callbackRequest, input.occurredAt)
-      leadId = await promote(target, prospect.id, input, exact?.date || day?.date || null, exact?.time || null)
+      leadId = await promote(target, prospect.id, input, exact?.date || day?.date || null, exact?.time || (day ? dayTime : null))
       promoted = !!leadId
     }
     return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted, ...(booking ? { booking } : {}) }
