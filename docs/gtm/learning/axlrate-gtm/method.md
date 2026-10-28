@@ -33,6 +33,11 @@ The Google Sheet "PROXe GTM Trifecta" (tabs Trifecta, Causal Law, PROXe GTM, TEM
 - Stalling ("after Diwali") means they see you as a value provider. Name it: "You said these problems go away with
   this, but you want to wait two months. So you're OK living with them?"
 - Money is about managing THEIR commitment, not your emotion. Full payment upfront.
+- Every conversation has one outcome set before it starts. Move with the buyer; no chasing, no pushing.
+- Money (Actions) counts only what moves money towards us (finance team, vendor registration, invoice, payment).
+  Agreeing to the price is words; their spend elsewhere is capability, not commitment.
+- Pain = problem x TEMQ impact, in rupees, worked out with them. Then leave them unsettled.
+- Free work only after they feel the pain and see the value, and tied to payment.
 - This is not about you. Be curiously engaged in how they perceive things, like a journalist.
 
 ## Session log
@@ -46,3 +51,6 @@ The Google Sheet "PROXe GTM Trifecta" (tabs Trifecta, Causal Law, PROXe GTM, TEM
 - **06 (7 Oct):** SLOW DOWN; words vs actions; create commitment points.
 - **07 (22 Oct) VPP:** be perceived as critical; uncover the pain, pain moves people; glossary of pains; VPP
   divergence defines the urgency of the deal.
+- **08 (28 Oct) VPP + TEMQ:** one outcome per conversation ("configuration"), reset it against reality; money actions
+  only count when money moves towards us; problem x TEMQ impact = pain in Rs; a cold lead's outcome is a reply. Full
+  notes: [session-08.md](session-08.md).

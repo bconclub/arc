@@ -7,6 +7,7 @@ Execution is done by the full-time GTM agent and its sub-agents: start with [han
 
 | File | Date | From | Who uses it |
 |---|---|---|---|
+| [session-08.md](session-08.md) | 2026-10-28 | Axlrate cohort call + Z's notes | Every agent scoring TEMQ, writing follow-ups or quoting numbers (formula: cohort-only) |
 | [handoff.md](handoff.md) | 2026-10-26 | This session | The full-time GTM agent: what to run now, what not to, what waits on Z |
 | [founder-feedback.md](founder-feedback.md) | Running, latest 2026-10-26 | Z | Every GTM agent; overrides older lines |
 | [social-playbook.md](social-playbook.md) | 2026-10-26 | Z's request | Social/content agents; Z for the daily 20 minutes |

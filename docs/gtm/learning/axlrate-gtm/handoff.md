@@ -1,6 +1,6 @@
 # Handoff to the full-time GTM agent
 
-> **Date:** 2026-10-26  
+> **Date:** 2026-10-26 (session 08 tasks added 2026-10-28)  
 > **From:** Axlrate PROXe GTM session (Z's GTM strategy thread)  
 > **Use it:** The full-time GTM agent and its sub-agents (outbound writing, logging, social). Pick these up and run
 > them there. Every send, post or spend still waits for Z (brief rules).
@@ -24,6 +24,14 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
 3. **Investors and events.** Next actions at the end of [investors-and-events.md](investors-and-events.md): warm intro
    paths to Artha India Ventures and Claypond first; Bengaluru Tech Summit (17 to 19 Nov) investor programme
    application is free, the Rs 30,000 + GST booth is Z's call; check DIDAC (25 to 27 Nov) stall cost.
+
+4. **From session 08 (28 Oct, [session-08.md](session-08.md)):**
+   - TEMQ Money (Actions) = 1 until finance/invoice/payment actions; rescore the sheet and `proxe_commitment_matrix`
+     on that rule (Gravity Academy's 4 was price talk, not action). PROXe's note scorer needs the same rule (PROXe Core).
+   - Cold or stalled pipeline (Genie Bikez first, then Frank Public School, Vidya, AsquareB): draft one pain-trigger
+     message each, with their own numbers (Genie: ~Rs 40K a day at stake). Outcome is a reply. Z sends.
+   - Before every call or visit, write its one outcome in the account note. Z walks into 3 businesses this week.
+   - No free websites/setup offered before pain and value land, and never a payment link before alignment.
 
 ## Outbound callers: ready (from PROXe Core, 26 Oct, on Z's go)
 - **Agents** (ElevenLabs, all on the Sanket voice): Intro Cold (`noname`, V4: "Hi, is this {business}?", the opener,
