@@ -183,6 +183,12 @@ async function promote(target: Target, prospectId: string, input: MirrorInput, f
     why_them: target.why_them, qualification_note: note, qualified_at: now, promoted_at: now,
     conversation_id: input.conversationId || null,
   }
+  // A call-back with a time is a scheduled call: the lead sits under Leads,
+  // not Prospects, so someone calls them (Z, 28 Oct 2026: "these guys who
+  // are booking calls should come to Leads").
+  const callback = followUpDate && followUpTime
+    ? { outbound_callback: { request: input.callbackRequest || null, source: "outbound_call", at: new Date(Date.parse(`${followUpDate}T${followUpTime}:00+05:30`)).toISOString(), conversation_id: input.conversationId || null } }
+    : {}
   type Lead = { id: string; customer_name: string | null; unified_context: Record<string, unknown> | null }
   const matches = await px<Lead[]>(`all_leads?select=id,customer_name,unified_context&brand=eq.proxe&customer_phone_normalized=eq.${phoneKey}&limit=2`)
   if (matches.length > 1) return null // ambiguous: leave for a human, same rule as the dashboard promote route
@@ -192,7 +198,7 @@ async function promote(target: Target, prospectId: string, input: MirrorInput, f
     const prior = Array.isArray(ctx.lead_sources) ? (ctx.lead_sources as string[]) : []
     await px(`all_leads?id=eq.${matches[0].id}`, {
       method: "PATCH", body: JSON.stringify({
-        unified_context: { ...ctx, outreach: { ...((ctx.outreach as object) || {}), ...outreach }, lead_sources: Array.from(new Set([...prior, "proxe_outbound"])) },
+        unified_context: { ...ctx, ...callback, outreach: { ...((ctx.outreach as object) || {}), ...outreach }, lead_sources: Array.from(new Set([...prior, "proxe_outbound"])) },
         last_touchpoint: "voice", last_interaction_at: now,
         ...(matches[0].customer_name ? {} : { customer_name: target.name }),
       }),
@@ -205,7 +211,7 @@ async function promote(target: Target, prospectId: string, input: MirrorInput, f
         brand: "proxe", customer_name: target.name || target.org, email: target.email, phone: target.phone,
         customer_phone_normalized: phoneKey, first_touchpoint: "voice", last_touchpoint: "voice",
         last_interaction_at: input.occurredAt, lead_stage: "New",
-        unified_context: { outreach, lead_sources: ["proxe_outbound"], attribution: { source: "proxe_outbound", source_label: "PROXe Outreach", original_source: target.source } },
+        unified_context: { outreach, ...callback, lead_sources: ["proxe_outbound"], attribution: { source: "proxe_outbound", source_label: "PROXe Outreach", original_source: target.source } },
       }),
     })
     leadId = rows[0].id

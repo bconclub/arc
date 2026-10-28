@@ -12,11 +12,41 @@ const DAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", 
 
 export type CallbackSlot = { date: string; time: string; at: string }
 
+const WORDS: Record<string, string> = { one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12", fifteen: "15", twenty: "20", thirty: "30", forty: "40", "forty five": "45" }
+
+/**
+ * Spoken times as digits (Z, 28 Oct 2026: Medax said "half past five today"
+ * and no follow-up was made): "half past five" -> "5:30", "five thirty" ->
+ * "5:30", "quarter to six" -> "5:45".
+ */
+function spokenToDigits(s: string): string {
+  let t = s.replace(/\b(forty five|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty)\b/g, (w) => WORDS[w])
+  t = t.replace(/\bhalf past (\d{1,2})\b/g, "$1:30").replace(/\bquarter past (\d{1,2})\b/g, "$1:15")
+    .replace(/\bquarter to (\d{1,2})\b/g, (_, h) => `${(Number(h) + 11) % 12 || 12}:45`)
+    .replace(/\b(\d{1,2}) (15|30|45)\b/g, "$1:$2")
+  return t
+}
+
 export function parseCallbackTime(text: string | null | undefined, callAt: string | Date): CallbackSlot | null {
-  const s = String(text || "").toLowerCase().replace(/\s+/g, " ")
+  const s = spokenToDigits(String(text || "").toLowerCase().replace(/\s+/g, " "))
   if (!s.trim()) return null
   const base = new Date(callAt)
   if (!Number.isFinite(base.getTime())) return null
+
+  // Relative: "in 5 minutes", "10-15 minutes", "after an hour", "in 2 hours".
+  // The slot is that long after the call, rounded up to 5 minutes.
+  const mins = s.match(/\b(\d{1,3})(?:\s*(?:-|to|:|or)\s*(\d{1,3}))?\s*min/)
+  const hrs = s.match(/\b(?:in|after)\s+(an?|\d{1,2})\s+hours?\b/)
+  if (mins || hrs) {
+    const add = mins ? Number(mins[2] || mins[1]) : (/^an?$/.test(hrs![1]) ? 1 : Number(hrs![1])) * 60
+    if (add > 0 && add <= 600) {
+      const atMs = Math.ceil((base.getTime() + add * 60_000) / 300_000) * 300_000
+      const ist = new Date(atMs + IST_MS)
+      const date = ist.toISOString().slice(0, 10)
+      const time = ist.toISOString().slice(11, 16)
+      return { date, time, at: new Date(atMs).toISOString() }
+    }
+  }
 
   // Clock time. "10 a.m." / "10:30am" / "10.30 pm" / "15:00" / "10 o'clock".
   const m = s.match(/\b(\d{1,2})(?:[:.](\d{2}))?\s*(a\.?\s?m\.?|p\.?\s?m\.?)(?![a-z])/)
