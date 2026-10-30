@@ -68,7 +68,12 @@ export async function POST(req: NextRequest) {
 
   const transcript = typeof body.transcript === "string" ? body.transcript.slice(0, 20000) : "";
   const recording = typeof body.recording_url === "string" ? body.recording_url : "";
-  const disposition = typeof body.disposition === "string" ? body.disposition : "";
+  // "Reached the wrong business" is a wrong number whatever label the agent
+  // picked (Desi Dental, 30 Oct 2026: the lead stayed in the dial list).
+  const rawDisposition = typeof body.disposition === "string" ? body.disposition : "";
+  const wrongBusiness = !["interested", "callback"].includes(rawDisposition)
+    && /\b(wrong (number|business|clinic|person|company)|not the (right )?(business|clinic|company)|different (business|clinic|company))\b/i.test(String(body.summary || "") + " " + transcript.slice(0, 20000));
+  const disposition = wrongBusiness ? "wrong_number" : rawDisposition;
 
   const callbackRequest = typeof body.callback_request === 'string' ? body.callback_request.slice(0,2000) : '';
   const occurredAt = typeof body.occurred_at === 'string' && Number.isFinite(Date.parse(body.occurred_at)) ? body.occurred_at : new Date().toISOString();

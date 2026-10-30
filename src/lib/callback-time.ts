@@ -110,7 +110,12 @@ export function futureCallbackTime(request: string | null | undefined, body: str
 export function spokeToFrontDesk(body: string | null | undefined): boolean {
   const said = String(body || "").split("\n").filter((l) => /^caller:/i.test(l)).join("\n")
   if (/\bi'?m (the |a |an )?(doctor|owner|founder|director|proprietor|principal)\b|\bi am (the |a |an )?(doctor|owner|founder|director|proprietor|principal)\b/i.test(said)) return false
-  return /\b(front ?desk|front office|reception|receptionist|i'?m (the |a |an |just )?(staff|assistant|employee)|i am (the |a |an |just )?(staff|assistant|employee))\b/i.test(said)
+  if (/\b(front ?desk|front office|reception|receptionist|i'?m (the |a |an |just )?(staff|assistant|employee)|i am (the |a |an |just )?(staff|assistant|employee))\b/i.test(said)) return true
+  // The call summary names who answered even when the caller never says it
+  // (Dr Ananya Orthopaedic Clinic, 30 Oct 2026: "reception asked for info to be
+  // sent to the doctor" booked a demo nobody agreed to).
+  const summary = String(body || "").match(/^SUMMARY: (.+)$/m)?.[1] || ""
+  return /\b(front ?desk|front office|reception(?:ist)?|office staff|clinic staff|staff member)\b/i.test(summary)
 }
 
 /** The person's own name from the call ("I'm Dr. Shobha Joel, Managing Director" -> "Dr Shobha Joel"). */
