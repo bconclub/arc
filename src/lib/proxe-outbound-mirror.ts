@@ -24,7 +24,7 @@
 import { supabaseAdmin } from "@/lib/supabase"
 import { isTestTarget } from "@/lib/outreach-workflow"
 import { proxeSyncConfigured } from "@/lib/investor/proxe-sync"
-import { parseCallbackTime, parseCallbackDay, partOfDayTime, contactNameFromTranscript } from "@/lib/callback-time"
+import { futureCallbackTime, spokeToFrontDesk, parseCallbackDay, partOfDayTime, contactNameFromTranscript } from "@/lib/callback-time"
 
 type Target = {
   id: string; kind: string | null; name: string | null; org: string | null; segment: string | null; city: string | null
@@ -137,7 +137,7 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     // confirmation goes out with Confirmed / Reschedule so they can fix the
     // time themselves and the WhatsApp conversation starts (Z, 27 Oct 2026).
     const exact = ["callback", "interested"].includes(input.disposition) && !test
-      ? parseCallbackTime(input.callbackRequest, input.occurredAt) : null
+      ? futureCallbackTime(input.callbackRequest, input.body, input.occurredAt) : null
     const dayOnly = !exact && ["callback", "interested"].includes(input.disposition) && !test
       ? parseCallbackDay(input.callbackRequest, input.occurredAt) : null
     // A BOOKING only when they agreed to a call / demo with the founder after
@@ -151,17 +151,22 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     // A day with only a part of day keeps it: "tomorrow evening" is 6 pm
     // (Z, 28 Oct 2026: Padma Clinic's "tomorrow evening" sat at 11 am).
     const dayTime = partOfDayTime(input.callbackRequest)
+    // A front desk's call-back stays a prospect (the call shows on Prospects
+    // with its time); only the doctor or owner makes it a lead.
+    const frontDesk = spokeToFrontDesk(input.body)
     const slot = demoAgreed ? (exact || (dayOnly ? { date: dayOnly.date, time: dayTime, at: new Date(Date.parse(`${dayOnly.date}T${dayTime}:00+05:30`)).toISOString() } : null)) : null
-    if (slot && Date.parse(slot.at) > Date.now()) {
+    if (slot && !frontDesk && Date.parse(slot.at) > Date.now()) {
       booking = await bookInProxe(target, prospect.id, input, slot)
       if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
-    } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at) {
+    } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at && !frontDesk) {
       // Interested, or asked for a call back without a clock time: still a
       // PROXe lead, with a follow-up on the day they named (11 am IST, to be
       // confirmed) so it sits on the calendar (Z, 27 Oct 2026: "once the
       // lead is done, it should move").
       const day = parseCallbackDay(input.callbackRequest, input.occurredAt)
-      leadId = await promote(target, prospect.id, input, exact?.date || day?.date || null, exact?.time || (day ? dayTime : null))
+      // A part-of-day time already gone stays unset, to be confirmed.
+      const dayTimeAhead = day && Date.parse(`${day.date}T${dayTime}:00+05:30`) > Date.parse(input.occurredAt) ? dayTime : null
+      leadId = await promote(target, prospect.id, input, exact?.date || day?.date || null, exact?.time || dayTimeAhead)
       promoted = !!leadId
     }
     return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted, ...(booking ? { booking } : {}) }

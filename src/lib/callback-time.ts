@@ -84,6 +84,35 @@ export function parseCallbackTime(text: string | null | undefined, callAt: strin
   return { date, time, at }
 }
 
+/**
+ * A call-back slot that is ahead of the call. The agent's own request can name
+ * a time already gone (Z, 30 Oct 2026: called at 4:51, "call after one hour",
+ * and the agent agreed "3:30 today"), so then the caller's own words decide.
+ * Nothing ahead of the call -> null: someone has to confirm the time.
+ */
+export function futureCallbackTime(request: string | null | undefined, body: string | null | undefined, callAt: string | Date): CallbackSlot | null {
+  const callMs = new Date(callAt).getTime()
+  const slot = parseCallbackTime(request, callAt)
+  if (!slot || Date.parse(slot.at) > callMs) return slot
+  for (const line of String(body || "").split("\n")) {
+    if (!/^caller:/i.test(line)) continue
+    const said = parseCallbackTime(line.replace(/^caller:\s*/i, ""), callAt)
+    if (said && Date.parse(said.at) > callMs) return said
+  }
+  return null
+}
+
+/**
+ * The person on the call said they are the front desk, not someone who decides
+ * (Z, 30 Oct 2026: a front desk asking for a call back is not a lead). A doctor
+ * or owner saying so on the same call wins.
+ */
+export function spokeToFrontDesk(body: string | null | undefined): boolean {
+  const said = String(body || "").split("\n").filter((l) => /^caller:/i.test(l)).join("\n")
+  if (/\bi'?m (the |a |an )?(doctor|owner|founder|director|proprietor|principal)\b|\bi am (the |a |an )?(doctor|owner|founder|director|proprietor|principal)\b/i.test(said)) return false
+  return /\b(front ?desk|front office|reception|receptionist|i'?m (the |a |an |just )?(staff|assistant|employee)|i am (the |a |an |just )?(staff|assistant|employee))\b/i.test(said)
+}
+
 /** The person's own name from the call ("I'm Dr. Shobha Joel, Managing Director" -> "Dr Shobha Joel"). */
 export function contactNameFromTranscript(transcript: string | null | undefined): string | null {
   for (const line of String(transcript || "").split("\n")) {
