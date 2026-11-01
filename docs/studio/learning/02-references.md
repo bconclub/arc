@@ -46,7 +46,7 @@ The founder sends reels while scrolling (to Insta Daemon). Our job is to **under
 - **Saturation check.** If two of three brand versions of a trend are the same template (Roadster delivers to a
   window), skip that template.
 
-## Formats on file (full breakdowns in EDITR REFERENCE-REELS.md; 26 so far)
+## Formats on file (full breakdowns in EDITR REFERENCE-REELS.md; 27 so far)
 | Brand type | Reference # | Format | Best for |
 |---|---|---|---|
 | Famous-brand AI spec ad | 1, 2, 6, 10 | Prompt reveal split / cards board (title + video + storyboard + prompt cards + comment CTA) | AI-ad tutorials, growing our account |
@@ -63,6 +63,7 @@ The founder sends reels while scrolling (to Insta Daemon). Our job is to **under
 | Kinetic typography / motion poem | 24, 22 | "Change" (24, 490K likes, no AI): tiny typed words in big space, pixel-art icons, thermal-gradient silhouettes, one red accent, one word per beat. HEADLOCK (22): the words are the picture, one object pun per word on a beat grid. Both built in code + ChatGPT cut-outs, ~$0-2 | Manifestos, brand values, launches, Indian-script brands, our own craft posts |
 | Hyper-montage / match-cut story | 25 | "Time feels this fast" (1.24M likes): birth to death in 12s, 57 cuts, one shape overlay held while the picture under it changes (spiral, circle, eye), red flash frames, "THE END" | Brand or category history in 12s, launch hooks, craft posts |
 | Program / cohort recruitment | 26 | Lightyear Residency (35K likes): legends first (archival), then the turn to real members in the same warm grade, creed lines ("one goal", "no excuses"), deadline CTA. Use anonymous archival-look stills, never famous people's footage | ZenSquare A★, academies, residencies, hiring films |
+| Founder / service walk-and-talk | 27 | GP Multimedia: one person walks a real premium place talking to camera, type and cards sit behind him (depth), B-roll bursts on the beat, DM keyword + phone pill. Real footage + a person matte + code graphics | Founder reels, our own video service, real estate and builders |
 
 ## Client briefs from references (example: Team Mithai, 22 references)
 Group the client's references by what they're asking for (brand film, premium heritage, food close-ups, AI spec
