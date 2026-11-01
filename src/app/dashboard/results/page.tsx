@@ -1,172 +1,274 @@
 "use client";
 
-import { useState } from "react";
-import { Globe, Eye, MessageSquare, Send, Repeat } from "lucide-react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import type { ScheduledPost, PostResult } from "@/types/content-engine";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { BarChart3, ExternalLink, Plus } from "lucide-react";
+import { Modal, Field, ModalActions, inputCls, btnPrimaryCls } from "@/components/ops/Modal";
 
-const CHANNEL_ICONS: Record<string, React.ReactNode> = {
-  LinkedIn: <Globe size={14} />,
-  Instagram: <Globe size={14} />,
-  WhatsApp: <Globe size={14} />,
-  Twitter: <Globe size={14} />,
-  X: <Globe size={14} />,
+type SocialPost = {
+  id: string;
+  platform: string;
+  external_id: string;
+  url: string | null;
+  posted_at: string | null;
+  text_preview: string | null;
+  impressions: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  collected_at: string;
 };
 
+type Channel = "linkedin" | "x";
+type Period = "30" | "90" | "all";
+type Sort = "newest" | "views";
+
+const CHANNEL_LABEL: Record<Channel, string> = { linkedin: "LinkedIn", x: "X" };
+const METRICS = [
+  ["impressions", "Views"],
+  ["likes", "Likes"],
+  ["comments", "Comments"],
+  ["shares", "Reposts"],
+] as const;
+
+type Form = {
+  platform: Channel; url: string; posted_at: string; text_preview: string;
+  impressions: string; likes: string; comments: string; shares: string;
+};
+const EMPTY: Form = {
+  platform: "linkedin", url: "", posted_at: new Date().toISOString().slice(0, 10), text_preview: "",
+  impressions: "", likes: "", comments: "", shares: "",
+};
+
+const num = (v: number | null) => (v == null ? "-" : v.toLocaleString("en-IN"));
+const day = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "No date";
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
 export default function ResultsPage() {
-  const [schedule] = useLocalStorage<ScheduledPost[]>("arc:schedule", []);
-  const [results, setResults] = useLocalStorage<PostResult[]>("arc:results", []);
+  const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [channel, setChannel] = useState<Channel | "all">("all");
+  const [period, setPeriod] = useState<Period>("90");
+  const [sort, setSort] = useState<Sort>("newest");
+  const [form, setForm] = useState<Form | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ views: 0, comments: 0, replies: 0, dms: 0 });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const donePosts = schedule.filter(p => p.status === "done");
-  
-  const postsWithResults = donePosts.map(post => {
-    const result = results.find(r => r.id === post.id);
-    return { post, result };
-  });
+  const load = useCallback(async () => {
+    const data = await fetch("/api/social/posts").then((r) => r.json()).catch(() => []);
+    setPosts(Array.isArray(data) ? data : []);
+    setLoaded(true);
+  }, []);
 
-  const handleEdit = (postId: string, result?: PostResult) => {
-    setEditingId(postId);
-    setEditForm({
-      views: result?.views || 0,
-      comments: result?.comments || 0,
-      replies: result?.replies || 0,
-      dms: result?.dms || 0,
+  useEffect(() => { load(); }, [load]);
+
+  const inPeriod = useMemo(() => {
+    if (period === "all") return posts;
+    const cutoff = Date.now() - Number(period) * 864e5;
+    return posts.filter((p) => p.posted_at && new Date(p.posted_at).getTime() >= cutoff);
+  }, [posts, period]);
+
+  const visible = useMemo(() => {
+    const rows = inPeriod.filter((p) => channel === "all" || p.platform === channel);
+    if (sort === "views") return [...rows].sort((a, b) => (b.impressions ?? -1) - (a.impressions ?? -1));
+    return rows;
+  }, [inPeriod, channel, sort]);
+
+  const lastUpdated = useMemo(
+    () => posts.reduce<string | null>((latest, p) => (!latest || p.collected_at > latest ? p.collected_at : latest), null),
+    [posts],
+  );
+
+  function openEdit(p: SocialPost) {
+    setError("");
+    setEditingId(p.external_id);
+    setForm({
+      platform: p.platform as Channel,
+      url: p.url ?? "",
+      posted_at: p.posted_at ? p.posted_at.slice(0, 10) : "",
+      text_preview: p.text_preview ?? "",
+      impressions: p.impressions?.toString() ?? "",
+      likes: p.likes?.toString() ?? "",
+      comments: p.comments?.toString() ?? "",
+      shares: p.shares?.toString() ?? "",
     });
-  };
+  }
 
-  const handleSave = (postId: string) => {
-    const post = schedule.find(p => p.id === postId);
-    if (!post) return;
-
-    const newResult: PostResult = {
-      id: postId,
-      topic: post.topic,
-      channel: post.channel,
-      date: post.date,
-      pillar: post.pillar || "Build Journey",
-      ...editForm,
-    };
-
-    setResults(prev => {
-      const existing = prev.findIndex(r => r.id === postId);
-      if (existing >= 0) {
-        return prev.map(r => r.id === postId ? newResult : r);
-      }
-      return [...prev, newResult];
+  async function save() {
+    if (!form) return;
+    setSaving(true); setError("");
+    const res = await fetch("/api/social/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...form, external_id: editingId ?? undefined }),
     });
-    setEditingId(null);
-  };
+    setSaving(false);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      setError(body?.error || "Save failed.");
+      return;
+    }
+    setForm(null); load();
+  }
 
-  const handleRepost = (post: ScheduledPost) => {
-    const newPost: ScheduledPost = {
-      id: `post-${Date.now()}`,
-      topic: `${post.topic} (repost)`,
-      channel: post.channel,
-      date: new Date().toISOString().split("T")[0],
-      time: "09:00",
-      status: "scheduled",
-      draft: post.draft,
-      pillar: post.pillar,
-    };
-    
-    const existing = JSON.parse(localStorage.getItem("arc:schedule") || "[]");
-    localStorage.setItem("arc:schedule", JSON.stringify([...existing, newPost]));
-    window.location.href = "/dashboard/schedule";
-  };
+  const pill = (active: boolean) =>
+    `rounded-lg px-2.5 py-1 text-[12px] transition-colors ${active ? "bg-white/[0.1] text-text" : "text-text-muted hover:text-text"}`;
 
   return (
-    <div className="page">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">Results</h1>
-        <p className="text-[13px] text-text-muted mt-0.5">What landed</p>
+    <div className="page space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <BarChart3 size={18} className="text-text-muted" />
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-text">Results</h1>
+            <p className="mt-0.5 text-[13px] text-text-muted">
+              What landed on LinkedIn and X{lastUpdated ? ` · numbers updated ${day(lastUpdated)}` : ""}
+            </p>
+          </div>
+        </div>
+        <button
+          className={`${btnPrimaryCls} flex shrink-0 items-center gap-1.5`}
+          onClick={() => { setError(""); setEditingId(null); setForm({ ...EMPTY }); }}
+        >
+          <Plus size={13} /> Add post
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {(Object.keys(CHANNEL_LABEL) as Channel[]).map((c) => {
+          const rows = inPeriod.filter((p) => p.platform === c);
+          const counted = rows.filter((p) => p.impressions != null).map((p) => p.impressions as number);
+          const sum = (key: "impressions" | "likes" | "comments" | "shares") =>
+            rows.reduce((total, p) => total + (p[key] ?? 0), 0);
+          const stats: [string, string][] = [
+            ["Posts", rows.length.toLocaleString("en-IN")],
+            ["Views", sum("impressions").toLocaleString("en-IN")],
+            ["Typical views", num(median(counted))],
+            ["Likes", sum("likes").toLocaleString("en-IN")],
+            ["Comments", sum("comments").toLocaleString("en-IN")],
+            ["Reposts", sum("shares").toLocaleString("en-IN")],
+          ];
+          return (
+            <div key={c} className="rounded-card border border-[var(--border)] bg-surface p-4">
+              <p className="text-[13px] font-semibold text-text">{CHANNEL_LABEL[c]}</p>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                {stats.map(([label, value]) => (
+                  <div key={label}>
+                    <p className="text-lg font-bold tabular-nums tracking-tight text-text">{value}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-1">
+          {(["all", "linkedin", "x"] as const).map((c) => (
+            <button key={c} className={pill(channel === c)} onClick={() => setChannel(c)}>
+              {c === "all" ? "All" : CHANNEL_LABEL[c]}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1">
+          {([["30", "30 days"], ["90", "90 days"], ["all", "All time"]] as const).map(([p, label]) => (
+            <button key={p} className={pill(period === p)} onClick={() => setPeriod(p)}>{label}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1">
+          {([["newest", "Newest"], ["views", "Most views"]] as const).map(([s, label]) => (
+            <button key={s} className={pill(sort === s)} onClick={() => setSort(s)}>{label}</button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-3">
-        {postsWithResults.length === 0 ? (
-          <div className="card p-8 text-center">
-            <p className="text-sm text-text-muted mb-1">No completed posts yet</p>
-            <p className="text-xs text-text-muted/60">Mark posts as done in Schedule to track results</p>
+        {loaded && visible.length === 0 ? (
+          <div className="rounded-card border border-[var(--border)] bg-surface p-8 text-center">
+            <p className="text-sm text-text-muted">No posts in this view yet.</p>
           </div>
         ) : (
-          postsWithResults.map(({ post, result }) => (
-            <div key={post.id} className="card p-4">
+          visible.map((p) => (
+            <div key={p.id} className="rounded-card border border-[var(--border)] bg-surface p-4">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-text-muted">{CHANNEL_ICONS[post.channel] || <Globe size={14} />}</span>
-                    <span className="text-[11px] text-text-muted">{post.channel} · {post.date}</span>
-                  </div>
-                  <p className="text-[14px] font-medium text-text truncate">{post.topic}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-[11px] text-text-muted">
+                    {CHANNEL_LABEL[p.platform as Channel] ?? p.platform} · {day(p.posted_at)}
+                  </p>
+                  <p className="line-clamp-2 text-[14px] text-text">{p.text_preview || "No text saved"}</p>
                 </div>
-                <button
-                  onClick={() => handleRepost(post)}
-                  className="shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] text-text-muted hover:text-text bg-surface hover:bg-white/[0.08] rounded-lg transition-all"
-                >
-                  <Repeat size={11} />
-                  Post again
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button className="text-[12px] text-text-muted hover:text-text" onClick={() => openEdit(p)}>Edit</button>
+                  {p.url && /^https:\/\//.test(p.url) && (
+                    <a href={p.url} target="_blank" rel="noreferrer" aria-label="Open post" className="text-text-muted hover:text-text">
+                      <ExternalLink size={13} />
+                    </a>
+                  )}
+                </div>
               </div>
-
-              {editingId === post.id ? (
-                <div className="grid grid-cols-4 gap-2 mt-4">
-                  {[
-                    { key: "views", icon: Eye, label: "Views" },
-                    { key: "comments", icon: MessageSquare, label: "Comments" },
-                    { key: "replies", icon: Send, label: "Replies" },
-                    { key: "dms", icon: Globe, label: "DMs" },
-                  ].map(({ key, icon: Icon, label }) => (
-                    <div key={key} className="text-center">
-                      <Icon size={12} className="mx-auto mb-1 text-text-muted" />
-                      <input
-                        type="number"
-                        value={editForm[key as keyof typeof editForm]}
-                        onChange={(e) => setEditForm(f => ({ ...f, [key]: parseInt(e.target.value) || 0 }))}
-                        className="w-full bg-bg border border-white/[0.08] rounded-lg px-2 py-1.5 text-[13px] text-text text-center focus:border-white/20 focus:outline-none"
-                      />
-                      <span className="text-[9px] text-text-muted uppercase tracking-wider">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-2 mt-4">
-                  {[
-                    { key: "views", icon: Eye, label: "Views", val: result?.views || 0 },
-                    { key: "comments", icon: MessageSquare, label: "Comments", val: result?.comments || 0 },
-                    { key: "replies", icon: Send, label: "Replies", val: result?.replies || 0 },
-                    { key: "dms", icon: Globe, label: "DMs", val: result?.dms || 0 },
-                  ].map(({ key, icon: Icon, label, val }) => (
-                    <div key={key} className="text-center">
-                      <Icon size={12} className="mx-auto mb-1 text-text-muted" />
-                      <span className="text-[15px] font-semibold text-text block">{val}</span>
-                      <span className="text-[9px] text-text-muted uppercase tracking-wider">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex justify-end mt-3">
-                {editingId === post.id ? (
-                  <button
-                    onClick={() => handleSave(post.id)}
-                    className="px-3 py-1.5 text-[12px] font-medium bg-white text-black rounded-lg hover:bg-white/90"
-                  >
-                    Save
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleEdit(post.id, result)}
-                    className="px-3 py-1.5 text-[12px] text-text-muted hover:text-text transition-colors"
-                  >
-                    {result ? "Edit stats" : "Add stats"}
-                  </button>
-                )}
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {METRICS.map(([key, label]) => (
+                  <div key={key}>
+                    <p className="text-[15px] font-semibold tabular-nums text-text">{num(p[key])}</p>
+                    <p className="text-[9px] uppercase tracking-wider text-text-muted">{label}</p>
+                  </div>
+                ))}
               </div>
             </div>
           ))
         )}
       </div>
+
+      {form && (
+        <Modal title={editingId ? "Edit post" : "Add post"} onClose={() => setForm(null)}>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Platform">
+              <select
+                className={inputCls}
+                value={form.platform}
+                disabled={!!editingId}
+                onChange={(e) => setForm({ ...form, platform: e.target.value as Channel })}
+              >
+                <option value="linkedin">LinkedIn</option>
+                <option value="x">X</option>
+              </select>
+            </Field>
+            <Field label="Posted on">
+              <input type="date" className={inputCls} value={form.posted_at} onChange={(e) => setForm({ ...form, posted_at: e.target.value })} />
+            </Field>
+          </div>
+          <Field label="Link to the post">
+            <input className={inputCls} value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+          </Field>
+          <Field label="Post text">
+            <textarea className={inputCls} rows={3} value={form.text_preview} onChange={(e) => setForm({ ...form, text_preview: e.target.value })} />
+          </Field>
+          <div className="grid grid-cols-4 gap-3">
+            {METRICS.map(([key, label]) => (
+              <Field key={key} label={label}>
+                <input
+                  type="number"
+                  min="0"
+                  className={inputCls}
+                  value={form[key]}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                />
+              </Field>
+            ))}
+          </div>
+          {error && <p className="text-[12px] text-accent-red">{error}</p>}
+          <ModalActions onCancel={() => setForm(null)} onSave={save} saving={saving} />
+        </Modal>
+      )}
     </div>
   );
 }
