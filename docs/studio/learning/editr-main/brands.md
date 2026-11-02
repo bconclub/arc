@@ -34,7 +34,7 @@
 ## frwdslash (/), BCON's "signals of the AI future" page
 - "Forward Flash" in voice-to-text. Films on what is next, Manipur format. Voice proposed: Rehan Waris, as on Manipur.
 - Brand from the founder, 2026-11-02 (`EDITR/content/forward-slash/brand/forward-slash-brand-direction.png`): gradient #6A00FF, #D633FF, #FF4D7E,
-  #FF7A00, gradient slash mark, FORWARD SLASH in letterspaced Inter, "Market moves / Ideas / What's next".
+  #FF7A00, gradient slash mark, the name forward slash in Inter, always small letters, no capital S, "Market moves / Ideas / What's next".
 - His changes to that board: **light, not dark**, and "don't overdo it, you should not feel like AI". So the dark board is the palette, not the look:
   off-white paper, real footage in a neutral grade, gradient only on the slash and the one live accent. It replaces the cobalt and lime.
 - The Sarvam reel (Feb 2026, 43 s, 16 likes) lacked a hook frame, so frame 0 now carries the claim. Ep 1: `EDITR/content/forward-slash/who-is-paying/`.
