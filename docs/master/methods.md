@@ -45,6 +45,9 @@ House structure: cover, the goal, positioning, the flow from enquiry to customer
 two signature lines. Mixed dark and light pages, a "BCON x client" header with a page pill, Anybody caps with an Instrument
 Serif italic accent, in the client's colours. One idea per page. Don't add photos unless Z asks for them.
 
+Anything a client may read on a phone: build tall pages at 480 x 853 px, body text at least 16.5 px, no wide tables (stack them
+as rows). A US Letter page shrinks to unreadable text on a phone. Render each page at 390 px wide to check it.
+
 ## The video library
 `C:\dev\builds\video-library\` is a local gallery of every video across the machine, on port 4177 (`video-library` in the
 ISIVIS `launch.json`). It only opens on this computer. `build.py` probes files, sets the brand by regex, groups versions and cuts
