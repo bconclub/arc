@@ -32,3 +32,4 @@
 | 2026-11-02 | The name is "actually small letters... not capital S" | forward slash, lowercase everywhere |
 | 2026-11-02 | "I don't think this is working, so let's do a day in AI"; "a proper start, a proper end, a jingle, one proper voice" | Today in AI, daily, each edition covers the day before |
 | 2026-11-03 | Scafell flat tile motion: "These are really bad motions. Find what the brand does and then do something really like premium" | Started from the brand's own idea (One loop), the real logo in 3D, one unbroken camera move, low-key light. Flat stamped tiles are out |
+| 2026-11-03 | Scafell: "Formerly Bakervaughn... is not needed"; "it should entail all that we do"; "Don't say UK specifically" | Rebrand line and UK off the film, all ten services named, end line AI systems for growing businesses |
