@@ -4,11 +4,9 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
-**2026-11-02 #16: Windchasers app, built after they declined it at Rs 1.2 lakh.** (Open)
-- No free handover and no price cut. Rs 1.2 lakh stays; splitting the payment is allowed.
-- Test on a real phone, demo to Sumaiya by 6 Nov, and ask why they said no. Nothing goes to students before the advance.
-- Written yes with advance, or written no, by 13 Nov. On a no, shelve it and keep the code as a BCON template.
-- Unrequested builds: agree the price and the terms of use before showing them, so a demo isn't read as a gift.
+**2026-11-02 #16: Windchasers app: Z's decision replaces the council verdict.** Z is giving the app to Windchasers at no
+charge, as a thank-you to Sumaiya for a long relationship, with changes done as needed. This is a one-off for this client,
+not a price or offer for anyone else. The council had advised keeping Rs 1.2 lakh; Z overrode that.
 
 **2026-10-26: Core plan contents confirmed by Z.** Rs 9,999/month + GST = 1,000 managed leads + 250 minutes of AI voice,
 usable across all channels. Replaces every "500 leads + 100 minutes" mention. Every page, prompt, script and email must say this.

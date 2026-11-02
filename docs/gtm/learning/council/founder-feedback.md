@@ -1,5 +1,6 @@
 # Founder feedback to the Council (newest first)
 
+- **2026-11-02:** Windchasers app is a free gift to Sumaiya for the long relationship, changes included. Change: verdict #16 (keep Rs 1.2 lakh) replaced. One-off, not an offer for other clients.
 - **2026-10-25:** Everything the Council and GTM define goes to ARC GTM learning so the autonomous agents pick it up.
   Change: this folder created; the Council now writes here after each GTM verdict.
 - **2026-10-25:** "One closure a month" was wrong; read the ARC investor updates first. Change: Council reads
