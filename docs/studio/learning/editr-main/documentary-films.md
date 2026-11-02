@@ -65,3 +65,8 @@ Founder on the first Ep 1 cut: "Use actual data", and asking "who's paying?" the
 - Numbers come from filings first (SEC 8-K exhibits, company releases), press only when no filing exists. Add only like with like: one line item, one period. Plans stay out of totals.
 - A claim with no source tying it to the story is cut, however good it sounds (Microsoft buyouts).
 Format that came from this: **The AI Bill**, a dated weekly bill (Bill No. 001, 26 Oct - 1 Nov 2026). `EDITR/content/forward-slash/the-ai-bill/`: one JSON per week in `bills/`, `make_bill.py` asserts the total matches its items before rendering.
+
+## Checking before anyone sees it (added 2026-11-02, founder: "double-check and triple-check")
+- Numbers: re-add from the filing's exact millions, in code. Words: transcribe the finished mix, not only the take. Picture: a frame every second across the whole film, and every 0.3 s around any fix. Sound: LUFS and peak on each export.
+- On The AI Bill this caught, in order: a worker's face with his name on his helmet, a client's site plan sliding in, and a brand logo, all inside clips that looked clean on the contact sheet. Sheets show moments; stock and news clips cut and overlay between them. Pin each clip's safe seconds in the shot list with a comment.
+- Label generic footage on screen ("illustrative footage, not the companies' sites") so a building never reads as the named company's.
