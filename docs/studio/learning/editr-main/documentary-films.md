@@ -46,3 +46,8 @@ HOUSEHOLDS. A caption says it is commentary from public reporting. Active court 
 ## Manipur notes from the founder
 Music overpowering the voice was the first complaint: one low fixed gain (.22). Real video wherever possible. No
 artificial pitch or volume steps, compose any rise in ElevenLabs. Animate everything, every shot moves.
+
+## Checking clips (added 2026-11-02)
+Contact sheets at six frames miss things. On Ep 1 an IEA logo faded in mid-shot and a large, faint ETV watermark sat over the aerials; both only showed on
+the cut's 2-second strip. Check the strip of every cut, and look at candidate windows before re-rendering. Stock channels on the CC filter often carry a
+big watermark ("footageonline"), and travel clips can carry their own title, so test the exact seconds you use.
