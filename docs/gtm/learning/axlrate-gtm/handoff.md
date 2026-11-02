@@ -72,10 +72,23 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
 - **Measure per opener:** interested + callback_requested per 100 connected (September baseline: 6 interested of
   59 connected).
 
+## Three channels (Z, 2026-11-02): calls, WhatsApp, email all needed
+- **Calls:** ARC shows 0 dial reservations since 26 Oct 13:26 IST. Find out if calling stopped or bypasses ARC. Before
+  volume: widen `DIAL_ALLOWLIST` per approved batch, settle 140-series + DND scrub (TRAI). Pool: 454 identified
+  targets with phones. Log to `outreach_activity`, which is empty today.
+- **WhatsApp:** the kit's Marketing templates need creating and Meta approval; `proxe_after_call_v1`,
+  `proxe_followup_v1` and `proxe_closeout_v1` are not in PROXe's template config. Use the separate outbound number
+  in messaging-kit.md, never the main PROXe number.
+- **Email:** candidate is Warmbly (github.com/warmbly/warmbly, Apache-2.0, Go, Docker Compose, v0.6.x, 854 stars,
+  created Jan 2026). It sends through our own mailboxes; it brings no lead data. Self-host needs a server, a separate
+  lookalike domain with SPF/DKIM/DMARC and new mailboxes (spend: Z's go), and about 2 weeks' warm-up, so no volume
+  before mid-Nov. Warmup pool for self-hosted instances depends on Warmbly Cloud, whose launch status is unclear:
+  verify first. Read the install script (`--dry-run`) before running. Pool: 238 identified targets with email.
+
 ## Not now
-- No cold email to India. UK cold email only after: separate lookalike domain on Workspace with SPF/DKIM/DMARC,
+- Superseded 2026-11-02 for India (see Three channels). UK cold email only after: separate lookalike domain on Workspace with SPF/DKIM/DMARC,
   2-week warm-up, UK postal address + unsubscribe, GBP price, sender decided (Z or BVCL). See messaging-kit.md.
-- No Instantly, no Apollo sequences, no Apollo inbox linking, no paid Apollo plan.
+- No Instantly (Warmbly under review instead), no Apollo sequences, no Apollo inbox linking, no paid Apollo plan.
 
 ## Waiting on Z (ask, don't assume)
 - Outbound call script go (PROXe says it is an AI; one agent instead of three).

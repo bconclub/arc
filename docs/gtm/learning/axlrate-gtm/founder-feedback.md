@@ -1,9 +1,12 @@
 # Z's corrections to the Axlrate PROXe GTM session (newest first)
 
-> **Date:** Running log, newest first (latest 2026-10-24)  
+> **Date:** Running log, newest first (latest 2026-11-02)  
 > **From:** Z, in their own words, to the Axlrate PROXe GTM session  
 > **Use it:** Every GTM agent: these override older lines anywhere else
 
+- **2026-11-02** Three outreach channels all needed and running: calls, WhatsApp, email. Replaces the 26 Oct "no cold
+  email to India" and "call + LinkedIn only" lines. Z asked to look at Warmbly (open-source Instantly/Apollo
+  alternative) for email. Hand sends, spends and dials still wait for Z's go.
 - **2026-10-26** Execution lives with the full-time GTM agent (it runs the outbound writing, logging and social
   sub-agents). This session writes the learnings and instructions into this folder; it does not set up schedules or
   tools itself. Every learning is dated, says where it came from and who should use it.
