@@ -48,6 +48,14 @@ Serif italic accent, in the client's colours. One idea per page. Don't add photo
 Anything a client may read on a phone: build tall pages at 480 x 853 px, body text at least 16.5 px, no wide tables (stack them
 as rows). A US Letter page shrinks to unreadable text on a phone. Render each page at 390 px wide to check it.
 
+Z rejected the default look as "Claude's normal": rounded cards, small uppercase labels, page pills, italic serif accents. What
+Z's latest version uses instead: full colour pages, huge condensed type (Anton with Archivo), hairlines, no boxes.
+
+Market reports say where the market stands and which brands are running, with source and date. Never claim an absence, such as
+"we found no ads": one empty search proves nothing. Sources: Meta Ad Library, Google Ads Transparency Center
+(`adstransparency.google.com/?region=IN&domain=<site>`, a zero can mean the wrong domain), Google Keyword Planner (in a Google
+Ads account; it auto-saves a draft plan there).
+
 ## The video library
 `C:\dev\builds\video-library\` is a local gallery of every video across the machine, on port 4177 (`video-library` in the
 ISIVIS `launch.json`). It only opens on this computer. `build.py` probes files, sets the brand by regex, groups versions and cuts
