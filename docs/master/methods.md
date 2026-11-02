@@ -48,8 +48,11 @@ Serif italic accent, in the client's colours. One idea per page. Don't add photo
 Anything a client may read on a phone: build tall pages at 480 x 853 px, body text at least 16.5 px, no wide tables (stack them
 as rows). A US Letter page shrinks to unreadable text on a phone. Render each page at 390 px wide to check it.
 
-Z rejected the default look as "Claude's normal": rounded cards, small uppercase labels, page pills, italic serif accents. What
-Z's latest version uses instead: full colour pages, huge condensed type (Anton with Archivo), hairlines, no boxes.
+Z rejected two looks: the default (rounded cards with small uppercase labels, page pills, italic serif accents) and impact-style
+poster type. What Z asked for: a neat font (Plus Jakarta Sans works), and every page a rich visual card built around a real map,
+chart or the client's own photo, never pages of text. For a local business, lead with a radius map centred on them (`make_maps.py`
+in the T24 market report builds it from OpenStreetMap tiles, Carto needs an API key) and talk about their city and area, not India.
+State costs as per click.
 
 Market reports say where the market stands and which brands are running, with source and date. Never claim an absence, such as
 "we found no ads": one empty search proves nothing. Sources: Meta Ad Library, Google Ads Transparency Center
