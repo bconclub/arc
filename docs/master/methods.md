@@ -36,6 +36,15 @@ display name changes, so select it by device, id in `private/ids-and-locations.m
 - After sending, update `EDITR/brand/bcon-letterhead/invoices-sent.md`.
 - ARC's `billing_documents` stops at July 2026, so don't treat it as complete. `gst_invoices` is the other table.
 
+## Client proposal PDFs
+Built as HTML pages at 816 x 1056 px (US Letter) and exported with headless Chrome (`--print-to-pdf --no-pdf-header-footer
+--virtual-time-budget=8000`), then rendered to images to check every page. Past examples are in Downloads, source for one is
+in `BVCL/clients/calvary-caters/proposal`.
+
+House structure: cover, the goal, positioning, the flow from enquiry to customer with an example chat, numbers, next steps,
+two signature lines. Mixed dark and light pages, a "BCON x client" header with a page pill, Anybody caps with an Instrument
+Serif italic accent, in the client's colours. One idea per page. Don't add photos unless Z asks for them.
+
 ## The video library
 `C:\dev\builds\video-library\` is a local gallery of every video across the machine, on port 4177 (`video-library` in the
 ISIVIS `launch.json`). It only opens on this computer. `build.py` probes files, sets the brand by regex, groups versions and cuts
