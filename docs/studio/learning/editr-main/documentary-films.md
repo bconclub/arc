@@ -51,3 +51,9 @@ artificial pitch or volume steps, compose any rise in ElevenLabs. Animate everyt
 Contact sheets at six frames miss things. On Ep 1 an IEA logo faded in mid-shot and a large, faint ETV watermark sat over the aerials; both only showed on
 the cut's 2-second strip. Check the strip of every cut, and look at candidate windows before re-rendering. Stock channels on the CC filter often carry a
 big watermark ("footageonline"), and travel clips can carry their own title, so test the exact seconds you use.
+
+## Voice and music on Ep 1 (added 2026-11-02)
+- One take, split on `silencedetect` at 0.18 s into its 20 sentences (`voice/build_voice.py`). Each sentence is placed on its own, so holds can be added before the closing question. Everything else reads those times: cuts, receipt lines, subtitles.
+- Check the words with the cached `faster_whisper` small.en model (`local_files_only=True`). It confirms the take says the script before any cutting.
+- ElevenLabs duration field: click it, End, Backspace twice, type the seconds, Return. Typing over the whole value or setting it from JS reverts to the old length.
+- Two tracks from one brief can differ by 5 dB. Hold each to the same quiet level (-34 LUFS here) so the founder picks by ear, not by loudness. Limit at 0.7 after the film gain: 0.84 peaked at -0.4 dBFS after AAC.
