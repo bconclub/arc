@@ -17,6 +17,7 @@ Other threads write their own folders next to this one; this folder holds what t
 | [edit-and-delivery.md](edit-and-delivery.md) | The edit script, captions, end card, frame 0, QA commands, Drive and ARC Studio delivery |
 | [tools.md](tools.md) | Driving ChatGPT, ComfyUI, ElevenLabs, Drive and ARC from the browser; every quirk we hit |
 | [documentary-films.md](documentary-films.md) | Manipur and frwdslash: sourced scripts, real footage, one visual rule, the build |
+| [today-in-ai.md](today-in-ai.md) | The daily forward slash show: format, routine, what bit us |
 | [brands.md](brands.md) | Product truth and guardrails per brand this thread worked on |
 | [founder-feedback.md](founder-feedback.md) | The founder's corrections to this thread, dated, and what changed |
 

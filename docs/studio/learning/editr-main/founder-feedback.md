@@ -30,3 +30,4 @@
 | 2026-11-02 | "Use the real data... it feels like Meta is paying for everything" | Every claim rechecked against filings; labels that were our conclusions removed |
 | 2026-11-02 | "Do a weekly recap of how much money is being spent on AI, and that can be the bill" | The AI Bill: dated, numbered, weekly |
 | 2026-11-02 | The name is "actually small letters... not capital S" | forward slash, lowercase everywhere |
+| 2026-11-02 | "I don't think this is working, so let's do a day in AI"; "a proper start, a proper end, a jingle, one proper voice" | Today in AI, daily, each edition covers the day before |
