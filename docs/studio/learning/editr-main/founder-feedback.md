@@ -25,3 +25,5 @@
 | 2026-11-02 | "Any update should go to local"; "I don't want to miss anything" | Episodes Hub lists every project, each film has a live page |
 | 2026-11-02 | "Whenever you are working, you open a localhost and you show me what you are working on" | Studio on localhost:4401 first on every film, house rule 10 |
 | 2026-11-02 | "Make sure you update all this into Arc also" | This update; keep ARC current as a film teaches something |
+| 2026-11-02 | Forward Slash brand board: "don't overdo it. You should not feel like AI... It will be light" | Palette taken from the board, look made light, gradient kept to the slash and the live accent |
+| 2026-11-02 | "Anything that we learn new or do new goes to Arc as a learning" | Pushed to this folder as work goes, unasked |
