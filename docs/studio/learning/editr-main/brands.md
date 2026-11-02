@@ -30,3 +30,12 @@
 - Current dashboard: near-black, purple ~#8b5cf6 + lime ~#c8f031. Old orange "PROXe UI" screens are outdated: use only
   current screenshots from the founder. Going global UK first (2026-10-24): +44, British VO, UK sets.
 - Ads: open on the problem happening, never "if you run a clinic"; two text moments (hook, end card); ordinary people.
+
+## frwdslash (/), BCON's "signals of the AI future" page
+- "Forward Flash" in voice-to-text. Films on what is next, Manipur format. Look: real footage in a neutral grade, off-white paper, lime on the
+  live line, cobalt end card. Voice proposed: Rehan Waris, as on Manipur. The Sarvam reel (Feb 2026, 43 s, 16 likes) lacked a hook frame,
+  so frame 0 now carries the claim. Ep 1: `EDITR/content/forward-slash/who-is-paying/`. Method: [documentary-films.md](documentary-films.md).
+
+## PROXe conversation films (2026-11)
+- EP 01 "The Other You" and EP 02 "The Interview": twins, MK8 voice, 19 stills from one locked face. Written PROXe, spoken "Proxy", subtitles say PROXe.
+  End line: "You take care of the business. I'll do the rest." Folders: `EDITR/content/proxe/other-you/`, `the-interview/`.

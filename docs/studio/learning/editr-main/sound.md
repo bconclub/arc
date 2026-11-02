@@ -28,3 +28,24 @@
 - Music ducks under the voice and comes back up for the end card. Master to **-14 LUFS**, true peak -1.5.
 - Check: `ffmpeg -i out.mp4 -af ebur128 -vn -f null -` (the summary `I:` line). Before loudnorm our mix sat at -26 dB
   mean in VO sections: too quiet for Reels.
+
+## Real sound effects for edits (added 2026-10-30)
+Source: Instagram reel instagram.com/reel/De9yxpuIG6X (life.with.akshat_, "Claude can't hear, so it fakes the sound").
+Three free tools it names. What we checked ourselves:
+- **earshot** (github.com/Leonxlnx/earshot, MIT): CLI / Python / MCP server, CPU only, needs Python 3.10+ and ffmpeg. Scores an edit against
+  7 reference launch films with a timestamped scorecard, and its `sfx` command aims a whoosh / hit / click / note at a moment
+  (bank of 201 sounds made in code). Downloads about 1.1 GB of open models on first use. Star counts quoted online disagree, so
+  check the repo. Not installed yet: needs the founder's yes for the 1.1 GB, and read the source before running it.
+- **Openverse** (openverse.org, free API, no key): 5M+ openly licensed images and audio, `GET api.openverse.org/v1/audio/?q=whoosh&license_type=commercial`.
+  Pick CC0 / public domain so we never owe attribution, and write each sound's creator + licence + URL into a LICENSES file next to the
+  audio. On 2026-10-30 the API did not answer from the PC shell or from the browser (timeouts), so not used yet; retry later.
+- **"Real SFX" skill**: the reel says it ships 78 UI sounds. We found no repo by that name, so treat it as unverified.
+Rules for us: SFX only where the founder asks (see founder-feedback.md); music and voice stay ElevenLabs; never install a repo or model
+without saying size and source first. Our current SFX are synthesised in `tools/mix.py` (ai-video skill, `ctx.sfx(t, name, gain)`),
+18 dB under the voice by default; `sfx_gain: 7` in reel.json made entrance sounds audible in the Lokazen reel.
+
+## Conversation films and current mix rule (added 2026-11-02)
+- Mix rule now: one track, untouched, one low fixed gain, no ducking or fades (house rule 11). The ducked recipe above is old.
+- Voice direction the founder liked: "firm, flat", then "give a soul". Casual was rejected ("the line should land sharply"), and "firm, assertive"
+  over-acted. One voice plays both twins (MK8). Split one full take on pauses with `silencedetect`, check the piece count against the script.
+- Sitcom music at gain .16, crickets only where the founder asked (The Interview, frame 14). Subtitle text must match what the voice says.

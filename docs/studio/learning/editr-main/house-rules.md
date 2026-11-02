@@ -65,3 +65,18 @@ $8.50 was called decent.
 ## 9. Music is auditioned by the founder
 - We can't hear. Never pick a track by its loudness curve or title. Make 2 options in ElevenLabs Music, send them,
   and mix only the one the founder picks (or cut both and let them choose).
+
+## 10. Always show the work on localhost (2026-11-02)
+- Whenever editing, open **Studio** first: `node studio/studio.mjs` in `C:\devuilds\EDITR` (bconclub/editr), or
+  preview_start `{name: "studio"}`, http://localhost:4401, with `STUDIO_ROOT=C:/dev/builds`.
+- Keep it current as you work: `python studio/now.py '{"update": "..."}'` for update, doing, jobs, steps, waiting, preview and
+  queue; `python studio/log.py "<video>" "<kind>" "<text>"` for each step. Details in `EDITR/studio/README.md`.
+- First step of every film, without being asked. The Episodes Hub (`content/proxe`, port 4460) lists projects across threads.
+
+## 11. One music track, untouched (2026-11-01)
+- One track to its own end, one low fixed gain (.16-.22), the film ends with it. No switches, blends, skips, ducking or fades.
+- This replaces the ducked mix in [sound.md](sound.md).
+
+## 12. Sourced facts on anything about the real world (2026-11-02)
+- Open the source, quote exactly, keep the date and who said it. If a claim can't be stood up, the line goes.
+- See [documentary-films.md](documentary-films.md).

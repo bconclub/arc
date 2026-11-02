@@ -38,3 +38,19 @@
 ## Check before sending
 Real photo at a glance? One light? Five fingers? Same person, clothes and room as the last frame? No logos or readable
 text? Brand colours present in the room? Then send it to the founder with one line on what the frame does in the story.
+
+## Locking the founder's face across stills (added 2026-10-30)
+ChatGPT redraws a face every request, so a real person drifts. What the founder said: sheets 1-2 "are at least close to me", later ones
+"too different". What we do now:
+1. Two approved sheets are the identity anchors (plaid, navy blazer), plus 4-6 real photos. Attach BOTH anchors in EVERY request, not only the first.
+2. New outfits come from EDITING an anchor sheet ("keep all 13 photos identical, change only the clothing"), not from a fresh prompt.
+3. Outfit references are cropped below the chin (headless) so another person's face cannot leak in; a full-face outfit photo pulled the face
+   toward the model.
+4. Keep the face big in frame (a small face drifts most); check every output against the anchors before it counts, label failures DRIFTED.
+5. Real footage of the founder is the zero-drift option when it exists.
+
+## One locked face across a whole film, and twins (added 2026-11-02, PROXe The Other You and The Interview)
+- A grid board can't hold one face. Lock a master still, then generate frame by frame, attaching the master each time.
+- Twins: make the second man from the first man's frame, with one difference only (glasses). ChatGPT redraws the whole image, so
+  "unchanged" is never quite true: compare at full size.
+- Tight head-filling close-ups crinkle the skin. Chest-up medium close-ups held up. Check subagent output yourself, one frame came back wrong.

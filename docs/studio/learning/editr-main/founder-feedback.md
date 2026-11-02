@@ -20,3 +20,8 @@
 | 2026-10-24 | "Upload all the understanding under ARC Studio" | Brand pages in ARC Studio with brief, notes, prompts, films |
 | 2026-10-24 | "Animate these scenes and get the final video out" | Kling 720p std, 6/6 first takes, $2.52, final with VO + music same day |
 | 2026-10-25 | "Put everything you've learned in the ARC repo under learning" | This folder |
+| 2026-11-01 | Manipur: music overpowers the voice; real video wherever possible; no artificial pitch | One low fixed gain, archival first, rises composed in ElevenLabs |
+| 2026-11-02 | The Other You: "Firm flat was fine... firm assertive is too over-exaggerated", "give a soul" | Firm and flat with warmth, MK8 |
+| 2026-11-02 | "Any update should go to local"; "I don't want to miss anything" | Episodes Hub lists every project, each film has a live page |
+| 2026-11-02 | "Whenever you are working, you open a localhost and you show me what you are working on" | Studio on localhost:4401 first on every film, house rule 10 |
+| 2026-11-02 | "Make sure you update all this into Arc also" | This update; keep ARC current as a film teaches something |

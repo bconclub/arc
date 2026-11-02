@@ -54,3 +54,14 @@ in; we never type credentials, buy or upgrade.
 ## Instagram references
 - `/embed/` page exposes the video src; fetch it on the CDN page to download. Video won't load in a background Chrome
   tab; use the app's browser pane.
+
+## Studio (live edit view, localhost:4401)
+- `studio/studio.mjs` in the EDITR repo, driven by `studio/_explore/now.json` (re-read every 2 s, gitignored). `.claude/launch.json` has
+  the `studio` entry. `studio/now.py` updates fields, `studio/log.py` adds a timed activity line. See house rule 10.
+
+## Browser and ElevenLabs quirks (2026-11-02)
+- The extension's selected browser can flip between calls ("not in Claude's tab group"), and display names change. Call
+  `select_browser` with the BCON deviceId in the same message as each browser batch. The deviceId is what counts.
+- ElevenLabs TTS: page layout shifts cost two broken takes (about 780 credits). Screenshot and check the speaker chip and the text before Generate.
+- Read the balance before planning sound: bottom of the TTS page, or `/app/subscription` for the renewal date. Music is 30 credits a second.
+- Openverse often times out; Wikimedia Commons worked for SFX. Check the licence and listen for a usable file.
