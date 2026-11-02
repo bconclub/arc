@@ -47,3 +47,9 @@ Pattern: **one small natural action + one slow camera move + "light stays steady
 
 ## Spend log format (in the spec)
 `2026-10-24 · k1 study (f1) · kling-v3 720p std 9:16 5s seed 20261024 · $0.42 · total $0.42 · accepted · left $34.05`
+
+## Short logo motion film, no people (Scafell Partners, 2026-11-03)
+Founder asked for a 10-second motion animation instead of a live-action launch film. Built with the code-film method (see `../social-editr/code-films.md`): one canvas page, every frame a pure function of t, `social/mods/render.mjs` at 60 fps (10 s renders in about 35 s), then `tmix` to 30 fps with light grain. Paid video spend $0.
+- **Music first, then cut to it.** Two 10 s ElevenLabs tracks at a stated BPM cost 300 credits. A small onset script gives the real grid and the biggest hit; put the hero moment on that hit. The asked-for "two-beat silence" did not come through, and both tracks' audio dies by about 8.5 s, so the logo lands on the last hit and holds over the tail.
+- **Use the real logo paths** from the SVG. Animate four rounded squares to the logo's exact coordinates, then swap to the real path on the hit, so nothing is AI-drawn and there is no jump.
+- **Contact sheets caught what a full render would have wasted:** corners of grid tiles peeking round a big tile (fix: ink plate behind it), a payoff grid hidden by the last tile, and type colliding with falling tiles.
