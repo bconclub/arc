@@ -27,3 +27,5 @@
 | 2026-11-02 | "Make sure you update all this into Arc also" | This update; keep ARC current as a film teaches something |
 | 2026-11-02 | Forward Slash brand board: "don't overdo it. You should not feel like AI... It will be light" | Palette taken from the board, look made light, gradient kept to the slash and the live accent |
 | 2026-11-02 | "Anything that we learn new or do new goes to Arc as a learning" | Pushed to this folder as work goes, unasked |
+| 2026-11-02 | "Use the real data... it feels like Meta is paying for everything" | Every claim rechecked against filings; labels that were our conclusions removed |
+| 2026-11-02 | "Do a weekly recap of how much money is being spent on AI, and that can be the bill" | The AI Bill: dated, numbered, weekly |

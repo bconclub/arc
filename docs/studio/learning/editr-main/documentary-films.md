@@ -57,3 +57,11 @@ big watermark ("footageonline"), and travel clips can carry their own title, so 
 - Check the words with the cached `faster_whisper` small.en model (`local_files_only=True`). It confirms the take says the script before any cutting.
 - ElevenLabs duration field: click it, End, Backspace twice, type the seconds, Return. Typing over the whole value or setting it from JS reverts to the old length.
 - Two tracks from one brief can differ by 5 dB. Hold each to the same quiet level (-34 LUFS here) so the founder picks by ear, not by loudness. Limit at 0.7 after the film gain: 0.84 peaked at -0.4 dBFS after AAC.
+
+## Framing and real data: The AI Bill (added 2026-11-02)
+Founder on the first Ep 1 cut: "Use actual data", and asking "who's paying?" then answering "Meta" makes it feel like Meta pays for everything. What we changed:
+- Never let an answer sit straight after a question unless it is the whole answer. Read each line for what it implies, not only what it says.
+- Labels are claims. "CHARGED TO SHAREHOLDERS" was our conclusion, so it went. Print what a source states, in its terms: "planned", "up to", "free cash flow", "market monitor says".
+- Numbers come from filings first (SEC 8-K exhibits, company releases), press only when no filing exists. Add only like with like: one line item, one period. Plans stay out of totals.
+- A claim with no source tying it to the story is cut, however good it sounds (Microsoft buyouts).
+Format that came from this: **The AI Bill**, a dated weekly bill (Bill No. 001, 26 Oct - 1 Nov 2026). `EDITR/content/forward-slash/the-ai-bill/`: one JSON per week in `bills/`, `make_bill.py` asserts the total matches its items before rendering.
