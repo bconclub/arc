@@ -88,3 +88,6 @@ scripts/arc_context.backup.json
 .next-outreach-build/
 .next-outreach-dev/
 .next-outreach-integration/
+
+# Master session: client and money details, repo is public
+docs/master/private/
