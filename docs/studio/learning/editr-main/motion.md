@@ -53,3 +53,11 @@ Founder asked for a 10-second motion animation instead of a live-action launch f
 - **Music first, then cut to it.** Two 10 s ElevenLabs tracks at a stated BPM cost 300 credits. A small onset script gives the real grid and the biggest hit; put the hero moment on that hit. The asked-for "two-beat silence" did not come through, and both tracks' audio dies by about 8.5 s, so the logo lands on the last hit and holds over the tail.
 - **Use the real logo paths** from the SVG. Animate four rounded squares to the logo's exact coordinates, then swap to the real path on the hit, so nothing is AI-drawn and there is no jump.
 - **Contact sheets caught what a full render would have wasted:** corners of grid tiles peeking round a big tile (fix: ink plate behind it), a payoff grid hidden by the last tile, and type colliding with falling tiles.
+
+The flat tile version above was rejected. What replaced it:
+- **Start from what the brand does, not from its copy.** Scafell connects a business into one system, and its site calls that One loop. The film became one pulse of light running through that loop.
+- **Premium in code:** three.js r180 with the logo SVG paths extruded, a long lens, one unbroken camera move with no cuts, low-key light that only comes up on the music's hit, restrained type in masked reveals. `content/scafell/motion/scene.html`.
+- **Hardware WebGL matters:** launch Chrome with `--use-angle=d3d11 --ignore-gpu-blocklist`. Depth of field and bloom at 1080x1920 render 600 frames in under 40 s.
+- **Traps:** with `decay 0` a spot light blows out white surfaces, so keep intensity near 0.5 to 1.5. A text band across the middle looks like a bar: use a scrim from mid-frame to the bottom and shift the view up with `setViewOffset`. Turn bloom off once the logo settles so it ends crisp.
+- **Choosing where a track starts:** ElevenLabs' big hit came at 9 s of 11 s, so starting 1.05 s in put it on the film's 8 s and let the chord ring to the end. No edit to the track itself.
+
