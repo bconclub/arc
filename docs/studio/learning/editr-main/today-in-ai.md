@@ -33,3 +33,10 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 ## Founder on the 5 Nov edition: "This is not how I want it"
 - Delivery like a radio jockey: "This is your AI Wrap today, and this is what happened." Host energy, not a reader.
 - "Other than showing white slides, who's gonna watch all this? I'm talking about Instagram stuff." Type on paper is out for this show. Each story shows the real thing on screen (the actual source pages, product UI, real clips), cut fast, big captions, dark and colourful with the gradient as accent.
+
+## AI Wrap reel build (5 Nov 2026)
+- `capture/grab.mjs <url> <png>` captures the real source page at phone width (2x); `capture/find.mjs <url> <port> "phrase"...` returns where each key phrase sits, in the screenshot's pixels. Those boxes become the shots and highlighter marks in `editions/<date>-wrap.json`.
+- `ui/wrap.html` (9:16): ON AIR pill, story number and kicker, the page in a card with a camera that eases to each cue word, a gradient highlighter sweep over the marked line, a pop line that punches in, captions in the safe zone, and a waveform drawn from the voice level per frame. Frame 0: title over today's three pages.
+- Camera: centre on the marked line but clamp to the page edges; unmarked shots hold the left edge, or titles get cut off.
+- Windows can hold a rendered PNG open; cleanup with `rm -rf ... || true`, and keep the check frames clear of the file's last 0.3 s.
+- Transcription writes "Number 1", "5th", "chat GPT", "SWE2": the edition file's fix list and beats.py's joins turn them back for captions; cue on words as transcribed (start cue "Number").
