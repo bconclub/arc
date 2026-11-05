@@ -24,3 +24,8 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 - Voice Design: Voice Creation, Voice Design, turn off Generate Preview Text and paste the show's real lines, so the voice is judged on our words. About 312 credits for three previews.
 - Previews can't be downloaded and the page has no audio element, so the founder listens in the panel or by the share link. Save the picked one by name, then record in Text to Speech.
 - Facts stay as sourced. Only delivery gets casual.
+
+## Edition files (from 5 Nov 2026)
+- Each edition is `editions/<date>.json`: date line, take, transcription fixes, and per story a start word, kicker, source and lines, each line cued by a word the host says. `python beats.py <date>` builds the voice and cues and stops if a cue word is missing; `ui/film.html` draws whatever stories the file holds. A new day is a new JSON file, no code changes.
+- Show voice: "forward slash host 1", from Voice Design (late twenties, light Indian English, creator talking to chat). Saving one voice closes the panel and drops the other previews, so play them all before saving.
+- Stories must be dated the day covered. On 5 Nov three strong candidates were dated 3 Nov (Meta bonds, Apple Siri) and were left out. OpenAI's site blocks fetch tools; read it in the browser. We leave out Anthropic stories (Claude is made by Anthropic) unless disclosed.
