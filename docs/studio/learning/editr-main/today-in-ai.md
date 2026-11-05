@@ -47,3 +47,9 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 - Finding them: the source article often links the founder's X post (TechCrunch did); otherwise read the company's X profile in the BCON Club Chrome and keep posts dated the day covered. `capture/media.mjs <url> <port>` lists a page's images, videos and X/YouTube links. `yt-dlp` downloads X videos; `cdn.syndication.twimg.com/tweet-result?id=<id>&token=4` gives the post text, date and image URLs.
 - Video in a seek(t) page: extract frames at 24 fps to JPG, set the img for each t, and let `__seek` return the image's decode promise; the renderer awaits it (`awaitPromise`). Check the clip's end for black frames (`blackdetect`) and hold the last good frame.
 - Edition fields: `posts` (name, handle, date, quoted text, frames dir or image) and per story `media` [{cue, post, mode big|pip, in}].
+
+## Sound bites from the company's own video (6 Nov 2026)
+- The founder sent OpenAI's YouTube launch video (youtu.be/9ZxCOHkfn_8, 4 Nov, Charlie Guo on camera). Use a company's own on-camera video as a 2-4 s sound bite right after the host names the launch.
+- How: `yt-dlp` the video, transcribe with word times (faster_whisper on `device="cpu"`; the GPU path fails without cublas), cut the bite at a word end, level it to the host take's LUFS, and splice it into the host take at a silence between words (150 ms before, 200 ms after). beats.py then cues it like any other word, and the captions show the speaker's words.
+- In the page: a `src: "yt"` post shows ▶ and "THEIR VIDEO"; its text carries the speaker's name and title exactly as the video's lower third shows it. Set the media `in` so that the source time equals the film time minus the splice point, and the lips stay in sync.
+- Watch for: the story pop covers the bottom of the clip, which hides the video's own title.
