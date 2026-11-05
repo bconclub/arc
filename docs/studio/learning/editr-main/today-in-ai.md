@@ -29,3 +29,7 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 - Each edition is `editions/<date>.json`: date line, take, transcription fixes, and per story a start word, kicker, source and lines, each line cued by a word the host says. `python beats.py <date>` builds the voice and cues and stops if a cue word is missing; `ui/film.html` draws whatever stories the file holds. A new day is a new JSON file, no code changes.
 - Show voice: "forward slash host 1", from Voice Design (late twenties, light Indian English, creator talking to chat). Saving one voice closes the panel and drops the other previews, so play them all before saving.
 - Stories must be dated the day covered. On 5 Nov three strong candidates were dated 3 Nov (Meta bonds, Apple Siri) and were left out. OpenAI's site blocks fetch tools; read it in the browser. We leave out Anthropic stories (Claude is made by Anthropic) unless disclosed.
+
+## Founder on the 5 Nov edition: "This is not how I want it"
+- Delivery like a radio jockey: "This is your AI Wrap today, and this is what happened." Host energy, not a reader.
+- "Other than showing white slides, who's gonna watch all this? I'm talking about Instagram stuff." Type on paper is out for this show. Each story shows the real thing on screen (the actual source pages, product UI, real clips), cut fast, big captions, dark and colourful with the gradient as accent.
