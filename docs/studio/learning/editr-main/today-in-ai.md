@@ -40,3 +40,10 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 - Camera: centre on the marked line but clamp to the page edges; unmarked shots hold the left edge, or titles get cut off.
 - Windows can hold a rendered PNG open; cleanup with `rm -rf ... || true`, and keep the check frames clear of the file's last 0.3 s.
 - Transcription writes "Number 1", "5th", "chat GPT", "SWE2": the edition file's fix list and beats.py's joins turn them back for captions; cue on words as transcribed (start cue "Number").
+
+## Founder on AI Wrap v1 (5 Nov 2026): fast start, show what they shared
+- "The starting was too much time. It should start just like that." The voice now comes in at 0.3 s over the jingle (edition `lead`), with the jingle at half level under it. The "Here's what went down yesterday" line was cut from the take, so story one lands at 5 s (was 10 s). Cut a take at silence found from the voice level, not at transcription times.
+- "Along with the text highlight, show some screens of what they have shared... some video or anyone talking about it." Each story now plays the company's own post next to the page: big over the page when the host names the launch, then small beside the highlight. 5 Nov: OpenAI's launch video and GIF clip, Cognition's SWE-2 Flash chart, Conductor founder Charlie Holtz's video.
+- Finding them: the source article often links the founder's X post (TechCrunch did); otherwise read the company's X profile in the BCON Club Chrome and keep posts dated the day covered. `capture/media.mjs <url> <port>` lists a page's images, videos and X/YouTube links. `yt-dlp` downloads X videos; `cdn.syndication.twimg.com/tweet-result?id=<id>&token=4` gives the post text, date and image URLs.
+- Video in a seek(t) page: extract frames at 24 fps to JPG, set the img for each t, and let `__seek` return the image's decode promise; the renderer awaits it (`awaitPromise`). Check the clip's end for black frames (`blackdetect`) and hold the last good frame.
+- Edition fields: `posts` (name, handle, date, quoted text, frames dir or image) and per story `media` [{cue, post, mode big|pip, in}].
