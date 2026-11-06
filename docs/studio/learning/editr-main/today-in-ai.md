@@ -58,3 +58,8 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 - The host never says "chat" ("Yo, what's up chat?" / "See you tomorrow, chat!"). Use "Yo, what's up, everyone?" and "See you tomorrow, everyone!", and the end card text must match.
 - To change only those lines: generate them in the same ElevenLabs voice and settings with the line next to them for context, level to the take's LUFS, and splice at the silences between sentences.
 - After a splice, transcription can glue a word onto the one before it ("2.6 faster"). The edition's `"time": {"Faster": 13.61}` sets the measured start back and begins a new caption line there.
+
+## Slashers, teaser first, no yesterday/today (founder, 6 Nov 2026)
+- The forward slash audience is called **slashers**: "Yo, what's up, slashers! This is AI Wrap on forward slash." Sign-off: "And that's your AI Wrap. Catch you next time, slashers!" The end card text must match.
+- The host never says "yesterday", "today" or "tomorrow". The date shows on screen only (THURSDAY 5 NOV 2026), with no "YESTERDAY, 4 NOV" line.
+- Hook first, because people have to keep watching: open with one line per story before the greeting (about 7 s). In the edition, `"teaser": [{cue, story, html}]` brings that story's page to the front with its label, and the label clears when "Yo" starts. Frame 0 is still the AI WRAP title over the three pages.
