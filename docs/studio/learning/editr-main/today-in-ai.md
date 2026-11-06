@@ -62,4 +62,11 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 ## Slashers, teaser first, no yesterday/today (founder, 6 Nov 2026)
 - The forward slash audience is called **slashers**: "Yo, what's up, slashers! This is AI Wrap on forward slash." Sign-off: "And that's your AI Wrap. Catch you next time, slashers!" The end card text must match.
 - The host never says "yesterday", "today" or "tomorrow". The date shows on screen only (THURSDAY 5 NOV 2026), with no "YESTERDAY, 4 NOV" line.
-- Hook first, because people have to keep watching: open with one line per story before the greeting (about 7 s). In the edition, `"teaser": [{cue, story, html}]` brings that story's page to the front with its label, and the label clears when "Yo" starts. Frame 0 is still the AI WRAP title over the three pages.
+- Tried and rejected (v5): a spoken headline teaser before the greeting. The founder said it doesn't work.
+
+## News format: one entry, the stories, one close (founder, 6 Nov 2026)
+- Like a news show, every AI Wrap has the same structure every day, so it is repeatable:
+  1. **Entry sting**, 2.4 s, on the opening jingle's 0.3 s beat. Frame 0 is the AI WRAP title over the day's three pages. On beats 1-3 each page flicks to the front, then a gradient slash wipes across the screen and the title punches in (scale 1.22 to 1).
+  2. The host comes in at 2.4 s: "Yo, what's up, slashers! This is AI Wrap on forward slash." Then the stories.
+  3. **Close sting**: after "Catch you next time, slashers!", the same slash wipe leads into the AI WRAP + date + forward slash lockup while the closing jingle rings out.
+- The code is in ui/wrap.html (`wipe`, `ENDL`); beats.py writes `cues.wipe` (last word + 0.1 s), and the edition sets `"lead": 2.4`. Only the pages change from day to day.
