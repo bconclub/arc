@@ -53,3 +53,8 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
 - How: `yt-dlp` the video, transcribe with word times (faster_whisper on `device="cpu"`; the GPU path fails without cublas), cut the bite at a word end, level it to the host take's LUFS, and splice it into the host take at a silence between words (150 ms before, 200 ms after). beats.py then cues it like any other word, and the captions show the speaker's words.
 - In the page: a `src: "yt"` post shows ▶ and "THEIR VIDEO"; its text carries the speaker's name and title exactly as the video's lower third shows it. Set the media `in` so that the source time equals the film time minus the splice point, and the lips stay in sync.
 - Watch for: the story pop covers the bottom of the clip, which hides the video's own title.
+
+## No "chat" (founder, 6 Nov 2026)
+- The host never says "chat" ("Yo, what's up chat?" / "See you tomorrow, chat!"). Use "Yo, what's up, everyone?" and "See you tomorrow, everyone!", and the end card text must match.
+- To change only those lines: generate them in the same ElevenLabs voice and settings with the line next to them for context, level to the take's LUFS, and splice at the silences between sentences.
+- After a splice, transcription can glue a word onto the one before it ("2.6 faster"). The edition's `"time": {"Faster": 13.61}` sets the measured start back and begins a new caption line there.
