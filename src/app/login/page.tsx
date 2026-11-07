@@ -41,17 +41,14 @@ function LoginForm() {
       onSubmit={submit}
       className="w-full max-w-xs space-y-4 bg-surface/80 backdrop-blur-xl border border-[var(--border)] rounded-2xl p-8"
     >
-      <div className="flex items-baseline gap-2">
-        <span className="text-lg font-bold tracking-tight text-text">ARC</span>
-        <span className="text-[11px] text-text-muted">the twin</span>
-      </div>
+      <div className="text-lg font-bold tracking-tight text-text">ARC</div>
       <input
         type="text"
         autoComplete="username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        placeholder="Your login name (team)"
-        aria-label="Login name, for team accounts"
+        placeholder="Email or login name"
+        aria-label="Email or login name"
         className="w-full rounded-full border border-[var(--border)] bg-transparent px-4 py-2.5 text-sm text-text outline-none placeholder:text-text-muted focus:border-[var(--border-strong)]"
       />
       <input

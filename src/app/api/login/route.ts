@@ -25,6 +25,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Wrong password" }, { status: 401 });
   }
 
+  // The owner's own login name. Owner password, full access, same as a blank name.
+  const adminName = (process.env.ADMIN_USERNAME || "proxe@goproxe.com").toLowerCase();
+  const name = typeof username === "string" ? username.trim().toLowerCase() : "";
+  if (name === adminName) {
+    if (!(await verifyPassword(password))) return NextResponse.json({ error: "Wrong name or password" }, { status: 401 });
+    const res = NextResponse.json({ ok: true, role: "owner" });
+    res.cookies.set(COOKIE_NAME, await createSessionToken(), cookieOpts);
+    res.cookies.set(STUDIO_COOKIE, "", clear);
+    res.cookies.set(TEAM_COOKIE, "", clear);
+    return res;
+  }
+
   if (typeof username === "string" && username.trim()) {
     // Login names are letters, digits and dots only (enforced at creation), so ilike is an exact, case-blind match.
     if (!/^[a-z0-9.]{2,32}$/i.test(username.trim())) return NextResponse.json({ error: "Wrong name or password" }, { status: 401 });
