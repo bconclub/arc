@@ -70,3 +70,13 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
   2. The host comes in at 2.4 s: "Yo, what's up, slashers! This is AI Wrap on forward slash." Then the stories.
   3. **Close sting**: after "Catch you next time, slashers!", the same slash wipe leads into the AI WRAP + date + forward slash lockup while the closing jingle rings out.
 - The code is in ui/wrap.html (`wipe`, `ENDL`); beats.py writes `cues.wipe` (last word + 0.1 s), and the edition sets `"lead": 2.4`. Only the pages change from day to day.
+
+## 2026-11-10: AI Wrap goes numbered (founder)
+- Name: "AI WRAP 01", "02"... numbered editions, no week or theme name. Content: the main things so far this month
+  (Wrap 01 = 1-10 Nov, the AI money moves: OpenAI $11B at $1.25T, Meta $20-25B bonds, Google $17B Wyoming).
+- Keep: fast pace and the cards. Not a crazy pop-art style video.
+- Music was "really bad" and never changed since 2 Nov (same jingle_A/theme_A every edition, jingle + bed + jingle).
+  Now: new ElevenLabs track per edition, 40 s, instrumental, starts on the first beat; founder picks from 4 options
+  (2 prompts x 2 variants, 1,200 credits each); one track untouched, the film ends with it.
+- ElevenLabs Music page: set the custom duration by clicking the field, ctrl+a, type 0:40, Tab (Enter does not stick).
+  Download menu needs two clicks after another menu closes; choose MP3.
