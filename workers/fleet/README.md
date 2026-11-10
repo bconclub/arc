@@ -12,6 +12,19 @@ Every machine and Claude session reports into ARC, so the hub on MAC Worker (and
 Schema: `supabase/migrations/20261011120000_fleet.sql`. It adds machine fields to
 `agent_heartbeats`, a capability and progress to `agent_jobs`, and the `fleet_status` view.
 
+## Quick setup (one line per machine)
+
+On each machine, in its ARC checkout (after `git pull`):
+
+```
+node workers/fleet/setup.mjs <bcon-main|bcon-worker|mac-worker> <fleet-key>
+```
+
+The fleet key is the `ARC_FLEET_SECRET` line in `~/.arc-fleet.env` on BCON Main. The script
+writes `~/.arc-fleet.env`, adds the hooks below to `~/.claude/settings.json` (backing it up,
+keeping every other setting, never adding twice) and sends a test report, so the machine shows
+Online in ARC > Fleet straight away.
+
 ## Session reporter (`report.mjs`)
 
 It's a Claude Code hook. Each session reports `working`, `finished`, `needs_input`
