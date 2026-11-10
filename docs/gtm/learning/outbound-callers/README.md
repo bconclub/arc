@@ -13,3 +13,13 @@
 3. **Calls go through ARC.** Every dial reserves in ARC first (`/api/agent/outreach/reserve`, 24 h cooldown) and
    results land in `outreach_activity` via the post-call webhook. No dialling straight to ElevenLabs.
 4. Agents and openers are described in [../axlrate-gtm/handoff.md](../axlrate-gtm/handoff.md) ("Outbound callers").
+
+## Where it lives now (since 2026-11-10)
+The log is a table in ARC (`outbound_notes`), not these files. People read and add on **ARC > Caller log**
+(`/dashboard/outreach/callers`): Z's feedback, what the calls teach, open problems, changes made.
+Agents use `/api/agent/outreach/notes` with the ARC ingest bearer and an `x-agent-name` header:
+- `GET` returns every note plus a plain-text version. Read it before touching a caller.
+- `POST { notes: [{ external_id, kind, body, caller?, action?, call_id?, noted_on?, resolved? }] }` with `kind` one of
+  `feedback`, `learning`, `issue`, `change`. Same `external_id` updates the note instead of duplicating it.
+
+`feedback.md` and `changes.md` were copied in on 10 Nov and are kept only as history. Write new entries to the log.

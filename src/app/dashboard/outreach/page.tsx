@@ -218,6 +218,9 @@ export default function OutreachPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <a className={btnCls} href="/dashboard/outreach/callers">
+            Caller log
+          </a>
           <button
             className={btnCls}
             disabled={loading || callsLoading}
