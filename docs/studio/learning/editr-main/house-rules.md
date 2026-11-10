@@ -80,3 +80,7 @@ $8.50 was called decent.
 ## 12. Sourced facts on anything about the real world (2026-11-02)
 - Open the source, quote exactly, keep the date and who said it. If a claim can't be stood up, the line goes.
 - See [documentary-films.md](documentary-films.md).
+
+- **Sound design in every video (founder, 2026-11-10).** One real CC0 SFX kit per project, every sound on a picture cue
+  (whoosh on wipes, hit on slams, riser into the hero, impact on it, tail on the end card), 12-18 dB under the voice, no
+  clipping, music untouched. Details: [sound.md](sound.md).

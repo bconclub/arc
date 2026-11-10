@@ -40,7 +40,7 @@ Three free tools it names. What we checked ourselves:
   Pick CC0 / public domain so we never owe attribution, and write each sound's creator + licence + URL into a LICENSES file next to the
   audio. On 2026-10-30 the API did not answer from the PC shell or from the browser (timeouts), so not used yet; retry later.
 - **"Real SFX" skill**: the reel says it ships 78 UI sounds. We found no repo by that name, so treat it as unverified.
-Rules for us: SFX only where the founder asks (see founder-feedback.md); music and voice stay ElevenLabs; never install a repo or model
+Rules for us (superseded 2026-11-10, see below: SFX now go in every video); music and voice stay ElevenLabs; never install a repo or model
 without saying size and source first. Our current SFX are synthesised in `tools/mix.py` (ai-video skill, `ctx.sfx(t, name, gain)`),
 18 dB under the voice by default; `sfx_gain: 7` in reel.json made entrance sounds audible in the Lokazen reel.
 
@@ -49,3 +49,27 @@ without saying size and source first. Our current SFX are synthesised in `tools/
 - Voice direction the founder liked: "firm, flat", then "give a soul". Casual was rejected ("the line should land sharply"), and "firm, assertive"
   over-acted. One voice plays both twins (MK8). Split one full take on pauses with `silencedetect`, check the piece count against the script.
 - Sitcom music at gain .16, crickets only where the founder asked (The Interview, frame 14). Subtitle text must match what the voice says.
+
+## Sound design in every video (founder rule, 2026-11-10)
+Founder, after the reel instagram.com/reel/DfII6u2Nl_p (ultra.skills, "Fix Claude's sound effects"): this skill goes into
+**every video by default**, in every editing session. Its method is right sound, right place, no clipping.
+1. **Right sound: one small kit per project.** Whoosh, riser, hit, impact, pop/click, sweep and tail. Use real
+   recorded sounds, CC0 from Openverse/Freesound. Log each sound's creator, licence and URL in `LICENSES.md` next to the
+   kit. Never synth beeps, cartoon boings or dings, and never ElevenLabs (it is for music and voiceover only).
+2. **Right place: every sound hangs off a cue the picture already uses.** Use the same cue sheet that drives the
+   animation, so each sound is frame-accurate. Sounds go only on real visual events:
+   - a transition or wipe gets a whoosh;
+   - a number or word slamming in gets a hit;
+   - a build into the hero moment gets a riser;
+   - the hero moment gets an impact;
+   - the end card gets a tail.
+   Never put a sound on every caption. Allow at most about one sound every 1.5 s, and leave quiet bars.
+3. **Right level: no clipping.** Effects sit 12-18 dB under the voice. The voice stays clear on phone speakers. The
+   music stays one track, untouched, with no ducking. Master to -14 LUFS with true peak at -1.5, then listen once
+   through end to end.
+4. **The founder's words win.** If he names a sound or a moment, do that. If he says it is too much, cut back. This
+   keeps the 2026-10-27 lesson: pings everywhere "made it really bad". Taste beats volume.
+- Tools: Openverse API (`api.openverse.org/v1/audio/?q=whoosh&license=cc0`, answered on 2026-11-10). earshot
+  (github.com/Leonxlnx/earshot, MIT) scores an edit and aims SFX, but it downloads 1.1 GB of models: get the founder's
+  yes before installing. The ultra.skills guide (Earshot, RealSFX, Openverse) is gated behind a "comment SOUND" funnel.
+  RealSFX could not be found publicly.
