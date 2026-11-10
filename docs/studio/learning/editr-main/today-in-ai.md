@@ -100,3 +100,20 @@ Founder notes on v1: three stories is too thin, cover the whole market (who owns
 - Long text into ElevenLabs TTS by typing can freeze the tab for ~30 s; it still lands. Wait and reload, don't retype.
 - Facts: real IPO terms beat press valuation talk (Anthropic S-1/A, 10 Nov: $70-78). Leave out what can't be sourced
   (an "all AI is worth X" total; Nvidia's live market cap).
+
+## 2026-11-10 (night): AI Wrap 001 v5, documentary bites (founder: "bring in Sam Altman... Dario... pump it up")
+- Bites from the people themselves, found by caption search: `yt-dlp --skip-download --write-auto-subs --sub-langs en-orig`,
+  grep the VTT for the theme words, then `--download-sections "*55:10-55:28"` to take only seconds. Prefer the original
+  interview over clip channels (Sam: Sources Podcast VeizK1M7V7E, 1 Sep; Dario: WSJ Davos K7F6ohcBJus, 20 Jan).
+- Splice each bite into the host take in a silence (150 ms before, 200 ms after), levelled to the host's LUFS. On screen: a
+  full-width panel (1080x900, face-centred 1080 crop, slow push-in, wipe-in) plus a lower third (name, role, source+date).
+- Detect camera cuts inside a bite (mean frame diff > 25 at 64x64). Never show the interviewer during the bite. After the cut,
+  hold the speaker's last frame dimmed and blurred and punch the key words as a quote card on the word they are said.
+- Edition numbers on screen only ("AI WRAP 001"); the host says "This is AI Wrap". Cut a spoken word out of a take on the
+  silences around it (loudness envelope at 20 ms) instead of paying for a new take.
+- Hook number counts up: frame 0 holds the finished figure (thumbnail), then from 0.4 s it counts from 0 to it as it is said.
+- Colour: gradient only on the one hero figure per scene, "AI" and the slash. Bars, labels, captions and waveform are neutral
+  ("we are overdoing the colour").
+- ElevenLabs Edit Song: "extend to N s" may APPEND a new section after the Final Hit (the song stops ending on its hit).
+  Say "make the Main Hook section X s long instead of Y, do not add any new section, end with the Final Hit". Check the
+  end matches the previous cut (correlation of the last 10 s ~0.99).
