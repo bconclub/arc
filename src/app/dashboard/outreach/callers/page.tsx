@@ -24,7 +24,8 @@ const KINDS: { key: Kind; label: string; blurb: string; add: string; actionLabel
 ];
 const CALLERS = ["Intro Cold", "Intro DM", "Follow-up"];
 const day = (d: string) => new Date(`${d}T00:00:00+05:30`).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-const field = "w-full rounded-soft border border-[var(--border)] bg-transparent px-3 py-2 text-[13px] text-text placeholder:text-text-muted focus:border-[var(--brand-line)] focus:outline-none";
+const fieldBase = "rounded-soft border border-[var(--border)] bg-transparent px-3 py-2 text-[13px] text-text placeholder:text-text-muted focus:border-[var(--brand-line)] focus:outline-none";
+const field = `w-full ${fieldBase}`;
 
 export default function CallerLog() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -140,12 +141,12 @@ export default function CallerLog() {
         <form onSubmit={add} className="flex flex-col gap-2 rounded-panel border border-[var(--border)] bg-surface p-3">
           <textarea value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} rows={2} placeholder={kind.add} aria-label={kind.add} className={field} />
           <div className="flex flex-wrap items-center gap-2">
-            <input value={draft.action} onChange={(e) => setDraft({ ...draft, action: e.target.value })} placeholder={kind.actionLabel} aria-label={kind.actionLabel} className={`${field} min-w-0 flex-1 basis-64`} />
-            <select value={draft.caller} onChange={(e) => setDraft({ ...draft, caller: e.target.value })} aria-label="Caller" className={`${field} w-auto`}>
+            <input value={draft.action} onChange={(e) => setDraft({ ...draft, action: e.target.value })} placeholder={kind.actionLabel} aria-label={kind.actionLabel} className={`${fieldBase} min-w-0 flex-1 basis-64`} />
+            <select value={draft.caller} onChange={(e) => setDraft({ ...draft, caller: e.target.value })} aria-label="Caller" className={fieldBase}>
               {CALLERS.map((c) => <option key={c} value={c}>{c}</option>)}
               <option value="">All callers</option>
             </select>
-            <input value={draft.call_id} onChange={(e) => setDraft({ ...draft, call_id: e.target.value })} placeholder="Call id (optional)" aria-label="Call id" className={`${field} w-44`} />
+            <input value={draft.call_id} onChange={(e) => setDraft({ ...draft, call_id: e.target.value })} placeholder="Call id (optional)" aria-label="Call id" className={`${fieldBase} w-44`} />
             <button type="submit" disabled={saving || !draft.body.trim()}
               className="flex h-9 items-center gap-1.5 rounded-soft border border-[var(--brand-line)] bg-[var(--brand)] px-3 text-[13px] text-[var(--brand-ink)] disabled:opacity-50">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add
