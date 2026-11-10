@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-10** "After the call, if someone says send me the details on WhatsApp, it should say OK, I'll send it on WhatsApp. It's not doing that." -> agent confirms WhatsApp, checks the number, asks a follow-up time; outcome interested + "WhatsApp details"; PROXe must actually send the details on WhatsApp after the call (Dev, needs an approved template).
+
 - **2026-11-10** "If the name can be pronounced, like Bangalore Baptist Hospital or Wonder Bums Studios, why are we not
   using the name? Only if it's something you can't pronounce say coaching or anything." -> first line = "Hi, is this
   {business_name}?" with a short, sayable name; type only if the name is hard to say.
