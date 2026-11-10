@@ -19,17 +19,29 @@ const cookieOpts = {
 };
 const clear = { path: "/", maxAge: 0 };
 
+/** The owner password from env, or the admin password stored in the database. */
+async function verifyAdminPassword(password: string): Promise<boolean> {
+  if (await verifyPassword(password).catch(() => false)) return true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabaseAdmin as any).from("arc_context").select("value").eq("key", "admin_password_hash").maybeSingle();
+  return data?.value ? verifyHash(password, data.value as string) : false;
+}
+
 export async function POST(req: NextRequest) {
   const { password, username } = await req.json().catch(() => ({ password: "", username: "" }));
   if (typeof password !== "string" || !password) {
     return NextResponse.json({ error: "Wrong password" }, { status: 401 });
   }
 
-  // The owner's own login name. Owner password, full access, same as a blank name.
-  const adminName = (process.env.ADMIN_USERNAME || "proxe@goproxe.com").toLowerCase();
+  // The owner's own login names: brands@bconclub.com, proxe@goproxe.com, plus any in ADMIN_USERNAME. Full access. The password
+  // is the owner password (DASHBOARD_PASSWORD_HASH) or the admin password kept in
+  // arc_context 'admin_password_hash', so the owner can be given a new one without
+  // touching Vercel env.
+  const adminNames = ["brands@bconclub.com", "proxe@goproxe.com", ...(process.env.ADMIN_USERNAME || "").split(",")]
+    .map((s) => s.trim().toLowerCase()).filter(Boolean);
   const name = typeof username === "string" ? username.trim().toLowerCase() : "";
-  if (name === adminName) {
-    if (!(await verifyPassword(password))) return NextResponse.json({ error: "Wrong name or password" }, { status: 401 });
+  if (adminNames.includes(name)) {
+    if (!(await verifyAdminPassword(password))) return NextResponse.json({ error: "Wrong name or password" }, { status: 401 });
     const res = NextResponse.json({ ok: true, role: "owner" });
     res.cookies.set(COOKIE_NAME, await createSessionToken(), cookieOpts);
     res.cookies.set(STUDIO_COOKIE, "", clear);
@@ -55,7 +67,7 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
-  if (await verifyPassword(password)) {
+  if (await verifyAdminPassword(password)) {
     const res = NextResponse.json({ ok: true, role: "owner" });
     res.cookies.set(COOKIE_NAME, await createSessionToken(), cookieOpts);
     res.cookies.set(STUDIO_COOKIE, "", clear);
