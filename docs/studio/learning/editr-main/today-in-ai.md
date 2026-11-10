@@ -117,3 +117,21 @@ Founder notes on v1: three stories is too thin, cover the whole market (who owns
 - ElevenLabs Edit Song: "extend to N s" may APPEND a new section after the Final Hit (the song stops ending on its hit).
   Say "make the Main Hook section X s long instead of Y, do not add any new section, end with the Final Hit". Check the
   end matches the previous cut (correlation of the last 10 s ~0.99).
+
+## 2026-11-10 (late): AI Wrap 001 v9, "give them value, not floating numbers" (founder)
+- Frame every company the same way so a viewer learns something: WORTH / RAISING / SPENDING (or LISTS, BORROWING,
+  INVESTING). Host script says it plainly ("Here's what each player is worth, what it's raising, and what it's spending").
+  On screen each company builds a 3-row numbers card under its footage, one row per spoken cue (label, figure in the
+  brand colour, a short plain note). No lone figures.
+- "Who owns the pie" means everyone: the public giants by market cap (companiesmarketcap, read on the day) plus the labs
+  at their latest round/IPO. SpaceX now carries xAI. Ten slices, each with logo + value; slices land as names are said.
+- The CEOs talking is the hook: cold open on the bites (Sam, then Dario), frame 0 = both faces + the question.
+- Real footage under the host: download the story's news piece (CNBC Television, 720p), split shots with
+  `select='gt(scene,0.3)'` and a contact sheet, pick product/logo/floor/aerial shots (never anchors), cut film-time
+  windows (`broll_cut.py` -> ui/broll.js). The article page comes back for the key number so the source stays visible.
+- Brand logos: Simple Icons (CC0) via jsdelivr; Microsoft/Mistral from Wikimedia Commons (public domain); licences in
+  EDITR brand/logos/LICENSES.md. White marks (filter) on dark; each section's accent = the brand colour (caption word,
+  figures, bars, slices, background tint). Gradient only on the hero figure and "AI".
+- Crop bites face-centred and outside burned-in captions, sponsor logos and channel bugs (check corners of frame 40).
+- Script changes shift the voice length: tighten long pauses (`tighten.py`, max 0.36 s) to fit the music instead of
+  re-extending the song.
