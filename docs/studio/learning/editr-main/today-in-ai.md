@@ -80,3 +80,23 @@ Open card with jingle and date, three stories, close card with jingle. Voice: ou
   (2 prompts x 2 variants, 1,200 credits each); one track untouched, the film ends with it.
 - ElevenLabs Music page: set the custom duration by clicking the field, ctrl+a, type 0:40, Tab (Enter does not stick).
   Download menu needs two clicks after another menu closes; choose MP3.
+
+## 2026-11-10 (later): AI Wrap 01 v2, "keep them hooked the whole way" (founder)
+Founder notes on v1: three stories is too thin, cover the whole market (who owns the pie), the bottom half was empty
+("khali"), page text got cut off, hook must be stronger, use the effects we already have.
+- Page: `today-in-ai/ui/wrap2.html` (render with `PAGE=ui/wrap2.html node anim/render_wrap.mjs ...`). Cues come from
+  the host's words, so the picture follows the voice. Sections: $ hook -> open-loop question -> 5 numbered stories ->
+  close -> end card.
+- Retention kit (from mg-styles-15, MIT, and our code-films playbook): hero number on frame 0; open loop ("Who owns the
+  AI pie?") paid off later; something new every 1.5-3 s (shot change, figure, chip, chart step); overshoot pops
+  (scale 0 -> 1.15 -> 1); camera shake on each hit; slash wipe on every section change; 5-segment progress bar so
+  viewers see what is left; hero moment at 60-70% (spend race + "2x" stamp); end card with the next edition.
+- Fill the 9:16 frame: card 780 tall, a big counting figure under it, captions, full-width waveform. Never zoom a page
+  past its line width; desktop pages (CNBC) get zoom 1.5 on the article column (`zoom`, `x0`).
+- Bug fixed: the waveform's display was set to block, which collapsed it to one column. It must be flex.
+- Music longer than the picked take: ElevenLabs Music > Generations > the track's "Edit Song" lets you prompt "extend to
+  66 s, keep the Final Hit as the last 10 s" (900 credits/min x 2 variations). Same song, longer, ending intact. Download:
+  Download > Full song > download icon > MP3.
+- Long text into ElevenLabs TTS by typing can freeze the tab for ~30 s; it still lands. Wait and reload, don't retype.
+- Facts: real IPO terms beat press valuation talk (Anthropic S-1/A, 10 Nov: $70-78). Leave out what can't be sourced
+  (an "all AI is worth X" total; Nvidia's live market cap).
