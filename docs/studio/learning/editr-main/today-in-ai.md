@@ -135,3 +135,14 @@ Founder notes on v1: three stories is too thin, cover the whole market (who owns
 - Crop bites face-centred and outside burned-in captions, sponsor logos and channel bugs (check corners of frame 40).
 - Script changes shift the voice length: tighten long pauses (`tighten.py`, max 0.36 s) to fit the music instead of
   re-extending the song.
+
+## 2026-11-11: AI Wrap 001 final round (founder)
+- Retention structure (doagenticly reel): hook in 2 s (Sam's punchline), two open questions, delay the answer, rehook mid
+  ("Not even close."), end on the payoff (the pie: the two labs = 13%), then out. Last line: "That's where the money is
+  flowing. That's the wrap."
+- Look: NEWSROOM mono (off-black, white, one yellow #FFD400). Charts keep brand colours. Numbers as editorial columns
+  with thin rules, never rounded tiles ("screams AI"). Article screenshots in dark mode (invert + hue-rotate).
+- New forward slash logo (ChatGPT, direction 4): "forward/slash", bold sans, red slash #E10600, black/off-white.
+  Kit in EDITR content/forward-slash/brand/logo-v2. Film end: a red cut slashes down, wordmark opens from the cut (~2 s).
+- To end a film earlier with the same song: Edit Song "make the Main Hook X s instead of Y, do not add a section, keep the
+  Final Hit as the last 10 s". `tighten.py` (max pause 0.30 s) recovers ~2 s from a 73 s voice.
