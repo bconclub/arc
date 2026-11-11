@@ -2,6 +2,7 @@
 
 | Date | Agent | Change | Why | By |
 |---|---|---|---|---|
+| 2026-11-12 | Intro Cold | Founder: always "our founder"; first name only if asked (Tan-ZEEL), never surname; replaces the 12 Nov who-we-are block. Pronunciation dict: Thanzeel -> Tan-zeel. | Z test call 12 Nov | GOD |
 | 2026-11-12 | GOD dialler | Every dial now reserves in ARC first (`/api/agent/outreach/reserve`, agent name `god-dialer`); 409 = skip. Closes the "known gap" below. GOD reads `/api/agent/context?ns=gtm` before any voice-agent work. | ARC rule 3, Z 12 Nov | GOD |
 | 2026-11-12 | Intro Cold | TTS speed 1.0 -> 0.9; prompt "Pace and purpose": slower, one loss question (Axlrate session 09) before asking for a call; no demo push. | Z feedback 12 Nov | GOD |
 | 2026-11-12 | Intro Cold | Prompt: "Who we are, when they ask" (Proxy from Beacon Club, founder Thanzeel Ashruf, marketing + lead systems across Bangalore) + pronunciation guide. | Z feedback 12 Nov | GOD |

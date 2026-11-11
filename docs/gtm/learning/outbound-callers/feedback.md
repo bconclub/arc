@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-12** (test call) "My name is wrong, it's Tanzeel not Tanzeem. Don't say the full name, just say 'our founder'; only if they ask, 'our founder Thanzeel would like to call you', stress on the zeel part." -> 'our founder' everywhere; first name only if asked, Tan-ZEEL; no surname.
+
 - **2026-11-12** "Proxy starts the call too fast. The call should be based on the new GTM learnings in ARC (Axlrate)." -> voice speed 0.9, pause after the first line; one loss question (session 09: loss as per TEMQ) before asking for a call with Thanzeel; no demo push before their loss.
 
 - **2026-11-12** "When someone asks what company this is: I am Proxy, from Beacon Club; the founder is Thanzeel Ashruf, pronounced properly; we run marketing systems for businesses across Bangalore." -> 'Who we are' answer + pronunciation guide (Tan-zeel Ash-ruf, Proxy, Beacon Club).
