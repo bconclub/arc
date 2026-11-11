@@ -2,6 +2,7 @@
 
 | Date | Agent | Change | Why | By |
 |---|---|---|---|---|
+| 2026-11-11 | Intro Cold | Prompt: "When they want to end, let them" (one closing line, no more pitch). | Z feedback 11 Nov | GOD |
 | 2026-11-10 | Intro Cold | Data collection `call_outcome`: interested only on an explicit ask; a yes followed by a drop is connected. | Z feedback 10 Nov (false "interested") | GOD |
 | 2026-11-10 | Intro Cold | Prompt: "Send it on WhatsApp" (confirm, check number, ask follow-up time, outcome interested + WhatsApp details). Post-call WhatsApp send handed to Dev. | Z feedback 10 Nov | GOD |
 | 2026-11-10 | Intro Cold | Prompt: "Your very first line: say their name" ("Hi, is this {business_name}?", type only if unsayable; never speak reasoning). Dialler sends a short sayable `business_name` (drops branch, area, Pvt Ltd). | Z feedback 10 Nov | GOD |

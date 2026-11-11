@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-11** "When they are ready to close, close the call and just let it be." -> when they signal the end, one warm closing line and hang up; no extra question or pitch.
+
 - **2026-11-10** "That call just dropped, how did it go to interested?" (Brik Oven: manager said 'yes, tell me', then the call dropped) -> outcome rule tightened: interested only on an explicit ask (details, demo, price, callback, WhatsApp); 'yes tell me' then a drop = connected.
 
 - **2026-11-10** "After the call, if someone says send me the details on WhatsApp, it should say OK, I'll send it on WhatsApp. It's not doing that." -> agent confirms WhatsApp, checks the number, asks a follow-up time; outcome interested + "WhatsApp details"; PROXe must actually send the details on WhatsApp after the call (Dev, needs an approved template).
