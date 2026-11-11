@@ -3,6 +3,8 @@
 The Axlrate PROXe GTM session is Z's GTM strategy thread. It runs PROXe's go-to-market on the method Z is learning in
 the Axlrate sales cohort (weekly Wednesday sessions with Jackie and Srihari) and owns the ARC GTM brief and plans
 (`arc_context.gtm_brief`, `gtm_plans`). This folder holds the reasoning, the instructions and Z's corrections.
+**Agents pull from ARC, not this folder:** `arc_context` keys `sales_pain_model`, `gtm_learnings` (method + session
+notes), `gtm_handoff`, `gtm_brief`. When a file here changes, update its key too.
 Execution is done by the full-time GTM agent and its sub-agents: start with [handoff.md](handoff.md).
 
 | File | Date | From | Who uses it |

@@ -1,7 +1,8 @@
 # PROXe sales pain model (VPP + TEMQ loss), for agents and the voice agent
 
-> **Updated:** 2026-11-12, from Axlrate sessions 07, 08, 09 ([session-08.md](session-08.md), [session-09.md](session-09.md))  
-> **Live copy:** ARC Supabase `arc_context`, key `sales_pain_model` (same text). Agents pull it from there.  
+> **Updated:** 2026-11-12, from Axlrate sessions 07, 08, 09  
+> **Lives in:** ARC Supabase `arc_context`: `sales_pain_model` (this), `gtm_learnings` (method + session notes),
+> `gtm_handoff` (tasks for the GTM agent), `gtm_brief` (offer, rules). Pull from there.  
 > **Use it:** the outbound voice agent, call-prep agents, follow-up writers, trial watchers, case-study writers.  
 > **Keep inside:** use it in our calls and messages. Never name the framework (TEMQ, VPP, "loss as per TEMQ") to a
 > prospect, and never post or share it outside our team and Axlrate cohort 24.
