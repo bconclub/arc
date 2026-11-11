@@ -19,6 +19,9 @@ Other threads write their own folders next to this one; this folder holds what t
 | [documentary-films.md](documentary-films.md) | Manipur and frwdslash: sourced scripts, real footage, one visual rule, the build |
 | [today-in-ai.md](today-in-ai.md) | The daily forward slash show: format, routine, what bit us |
 | [brands.md](brands.md) | Product truth and guardrails per brand this thread worked on |
+| [reference-library.md](reference-library.md) | The rated template library on ARC at /dashboard/studio/references and how it was made |
+| [code-made-app-films.md](code-made-app-films.md) | Four Instagram references for code-made app films and explainer reels, and what we built |
+| [handoff.md](handoff.md) | Full state of the thread on 11 Nov 2026, for starting a new thread |
 | [founder-feedback.md](founder-feedback.md) | The founder's corrections to this thread, dated, and what changed |
 
 When the founder shares a reference, the shared method is in [../02-references.md](../02-references.md): find why it
