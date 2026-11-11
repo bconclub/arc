@@ -127,3 +127,19 @@ has figured it out, we need to do this for the GTM content."
 - Fit for us: exactly our code-film method. For the app showcase the same one-colour UI-pieces language works for the
   three app types; the "made in code" wrapper could become a BCON post about how we build. Do not copy their brand,
   icons or wording.
+
+## Brand ad made in code with real clips inside (2026-11-12)
+- Job: a 30 s BCON brand ad. Idea in one line: every business has two problems (nobody knows you, nobody answers), we
+  fixed both. Simple line drawings for the story, real client clips for the proof, $0 paid generation.
+- **Real video inside a code film:** don't seek `<video>` elements in the page. Cut each clip to frames first
+  (`ffmpeg -ss T -t 1.3 -vf fps=30,scale=540:960 clips/x/%02d.jpg`), preload and `decode()` them, and draw the right frame
+  to a `<canvas>` in `__seek(t)`. Every screenshot is then exact.
+- **Check each clip does not cross a cut:** tile frames 1, 13, 26, 39 of every clip before building. Four of six first
+  picks crossed a cut.
+- 540 px wide sources look fine as a tilted card about 690 px wide with a white border, not full screen.
+- Frame 0: title plus all six client cards already on screen, so the thumbnail is the hero.
+- Drawings rebuilt as one SVG string per frame are fast enough (30 s at 60 fps rendered in about three minutes).
+- Sound: CC0 kit checked by fetching each Freesound page and grepping for the `publicdomain/zero` licence link;
+  Freesound's search page lists `data-mp3` preview links, so no login is needed for the previews.
+- Music length: a 30 s request can return 39 s. Start the track later so it ends with the film; don't trim or fade it.
+- Founder note: when options are offered, each one must be ready to watch. Build first, ask after.
