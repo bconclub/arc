@@ -2,6 +2,7 @@
 
 | Date | Agent | Change | Why | By |
 |---|---|---|---|---|
+| 2026-11-11 | Intro Cold | Prompt: "If the line is not clear, end and call back later" (outcome no_answer + callback_request "bad line, call back"); GOD dialler requeues those. Also a do-not-call list of clients/partners in GOD's dialler. | Z feedback 11 Nov | GOD |
 | 2026-11-11 | Intro Cold | Prompt: "When they want to end, let them" (one closing line, no more pitch). | Z feedback 11 Nov | GOD |
 | 2026-11-10 | Intro Cold | Data collection `call_outcome`: interested only on an explicit ask; a yes followed by a drop is connected. | Z feedback 10 Nov (false "interested") | GOD |
 | 2026-11-10 | Intro Cold | Prompt: "Send it on WhatsApp" (confirm, check number, ask follow-up time, outcome interested + WhatsApp details). Post-call WhatsApp send handed to Dev. | Z feedback 10 Nov | GOD |

@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-11** Laptop Store call: line unclear, they kept talking, the agent kept asking. "We should have a clarity rating; if clarity is below a threshold, end the call saying we'll reach out." -> clarity rule: on unclear line, one apology line, end, retry later (not a no).
+
 - **2026-11-11** "When they are ready to close, close the call and just let it be." -> when they signal the end, one warm closing line and hang up; no extra question or pitch.
 
 - **2026-11-10** "That call just dropped, how did it go to interested?" (Brik Oven: manager said 'yes, tell me', then the call dropped) -> outcome rule tightened: interested only on an explicit ask (details, demo, price, callback, WhatsApp); 'yes tell me' then a drop = connected.
