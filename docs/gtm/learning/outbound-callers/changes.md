@@ -2,6 +2,7 @@
 
 | Date | Agent | Change | Why | By |
 |---|---|---|---|---|
+| 2026-11-12 | GOD dialler | Every dial now reserves in ARC first (`/api/agent/outreach/reserve`, agent name `god-dialer`); 409 = skip. Closes the "known gap" below. GOD reads `/api/agent/context?ns=gtm` before any voice-agent work. | ARC rule 3, Z 12 Nov | GOD |
 | 2026-11-12 | Intro Cold | TTS speed 1.0 -> 0.9; prompt "Pace and purpose": slower, one loss question (Axlrate session 09) before asking for a call; no demo push. | Z feedback 12 Nov | GOD |
 | 2026-11-12 | Intro Cold | Prompt: "Who we are, when they ask" (Proxy from Beacon Club, founder Thanzeel Ashruf, marketing + lead systems across Bangalore) + pronunciation guide. | Z feedback 12 Nov | GOD |
 | 2026-11-11 | Post-call (ARC mirror + PROXe) | Fix: an agreed clock time in callback_request now books in PROXe (lead + booking + standard `proxe_demo_confirm_v1`) for any callback/interested call, whoever answered and however the summary words it. Before: booking needed the summary to say founder/demo AND not front desk, so "busy, call me tomorrow 11 am" only made a lead with no booking (Rayara, Akshara, Shaakya, SME) and FitFlix (front desk) got nothing. Not a missing reservation: ingest matches by phone already. Parser: added "2026-11-12", "12 Nov", and "next Thursday" (said on Wednesday = the 19th). Duplicate-safe (PROXe dedupes on conversation_id). Backfilled 5 calls, confirmations sent: FitFlix 12 Nov 7:30 PM (today's 7:30 passed before the booking; moved by hand), Shaakya Spa 12 Nov 11:00, Rayara Kirana 12 Nov 10:30 ("by 11"), Akshara Little Bees 12 Nov 11:30 (11:00 was taken: PROXe allows one booking per slot), SME Tours 19 Nov 1 PM ("next Thursday"). | Z, 11 Nov | Dev |
@@ -15,7 +16,7 @@
 | 2026-10-30 | Intro Cold | Prompt: "A question is not a no". | Z feedback 30 Oct | GOD |
 | 2026-10-26 | Intro Cold | V4 script, 5 openers, `intro_line` variable. | Z / PROXe Core | PROXe Core |
 
-## Known gap (10 Nov)
+## Known gap (10 Nov), CLOSED 12 Nov
 GOD's dialler on the Mac (`~/Builds/god/batch-dial.py`) has been dialling ElevenLabs directly since 26 Oct, so ARC shows
 no reservations for those calls (results still reach ARC through the post-call webhook). Moving it to reserve in ARC
 first (rule 3) is in progress.
