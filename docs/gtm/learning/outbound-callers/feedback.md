@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-12** "Proxy starts the call too fast. The call should be based on the new GTM learnings in ARC (Axlrate)." -> voice speed 0.9, pause after the first line; one loss question (session 09: loss as per TEMQ) before asking for a call with Thanzeel; no demo push before their loss.
+
 - **2026-11-12** "When someone asks what company this is: I am Proxy, from Beacon Club; the founder is Thanzeel Ashruf, pronounced properly; we run marketing systems for businesses across Bangalore." -> 'Who we are' answer + pronunciation guide (Tan-zeel Ash-ruf, Proxy, Beacon Club).
 
 - **2026-11-11** Laptop Store call: line unclear, they kept talking, the agent kept asking. "We should have a clarity rating; if clarity is below a threshold, end the call saying we'll reach out." -> clarity rule: on unclear line, one apology line, end, retry later (not a no).
