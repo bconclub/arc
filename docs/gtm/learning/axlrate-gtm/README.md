@@ -7,6 +7,7 @@ Execution is done by the full-time GTM agent and its sub-agents: start with [han
 
 | File | Date | From | Who uses it |
 |---|---|---|---|
+| [pain-model.md](pain-model.md) | 2026-11-12 | Sessions 07-09, for Z's other agents | The outbound voice agent and every call/message/trial agent. Live copy: `arc_context.sales_pain_model` |
 | [session-09.md](session-09.md) | 2026-11-11 | Axlrate cohort call | Agents booking demos, watching trials, writing case studies |
 | [session-08.md](session-08.md) | 2026-10-28 | Axlrate cohort call + Z's notes | Every agent scoring TEMQ, writing follow-ups or quoting numbers (formula: cohort-only) |
 | [handoff.md](handoff.md) | 2026-10-26 | This session | The full-time GTM agent: what to run now, what not to, what waits on Z |
