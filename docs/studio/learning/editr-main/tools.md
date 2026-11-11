@@ -1,7 +1,14 @@
 # Tools: how we drive them and what bites
 
-All browser work happens in the **BCON Club** Chrome (deviceId `f28429cc...`) via Claude in Chrome. The founder signs
-in; we never type credentials, buy or upgrade.
+All browser work happens in the BCON Chrome via Claude in Chrome. The founder signs in; we never type credentials,
+buy or upgrade.
+- **Each machine has its own browser ID.** On the Windows PC at `C:\Builds\EDITR` it is **"BCON EDITR"**
+  (deviceId `371f3d63...`, 2026-11-11); `f28429cc...` is the older BCON Club browser on another machine, and its
+  downloads land on that machine, not this one. Don't pick from `list_connected_browsers` names ("Browser 1-4" mean
+  nothing): call `switch_browser`, the founder clicks Connect in the right Chrome and names it.
+- **Full-res images without downloads:** overlay the ChatGPT image at natural size in two side-by-side tiles, `zoom`
+  each tile with `save_to_disk` (returns native pixels, ~941x836), then stack them with ffmpeg `vstack`
+  (EDITR `content/claymation-test/stitch.py`).
 
 ## ChatGPT (images)
 - Type the prompt as **one line**: a newline in `computer type` presses Enter and sends only the first paragraph.
