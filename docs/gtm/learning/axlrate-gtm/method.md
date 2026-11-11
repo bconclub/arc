@@ -38,6 +38,10 @@ The Google Sheet "PROXe GTM Trifecta" (tabs Trifecta, Causal Law, PROXe GTM, TEM
   Agreeing to the price is words; their spend elsewhere is capability, not commitment.
 - Pain = problem x TEMQ impact, in rupees, worked out with them. Then leave them unsettled.
 - Free work only after they feel the pain and see the value, and tied to payment.
+- Find their loss as per TEMQ (time, effort, money, quality, in their numbers) in the first conversation, before
+  any demo or trial. No loss, no demo.
+- Check every trial on day 2. Unused means trigger on their own loss: keep it on or switch it off?
+- A result is always a delta on their loss: before vs after, never a number alone.
 - This is not about you. Be curiously engaged in how they perceive things, like a journalist.
 
 ## Session log
@@ -54,3 +58,6 @@ The Google Sheet "PROXe GTM Trifecta" (tabs Trifecta, Causal Law, PROXe GTM, TEM
 - **08 (28 Oct) VPP + TEMQ:** one outcome per conversation ("configuration"), reset it against reality; money actions
   only count when money moves towards us; problem x TEMQ impact = pain in Rs; a cold lead's outcome is a reply. Full
   notes: [session-08.md](session-08.md).
+- **09 (11 Nov) Loss as per TEMQ:** get their time/effort/money/quality loss before any demo; trials checked on day
+  2 and triggered on that loss; results told as a delta on the loss; no LinkedIn crawling. Notes:
+  [session-09.md](session-09.md).

@@ -36,6 +36,15 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
    - Before every call or visit, write its one outcome in the account note. Z walks into 3 businesses this week.
    - No free websites/setup offered before pain and value land, and never a payment link before alignment.
 
+5. **From session 09 (11 Nov, [session-09.md](session-09.md)):**
+   - Z's target: 15 demos before next session, from the ~35 warm leads (~20 outbound-dialer interest, ~15 ad
+     inbound), each only after their loss as per TEMQ is in the account note. Prep a loss-finding question list per
+     lead for Z's call; no demo invites before that.
+   - Day-2 trial check: for every brand in trial, read conversations and team logins on day 2 and flag Z if flat,
+     with the loss line ready for Z's call.
+   - Case studies (Zensquare, Scan2Kare, Ahoy, Windchasers): collect before vs after numbers; no result without a
+     baseline.
+
 ## Outbound callers: ready (from PROXe Core, 26 Oct, on Z's go)
 - **Agents** (ElevenLabs, all on the Sanket voice): Intro Cold (`noname`, V4: "Hi, is this {business}?", the opener,
   then "who am I speaking with", goal ~30 s and a callback time for Thanzeel, end reason `callback_requested`);
