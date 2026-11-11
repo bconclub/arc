@@ -27,6 +27,30 @@ function spokenToDigits(s: string): string {
   return t
 }
 
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+
+/** A date said outright: "2026-11-12", "12 Nov", "Nov 12th". One already gone this year means next year. Null when none is named. */
+function explicitDay(s: string, today: Date): Date | null {
+  const iso = s.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/)
+  const dm = s.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/)
+  const md = s.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?\b/)
+  let y = today.getUTCFullYear(), mo: number, d: number
+  if (iso) { y = Number(iso[1]); mo = Number(iso[2]) - 1; d = Number(iso[3]) }
+  else if (dm) { mo = MONTHS.indexOf(dm[2]); d = Number(dm[1]) }
+  else if (md) { mo = MONTHS.indexOf(md[1]); d = Number(md[2]) }
+  else return null
+  if (d < 1 || d > 31 || mo < 0 || mo > 11) return null
+  const out = new Date(Date.UTC(y, mo, d))
+  if (!iso && out.getTime() < today.getTime()) out.setUTCFullYear(y + 1)
+  return out
+}
+
+/** Days to a named weekday. "next Thursday" said on a Wednesday is the week after (the day after is "tomorrow"); else the coming one. */
+function namedOffset(s: string, named: number, todayDow: number): number {
+  const delta = ((named - todayDow + 7) % 7) || 7
+  return new RegExp(`\\bnext ${DAYS[named]}\\b`).test(s) && delta <= 1 ? delta + 7 : delta
+}
+
 export function parseCallbackTime(text: string | null | undefined, callAt: string | Date): CallbackSlot | null {
   const s = spokenToDigits(String(text || "").toLowerCase().replace(/\s+/g, " "))
   if (!s.trim()) return null
@@ -72,7 +96,8 @@ export function parseCallbackTime(text: string | null | undefined, callAt: strin
   const named = DAYS.findIndex((d) => new RegExp(`\\b${d}\\b`).test(s))
   if (/\bday after tomorrow\b/.test(s)) day.setUTCDate(day.getUTCDate() + 2)
   else if (/\b(tomorrow|tmrw|tmw)\b/.test(s)) day.setUTCDate(day.getUTCDate() + 1)
-  else if (named >= 0) day.setUTCDate(day.getUTCDate() + (((named - day.getUTCDay() + 7) % 7) || 7))
+  else if (explicitDay(s, day)) day.setTime(explicitDay(s, day)!.getTime())
+  else if (named >= 0) day.setUTCDate(day.getUTCDate() + namedOffset(s, named, day.getUTCDay()))
   else if (!/\b(today|tonight|this (morning|afternoon|evening))\b/.test(s)) {
     // No day said: today if that time is still ahead of the call, else tomorrow.
     if (h * 60 + min <= callIst.getUTCHours() * 60 + callIst.getUTCMinutes()) day.setUTCDate(day.getUTCDate() + 1)
@@ -146,7 +171,8 @@ export function parseCallbackDay(text: string | null | undefined, callAt: string
   const named = DAYS.findIndex((d) => new RegExp(`\\b${d}\\b`).test(s))
   if (/\bday after tomorrow\b/.test(s)) day.setUTCDate(day.getUTCDate() + 2)
   else if (/\b(tomorrow|tmrw|tmw)\b/.test(s)) day.setUTCDate(day.getUTCDate() + 1)
-  else if (named >= 0) day.setUTCDate(day.getUTCDate() + (((named - day.getUTCDay() + 7) % 7) || 7))
+  else if (explicitDay(s, day)) day.setTime(explicitDay(s, day)!.getTime())
+  else if (named >= 0) day.setUTCDate(day.getUTCDate() + namedOffset(s, named, day.getUTCDay()))
   else if (/\b(next week)\b/.test(s)) day.setUTCDate(day.getUTCDate() + 7)
   else if (!/\b(today|later today|this (morning|afternoon|evening))\b/.test(s)) return null
   return { date: day.toISOString().slice(0, 10) }

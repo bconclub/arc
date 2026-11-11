@@ -45,10 +45,13 @@ export type MirrorInput = {
   agentId?: string | null
   callbackRequest?: string | null
   contactName?: string | null
+  /** Backfill only: book this IST slot instead of the parsed one (a slot already gone is moved by hand and noted). */
+  slotOverride?: { date: string; time: string; at: string } | null
 }
 type Booking = { date: string; time: string; duplicate: boolean; message: { sent: boolean; template: string | null; mode: string | null; wa_message_id: string | null; error: string | null } | null }
+export type WaDetails = { status: string; sent?: boolean; duplicate?: boolean; error?: string }
 export type MirrorResult =
-  | { ok: true; prospect_id: string; activity: "inserted" | "exists"; test: boolean; lead_id: string | null; promoted: boolean; booking?: (Booking & { lead_id: string }) | { error: string } }
+  | { ok: true; prospect_id: string; activity: "inserted" | "exists"; test: boolean; lead_id: string | null; promoted: boolean; booking?: (Booking & { lead_id: string }) | { error: string }; whatsapp_details?: WaDetails }
   | { ok: false; error: string }
 
 async function px<T = unknown>(path: string, init: RequestInit & { prefer?: string } = {}): Promise<T> {
@@ -154,8 +157,13 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     // A front desk's call-back stays a prospect (the call shows on Prospects
     // with its time); only the doctor or owner makes it a lead.
     const frontDesk = spokeToFrontDesk(input.body)
-    const slot = demoAgreed ? (exact || (dayOnly ? { date: dayOnly.date, time: dayTime, at: new Date(Date.parse(`${dayOnly.date}T${dayTime}:00+05:30`)).toISOString() } : null)) : null
-    if (slot && !frontDesk && Date.parse(slot.at) > Date.now()) {
+    // An agreed clock time is a booking whoever took the call and however the
+    // summary words it (Z, 11 Nov 2026: five "tomorrow 11 am" callbacks sat as
+    // leads with no booking: the summary did not say "demo", or the front desk
+    // answered). Only a day with no time keeps those gates.
+    const slot = input.slotOverride || exact
+      || (demoAgreed && !frontDesk && dayOnly ? { date: dayOnly.date, time: dayTime, at: new Date(Date.parse(`${dayOnly.date}T${dayTime}:00+05:30`)).toISOString() } : null)
+    if (slot && Date.parse(slot.at) > Date.now()) {
       booking = await bookInProxe(target, prospect.id, input, slot)
       if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
     } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at && !frontDesk) {
@@ -169,7 +177,11 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
       leadId = await promote(target, prospect.id, input, exact?.date || day?.date || null, exact?.time || dayTimeAhead)
       promoted = !!leadId
     }
-    return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted, ...(booking ? { booking } : {}) }
+    // 4. "Send me the details on WhatsApp": send them (Z, 10 Nov 2026).
+    const whatsappDetails = wantsWhatsAppDetails(input, target, test)
+      ? await sendWhatsAppDetails(target, prospect.id, input, exact?.at || null)
+      : undefined
+    return { ok: true, prospect_id: prospect.id, activity: inserted?.length ? "inserted" : "exists", test, lead_id: leadId, promoted, ...(booking ? { booking } : {}), ...(whatsappDetails ? { whatsapp_details: whatsappDetails } : {}) }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
   }
@@ -261,6 +273,67 @@ Recording: ${input.recordingUrl}` : ""}`,
     }).catch(() => null)
   }
   return leadId
+}
+
+const TEST_NUMBER = "9731660933"
+
+/** The caller records "WhatsApp details" in callback_request when they agree to send it. Test targets: Z's own number only. */
+function wantsWhatsAppDetails(input: MirrorInput, target: Target, test: boolean): boolean {
+  if (!["interested", "callback"].includes(input.disposition)) return false
+  if (!/whats\s?app/i.test(input.callbackRequest || "")) return false
+  return !test || tail10(target.phone) === TEST_NUMBER
+}
+
+/** "tomorrow at 11:00 am" / "on Wed, 11 Nov at 11:00 am", else "shortly". Single line: it goes into a Meta variable. */
+function followUpText(at: string | null, occurredAt: string): string {
+  if (!at) return "shortly"
+  const d = new Date(at), ist = { timeZone: "Asia/Kolkata" } as const
+  const day = (x: Date) => x.toLocaleDateString("en-CA", ist)
+  const time = d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, ...ist }).toLowerCase()
+  const base = new Date(occurredAt)
+  if (day(d) === day(base)) return `today at ${time}`
+  if (day(d) === day(new Date(base.getTime() + 864e5))) return `tomorrow at ${time}`
+  return `on ${d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", ...ist })} at ${time}`
+}
+
+/**
+ * PROXe sends the details (proxe_call_details_v1) and de-dupes on the call's
+ * conversation id, so a webhook replay never sends twice. The result lands in
+ * proxe_outbound_activity (latest state wins, so "pending_template" becomes
+ * "sent" after Meta approves and the call is replayed).
+ */
+async function sendWhatsAppDetails(target: Target, prospectId: string, input: MirrorInput, slotAt: string | null): Promise<WaDetails> {
+  const base = process.env.PROXE_INTENT_BASE, key = process.env.PROXE_INBOUND_API_KEY
+  if (!base || !key) return { status: "error", error: "PROXE_INTENT_BASE / PROXE_INBOUND_API_KEY not set" }
+  const convId = input.conversationId || `message:${input.messageId}`
+  const name = input.contactName || contactNameFromTranscript(input.body) || target.name || target.org || "there"
+  let out: WaDetails
+  try {
+    const r = await fetch(base.replace(/\/$/, "") + "/api/agent/outreach/whatsapp-details", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-api-key": key }, cache: "no-store",
+      signal: AbortSignal.timeout(25000),
+      body: JSON.stringify({
+        phone: target.phone, name, company: shortOrg(target.org), conversation_id: convId, source: "outbound_call",
+        industry: target.segment || null, follow_up_text: followUpText(slotAt, input.occurredAt),
+      }),
+    })
+    const d = await r.json().catch(() => ({}))
+    out = r.ok && d.details
+      ? { status: String(d.details.status || (d.details.sent ? "sent" : "unknown")), sent: !!d.details.sent, duplicate: !!d.duplicate }
+      : { status: "error", error: `PROXe whatsapp-details ${r.status}: ${String(d.error || "").slice(0, 200)}` }
+  } catch (e) {
+    out = { status: "error", error: e instanceof Error ? e.message : String(e) }
+  }
+  await px("proxe_outbound_activity?on_conflict=brand,external_system,external_id", {
+    method: "POST", prefer: "resolution=merge-duplicates",
+    body: JSON.stringify({
+      brand: "proxe", prospect_id: prospectId, external_system: "arc", external_id: `wa_details:${convId}`,
+      channel: "whatsapp", outcome: out.status,
+      summary: `WhatsApp details after the call: ${out.status}${out.error ? ` (${out.error})` : ""}.`,
+      occurred_at: input.occurredAt, payload: { conversation_id: convId, template: "proxe_call_details_v1", arc_message_id: input.messageId },
+    }),
+  }).catch((e) => console.error("[mirror] wa_details activity failed", e instanceof Error ? e.message : e))
+  return out
 }
 
 /** "Glam 'N' Smile - Face, Hair & Dental Clinic" -> "Glam 'N' Smile": the brand, not the listing title. */
