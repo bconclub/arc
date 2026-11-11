@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-12** "When someone asks what company this is: I am Proxy, from Beacon Club; the founder is Thanzeel Ashruf, pronounced properly; we run marketing systems for businesses across Bangalore." -> 'Who we are' answer + pronunciation guide (Tan-zeel Ash-ruf, Proxy, Beacon Club).
+
 - **2026-11-11** Laptop Store call: line unclear, they kept talking, the agent kept asking. "We should have a clarity rating; if clarity is below a threshold, end the call saying we'll reach out." -> clarity rule: on unclear line, one apology line, end, retry later (not a no).
 
 - **2026-11-11** "When they are ready to close, close the call and just let it be." -> when they signal the end, one warm closing line and hang up; no extra question or pitch.
