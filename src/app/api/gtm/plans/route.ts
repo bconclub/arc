@@ -26,7 +26,7 @@ export async function GET() {
 export async function PUT(req: Request) {
   const b = await req.json().catch(() => null);
   if (!b || typeof b !== "object" || Array.isArray(b)) return Response.json({ error: "Send the brief as an object." }, { status: 400 });
-  const keep = ["offer", "buyer", "win", "motion", "channels", "truth"] as const;
+  const keep = ["offer", "buyer", "win", "motion", "channels", "truth", "pain_model"] as const;
   const brief: Record<string, unknown> = {};
   for (const k of keep) brief[k] = String(b[k] ?? "").slice(0, 2000);
   brief.rules = (Array.isArray(b.rules) ? b.rules : []).map((r: unknown) => String(r).trim()).filter(Boolean).slice(0, 20);
