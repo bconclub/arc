@@ -65,7 +65,9 @@ export async function parseInvoice(
   if (mime === "application/pdf") {
     let text = "";
     try {
-      text = await extractPdfText(bytes);
+      // A copy: pdf.js takes over (detaches) the buffer it is given, which left `bytes`
+      // empty and made the model rung below fail with "PDF cannot be empty".
+      text = await extractPdfText(bytes.slice());
     } catch {
       // A malformed or encrypted PDF is not a reason to give up — the model
       // rung reads pages visually.
