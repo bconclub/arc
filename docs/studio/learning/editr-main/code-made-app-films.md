@@ -143,3 +143,13 @@ has figured it out, we need to do this for the GTM content."
   Freesound's search page lists `data-mp3` preview links, so no login is needed for the previews.
 - Music length: a 30 s request can return 39 s. Start the track later so it ends with the film; don't trim or fade it.
 - Founder note: when options are offered, each one must be ready to watch. Build first, ask after.
+
+## Voice-led code film: one metaphor, timed to the voice (2026-11-12)
+
+- A brand ad that only said things in text and showed client clips was rejected. What worked: one picture idea that carries the whole pitch (customers as dots, the business as a vessel with three leaks, the leaks get sealed and it fills), a voiceover on top, and only short keywords on screen.
+- Order of work: build the picture on guessed beat times, record the voice, then move the beats. Keep every beat time in a few constants at the top of the scene (section starts, cue lists) so retiming is one small edit.
+- Word timings: `faster_whisper` (`small.en`, `word_timestamps=True`) plus ffmpeg `silencedetect` for the real pause edges. The transcript can mishear a word; that is a timing tool, not a check of the take.
+- A 33 s take fits a 30 s film at `atempo=1.1` and sounds more energetic. Film time = start offset + take time / 1.1.
+- Particles in a seek(t) film: no simulation. Give each dot a spawn time and a closed-form path, and decide its fate (leaks or settles in slot n) once at load.
+- ffmpeg `alimiter` raises the output back to 0 dBFS unless `level=disabled` is set. Without it the mix measured a 0.0 dB peak; with it -2.3 dB.
+- Type a brand name the way it should be said in the TTS box (the spelling on screen stays as the brand writes it).
