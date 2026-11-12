@@ -2,6 +2,7 @@
 
 | Date | Agent | Change | Why | By |
 |---|---|---|---|---|
+| 2026-11-12 | GOD dialler | One branch per brand per day (others held to later days); preschools called "preschool", not "institute". | Bachpan Play School: 10 branches rung within minutes | GOD |
 | 2026-11-12 | Intro Cold | Prompt "Say the time once" (one natural confirmation, then end). | Z feedback 12 Nov | GOD |
 | 2026-11-12 | Intro Cold | Prompt "Get their name, don't say it"; new data collection field `contact_name`. | Z feedback 12 Nov | GOD |
 | 2026-11-12 | Intro Cold | Founder: always "our founder"; first name only if asked (Tan-ZEEL), never surname; replaces the 12 Nov who-we-are block. Pronunciation dict: Thanzeel -> Tan-zeel. | Z test call 12 Nov | GOD |
