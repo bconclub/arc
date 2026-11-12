@@ -12,6 +12,7 @@
    it to. Read it before any change.
 3. **Calls go through ARC.** Every dial reserves in ARC first (`/api/agent/outreach/reserve`, 24 h cooldown) and
    results land in `outreach_activity` via the post-call webhook. No dialling straight to ElevenLabs.
+5. **Test before live, then measure.** Every prompt change gets one test call to Z's number (+91 97316 60933) before real calls, with the result noted in changes.md; the next day's connect % and positive % (of connected) are checked against the day before, and a change that makes things worse is rolled back (backups in GOD's outbound/agent-backup-*.json). Batch several small fixes into one change a day rather than many.
 4. Agents and openers are described in [../axlrate-gtm/handoff.md](../axlrate-gtm/handoff.md) ("Outbound callers").
 
 ## Where it lives now (since 2026-11-10)
