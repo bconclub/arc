@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-12** (Brik Oven call) "The person said call the manager back after 30 minutes, and it kept probing, asking something. Not correct. After half an hour we should call. Stop it." -> top rule: call-later beats everything; say the time once and end, no more questions.
+
 - **2026-11-12** (Bachpan Play School call) "Don't repeat things: it said I'll call you at 4, then again I'll call you at 4 PM. That's robotic. Say the time once, then 'I'll call you then', that's it." -> time confirmed once, naturally; never repeated.
 
 - **2026-11-12** "Try to get their name, but don't call them by name; Indian names will break. Just ask who can I ask for. Don't repeat their name." -> ask for the name (or whom to ask for), record it (`contact_name`), never say it back.
