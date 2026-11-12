@@ -86,3 +86,9 @@ Format that came from this: **The AI Bill**, a dated weekly bill (Bill No. 001, 
 - Facts: the company's own wording ("resigned") on screen; anything from press only as "reports" / "alleged".
 - Music: ElevenLabs Edit Song took a 49.5 s take with a long fade to 42 s ending on one hard hit (ask for section
   lengths + "no fade-out, no new section").
+
+### Year cards are spoken by real narrators (Jensen v03, 12 Nov 2026)
+- Founder: on-screen timeline text only lands when a voice says it. No generated narration (not even his clone) in a real-footage montage: use the real narrators.
+- Pull the FULL audio of the long-form docs already in the edit (60 Minutes, Bloomberg Originals), transcribe with faster-whisper, grep for the card facts. Bloomberg's "born in Taiwan in 1963, moved to the US" and 60 Minutes' "worked as a dishwasher at Denny's" matched the cards word for word. Anchors on milestone clips (CNBC $1T, BBC "first ever company to $5 trillion") voice the money cards.
+- Lay each line on its cut (8th-note grid from the impact), card + line start together; drop cards nobody says. atempo up to 1.12 is fine to fit an anchor line.
+- Credits: just the outlet's @handle (or the name if no verified handle), small, bottom-left, below the ticker. No "COURTESY" word, no dates.
