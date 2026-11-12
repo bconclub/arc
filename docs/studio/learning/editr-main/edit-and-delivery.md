@@ -72,3 +72,19 @@ Two finished flying-school reels (26 s and 69 s), measured from frames, cut dete
   B-roll cut-in, low hit on the title and end card, click on the button. Voice: highpass, light compression, -15 LUFS.
 - Check the B-roll matches the claim: a reel about online classes with only offline classroom footage is a gap to
   raise, not to hide.
+
+### Matching a client's house style (Windchasers, 2026-11-12)
+Founder: v01 was "too bad", cut on instinct. Match their reels first, improve after. What fixed it:
+- **Study the whole account, not one reel.** Pull every reel (Instagram profile grid logged out: close the pop-up,
+  collect `/reel/` links + view counts; `yt-dlp` per reel), contact-sheet all of them by views, transcribe, count cuts.
+  Duplicates are common (same edit posted twice); the top reel may be in another language (Telugu with English captions).
+- **Read captions at 5-10 fps**, not from a 1 fps sheet. Windchasers: one short phrase per line, wiped in left to right
+  (~0.3 s), held 1.2-2 s, carried across cuts; the emphasis words land later on a second line, bigger and gold
+  (Playfair Display italic or Montserrat ExtraBold); inline key word in gold italic serif. White Montserrat SemiBold.
+- **Hand-set the captions** from the word-index transcript (clip, from, to, key, second line, style). Auto chunking gave
+  "Dream of becoming a / pilot".
+- Warm light-leak burn to white on the cutaways in the hook (about every 4 s) and at section changes; first cutaway by
+  ~2-3 s. End card: tan #C7B577, black logo, jets slide in, "ENQUIRE NOW" pill clicked.
+- Fonts that match: Montserrat + Playfair Display Italic (Google Fonts, OFL), variable axes via PIL `set_variation_by_name`.
+- AAC adds ~3 dB of true peak over the WAV: limit the final mix to ~0.70 before encoding.
+- ffmpeg with 12+ inputs crashed silently here: lay the cutaways in one pass, the caption PNG sequence in a second.
