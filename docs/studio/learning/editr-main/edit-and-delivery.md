@@ -58,3 +58,17 @@ Two finished flying-school reels (26 s and 69 s), measured from frames, cut dete
 - **Our method:** faster-whisper word timings -> cut list (drop gaps over ~0.3 s and retakes) -> ffmpeg concat ->
   B-roll laid over by word time -> captions from the same word timings -> title + end card -> music + SFX.
   Same "edit is a script" shape as above; `shortform-video-editor` skill covers the silence cut and captions.
+
+### First talking-head cut built this way (2026-11-12)
+- Six 4K vertical takes (rotation flag 90), 25 fps: keep 25 fps in the export. One `build.py`: phrases split at word
+  gaps over 0.35 s, each cut 0.06 s before the first word and 0.14 s after the last, alternate 1.0 / 1.14 punch-in per
+  phrase so jump cuts read as intended.
+- **B-roll boards (Playbook):** don't download 40 GB. Each asset carries a 10x10 preview sheet; pull those, tile four
+  frames per clip into an overview, choose, then cut only the seconds needed straight from the signed link with
+  `ffmpeg -ss T -i URL -t 3.6` (about 15 s per piece). Links expire daily.
+- Captions as a PNG strip sequence from PIL (ffmpeg `drawtext` crashed on this PC: no fontconfig). Break chunks at
+  conjunctions and punctuation, never across a sentence; keep them word-for-word with the voice.
+- Sound pass the founder asked for: riser timed to END on the reveal word, big hit on it, whoosh 0.12 s before every
+  B-roll cut-in, low hit on the title and end card, click on the button. Voice: highpass, light compression, -15 LUFS.
+- Check the B-roll matches the claim: a reel about online classes with only offline classroom footage is a gap to
+  raise, not to hide.
