@@ -85,3 +85,15 @@ the voice in one ear; plus electrical hum lines and a dull top end. Measure each
 3. EQ: highpass 75, -3 dB at 330 Hz, +4 dB at 3.4 kHz, high shelf +3 dB at 8.5 kHz, `deesser=i=0.35`.
 4. Cut the cleaned WAV with the same phrase times as the picture; `pan=stereo|c0=c0|c1=c0`.
 Tool lives in `C:\dev\tools\voicefix` (also a GPU PyTorch venv there for heavier models if needed).
+
+## Never loudnorm the final mix in one pass (2026-11-12, Windchasers reel)
+Founder: "music still loud, not dealing with the video" after we had already cut the music 6 dB.
+Cause: single-pass `loudnorm` on the full mix is dynamic. It rides gain up in every voice pause, so the music swells
+between lines and the -6 dB cut was undone (end card measured 1.2 dB LOUDER after the cut).
+Fix, now in the Windchasers build scripts:
+1. Measure each stem once (ebur128 integrated) and apply one fixed `volume=` gain: voice to -16 LUFS,
+   music to 20 dB under the voice. No riding, no ducking.
+2. Carve the music out of the voice: `highpass=70, -4 dB @110 Hz, -5 dB @3 kHz (w=1), high shelf -2 dB @8 kHz`.
+   808 sub and hats feel louder than LUFS says.
+3. Mix, measure the mix, one fixed gain to -14 LUFS, then `alimiter`. Result: LRA 3 LU, peaks -3 dBFS.
+Check the music level in a voice pause, not just integrated LUFS.
