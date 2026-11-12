@@ -2,6 +2,7 @@
 
 | Date | Agent | Change | Why | By |
 |---|---|---|---|---|
+| 2026-11-12 | Post-call (ARC mirror) | Front desk that says "interested" (explicit ask, e.g. "ask your founder to call me") now becomes a PROXe lead; plain front-desk "call later" stays a prospect. Backfilled Autopad Car Detailing. Commit 1d0dc3a6. | Z, 12 Nov (Autopad not in PROXe) | GOD |
 | 2026-11-12 | Intro Cold | Prompt (top): "'Interested, thank you' is usually a no" (STT drops "not"; after a brush-off/silence treat as no and close; ask once if unsure). `call_outcome` description updated the same way. Optum Car Care rescored not_interested in GOD stats. | Z feedback 12 Nov (Optum Car Care) | GOD |
 | 2026-11-12 | Intro Cold | Prompt (top, overrides all): "Call later wins over everything": manager not there / call after 30 min / busy = say the time once, end_call callback_requested; no "who am I speaking with" or other probing. Backup agent-backup-20261112-*.json. | Z feedback 12 Nov (Brik Oven call, kept probing after "call in 30 minutes") | GOD |
 | 2026-11-12 | GOD dialler | One branch per brand per day (others held to later days); preschools called "preschool", not "institute". | Bachpan Play School: 10 branches rung within minutes | GOD |
