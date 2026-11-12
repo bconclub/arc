@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/reports/zensquare/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>function fit(){const z=Math.min(1,innerWidth/480);document.querySelectorAll('.page').forEach(p=>p.style.zoom=z)}addEventListener('DOMContentLoaded',fit);addEventListener('resize',fit)</script>
+<meta name="robots" content="noindex">
+<meta name="description" content="Where families search for IGCSE help, who's advertising to them, and what one click costs. Prepared by BCON Club.">
+<meta property="og:title" content="ZenSquare: the IGCSE tutoring market in India">
+<meta property="og:description" content="Where families search for IGCSE help, who's advertising to them, and what one click costs. Prepared by BCON Club.">
+<meta property="og:url" content="https://arc.bconclub.com/reports/zensquare">
+<meta property="og:image" content="https://arc.bconclub.com/reports/zensquare/cover.png">
+<link rel="icon" href="/bcon-icon.png">
+<style>@media screen{body{background:#2b2f36;display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px 0 90px}.page{box-shadow:0 6px 30px rgba(0,0,0,.35)}.dl{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9;background:#fff;color:#111;font:700 16px/1 system-ui,sans-serif;padding:14px 22px;border-radius:99px;text-decoration:none;box-shadow:0 4px 18px rgba(0,0,0,.35)}}@media print{.dl{display:none}}</style>
+<title>IGCSE Tutoring Market Report for ZenSquare</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+<script>
+const MAX=450;
+function cost(k,v,l,h){const L=l/MAX*100,W=(h-l)/MAX*100;document.write('<div class="cost"><div class="t"><b>'+k+'</b><em>₹'+l+' to ₹'+h+'</em></div><div class="track"><span style="left:'+L+'%;width:'+W+'%"></span></div>'+(v?'<small>'+v+' searches a month</small>':'')+'</div>')}
+function axis(){document.write('<div class="axis"><span>₹0</span><span>₹150</span><span>₹300</span><span>₹450 a click</span></div>')}
+function ab(name,n,v,dim){document.write('<div class="ab">'+name+'<div><span class="'+(dim?'n':'')+'" style="width:'+v+'%"></span>'+n+'</div></div>')}
+function season(d){const mx=Math.max(...d.map(x=>x[1]));document.write('<div class="season">'+d.map(x=>'<div><b>'+x[1]+'</b><i class="'+(x[1]>=80?'pk':'')+'" style="height:'+Math.round(x[1]/mx*240)+'px"></i></div>').join('')+'</div><div class="months">'+d.map(x=>'<span>'+x[0]+'</span>').join('')+'</div>')}
+function g(name,note,n){document.write('<div class="g"><div><b>'+name+'</b>'+(note?'<small>'+note+'</small>':'')+'</div><em>'+n+'</em></div>')}
+</script>
+</head>
+<body>
+<a class="dl" href="ZenSquare-Market-Report.pdf" download>Download PDF</a>
+
+<section class="page cover">
+  <div class="grid"></div>
+  <div class="in">
+    <div class="lg"><img src="img/logo-white.png" alt="ZenSquare Education Services" style="width:150px"><img src="img/bcon-white.png" alt="BCON Club" style="height:24px;margin-top:6px"></div>
+    <div class="big">A★</div>
+    <h1>Your market, across India's IGCSE cities</h1>
+    <p class="l">Where families search for IGCSE help, who's advertising to them, and what one click costs.</p>
+    <div class="faces"><img src="img/samprasad.png" alt=""><img src="img/praveen-f.png" alt=""><img src="img/joslin-ananth.png" alt=""><img src="img/shabi-singh.png" alt=""><img src="img/aseena-ameer.png" alt=""><img src="img/parvathi-ajithkumar.png" alt=""><img src="img/gomathi.png" alt=""></div>
+    <p class="who">Prepared for ZenSquare Education Services by BCON Club · November 2026</p>
+  </div>
+</section>
+
+<section class="page dark">
+  <img class="full" src="img/map_states.jpg" alt="Map of India showing Google search interest in IGCSE by state" style="height:540px;object-fit:cover;object-position:50% 30%">
+  <div class="pad" style="padding-top:12px">
+    <h1 style="font-size:25px">Where India searches for IGCSE</h1>
+    <p class="sub" style="font-size:14.5px;margin-top:3px">Google search interest by state over the past year. 100 is the highest.</p>
+    <div class="chips"><span>Maharashtra<b>100</b></span><span>Tamil Nadu<b>91</b></span><span>Karnataka<b>73</b></span><span>Telangana<b>70</b></span><span>Goa<b>44</b></span><span>Kerala<b>35</b></span><span>Haryana<b>30</b></span><span>Delhi<b>28</b></span><span>Rajasthan<b>28</b></span></div>
+  </div>
+  <p class="src" style="padding-top:6px">Google Trends, "igcse", India, past 12 months, read 12 Nov 2026. Interest is relative to population, not a count of searches. Map data OpenStreetMap.</p>
+</section>
+
+<section class="page dark">
+  <div class="pad">
+    <h1>When parents search</h1>
+    <p class="sub">Search interest in IGCSE across India, month by month.</p>
+    <script>season([['Dec',60],['Jan',80],['Feb',90],['Mar',63],['Apr',61],['May',57],['Jun',46],['Jul',50],['Aug',60],['Sep',66],['Oct',58],['Nov',53]]);</script>
+    <div class="note" style="margin-top:16px">Searches peak in January and February, in the run-up to the exam series, and are lowest in June.</div>
+    <div class="two" style="margin-top:10px">
+      <div class="card" style="margin-top:0"><h3>Exam series</h3><p>Cambridge sits IGCSE in India in Feb–March, May–June and Oct–Nov.</p></div>
+      <div class="card" style="margin-top:0"><h3>Rising searches</h3><p>Results dates and results pages led the rising searches this year.</p></div>
+    </div>
+  </div>
+  <p class="src">Google Trends, "igcse", India, weekly, Nov 2025 to Nov 2026, averaged by month. 100 is the busiest week, in early February.</p>
+</section>
+
+<section class="page dark">
+  <div class="pad">
+    <h1>Who's advertising on Meta in India</h1>
+    <p class="sub">Live Facebook and Instagram ads that match each search.</p>
+    <div style="margin-top:12px">
+      <script>
+      ab('"igcse"','~980',100);
+      ab('"igcse online"','~360',37);
+      ab('"cambridge igcse"','~310',32);
+      ab('"igcse tuition"','~230',23);
+      ab('"ib tuition"','~190',19,1);
+      ab('"igcse maths"','~160',16);
+      ab('"igcse tutor"','~130',13);
+      ab('"igcse chemistry"','~120',12);
+      ab('"edexcel"','~72',7);
+      </script>
+    </div>
+    <div class="note">Close to a thousand live ads mention IGCSE. They come from tutors, online platforms and IGCSE schools taking admissions.</div>
+  </div>
+  <p class="src">Meta Ad Library, India, active ads, read 12 Nov 2026. Keyword matches, so counts include some unrelated ads, and they count ads, not advertisers. Grey: not IGCSE-specific.</p>
+</section>
+
+<section class="page dark">
+  <div class="pad">
+    <h1>The names in those ads</h1>
+    <div style="margin-top:10px">
+      <div class="brand"><img src="img/sp1.jpg" alt="Sparkl ad"><div><h3>Sparkl</h3><p>IB, Cambridge IGCSE, AS and A Levels, and AP, 1-on-1. Students, parents and tutors on camera.</p></div></div>
+      <div class="brand"><div class="ini">V</div><div><h3>Vedantu</h3><p>A 1:1 program for Grades 8 to 12 across CBSE, ICSE, IB and IGCSE, with a free trial class.</p></div></div>
+      <div class="brand"><img src="img/iv3.jpg" alt="Ivies Chase You ad"><div><h3>Ivies Chase You</h3><p>Free Ivy League application workshops led by a Stanford graduate. Essays and admissions, not grades.</p></div></div>
+      <div class="brand"><div class="ini">K</div><div><h3>Kerala 1-to-1 tutors</h3><p>Lifery Skool, Angle Tuition, CLAPS Learn. Malayalam ads, every board from KG to 12, free demo on WhatsApp.</p></div></div>
+      <div class="brand"><div class="ini">S</div><div><h3>IGCSE schools</h3><p>Greenwood High, Inventure Academy and Tapas in Bengaluru, running admissions ads.</p></div></div>
+    </div>
+    <div class="note" style="font-size:15px;padding:10px 14px">Most tutoring ads here sell help across every board, with a free demo as the hook.</div>
+  </div>
+  <p class="src">Meta Ad Library, India, top results for "igcse", "igcse online" and "cambridge igcse", read by hand 12 Nov 2026.</p>
+</section>
+
+<section class="page dark">
+  <div class="pad">
+    <h1>What their ads look like</h1>
+    <p class="tag">SPARKL · VIDEO, 1-ON-1 TUTORING</p>
+    <div class="wall tall"><img src="img/sp1.jpg" alt=""><img src="img/sp2.jpg" alt=""><img src="img/sp3.jpg" alt=""><img src="img/sp4.jpg" alt=""></div>
+    <p class="tag">IVIES CHASE YOU · FREE WORKSHOPS</p>
+    <div class="wall sq"><img src="img/iv1.jpg" alt=""><img src="img/iv2.jpg" alt=""><img src="img/iv3.jpg" alt=""><img src="img/iv4.jpg" alt=""></div>
+    <div class="two" style="margin-top:10px;gap:7px">
+      <div class="card" style="margin-top:0;padding:8px 11px"><h3>Real faces</h3><p>Students, parents and tutors talking to camera.</p></div>
+      <div class="card" style="margin-top:0;padding:8px 11px"><h3>A score on screen</h3><p>"4/5 in AP Chemistry".</p></div>
+      <div class="card" style="margin-top:0;padding:8px 11px"><h3>The dream</h3><p>Stanford, Ivy League, campus photos.</p></div>
+      <div class="card" style="margin-top:0;padding:8px 11px"><h3>A free first step</h3><p>Free demo, trial class or workshop.</p></div>
+    </div>
+  </div>
+  <p class="src">Sparkl and Ivies Chase You, live on Meta, 12 Nov 2026. Shown as market examples only.</p>
+</section>
+
+<section class="page">
+  <div class="pad">
+    <h1>Who's paying on Google</h1>
+    <p class="sub">Ads on record in India for brands that show up for IGCSE tuition searches.</p>
+    <div style="margin-top:8px">
+      <script>
+      g('Vedantu','National, all subjects and boards','~4,000');
+      g('Quest for Success','IGCSE 1-on-1, AP and college admits','27');
+      g('Sparkl','1-on-1 IGCSE, IB, A Level, AP','19');
+      g('Mentor Match','IB and IGCSE maths and science','17');
+      g('Vidyalai','Online IGCSE tutoring','12');
+      g('Tutopiya','Online IGCSE tuition','3');
+      g('PDO Tuition Services','1-on-1 online IGCSE classes','2');
+      </script>
+    </div>
+    <div class="card"><h3>Paid headlines lead with numbers</h3>
+      <p>"98% Students Improved Scores" · Sparkl</p>
+      <p>"91% Got High Score in 3 Months" · Mentor Match</p>
+      <p>"100% Satisfaction Guaranteed" · Vidyalai</p>
+    </div>
+    <div class="card"><h3>Page one for "igcse online tuition"</h3><p>Ads: Quest for Success, Sparkl, Vidyalai, PDO, Mentor Match. Listings: IGCSE Tuitions, Ziyyara, Catalyze Center, The Chennai Tuition, Vedantu, Tutopiya.</p></div>
+  </div>
+  <p class="src">Google Ads Transparency Center, India, all dates, by website, and Google search from Bengaluru, read 12 Nov 2026. A sample of brands, not a full list.</p>
+</section>
+
+<section class="page">
+  <div class="pad">
+    <h1>What one click costs on Google</h1>
+    <p class="sub">The bid to appear at the top of Google across India, per click.</p>
+    <div style="margin-top:8px">
+      <script>
+      cost('igcse tuition','100 to 1K',55,146);
+      cost('igcse online tuition','100 to 1K',56,216);
+      cost('igcse tutor','100 to 1K',69,204);
+      cost('igcse tuition near me','100 to 1K',30,118);
+      cost('igcse maths tutor','10 to 100',82,192);
+      cost('igcse physics tutor','10 to 100',64,266);
+      cost('igcse english tutor','10 to 100',104,232);
+      cost('ib tutor','100 to 1K',96,421);
+      axis();
+      </script>
+    </div>
+    <div class="note" style="font-size:15.5px;padding:10px 13px;margin-top:9px">At ₹55 to ₹220 a click, ₹1,000 buys about 4 to 18 clicks.</div>
+  </div>
+  <p class="src">Google Keyword Planner, India, Nov 2025 to Oct 2026, read 12 Nov 2026. Rounded to the rupee. Google's estimates, so real costs will differ.</p>
+</section>
+
+<section class="page dark">
+  <img class="full" src="img/map_metros.jpg" alt="Map of India's metros with the cost per click for igcse online tuition" style="height:520px;object-fit:cover;object-position:50% 30%">
+  <div class="pad" style="padding-top:12px">
+    <h1 style="font-size:25px">One click, city by city</h1>
+    <p class="sub" style="font-size:14.5px;margin-top:3px">On the map: "igcse online tuition". Below: "igcse tuition".</p>
+    <div class="chips"><span>Bengaluru<b>₹49–146</b></span><span>Chennai<b>₹49–139</b></span><span>Hyderabad<b>₹78–121</b></span><span>Delhi<b>₹80–117</b></span></div>
+    <div class="card" style="padding:9px 12px;margin-top:9px"><p style="margin-top:0">Each city searches these terms 10 to 100 times a month, so ads can run city by city. Online classes reach all of them from Marthandam.</p></div>
+  </div>
+  <p class="src" style="padding-top:5px">Google Keyword Planner, by city, read 12 Nov 2026. Top of page bid, low to high. Map data OpenStreetMap.</p>
+</section>
+
+<section class="page dark">
+  <div class="pad">
+    <h1>What you can stand on</h1>
+    <div class="tutors">
+      <div><img src="img/samprasad.png" alt="">Samprasad<small>Chemistry</small></div>
+      <div><img src="img/praveen-f.png" alt="">Praveen F<small>Chemistry</small></div>
+      <div><img src="img/joslin-ananth.png" alt="">N Joslin Ananth<small>Physics</small></div>
+      <div><img src="img/shabi-singh.png" alt="">Shabi Singh<small>Mathematics</small></div>
+      <div><img src="img/aseena-ameer.png" alt="">Aseena Ameer<small>Mathematics</small></div>
+      <div><img src="img/parvathi-ajithkumar.png" alt="">Parvathi Ajithkumar<small>English</small></div>
+      <div><img src="img/gomathi.png" alt="">Gomathi<small>Science and Chemistry</small></div>
+    </div>
+    <div class="card"><h3>Built for A and B students aiming at A★</h3><p>Advanced tutoring, not catch-up, and your site says so.</p></div>
+    <div class="card"><h3>Named specialist tutors</h3><p>Seven real tutors with their subjects and boards: IGCSE, Edexcel, A Level and IB.</p></div>
+    <div class="card"><h3>"Ivy League preparation starts in Grade 9"</h3><p>Grades as the first hard numbers on a university application.</p></div>
+    <div class="card"><h3>A method parents can follow</h3><p>Consult, plan, past papers, timed mocks and a monthly parent report.</p></div>
+  </div>
+  <p class="src">From zensquare.bconclub.com and zensquarelearningcenter.com, Nov 2026. Tutor photos: ZenSquare.</p>
+</section>
+
+<section class="page">
+  <div class="pad">
+    <h1>What gets ads pulled</h1>
+    <div class="card"><h3>Meta and under-18s</h3><p>Advertisers can't target teenagers by interests, only by age and location. Ads that speak to parents avoid the problem.</p></div>
+    <div class="card"><h3>Claims about results</h3><p>India's ad code (ASCI) asks education ads to back up claims about results and toppers, and to have consent for names and photos.</p></div>
+    <div class="card"><h3>University names and crests</h3><p>They belong to the universities. Use them as goals, never in a way that suggests a tie-up.</p></div>
+    <div class="card"><h3>Guarantees</h3><p>No guaranteed grades or admissions. Your FAQ already says no one honest can.</p></div>
+    <div class="note">Many ads in this market lean on percentages and university logos. Keeping to real tutors and a clear method stays safe.</div>
+  </div>
+  <p class="src">Sources: Meta Ad Library, Google Ads Transparency Center, Google Keyword Planner, Google Trends, Google search, Meta's teen ad targeting rules, ASCI code for education advertising. A market reading, not legal advice.<br>BCON Club · brands@bconclub.com · +91 93532 53817</p>
+</section>
+
+
+</body>
+</html>

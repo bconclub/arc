@@ -8,6 +8,14 @@ const nextConfig = {
   async redirects() {
     return [{ source: "/editr", destination: "/dashboard/editr", permanent: false }];
   },
+  // arc.bconclub.com/reports/<slug> is a client market report, static files in public/reports
+  // (scripts/publish-report.mjs). Public on purpose: it is sent to the business by link.
+  async rewrites() {
+    return [
+      { source: "/reports/:slug", destination: "/reports/:slug/index.html" },
+      { source: "/reports/:slug/", destination: "/reports/:slug/index.html" },
+    ];
+  },
 };
 
 export default nextConfig;

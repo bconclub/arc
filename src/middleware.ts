@@ -40,9 +40,12 @@ async function teamMemberAccess(id: string): Promise<string[] | null> {
 // investor and api/investor are the investor portal: their own login, their own
 // cookie, checked in lib/investor/viewer.ts. The owner session still opens them
 // as a preview; nothing an investor holds passes the gate below.
+//
+// reports/<slug> is a client market report sent by link (public/reports, static
+// files only). It holds market data, never fees, offers or anything private.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|studio/|manifest\\.webmanifest|sw\\.js|offline\\.html|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|studio/|reports/|manifest\\.webmanifest|sw\\.js|offline\\.html|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
   ],
 };
 
