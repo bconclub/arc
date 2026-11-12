@@ -70,3 +70,19 @@ Format that came from this: **The AI Bill**, a dated weekly bill (Bill No. 001, 
 - Numbers: re-add from the filing's exact millions, in code. Words: transcribe the finished mix, not only the take. Picture: a frame every second across the whole film, and every 0.3 s around any fix. Sound: LUFS and peak on each export.
 - On The AI Bill this caught, in order: a worker's face with his name on his helmet, a client's site plan sliding in, and a brand logo, all inside clips that looked clean on the contact sheet. Sheets show moments; stock and news clips cut and overlay between them. Pin each clip's safe seconds in the shot list with a comment.
 - Label generic footage on screen ("illustrative footage, not the companies' sites") so a building never reads as the named company's.
+
+## Breaking-news life montage in ~2 hours (added 2026-11-12, forward slash "Jensen Huang is out")
+- Build order the founder asked for: music + theme + a base cut with labelled footage slots first ("put the base up"), then
+  drop real clips into the slots. The base shows him timing, type and the arc before any footage exists.
+- Real footage only: a sourcing agent pulls 5-25 s sections with yt-dlp (<=720p, audio kept), logs sources.csv, rates
+  clips 1-5, checks every bite's words with faster-whisper. Childhood photos rarely exist as real footage; use period
+  archive film and say so in the credit, never AI or animated explainers.
+- Engine (EDITR content/forward-slash/jensen): edit.py = shots/slams/years/caps/bites on the music grid; cut.py cuts
+  24 fps JPGs per shot; ui/montage.html seek(t) page; mix.py = one music track at fixed gain, bites normalised to
+  -14 LUFS (~8 dB over the music, no ducking), CC0 SFX on cues. `sync()` locks picture to a bite so lips match.
+- What made it a montage: a year odometer (1963 -> 2026) with one-line captions, Anton slams on every phrase hit, white
+  flash + shake on drops, a breakdown where the music falls away for the most human bite ("pain and suffering"),
+  then the impact on the news. Three hooks share one body: render the body once, render only 0-3.5 s per hook.
+- Facts: the company's own wording ("resigned") on screen; anything from press only as "reports" / "alleged".
+- Music: ElevenLabs Edit Song took a 49.5 s take with a long fade to 42 s ending on one hard hit (ask for section
+  lengths + "no fade-out, no new section").
