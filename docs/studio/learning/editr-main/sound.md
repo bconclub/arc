@@ -73,3 +73,15 @@ Founder, after the reel instagram.com/reel/DfII6u2Nl_p (ultra.skills, "Fix Claud
   (github.com/Leonxlnx/earshot, MIT) scores an edit and aims SFX, but it downloads 1.1 GB of models: get the founder's
   yes before installing. The ultra.skills guide (Earshot, RealSFX, Openverse) is gated behind a "comment SOUND" funnel.
   RealSFX could not be found publicly.
+
+## Fixing a bad camera voice (open source, 2026-11-12)
+Windchasers raw takes: the lav was recorded on the LEFT channel only (right at -71 dB), so every earlier cut played
+the voice in one ear; plus electrical hum lines and a dull top end. Measure each channel before editing
+(`numpy` RMS per channel, `showspectrumpic` for hum lines).
+1. `pan=mono|c0=c0` (the mic channel) -> 48 kHz WAV.
+2. DeepFilterNet 0.5.6 Windows build (official release exe, no Python needed; the pip package needs Rust on Python
+   3.13): `deep-filter.exe -D -a 32 -o out *.wav`. `-D` keeps sync, `-a 32` caps the reduction so it stays natural.
+   Noise floor -43 -> -73 dB, hum gone.
+3. EQ: highpass 75, -3 dB at 330 Hz, +4 dB at 3.4 kHz, high shelf +3 dB at 8.5 kHz, `deesser=i=0.35`.
+4. Cut the cleaned WAV with the same phrase times as the picture; `pan=stereo|c0=c0|c1=c0`.
+Tool lives in `C:\dev\tools\voicefix` (also a GPU PyTorch venv there for heavier models if needed).
