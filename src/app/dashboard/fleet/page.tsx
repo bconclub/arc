@@ -21,6 +21,8 @@ type Member = {
   machine: string; agent: string; kind: string | null; project: string | null; status: string | null;
   capabilities: string[]; note: string | null; last_seen: string; stale: boolean;
   current_job: string | null; job_kind: string | null; job_stage: string | null; progress: number | null;
+  /** first line of the session's latest ask, and its latest reply (sessions only) */
+  task?: string | null; task_at?: string | null; last_said?: string | null;
 };
 type Job = {
   id: string; kind: string; payload: Record<string, unknown>; status: string; claimed_by: string | null;
@@ -34,7 +36,13 @@ const MEMBER_TONE: Record<string, Tone> = {
 };
 const JOB_TONE: Record<string, Tone> = { queued: "neutral", running: "info", done: "good", failed: "bad", cancelled: "neutral" };
 const label = (s: string | null) => (s || "unknown").replace(/_/g, " ");
-const who = (agent: string) => agent.split("/").slice(1).join("/").replace(/^session:/, "") || agent;
+const who = (agent: string) => agent.split("/").slice(1).join("/").replace(/^session:/, "").replace(/#\w+$/, "") || agent;
+// Order on a machine: needs you, working, just finished, then the rest by recency.
+const RANK: Record<string, number> = { needs_input: 0, working: 1, finished: 2 };
+const HOUR = 3600_000;
+const isRecent = (m: Member) => Date.now() - Date.parse(m.last_seen) < 6 * HOUR;
+// Notes from before the reporter sent real text were hook names; never show those.
+const cleanNote = (n: string | null) => (n && !/^(UserPromptSubmit|SessionStart|Stop|SessionEnd)$/.test(n) ? n : null);
 
 const inputCls =
   "h-9 rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 text-[13px] text-text outline-none transition-colors placeholder:text-text-muted focus:border-[var(--brand-line)]";
@@ -76,6 +84,7 @@ export default function FleetPage() {
   const [brief, setBrief] = useState("");
   const [msgTo, setMsgTo] = useState<string | null>(null);
   const [msgText, setMsgText] = useState("");
+  const [showOld, setShowOld] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     try {
@@ -191,42 +200,73 @@ export default function FleetPage() {
               {members.length === 0 ? (
                 <p className="text-[12.5px] text-text-muted">Nothing has reported from this machine yet. Set up the session reporter (workers/fleet/README.md).</p>
               ) : (
-                <ul className="flex flex-col gap-1">
-                  {members.map((x) => (
-                    <li key={x.agent} className={`rounded-soft px-2.5 py-2 ${x.stale ? "opacity-55" : ""}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 truncate text-[13px] font-medium text-text">
-                          {who(x.agent)} <span className="text-[11px] font-normal text-text-muted">{x.kind}</span>
-                        </span>
-                        <StatusPill status={x.stale ? "silent" : label(x.status)} tone={x.stale ? "neutral" : MEMBER_TONE[x.status || ""]} />
-                      </div>
-                      <div className="mt-1 flex items-center justify-between gap-2 text-[11.5px] text-text-muted">
-                        <span className="min-w-0 truncate">{x.note || "-"}</span>
-                        <span className="shrink-0">{timeAgo(x.last_seen)}</span>
-                      </div>
-                      {x.current_job && x.progress != null && (
-                        <div className="mt-1.5 flex items-center gap-2 text-[11px] text-text-muted">
-                          <Progress value={x.progress} /><span className="shrink-0 tabular-nums">{x.job_stage || x.job_kind} {x.progress}%</span>
-                        </div>
+                <>
+                {(() => {
+                  // Sessions older than 3 days are not shown at all; older than 6 hours fold away.
+                  const live = members.filter((x) => Date.now() - Date.parse(x.last_seen) < 3 * 24 * HOUR)
+                    .sort((p, q) => (isRecent(q) ? 1 : 0) - (isRecent(p) ? 1 : 0)
+                      || (RANK[p.status || ""] ?? 9) - (RANK[q.status || ""] ?? 9)
+                      || q.last_seen.localeCompare(p.last_seen));
+                  const now = live.filter(isRecent), old = live.filter((x) => !isRecent(x));
+                  const shown = showOld[m.slug] ? live : now;
+                  return (
+                    <>
+                      {!now.length && <p className="text-[12.5px] text-text-muted">Nothing active in the last 6 hours.</p>}
+                      <ul className="flex flex-col gap-1.5">
+                        {shown.map((x) => {
+                          const note = cleanNote(x.note);
+                          const task = x.task || (x.kind !== "session" ? note : null);
+                          return (
+                          <li key={x.agent} className={`rounded-soft border border-[var(--border)] px-3 py-2.5 ${isRecent(x) ? "bg-[var(--bg)]" : "opacity-55"}`}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="min-w-0 truncate text-[13px] font-semibold text-text">
+                                {who(x.agent)} <span className="text-[11px] font-normal text-text-muted">{x.kind === "session" ? "" : x.kind}</span>
+                              </span>
+                              <span className="flex shrink-0 items-center gap-2">
+                                <span className="text-[11px] text-text-muted">{timeAgo(x.last_seen)}</span>
+                                <StatusPill status={x.stale && x.status === "working" ? "quiet" : label(x.status)} tone={x.stale && x.status === "working" ? "neutral" : MEMBER_TONE[x.status || ""]} />
+                              </span>
+                            </div>
+                            <p className={`mt-1 line-clamp-2 text-[12.5px] ${task ? "text-text" : "text-text-muted"}`}>
+                              {task ? <><span className="text-text-muted">On: </span>{task}</> : "No task reported yet (it shows from this session's next message)."}
+                            </p>
+                            {x.status === "needs_input" && note && <p className="mt-1 text-[12px] font-medium text-accent-red">{note}</p>}
+                            {x.last_said && x.status !== "needs_input" && (
+                              <p className="mt-1 line-clamp-2 text-[11.5px] text-text-muted"><span className="font-medium">Last said: </span>{x.last_said}</p>
+                            )}
+                            {x.current_job && x.progress != null && (
+                              <div className="mt-1.5 flex items-center gap-2 text-[11px] text-text-muted">
+                                <Progress value={x.progress} /><span className="shrink-0 tabular-nums">{x.job_stage || x.job_kind} {x.progress}%</span>
+                              </div>
+                            )}
+                            {x.kind === "session" && (
+                              msgTo === x.agent ? (
+                                <form onSubmit={(e) => { e.preventDefault(); send(x.agent); }} className="mt-2 flex gap-1.5">
+                                  <input autoFocus value={msgText} onChange={(e) => setMsgText(e.target.value)} placeholder={`Context or instructions for ${who(x.agent)}`} className={`${inputCls} min-w-0 flex-1`} />
+                                  <button type="submit" disabled={!msgText.trim() || busy === `msg:${x.agent}`} className={btnCls} aria-label="Send">
+                                    {busy === `msg:${x.agent}` ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                                  </button>
+                                  <button type="button" onClick={() => setMsgTo(null)} className={ghostCls} aria-label="Close"><X size={13} /></button>
+                                </form>
+                              ) : (
+                                <button onClick={() => { setMsgTo(x.agent); setMsgText(""); }} className={`${ghostCls} mt-1 -ml-2`}>
+                                  <MessageSquare size={12} /> Send to session
+                                </button>
+                              )
+                            )}
+                          </li>
+                          );
+                        })}
+                      </ul>
+                      {old.length > 0 && (
+                        <button onClick={() => setShowOld((o) => ({ ...o, [m.slug]: !o[m.slug] }))} className={`${ghostCls} mt-2`}>
+                          {showOld[m.slug] ? "Hide older sessions" : `Show ${old.length} older session${old.length === 1 ? "" : "s"} (6 hours to 3 days)`}
+                        </button>
                       )}
-                      {x.kind === "session" && (
-                        msgTo === x.agent ? (
-                          <form onSubmit={(e) => { e.preventDefault(); send(x.agent); }} className="mt-2 flex gap-1.5">
-                            <input autoFocus value={msgText} onChange={(e) => setMsgText(e.target.value)} placeholder={`Context or instructions for ${who(x.agent)}`} className={`${inputCls} min-w-0 flex-1`} />
-                            <button type="submit" disabled={!msgText.trim() || busy === `msg:${x.agent}`} className={btnCls} aria-label="Send">
-                              {busy === `msg:${x.agent}` ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-                            </button>
-                            <button type="button" onClick={() => setMsgTo(null)} className={ghostCls} aria-label="Close"><X size={13} /></button>
-                          </form>
-                        ) : (
-                          <button onClick={() => { setMsgTo(x.agent); setMsgText(""); }} className={`${ghostCls} mt-1 -ml-2`}>
-                            <MessageSquare size={12} /> Send to session
-                          </button>
-                        )
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                    </>
+                  );
+                })()}
+                </>
               )}
             </Panel>
           );

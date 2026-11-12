@@ -35,6 +35,9 @@ export async function POST(req: Request) {
   // Only fields the caller sent — a plain {note} beat must not wipe a worker's capabilities.
   for (const f of FLEET_FIELDS) if (body[f] !== undefined) row[f] = body[f]
   if (body.job_id !== undefined) row.current_job = body.job_id || null
+  // A session's task (first line of the latest ask) and its latest reply, for the Fleet view.
+  if (typeof body.task === "string" && body.task.trim()) { row.task = body.task.slice(0, 200); row.task_at = row.last_seen }
+  if (typeof body.last_said === "string" && body.last_said.trim()) row.last_said = body.last_said.slice(0, 240)
 
   const { error } = await sb.from("agent_heartbeats").upsert(row, { onConflict: "agent" })
   if (error) return Response.json({ error: error.message }, { status: 500 })
