@@ -19,10 +19,13 @@ export const maxDuration = 300;
  * amount written silently is worse than a blank one, which is the same rule the
  * manual upload flow already follows.
  *
- * Attachments already seen are skipped on their Gmail ids, so re-running is
- * cheap. Without that guard a nightly cron would pay to re-read every invoice
- * it has ever seen, every night.
+ * Attachments already seen are skipped, so re-running is cheap. They are matched
+ * on message id + file name, NOT Gmail's attachment id: that id is a fresh token
+ * on every fetch, so matching on it made every run re-read (and pay for) the same
+ * invoices. From 4 to 12 Nov 2026 that queued about 74,000 copies of 41 files.
+ * Pasted inline images (image.png, image002.jpg...) are never invoices: skipped.
  */
+const INLINE_IMAGE = /^image\d*\.(png|jpe?g|gif)$/i;
 
 /** Bounded per run so one invocation cannot spend an unbounded amount. */
 const MAX_PER_RUN = 10;
@@ -74,14 +77,16 @@ async function runScan(query: string | undefined, limit: number) {
     );
   }
 
-  // Everything already recorded, whatever its outcome. A rejected proposal must
-  // not come back on the next run.
-  const { data: seenRows } = await supabaseAdmin
-    .from("email_ingest")
-    .select("message_id,attachment_id");
-  const seen = new Set((seenRows ?? []).map((r) => `${r.message_id}:${r.attachment_id}`));
+  // Everything already recorded for these messages, whatever its outcome. A rejected
+  // proposal must not come back on the next run. Only the candidates' messages are
+  // read, so the check never hits the 1,000-row page limit.
+  const messageIds = Array.from(new Set(candidates.map((c) => c.messageId)));
+  const { data: seenRows } = messageIds.length
+    ? await supabaseAdmin.from("email_ingest").select("message_id,filename").in("message_id", messageIds)
+    : { data: [] as { message_id: string; filename: string | null }[] };
+  const seen = new Set((seenRows ?? []).map((r) => `${r.message_id}:${r.filename}`));
 
-  const fresh = candidates.filter((c) => !seen.has(`${c.messageId}:${c.attachmentId}`));
+  const fresh = candidates.filter((c) => !INLINE_IMAGE.test(c.filename) && !seen.has(`${c.messageId}:${c.filename}`));
   const batch = fresh.slice(0, limit);
 
   // Loaded once per run so each attachment can be stamped with the brand it
@@ -126,12 +131,12 @@ async function runScan(query: string | undefined, limit: number) {
     }
 
     const { error: upsertErr } = await supabaseAdmin
-      .from("email_ingest").upsert(row, { onConflict: "message_id,attachment_id" });
+      .from("email_ingest").upsert(row, { onConflict: "message_id,filename" });
     // Until 20260816000000 runs, email_ingest has no brand_id — losing the
     // whole reading over the stamp would be backwards, so retry without it.
     if (upsertErr && /brand_id/.test(upsertErr.message) && "brand_id" in row) {
       delete row.brand_id;
-      await supabaseAdmin.from("email_ingest").upsert(row, { onConflict: "message_id,attachment_id" });
+      await supabaseAdmin.from("email_ingest").upsert(row, { onConflict: "message_id,filename" });
     }
   }
 
