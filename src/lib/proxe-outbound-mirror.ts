@@ -166,7 +166,11 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     if (slot && Date.parse(slot.at) > Date.now()) {
       booking = await bookInProxe(target, prospect.id, input, slot)
       if (!("error" in booking)) { leadId = booking.lead_id; promoted = !booking.duplicate }
-    } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at && !frontDesk) {
+    // A front desk that says "interested" (an explicit ask: "ask your founder to
+    // call me") is a lead too (Z, 12 Nov 2026: Autopad Car Detailing's rep asked
+    // for the founder's call and never reached PROXe). A plain front-desk
+    // "call later" still stays a prospect.
+    } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at && (!frontDesk || input.disposition === "interested")) {
       // Interested, or asked for a call back without a clock time: still a
       // PROXe lead, with a follow-up on the day they named (11 am IST, to be
       // confirmed) so it sits on the calendar (Z, 27 Oct 2026: "once the
