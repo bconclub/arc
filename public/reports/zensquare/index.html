@@ -22,6 +22,7 @@ function cost(k,v,l,h){const L=l/MAX*100,W=(h-l)/MAX*100;document.write('<div cl
 function axis(){document.write('<div class="axis"><span>₹0</span><span>₹150</span><span>₹300</span><span>₹450 a click</span></div>')}
 function ab(name,n,v,dim){document.write('<div class="ab">'+name+'<div><span class="'+(dim?'n':'')+'" style="width:'+v+'%"></span>'+n+'</div></div>')}
 function season(d){const mx=Math.max(...d.map(x=>x[1]));document.write('<div class="season">'+d.map(x=>'<div><b>'+x[1]+'</b><i class="'+(x[1]>=80?'pk':'')+'" style="height:'+Math.round(x[1]/mx*240)+'px"></i></div>').join('')+'</div><div class="months">'+d.map(x=>'<span>'+x[0]+'</span>').join('')+'</div>')}
+function gb(name,note,n,w){document.write('<div class="gbr"><div class="t"><b>'+name+'</b><em>'+n+' ads</em></div><small>'+note+'</small><div class="track"><span style="left:0;width:'+w+'%"></span></div></div>')}
 function g(name,note,n){document.write('<div class="g"><div><b>'+name+'</b>'+(note?'<small>'+note+'</small>':'')+'</div><em>'+n+'</em></div>')}
 </script>
 </head>
@@ -38,6 +39,20 @@ function g(name,note,n){document.write('<div class="g"><div><b>'+name+'</b>'+(no
     <div class="faces"><img src="img/samprasad.png" alt=""><img src="img/praveen-f.png" alt=""><img src="img/joslin-ananth.png" alt=""><img src="img/shabi-singh.png" alt=""><img src="img/aseena-ameer.png" alt=""><img src="img/parvathi-ajithkumar.png" alt=""><img src="img/gomathi.png" alt=""></div>
     <p class="who">Prepared for ZenSquare Education Services by BCON Club · November 2026</p>
   </div>
+</section>
+
+<section class="page">
+  <div class="pad">
+    <p class="ey">BCON × ZENSQUARE · WHAT THIS SHOWS</p>
+    <h1>The IGCSE market, in five lines</h1>
+    <div class="goal">Reach parents of strong IGCSE students in the cities that search most, before the January peak.</div>
+    <div class="find"><i>1</i><div><h3>Demand is south and west</h3><p>Maharashtra, Tamil Nadu, Karnataka and Telangana search for IGCSE the most.</p></div></div>
+    <div class="find"><i>2</i><div><h3>January and February are the peak</h3><p>Searches climb before the exam series and are lowest in June.</p></div></div>
+    <div class="find"><i>3</i><div><h3>Meta is busy</h3><p>About 980 live ads mention IGCSE, mostly tutoring for every board with a free demo.</p></div></div>
+    <div class="find"><i>4</i><div><h3>Google clicks cost ₹55 to ₹220</h3><p>The paid spots lead with percentages and ratings.</p></div></div>
+    <div class="find"><i>5</i><div><h3>Your edge is A★</h3><p>Advanced tutoring for A and B students, named specialist tutors, and the Grade 9 university angle.</p></div></div>
+  </div>
+  <p class="src">Read 12 Nov 2026 from Google Trends, Meta Ad Library, Google Ads Transparency Center, Google Keyword Planner and Google search. Details on the pages that follow.</p>
 </section>
 
 <section class="page dark">
@@ -89,14 +104,14 @@ function g(name,note,n){document.write('<div class="g"><div><b>'+name+'</b>'+(no
 <section class="page dark">
   <div class="pad">
     <h1>The names in those ads</h1>
-    <div style="margin-top:10px">
-      <div class="brand"><img src="img/sp1.jpg" alt="Sparkl ad"><div><h3>Sparkl</h3><p>IB, Cambridge IGCSE, AS and A Levels, and AP, 1-on-1. Students, parents and tutors on camera.</p></div></div>
-      <div class="brand"><div class="ini">V</div><div><h3>Vedantu</h3><p>A 1:1 program for Grades 8 to 12 across CBSE, ICSE, IB and IGCSE, with a free trial class.</p></div></div>
-      <div class="brand"><img src="img/iv3.jpg" alt="Ivies Chase You ad"><div><h3>Ivies Chase You</h3><p>Free Ivy League application workshops led by a Stanford graduate. Essays and admissions, not grades.</p></div></div>
-      <div class="brand"><div class="ini">K</div><div><h3>Kerala 1-to-1 tutors</h3><p>Lifery Skool, Angle Tuition, CLAPS Learn. Malayalam ads, every board from KG to 12, free demo on WhatsApp.</p></div></div>
-      <div class="brand"><div class="ini">S</div><div><h3>IGCSE schools</h3><p>Greenwood High, Inventure Academy and Tapas in Bengaluru, running admissions ads.</p></div></div>
+    <div class="gc">
+      <div><img src="img/sp1.jpg" alt="Sparkl ad"><h3>Sparkl</h3><p>IGCSE, IB, A Level, AP. 1-on-1, real students on camera.</p></div>
+      <div><img src="img/ved.jpg" alt="Vedantu ad" style="object-position:50% 62%"><h3>Vedantu</h3><p>1:1 "OTO" for Grades 8 to 12, every board. Free trial.</p></div>
+      <div><img src="img/iv3.jpg" alt="Ivies Chase You ad"><h3>Ivies Chase You</h3><p>Free Ivy League essay workshops by a Stanford grad.</p></div>
+      <div><img src="img/lif.jpg" alt="Lifery Skool ad" style="object-position:50% 88%"><h3>Lifery Skool</h3><p>Kerala 1-to-1 tuition in Malayalam, KG to 12. Free demo.</p></div>
+      <div><img src="img/gw.jpg" alt="Greenwood High ad"><h3>Greenwood High</h3><p>IGCSE school in Bengaluru, running admissions ads.</p></div>
+      <div class="also"><h3>Also running</h3><p>Angle Tuition, CLAPS Learn, Viskool, Tutorix, Edudrona, Tutoroot, Inventure Academy, Tapas, Save My Exams.</p></div>
     </div>
-    <div class="note" style="font-size:15px;padding:10px 14px">Most tutoring ads here sell help across every board, with a free demo as the hook.</div>
   </div>
   <p class="src">Meta Ad Library, India, top results for "igcse", "igcse online" and "cambridge igcse", read by hand 12 Nov 2026.</p>
 </section>
@@ -118,29 +133,37 @@ function g(name,note,n){document.write('<div class="g"><div><b>'+name+'</b>'+(no
   <p class="src">Sparkl and Ivies Chase You, live on Meta, 12 Nov 2026. Shown as market examples only.</p>
 </section>
 
+<section class="page dark">
+  <div class="pad">
+    <h1>What parents see on Google</h1>
+    <p class="sub">The paid results for "igcse online tuition", searched from Bengaluru.</p>
+    <img class="serp" src="img/serp.jpg" alt="Google's sponsored results for igcse online tuition">
+    <div class="card" style="padding:10px 13px"><h3>Headlines lead with numbers</h3>
+      <p>"A* scores" · Quest for Success &nbsp;·&nbsp; "Rated 4.9+" · Mentor Match<br>"98% Students Improved Scores" · Sparkl<br>"100% Satisfaction Guaranteed" · Vidyalai</p>
+    </div>
+  </div>
+  <p class="src">Google search from Bengaluru, 12 Nov 2026, two reads. Paid results change by the hour and by place.</p>
+</section>
+
 <section class="page">
   <div class="pad">
     <h1>Who's paying on Google</h1>
-    <p class="sub">Ads on record in India for brands that show up for IGCSE tuition searches.</p>
-    <div style="margin-top:8px">
+    <p class="sub">Google ads on record in India, by brand.</p>
+    <div class="gb" style="margin-top:10px">
       <script>
-      g('Vedantu','National, all subjects and boards','~4,000');
-      g('Quest for Success','IGCSE 1-on-1, AP and college admits','27');
-      g('Sparkl','1-on-1 IGCSE, IB, A Level, AP','19');
-      g('Mentor Match','IB and IGCSE maths and science','17');
-      g('Vidyalai','Online IGCSE tutoring','12');
-      g('Tutopiya','Online IGCSE tuition','3');
-      g('PDO Tuition Services','1-on-1 online IGCSE classes','2');
+      gb('Quest for Success','IGCSE 1-on-1, AP, college admits',27,100);
+      gb('Sparkl','IGCSE, IB, A Level, AP',19,70);
+      gb('Mentor Match','IB and IGCSE maths, science',17,63);
+      gb('Vidyalai','Online IGCSE tutoring',12,44);
+      gb('Tutopiya','Online IGCSE tuition',3,11);
+      gb('PDO Tuition Services','Online IGCSE classes',2,7);
       </script>
     </div>
-    <div class="card"><h3>Paid headlines lead with numbers</h3>
-      <p>"98% Students Improved Scores" · Sparkl</p>
-      <p>"91% Got High Score in 3 Months" · Mentor Match</p>
-      <p>"100% Satisfaction Guaranteed" · Vidyalai</p>
-    </div>
-    <div class="card"><h3>Page one for "igcse online tuition"</h3><p>Ads: Quest for Success, Sparkl, Vidyalai, PDO, Mentor Match. Listings: IGCSE Tuitions, Ziyyara, Catalyze Center, The Chennai Tuition, Vedantu, Tutopiya.</p></div>
+    <div class="card" style="margin-top:12px"><h3>Vedantu: about 4,000 ads</h3><p>A national brand across every subject and board, so most of its ads aren't for IGCSE.</p></div>
+    <div class="note">Quest for Success, Mentor Match and Sparkl hold the top paid spots for "igcse online tuition".</div>
+    <div class="card"><h3>Top free listings</h3><p>IGCSE Tuitions, Ziyyara, Catalyze Center, The Chennai Tuition, Vedantu, Tutopiya.</p></div>
   </div>
-  <p class="src">Google Ads Transparency Center, India, all dates, by website, and Google search from Bengaluru, read 12 Nov 2026. A sample of brands, not a full list.</p>
+  <p class="src">Google Ads Transparency Center, India, all dates, by website, read 12 Nov 2026. Counts ads, not spend. A sample of brands, not a full list.</p>
 </section>
 
 <section class="page">
@@ -205,7 +228,25 @@ function g(name,note,n){document.write('<div class="g"><div><b>'+name+'</b>'+(no
     <div class="card"><h3>Guarantees</h3><p>No guaranteed grades or admissions. Your FAQ already says no one honest can.</p></div>
     <div class="note">Many ads in this market lean on percentages and university logos. Keeping to real tutors and a clear method stays safe.</div>
   </div>
-  <p class="src">Sources: Meta Ad Library, Google Ads Transparency Center, Google Keyword Planner, Google Trends, Google search, Meta's teen ad targeting rules, ASCI code for education advertising. A market reading, not legal advice.<br>BCON Club · brands@bconclub.com · +91 93532 53817</p>
+  <p class="src">Sources: Meta Ad Library, Google Ads Transparency Center, Google Keyword Planner, Google Trends, Google search, Meta's teen ad targeting rules, ASCI code for education advertising. A market reading, not legal advice.</p>
+</section>
+
+<section class="page dark">
+  <div class="pad">
+    <p class="ey">BCON × ZENSQUARE · NEXT STEPS</p>
+    <h1>From this report to the January peak</h1>
+    <div class="steps">
+      <div><b>This month</b><h3>Set up</h3><p>Consult page ready, every enquiry answered by PROXe, Meta and Google set up, short tutor videos.</p></div>
+      <div><b>December</b><h3>Go live</h3><p>Meta to parents in Bengaluru, Chennai, Hyderabad and Mumbai. Google on IGCSE tutoring searches.</p></div>
+      <div><b>Jan to Feb</b><h3>The peak</h3><p>The most weight in the busiest weeks before the exam series.</p></div>
+      <div><b>Month 3</b><h3>Review</h3><p>Consults booked, enrolments and cost per enrolment. Keep, change or stop.</p></div>
+    </div>
+    <p class="tag" style="margin-top:14px">WHAT WE NEED FROM YOU</p>
+    <div class="chips"><span>Real results, with parents' consent</span><span>Short tutor videos</span><span>Subjects and grades to lead with</span><span>Cities that matter most</span><span>What the consult includes</span><span>Meta Business access</span><span>Google Ads access</span><span>WhatsApp number for enquiries</span></div>
+    <div class="go"><small>LET'S BEGIN</small>Say yes this week, and ads are live before the January peak.</div>
+    <div class="card" style="padding:11px 14px"><h3>Talk to us</h3><p>Thanzeel Ashruf, BCON Club<br>brands@bconclub.com · +91 93532 53817 · bconclub.com</p></div>
+  </div>
+  <p class="src" style="padding-top:6px">Prepared for ZenSquare Education Services by BCON Club, November 2026.</p>
 </section>
 
 
