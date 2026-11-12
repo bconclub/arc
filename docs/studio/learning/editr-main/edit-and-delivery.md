@@ -43,3 +43,18 @@ glyphs render, end card clean. Confirm duration (30.00s) and 1080x1920.
 - ARC Studio: brand page with brief, palette, logo, notes (plan, prompts, script/music/cut, motion + spend, rules),
   stills with their exact prompts, and the film as a `video` item. Update it when a new version lands.
 - Log spend and files in the spec; keep the founder's open questions at the top.
+
+## Talking-head reel cut (real footage), read from two client references (2026-11-12)
+Two finished flying-school reels (26 s and 69 s), measured from frames, cut detection and a faster-whisper transcript.
+- **Tight voice track is the edit.** 180 to 190 words a minute, no gap between words over 0.42 s, speech starts at
+  0.0 s. Pauses, breaths and retakes are cut out first; everything else hangs on that track.
+- **Cut every 2 to 3 s**, faster in the first 12 s. Face shots run 2 to 5 s; cutaways 1 to 3 s.
+- **Cutaway on the spoken noun:** the picture shows the thing as the word is said (a list of four items = four quick
+  shots), then back to the face. B-roll is the client's own rooms and people; stock only for planes and airlines.
+- **Captions:** style 1 = 1 to 2 bold words at a time, fixed low-centre, key word yellow. Style 2 = small white sans
+  plus the key word in a gold italic serif, position moves with the shot.
+- **Open:** title card on frame 0 (speaker cut out over topic images + the title) beats opening on a plain face.
+- **Close:** spoken keyword CTA, then a 3 to 4 s brand end card with a button.
+- **Our method:** faster-whisper word timings -> cut list (drop gaps over ~0.3 s and retakes) -> ffmpeg concat ->
+  B-roll laid over by word time -> captions from the same word timings -> title + end card -> music + SFX.
+  Same "edit is a script" shape as above; `shortform-video-editor` skill covers the silence cut and captions.
