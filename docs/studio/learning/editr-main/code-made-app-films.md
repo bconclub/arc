@@ -153,3 +153,16 @@ has figured it out, we need to do this for the GTM content."
 - Particles in a seek(t) film: no simulation. Give each dot a spawn time and a closed-form path, and decide its fate (leaks or settles in slot n) once at load.
 - ffmpeg `alimiter` raises the output back to 0 dBFS unless `level=disabled` is set. Without it the mix measured a 0.0 dB peak; with it -2.3 dB.
 - Type a brand name the way it should be said in the TTS box (the spelling on screen stays as the brand writes it).
+
+## Real footage inside a code film (2026-11-12, FishPoint montage)
+
+- **Brand montage from a client's own Instagram:** `yt-dlp` can't list a profile while signed out. Read the reel links from the profile
+  page DOM in the browser (`a[href*="/reel/"]`), then fetch each reel URL with `yt-dlp`. Photo posts have no video.
+- **Footage inside HTML scenes:** pre-cut every shot as an all-intra 1080x1920 clip (`-g 1`), put `<video>` elements in the page,
+  and make `__seek(t)` async: set `currentTime`, await `seeked`, then wait two `requestAnimationFrame`s before the screenshot.
+  This lets collage frames, flash cards and beat cuts all be driven by one timeline. Shared engine: EDITR
+  `content/clients/fishpoint/montage/engine.js` + `render_seq.mjs`.
+- **Overlay-only graphics on a plain ffmpeg cut:** render the page with `omitBackground` PNGs into `qtrle` `argb` .mov, then `overlay`.
+- **Heredoc + ffmpeg in a `while read` loop:** ffmpeg reads stdin and eats characters from the next line. Add `-nostdin`.
+- **Malayalam VO:** Multilingual v2 has no Malayalam; Eleven v3 does. A loose Malayalam-English mix reads naturally for Kerala audiences.
+- **Beat grid without librosa:** an onset-flux tempo search in numpy found the 108 BPM we prompted, and gave the phase.
