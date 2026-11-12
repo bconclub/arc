@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-12** "Try to get their name, but don't call them by name; Indian names will break. Just ask who can I ask for. Don't repeat their name." -> ask for the name (or whom to ask for), record it (`contact_name`), never say it back.
+
 - **2026-11-12** (test call) "My name is wrong, it's Tanzeel not Tanzeem. Don't say the full name, just say 'our founder'; only if they ask, 'our founder Thanzeel would like to call you', stress on the zeel part." -> 'our founder' everywhere; first name only if asked, Tan-ZEEL; no surname.
 
 - **2026-11-12** "Proxy starts the call too fast. The call should be based on the new GTM learnings in ARC (Axlrate)." -> voice speed 0.9, pause after the first line; one loss question (session 09: loss as per TEMQ) before asking for a call with Thanzeel; no demo push before their loss.
