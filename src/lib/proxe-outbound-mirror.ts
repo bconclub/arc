@@ -170,7 +170,7 @@ export async function mirrorCallToProxe(input: MirrorInput): Promise<MirrorResul
     // call me") is a lead too (Z, 12 Nov 2026: Autopad Car Detailing's rep asked
     // for the founder's call and never reached PROXe). A plain front-desk
     // "call later" still stays a prospect.
-    } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at && (!frontDesk || input.disposition === "interested")) {
+    } else if (["interested", "callback"].includes(input.disposition) && !test && !prospect.promoted_at ) {  // Z, 13 Nov 2026: push every call-back and interested call to PROXe, front desk too
       // Interested, or asked for a call back without a clock time: still a
       // PROXe lead, with a follow-up on the day they named (11 am IST, to be
       // confirmed) so it sits on the calendar (Z, 27 Oct 2026: "once the
