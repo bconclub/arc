@@ -100,3 +100,8 @@ Founder: v01 was "too bad", cut on instinct. Match their reels first, improve af
 - **No-VO mix:** music measured once to -20 LUFS with one fixed gain, effects set by peak, summed, one fixed gain to
   about -14 LUFS, limiter at 0.56 (AAC added ~3 dB of true peak at 0.70). Result -14.7 LUFS, true peak -2.2.
 - **ffmpeg in a background shell hangs** waiting on stdin: always pass `-nostdin` in build scripts.
+- **amix + apad can hang ffmpeg near the end of the mix** (seen twice on 2026-11-13, file stops growing a few hundred ms
+  short). Don't use `apad,atrim` after `amix`; use `amix=duration=longest` and cap the length with `-t TOTAL` as an output
+  option.
+- **Announcement VO cut** (Basair v04): ElevenLabs Multilingual v2, two voices for the founder to pick by ear; faster-whisper
+  word timings -> every scene starts 0.1 s before its line; a short line gets a minimum hold (1.3 s) so its title can land.
