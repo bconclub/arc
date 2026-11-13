@@ -88,3 +88,15 @@ Founder: v01 was "too bad", cut on instinct. Match their reels first, improve af
 - Fonts that match: Montserrat + Playfair Display Italic (Google Fonts, OFL), variable axes via PIL `set_variation_by_name`.
 - AAC adds ~3 dB of true peak over the WAV: limit the final mix to ~0.70 before encoding.
 - ffmpeg with 12+ inputs crashed silently here: lay the cutaways in one pass, the caption PNG sequence in a second.
+
+### Text-led event ad with no speaker footage (Windchasers x Basair seminar, 2026-11-13)
+- `EDITR/content/windchasers/basair-seminar/build.py`: one script renders the 9:16 reel, the 4:5 reel (same scenes,
+  layout from H/W) and the statics (the reel's final frames at 1080 wide), so all pieces match.
+- **One grade for mixed footage** (bright cockpit + dark classroom): per clip, measure the mean RGB at 5 fps, pull the
+  white balance most of the way to neutral, set exposure with a gamma so the mean luma lands on 0.38, then one shared
+  look (soft S-curve, saturation 0.92, slightly cool shadows). Founder asked for "all footage to one look".
+- **Placeholders** for anything the client still owes (speaker photo, partner logo, venue): pink dashed box + a
+  PLACEHOLDER chip, swapped by one variable each at the top of the script.
+- **No-VO mix:** music measured once to -20 LUFS with one fixed gain, effects set by peak, summed, one fixed gain to
+  about -14 LUFS, limiter at 0.56 (AAC added ~3 dB of true peak at 0.70). Result -14.7 LUFS, true peak -2.2.
+- **ffmpeg in a background shell hangs** waiting on stdin: always pass `-nostdin` in build scripts.
