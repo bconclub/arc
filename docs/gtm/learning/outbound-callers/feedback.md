@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-13** "Calls Proxy books, like Pai Mobiles 2:33, I'll not be calling: Proxy has to call them back. Follow up every call-back until we get the information from them or a no. Only those two outcomes, until then we keep going." -> auto call-back dialler + calling-back prompt block.
+
 - **2026-11-12** (Optum Car Care call) "I am not interested, and it just kept us [going]" -> the line dropped "not" (transcript: "I'm, uh, interested. Thank you."), the caller said "great to hear" and pushed a founder call. Rule: a bare "interested, thank you" after a brush-off is a no; close.
 
 - **2026-11-12** (Brik Oven call) "The person said call the manager back after 30 minutes, and it kept probing, asking something. Not correct. After half an hour we should call. Stop it." -> top rule: call-later beats everything; say the time once and end, no more questions.

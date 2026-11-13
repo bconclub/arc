@@ -2,6 +2,7 @@
 
 | Date | Agent | Change | Why | By |
 |---|---|---|---|---|
+| 2026-11-13 | Intro Cold + GOD | Auto call-back: GOD `callback-dial.py` (every 2 min, Mon-Sat 10:00-19:45) rings every call-back at the promised time with `last_summary` = earlier call; no answer = retry +20 min (3x), then next working day 11:00; stops on interested (info + founder time) or a no. Prompt block "Calling back as promised" (keyed on last_summary). | Z, 13 Nov ("Proxy has to call them back, only two outcomes") | GOD |
 | 2026-11-12 | Post-call (ARC mirror) | Front desk that says "interested" (explicit ask, e.g. "ask your founder to call me") now becomes a PROXe lead; plain front-desk "call later" stays a prospect. Backfilled Autopad Car Detailing. Commit 1d0dc3a6. | Z, 12 Nov (Autopad not in PROXe) | GOD |
 | 2026-11-12 | Intro Cold | Prompt (top): "'Interested, thank you' is usually a no" (STT drops "not"; after a brush-off/silence treat as no and close; ask once if unsure). `call_outcome` description updated the same way. Optum Car Care rescored not_interested in GOD stats. | Z feedback 12 Nov (Optum Car Care) | GOD |
 | 2026-11-12 | Intro Cold | Prompt (top, overrides all): "Call later wins over everything": manager not there / call after 30 min / busy = say the time once, end_call callback_requested; no "who am I speaking with" or other probing. Backup agent-backup-20261112-*.json. | Z feedback 12 Nov (Brik Oven call, kept probing after "call in 30 minutes") | GOD |
