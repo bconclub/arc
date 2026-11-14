@@ -1,5 +1,7 @@
 # Z's feedback on the AI callers (newest first)
 
+- **2026-11-14** (Pratham Motors) "She was giving the number, we didn't take the entire number, and it said thank you Sangeeta. We should understand the number and check the number; it didn't do that." -> number capture rule (10 digits, read back, confirm) + `referral_number`.
+
 - **2026-11-13** "Calls Proxy books, like Pai Mobiles 2:33, I'll not be calling: Proxy has to call them back. Follow up every call-back until we get the information from them or a no. Only those two outcomes, until then we keep going." -> auto call-back dialler + calling-back prompt block.
 
 - **2026-11-12** (Optum Car Care call) "I am not interested, and it just kept us [going]" -> the line dropped "not" (transcript: "I'm, uh, interested. Thank you."), the caller said "great to hear" and pushed a founder call. Rule: a bare "interested, thank you" after a brush-off is a no; close.
