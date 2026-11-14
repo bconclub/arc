@@ -108,3 +108,14 @@ Founder: v01 was "too bad", cut on instinct. Match their reels first, improve af
 
 ## Type: no cursive, no text shadows (founder, 14 Nov 2026)
 - All on-screen type in Montserrat; accent line Montserrat ExtraBold gold. No Playfair/italic serif, no drop shadows or glows on text. A soft dark scrim behind the text area is fine.
+
+## Ad batches for a reach campaign: one body, many hooks (PROXe, 2026-11-14)
+- When Meta reach is expensive (PROXe Business Owner: Rs 2,700 per 1,000 views), the relaunch tests hooks, not bodies. Keep
+  the approved body and swap only the first ~3 s: a hook card (kicker "BUSINESS OWNER?" + a two-line headline, accent on
+  line 2) over its own visual, holding through the opening VO line; captions are off under the hook card. Every hook's
+  frame 0 already shows the headline and its proof (unanswered chat, ad-spend card, live reply, the final counter number,
+  never a counter still at 0).
+- Zero credits: re-cut the live ad's own VO for a 10-12 s views cut (hook -> pain -> brand -> one proof -> end card).
+- Statics come from the same demo-mode recording frames and the same layout rules: whole phone, text over empty screen
+  space or above it; in 4:5 move the phone down/smaller so the app header never sits under the headline.
+- Code: proxe-clips edit src/uk/BizV3.tsx (hook prop), BizShort.tsx, BizStatic.tsx; EDITR meta_hooks/mix_batch.py.
