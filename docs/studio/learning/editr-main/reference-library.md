@@ -52,3 +52,14 @@ EDITR and PUT each to the signed upload link that the same route returns on POST
 ## First use
 casso v02 (code film, no generation) was rebuilt from four kept references: K0109 (black void, light slides in),
 L0008 (looks wiped across one held frame), K0017 (frozen moment, full orbit), H0123 (exploded view with callouts).
+
+## B-roll index of a client's footage library (Windchasers, 14 Nov 2026)
+- Index first, cut second. Windchasers' Playbook had 4,068 assets (1,665 videos) across 35 boards; the ads were being cut
+  from ~25 clips because nobody had looked. Result: `EDITR/content/windchasers/BROLL-INDEX.md` + `PLAYBOOK-INDEX.md`.
+- How (no downloads of the videos): in the logged-in Playbook tab, call the page's own GraphQL `CollectionAssetsQuery`
+  (persisted query, replayed with the page's headers, `includeSubboards: true`, `first: 100`, cursor paging) for every board;
+  save the list; fetch each video's signed thumbnail at the width Playbook signed (w:250; changing the width breaks the
+  signature, 403); build numbered contact sheets (V0001...) per board; rate each 1-5 on sight.
+- Rating scale: 5 hero / frame-0, 4 strong cutaway, 3 filler, 2 weak, 1 never (e.g. a guest shown as staff). Flag (A) for
+  aircraft in shot, "sideways" for camera files stored rotated.
+- Then pick by use (trainers, simulator, parents, cadets, setup, cabin crew) and download only the picks.
