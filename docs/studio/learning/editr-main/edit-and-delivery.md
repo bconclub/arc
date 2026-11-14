@@ -105,3 +105,6 @@ Founder: v01 was "too bad", cut on instinct. Match their reels first, improve af
   option.
 - **Announcement VO cut** (Basair v04): ElevenLabs Multilingual v2, two voices for the founder to pick by ear; faster-whisper
   word timings -> every scene starts 0.1 s before its line; a short line gets a minimum hold (1.3 s) so its title can land.
+
+## Type: no cursive, no text shadows (founder, 14 Nov 2026)
+- All on-screen type in Montserrat; accent line Montserrat ExtraBold gold. No Playfair/italic serif, no drop shadows or glows on text. A soft dark scrim behind the text area is fine.
