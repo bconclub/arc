@@ -119,3 +119,14 @@ Founder: v01 was "too bad", cut on instinct. Match their reels first, improve af
 - Statics come from the same demo-mode recording frames and the same layout rules: whole phone, text over empty screen
   space or above it; in 4:5 move the phone down/smaller so the app header never sits under the headline.
 - Code: proxe-clips edit src/uk/BizV3.tsx (hook prop), BizShort.tsx, BizStatic.tsx; EDITR meta_hooks/mix_batch.py.
+
+## Show the problem before the product (PROXe, 2026-11-14)
+- Z on a polished hook batch: "looks good but doesn't show what the problem is". The film has to SHOW the pain on the
+  same surfaces the owner lives in: leads arriving from every channel (generic WhatsApp-style list, DM inbox, form mail,
+  missed calls, lead-form/SMS notifications, one per spoken channel), then those same screens going stale (unread
+  climbing, "Seen · no reply", a clock running overnight, the customer saying they booked elsewhere), then the loss in
+  rupees, and only then the product. Mockups are generic look-alikes with demo names, no third-party logos.
+- When a needed line isn't in the existing VO, build the beat silent with on-screen text + SFX, and flag the line and
+  its credit cost instead of spending. Two story angles were rendered side by side (hstack 540 px each) so the founder
+  picks by watching.
+- Code: proxe-clips edit src/uk/BizStory.tsx (mockup surfaces), EDITR meta_hooks/make_story_vo.py, mix_story.py.
