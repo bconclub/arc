@@ -103,7 +103,7 @@ Founder: v01 was "too bad", cut on instinct. Match their reels first, improve af
 - **amix + apad can hang ffmpeg near the end of the mix** (seen twice on 2026-11-13, file stops growing a few hundred ms
   short). Don't use `apad,atrim` after `amix`; use `amix=duration=longest` and cap the length with `-t TOTAL` as an output
   option.
-- **Announcement VO cut** (Basair v04): ElevenLabs Multilingual v2, two voices for the founder to pick by ear; faster-whisper
+- **Announcement VO cut** (Basair v04): ElevenLabs (newest model, v4, not v2: see sound.md), two voices for the founder to pick by ear; faster-whisper
   word timings -> every scene starts 0.1 s before its line; a short line gets a minimum hold (1.3 s) so its title can land.
 
 ## Type: no cursive, no text shadows (founder, 14 Nov 2026)

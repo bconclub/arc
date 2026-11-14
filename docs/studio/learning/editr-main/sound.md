@@ -4,8 +4,11 @@
 - The voice carries the story; captions repeat it for sound-off. Script from the brand's own words, no invented claims.
 - ~2.4 words per second: 60-65 words fill 26s and leave room for a 0.8s thumbnail hold and an end card.
 - Write numbers and symbols as they should be said: "Grade nine", "A star", "one to one", "Proxy" for PROXe.
+- **Latest models only (founder rule, 2026-11-14):** always the newest model available. VO = the newest ElevenLabs model
+  (v4) with auto-tag / audio tags for emotion, brisk pace; **never Multilingual v2** (its reads came out broken and flat:
+  "reading out of something", "no texture", "so slow"). Step down only when the latest burns a lot of credits, and say the cost.
 - **Ad / announcement VO (founder pick 2026-11-13): Ruhaan - Polished Cinematic Ad Narrator** (ElevenLabs library, in My
-  Voices, Multilingual v2, default settings). Picked from a 6-voice audition (same line each: Ruhaan, Rudra, Niraj, Rajan,
+  Voices; voice picked on v2 default settings, now run on v4). Picked from a 6-voice audition (same line each: Ruhaan, Rudra, Niraj, Rajan,
   Tripti, Payyal Modi). Rejected for ads: Vedish - Deep and Authoritative, Raj - Indian English Ads & Social.
 - Voices used: **Zina - Confident & Clear** (Indian English, ZenSquare parent-facing ad), Samitha (Malayalam narrator)
   and Vijayesh (son) for SecondSpring, Jeevan (Hinglish). Offer other voices when the founder asks; they pick.
