@@ -130,3 +130,15 @@ Founder: v01 was "too bad", cut on instinct. Match their reels first, improve af
   its credit cost instead of spending. Two story angles were rendered side by side (hstack 540 px each) so the founder
   picks by watching.
 - Code: proxe-clips edit src/uk/BizStory.tsx (mockup surfaces), EDITR meta_hooks/make_story_vo.py, mix_story.py.
+
+## Ads as swappable hook + meat + CTA modules (PROXe, 2026-11-14)
+- Z's ad method: every ad = 1 hook (0-3 s) + 1 meat + 1 CTA, and every combination is its own ad (6 hooks x 2 meats
+  x 1 CTA = 12). Build each piece as its own render that starts and ends clean (no reference to the piece before it),
+  add SFX per piece, then join with an ffmpeg concat filter. Frame 0 of every ad = frame 0 of its hook, so every hook
+  carries its title from frame 0 (hold a title over a source clip whose caption lands late).
+- Timing has one source: a per-module JSON (words + the cut times = the words a new screen lands on). Before the voice
+  exists, the script's words get placeholder times spread over the target length, so the piece is a watchable
+  captioned animatic. When the founder's take arrives, whisper word times replace them and everything re-renders and
+  re-joins with no hand edits.
+- Code: proxe-clips edit src/uk/BizStory.tsx (Mod-* compositions), EDITR meta_hooks/make_mods.py, mix_mods.py; script
+  in meta_hooks/copy.md.
