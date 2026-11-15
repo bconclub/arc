@@ -61,3 +61,15 @@ The flat tile version above was rejected. What replaced it:
 - **Traps:** with `decay 0` a spot light blows out white surfaces, so keep intensity near 0.5 to 1.5. A text band across the middle looks like a bar: use a scrim from mid-frame to the bottom and shift the view up with `setViewOffset`. Turn bloom off once the logo settles so it ends crisp.
 - **Choosing where a track starts:** ElevenLabs' big hit came at 9 s of 11 s, so starting 1.05 s in put it on the film's 8 s and let the chord ring to the end. No edit to the track itself.
 
+
+## Event promo from stills + real footage (Windchasers Aviators Meetup, 2026-11-15, $2.10)
+- Mix the brand's real footage (uniform, sim, first solo, Cessna) for "who you'll meet" with four ChatGPT stills of the
+  event itself (table, arrival, breakfast, group), made in ONE ChatGPT chat ("same cafe, same light, same people").
+- Kling v3 720p std often **reframes wider in the first frame and pushes in**, and in group shots a foreground person
+  may lean in and block the table. Fix that worked first time: start the prompt "Locked-off tripod shot, the camera does
+  not move or zoom. Everyone stays seated in their place", name who moves, say the foreground people stay still, and add
+  "person leaning into frame, blocking the table, camera push, zoom out, reframing" to the negative.
+- Group shots can lose a person late in the take (identity drift after ~4 s): check the last second at full size and
+  use only the clean seconds, stretched up to ~1.2x.
+- Edit-script trap: when cueing cuts from Whisper word times, a common word ("the") matches the first occurrence. Pick
+  the nth occurrence explicitly for the cue you mean.
