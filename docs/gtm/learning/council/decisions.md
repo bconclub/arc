@@ -4,6 +4,13 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-11-16 #19: Managing the new sales team (Varnit Raina, Aftab Shaikh). Replaces the #18 week-1 gate.** (Open)
+- By Wed 18 Nov each gets a one-page brief: pay and incentive in writing (5% also on BCON work from a PROXe lead), weekly targets, the pain-TEMQ demo gate, an opener, how to log calls.
+- Named leads per person, not an open pool.
+- Connected calls ramp 5, then 15, then 25 a day. Daily 4:45 pm review in week 1.
+- Gate Fri 20 Nov: 40 connected calls each, logged in PROXe; 6 pain-TEMQ demos combined; 2 commitments.
+- Goal Z gave the team: 100 paying PROXe clients by March 2027 (5 paying + 5-7 trials on 16 Nov).
+
 **2026-11-16 #18: Two new sales hires (FDE + digital marketer), week 1.** (Open)
 - Both call in week 1, warmest leads first: AI-handed-off outbound (107), inbound Booking Made (54) and Qualified (13), then New inbound (124) and untouched outbound (184). Counts from BCON PROXe on 16 Nov.
 - Z listens in on the first 5 calls for each person on day 1. One script. Every call logged in PROXe the same day.
