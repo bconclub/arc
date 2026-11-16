@@ -7,6 +7,10 @@ import { fileUrl, productBySlugs, reviewerName, type ReviewFile } from "@/lib/re
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+// Reads go through supabase-js fetch; without this Next serves a cached copy and a
+// new score or comment does not show until the cache turns over.
+export const fetchCache = "force-no-store"
+export const revalidate = 0
 
 export async function GET(_req: Request, { params }: { params: { brand: string; product: string } }) {
   const found = await productBySlugs(params.brand, params.product)

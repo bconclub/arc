@@ -7,6 +7,10 @@ import { reviewerName } from "@/lib/review"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+// Reads go through supabase-js fetch; without this Next serves a cached copy and a
+// new score or comment does not show until the cache turns over.
+export const fetchCache = "force-no-store"
+export const revalidate = 0
 
 export async function GET() {
   const [products, ads, ratings, comments] = await Promise.all([

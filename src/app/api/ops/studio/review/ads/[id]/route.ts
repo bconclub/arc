@@ -10,6 +10,10 @@ import { AD_STATUSES, reviewerName } from "@/lib/review"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+// Reads go through supabase-js fetch; without this Next serves a cached copy and a
+// new score or comment does not show until the cache turns over.
+export const fetchCache = "force-no-store"
+export const revalidate = 0
 
 const isId = (s: unknown) => typeof s === "string" && /^[0-9a-f-]{36}$/i.test(s)
 
