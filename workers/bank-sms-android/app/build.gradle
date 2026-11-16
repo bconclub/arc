@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+// The bank secret and signing key never live in git: read from C:/dev/tools/keys.
+def keysDir = new File(System.getenv('ARC_KEYS_DIR') ?: 'C:/dev/tools/keys')
+def bankSecret = new File(keysDir, 'arc-bank-secret.txt').with { it.exists() ? it.text.trim() : '' }
+def storePass = new File(keysDir, 'arc-bank.keystore.pass').with { it.exists() ? it.text.trim() : '' }
+
+android {
+    namespace 'com.bconclub.arcbank'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'com.bconclub.arcbank'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+        buildConfigField 'String', 'ARC_URL', '"https://arc.bconclub.com/api/agent/bank-sms"'
+        buildConfigField 'String', 'ARC_SECRET', "\"${bankSecret}\""
+    }
+    buildFeatures { buildConfig true }
+    signingConfigs {
+        release {
+            storeFile new File(keysDir, 'arc-bank.keystore')
+            storePassword storePass
+            keyAlias 'arcbank'
+            keyPassword storePass
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}

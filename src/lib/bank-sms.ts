@@ -21,7 +21,7 @@ export type BankTxn = {
   body: string;
 };
 
-const OTP = /\b(otp|one[\s-]?time\s+password|verification\s+code|passcode)\b/i;
+const OTP = /(is\s+(your|the)\s+(otp|one[\s-]?time\s+password|verification\s+code)|\botp\s*(is|for|:)|verification\s+code\s*(is|:)|one[\s-]?time\s+password\s*(is|:))/i;
 const NOT_A_TXN = /\b(will be debited|is due|due on|due date|bill (?:of|for)|request(?:ed)? (?:for|of)|collect request|has requested|e-?mandate|auto[\s-]?pay set|pre-?approved|offer|loan of|statement)\b/i;
 const TXN_HINT = /\b(a\/c|acct|account|card|upi|neft|imps|rtgs|vpa)\b/i;
 
