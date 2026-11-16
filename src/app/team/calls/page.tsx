@@ -63,7 +63,9 @@ export default function TeamCalls() {
   }, [calls, team, source, scope, hideTests, byPhone, myId]);
 
   const open: Partial<OutreachTarget> | null = leads?.targets.find((t) => t.id === openId) ?? null;
-  const loading = (source !== "team" && callsState === "loading" && !calls.length) || (source !== "ai" && teamState === "loading" && !team);
+  // Show what has arrived: team calls come at once, the AI caller's history takes a while.
+  const aiLoading = source !== "team" && callsState === "loading" && !calls.length;
+  const loading = !list.length && (aiLoading || (source !== "ai" && teamState === "loading" && !team));
   const chip = (on: boolean) => `h-8 rounded-pill border px-3 text-[12px] ${on ? "border-[var(--brand-line)] bg-[var(--brand)] text-[var(--brand-ink)]" : "border-[var(--border)] text-text-muted hover:text-text"}`;
 
   return (
@@ -99,6 +101,10 @@ export default function TeamCalls() {
 
       {source !== "team" && callsState === "error" && <p className="text-[12.5px] text-accent-red">AI caller history is unavailable right now. Try Refresh in a minute.</p>}
       {source !== "ai" && teamState === "error" && <p className="text-[12.5px] text-accent-red">Team calls could not load. Try Refresh.</p>}
+
+      {aiLoading && !loading && (
+        <p className="flex items-center gap-2 text-[12px] text-text-muted"><Loader2 size={13} className="animate-spin" /> Loading the AI caller&apos;s calls…</p>
+      )}
 
       {loading ? (
         <div className="flex h-40 flex-col items-center justify-center gap-2 text-[12.5px] text-text-muted">

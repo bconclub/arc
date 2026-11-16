@@ -8,6 +8,12 @@ import {
 } from "@/lib/outreach-calls";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+// Reading every call ever made (2,000+ by Nov 2026) and then each one's detail
+// ran past the 60 s limit, so the page only ever showed a 504. Now: the last
+// DAYS days (pages come newest first, so paging stops at the cutoff), and the
+// detail (phone, summary, recording) for the newest DETAILED of those.
+const DAYS = 30;
+const DETAILED = 150;
 export async function GET() {
   const viewer = await callViewer();
   if (!viewer)
@@ -16,6 +22,7 @@ export async function GET() {
     const groups = await Promise.all(
       Object.entries(BDR_AGENTS).map(async ([id, name]) => {
         const calls = [];
+        const cutoff = Date.now() / 1000 - DAYS * 86400;
         let cursor = "";
         do {
           const r = await callProvider(
@@ -44,19 +51,23 @@ export async function GET() {
               }),
             ),
           );
-          cursor = d.has_more ? d.next_cursor : "";
+          const oldest = Math.min(...d.conversations.map((c: { start_time_unix_secs: number }) => c.start_time_unix_secs));
+          cursor = d.has_more && oldest > cutoff ? d.next_cursor : "";
         } while (cursor);
         return calls;
       }),
     );
+    const since = Date.now() - DAYS * 86400e3;
     const calls = groups
       .flat()
-      .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at));
+      .filter((c) => Date.parse(c.started_at) >= since)
+      .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at))
+      .slice(0, DETAILED);
     const enriched = [];
-    for (let i = 0; i < calls.length; i += 5)
+    for (let i = 0; i < calls.length; i += 10)
       enriched.push(
         ...(await Promise.all(
-          calls.slice(i, i + 5).map(async (c) => {
+          calls.slice(i, i + 10).map(async (c) => {
             try {
               const d = await callDetail(c.id);
               const phone = d?.metadata?.phone_call?.external_number || null;
