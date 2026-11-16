@@ -74,6 +74,7 @@ public class MainActivity extends Activity {
         if (checkSelfPermission(Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS}, 1);
         }
+        DailyJob.schedule(this);
         refresh();
         // Anything left over from a failed send goes now.
         new Thread(() -> { if (Bank.pending(this) > 0) { Bank.flush(this); runOnUiThread(this::refresh); } }).start();

@@ -28,6 +28,11 @@ final class Bank {
     private static final Pattern MOVE = Pattern.compile("(?i)\\b(credited|debited|deposited|received|spent|sent|withdrawn|paid|purchase|refund)\\b");
     private static final Pattern PERSON = Pattern.compile("^\\+?\\d[\\d\\s-]{6,}$");
 
+    private static final Pattern BALANCE = Pattern.compile("(?i)(?:avl|avbl|available|total)\\.?\\s*(?:bal(?:ance)?|lmt|limit|amt)\\.?\\s*(?:is)?\\s*:?\\s*(?:rs\\.?|inr|₹)?\\s*-?[\\d,]+(?:\\.\\d{1,2})?");
+
+    /** Balances never leave the phone. */
+    static String stripBalance(String body) { return BALANCE.matcher(body).replaceAll("[bal]"); }
+
     static boolean looksLikeBankTxn(String sender, String body) {
         if (sender == null || body == null) return false;
         if (PERSON.matcher(sender.trim()).matches()) return false; // personal SMS
@@ -42,7 +47,7 @@ final class Bank {
     static synchronized void enqueue(Context c, String sender, String body, long ts) {
         try {
             JSONArray q = new JSONArray(prefs(c).getString("queue", "[]"));
-            q.put(new JSONObject().put("sender", sender).put("body", body).put("ts", ts));
+            q.put(new JSONObject().put("sender", sender).put("body", stripBalance(body)).put("ts", ts));
             prefs(c).edit().putString("queue", q.toString()).apply();
         } catch (Exception ignored) {}
     }
