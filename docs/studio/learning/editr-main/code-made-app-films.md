@@ -184,3 +184,13 @@ has figured it out, we need to do this for the GTM content."
   Music v2.5 at 1:00 x 2 costs 1,800 credits.
 - Mix that held: VO +5 dB (from -21 LUFS raw), music at a constant -13 dB (A) / -8 dB (B), SFX -12 to -20 dB, +2.5 dB, then
   `alimiter=limit=0.7:level=false` → about -15.5 LUFS, true peak -2.5 dB.
+- **Founder note on the Scafell v01 (2026-11-16):** a brand ad for a multi-product company must not lead with one product
+  ("not about PROXe at all"); the story is how the company joins all its products to fix the owner's problems, ending on
+  the brand line ("AI systems for UK businesses"). Orbit rings around the logo read as "unwanted"; 60 s calm was "too slow".
+  v02: 30 s, problems scatter → tiles assemble into the real logo → the site's 5 stages as a stepper with one vignette each.
+- **Speeding a VO without re-generating:** cut the take into lines (whisper word times), `atempo=1.12` per line and close
+  the gaps to 0.2-0.45 s; a 32.6 s read became 28.6 s for a 30 s film (`build/vo2.py`, timing exported to `timing.js`
+  so every animation lands on its word).
+- **Assemble animations with a real logo:** move simple rounded tiles while the shape is in motion, but swap to the true
+  logo paths the moment it is assembled (frame 0, the gather, the end); four loose tiles misdraw the connector.
+- ElevenLabs Music (narrow layout): download lives under the row's ⋮ → Download → MP3; sometimes a track won't download.
