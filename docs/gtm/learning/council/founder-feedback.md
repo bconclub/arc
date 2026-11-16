@@ -17,3 +17,5 @@
 - **2026-10-13:** Hiring: no equipment before the offer letter and ID; signed note on hand-over (laptop incident).
 - **2026-10-11/12:** ICP volume corrections: 50+ enquiries a month was wrong; then 50+ a day; then 30-50 a day average
   (real days swing, e.g. 18 to 30). The plan's ~1,000 leads a month covers about 30 a day; more goes on credits.
+
+- 2026-11-16: Z corrected the council: forward-deployed engineers and marketers both do outbound, sit with customers, find what they need and bring them in. Don't plan roles as caller vs builder.
