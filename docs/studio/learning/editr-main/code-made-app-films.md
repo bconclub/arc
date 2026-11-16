@@ -166,3 +166,21 @@ has figured it out, we need to do this for the GTM content."
 - **Heredoc + ffmpeg in a `while read` loop:** ffmpeg reads stdin and eats characters from the next line. Add `-nostdin`.
 - **Malayalam VO:** Multilingual v2 has no Malayalam; Eleven v3 does. A loose Malayalam-English mix reads naturally for Kerala audiences.
 - **Beat grid without librosa:** an onset-flux tempo search in numpy found the 108 BPM we prompted, and gave the phase.
+
+## Format-match brand ad as code (2026-11-16, Scafell Partners "agents format", T27)
+
+- **Copying a SaaS launch-ad format** (ElevenLabs ElevenAgents ad: dark space + glowing planet, logo card, product UI on mist,
+  A/B card, guardrail card, badge grid + lock, planet + logo end card): the planet becomes our logo with orbit rings and
+  light dots that pass in front of / behind it (draw back half under the logo, front half over it). Every UI beat maps to a
+  fact from the client's own site; sample tickets become the chat bubbles, no scores or results on the A/B card.
+- **One page, two aspects:** `scene.html?ar=16x9|9x16` sets the stage size, and the UI scenes get `transform: scale()` around
+  the centre (1.25 for 16:9, 1.1 for 9:16) instead of a second layout. Both renders run at once (two headless Chromes).
+  Files: EDITR `tasks/T27-scafell-agents-format-ad/build/` (scene.html, render.mjs, stills.mjs, mix.py).
+- **Cut the VO into sentence segments** (word starts from faster-whisper `small.en`) and place each on its picture beat with
+  `atrim` + `adelay`. A 45 s read then fits a 60 s film with silent logo card and end card, and the music runs untouched.
+- **Eleven v4 Auto-tag** adds `[excited]`, `!` and capitals ("does NOT"). For a calm premium read, write your own tags:
+  `[thoughtful]` `[confident]` `[calm]` `[warm]` `[short pause]`.
+- **ElevenLabs Music download** opens a format menu (MP3 / MP4 / WAV); pick MP3, and take the second track's menu fresh.
+  Music v2.5 at 1:00 x 2 costs 1,800 credits.
+- Mix that held: VO +5 dB (from -21 LUFS raw), music at a constant -13 dB (A) / -8 dB (B), SFX -12 to -20 dB, +2.5 dB, then
+  `alimiter=limit=0.7:level=false` → about -15.5 LUFS, true peak -2.5 dB.
