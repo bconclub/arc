@@ -23,11 +23,11 @@ async function named<T extends Row>(rows: T[]): Promise<T[]> {
 const CALL_COLS = "id,member_id,target_id,direction,phone,caller_id,status,hangup_cause,started_at,answered_at,ended_at,duration_secs,recording_status,recording_key,note,fields,outcome,processed_at,proxe_synced_at,proxe_error,error";
 
 /**
- * Dialer state for the signed-in person: is their line open, their calls today
+ * Dialer state for the signed-in person: is their line open, their calls (36 h, or ?days=N)
  * (newest first, the live one on top). The owner sees everyone's setup and calls.
  * Each read also runs the backstop sweep (unfiled calls, missing recordings).
  */
-export async function GET() {
+export async function GET(req: Request) {
   const viewer = await getViewer();
   if (!viewer) return unauthorized();
   const swept = sweep().catch((e) => console.error("[dialer] sweep", (e as Error).message));
@@ -37,13 +37,16 @@ export async function GET() {
   if (probe.error) return Response.json({ role: viewer.kind, configured: false, installed: false, calls: [] });
   await swept;
 
-  const since = new Date(Date.now() - 36 * 3600e3).toISOString();
+  // ?days=N widens the list (the Calls page reads 30 days); the bar reads the last 36 hours.
+  const days = Math.min(60, Math.max(0, Number(new URL(req.url).searchParams.get("days")) || 0));
+  const since = new Date(Date.now() - (days ? days * 24 : 36) * 3600e3).toISOString();
+  const cap = days ? 500 : 0;
   if (viewer.kind === "team") {
     const m = viewer.member;
     const { data: me } = await db.from("team_members").select("dialer_phone,dialer_caller_id,dialer_pin_hash").eq("id", m.id).maybeSingle();
     const session = await liveSession(m.id);
     const { data: calls } = await db.from("dialer_calls").select(CALL_COLS).eq("member_id", m.id).gt("started_at", since)
-      .order("started_at", { ascending: false }).limit(40);
+      .order("started_at", { ascending: false }).limit(cap || 40);
     return Response.json({
       role: "team",
       configured: vobizConfigured(),
@@ -59,7 +62,7 @@ export async function GET() {
   const { data: members } = await db.from("team_members").select("id,name,dialer_phone,dialer_caller_id,dialer_pin_hash").eq("active", true).order("created_at");
   const { data: sessions } = await db.from("dialer_sessions").select("member_id,started_at").eq("status", "live");
   const { data: calls } = await db.from("dialer_calls").select(CALL_COLS).gt("started_at", since)
-    .order("started_at", { ascending: false }).limit(100);
+    .order("started_at", { ascending: false }).limit(cap || 100);
   return Response.json({
     role: "owner",
     configured: vobizConfigured(),

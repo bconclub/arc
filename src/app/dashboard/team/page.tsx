@@ -249,7 +249,7 @@ export default function TeamPage() {
           <h1 className="text-[22px] font-bold tracking-tight text-text">Team & access</h1>
           <p className="max-w-[75ch] text-[12.5px] text-text-muted">
             People with their own ARC login. They sign in at arc.bconclub.com/login with their login name and password and can open only what you tick.
-            Studio: every brand board, with full control inside it. Sales: Today, Leads, AI calls, Ask and Playbook (never deleting leads or seeing call costs).
+            Studio: every brand board, with full control inside it. Sales: Today, Leads, Dialer, Calls (AI and team), Ask and Playbook (never deleting leads or seeing call costs).
             Nobody but you sees the rest of ARC.
           </p>
         </div>
