@@ -5,6 +5,7 @@ import type { OutreachTarget } from "@/types/ops";
 import { outcomeLabel } from "@/lib/outreach-workflow";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
 import { dueBy, isInbound, todayIso } from "./useTeamData";
+import { useDialer } from "./Dialer";
 
 const STAGE_TONE: Record<string, Tone> = {
   identified: "neutral", researched: "neutral", drafted: "info", sent: "info", replied: "warn",
@@ -13,8 +14,13 @@ const STAGE_TONE: Record<string, Tone> = {
 
 const when = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
-/** One lead in a list: who, where from, stage, follow-up, owner. Tap to open; the phone dials. */
+/**
+ * One lead in a list: who, where from, stage, follow-up, owner. Tap to open.
+ * The phone button calls through the team dialer (company number, recorded)
+ * once the person has one; until then it opens the phone's own dialler.
+ */
 export function LeadRow({ t, owner, lastWork, onOpen }: { t: OutreachTarget; owner: string | null; lastWork?: string; onOpen: () => void }) {
+  const dialer = useDialer();
   const due = dueBy(t, todayIso());
   const inbound = isInbound(t);
   return (
@@ -37,7 +43,13 @@ export function LeadRow({ t, owner, lastWork, onOpen }: { t: OutreachTarget; own
           {t.next_at ? `${due ? "Due " : "Follow up "}${when(t.next_at)}` : owner || "Unassigned"}
         </span>
       </div>
-      {t.phone ? (
+      {t.phone && dialer?.ready ? (
+        <button onClick={() => dialer.dial({ id: t.id, name: t.name })} aria-label={"Call " + t.name + " from your company number"}
+          disabled={Boolean(dialer.current && ["dialing", "connected"].includes(dialer.current.status))}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--brand-line)] bg-[var(--brand-soft)] text-[var(--brand-text)] disabled:opacity-40">
+          <Phone size={15} />
+        </button>
+      ) : t.phone ? (
         <a href={"tel:" + t.phone} aria-label={"Call " + t.name}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] text-text hover:border-[var(--brand-line)]">
           <Phone size={15} />

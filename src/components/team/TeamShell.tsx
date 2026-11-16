@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarCheck, LayoutGrid, LogOut, MessageCircle, PhoneCall, Users } from "lucide-react";
+import { BookOpen, CalendarCheck, Headphones, LayoutGrid, LogOut, MessageCircle, PhoneCall, Users } from "lucide-react";
+import { DialerBar, DialerProvider } from "@/components/team/Dialer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { VERSION } from "@/lib/version";
 
 /**
- * The whole chrome for a team login (sales): one bar with their five places,
+ * The whole chrome for a team login (sales): one bar with their six places,
  * no ARC sidebar. On a phone the places move to a bottom bar.
  */
 const NAV = [
   { href: "/team", label: "Today", icon: CalendarCheck, exact: true },
   { href: "/team/leads", label: "Leads", icon: Users },
+  { href: "/team/dialer", label: "Dialer", icon: Headphones },
   { href: "/team/calls", label: "AI calls", icon: PhoneCall },
   { href: "/team/ask", label: "Ask", icon: MessageCircle },
   { href: "/team/playbook", label: "Playbook", icon: BookOpen },
@@ -26,7 +28,8 @@ export function TeamShell({ name, owner, studio, children }: { name: string; own
     window.location.href = "/login";
   }
   return (
-    <div className="min-h-screen pb-20 md:pb-0">
+    <DialerProvider>
+    <div className="min-h-screen pb-32 md:pb-12">
       {owner && (
         <div className="bg-[var(--brand-soft)] px-4 py-1.5 text-center text-[12px] text-[var(--brand-text)]">
           You are seeing the sales view as the owner.{" "}
@@ -65,7 +68,7 @@ export function TeamShell({ name, owner, studio, children }: { name: string; own
         <span>BCON Club · Sales</span>
         <span className="font-mono" title={`ARC v${VERSION}`}>ARC v{VERSION}</span>
       </footer>
-      <nav aria-label="Sales sections" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--border)] bg-[var(--bg)] pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav aria-label="Sales sections" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-[var(--border)] bg-[var(--bg)] pb-[env(safe-area-inset-bottom)] md:hidden">
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} aria-current={on(n) ? "page" : undefined}
             className={`flex flex-col items-center gap-0.5 py-2 text-[10.5px] ${on(n) ? "font-semibold text-text" : "text-text-muted"}`}>
@@ -73,6 +76,8 @@ export function TeamShell({ name, owner, studio, children }: { name: string; own
           </Link>
         ))}
       </nav>
+      <DialerBar />
     </div>
+    </DialerProvider>
   );
 }

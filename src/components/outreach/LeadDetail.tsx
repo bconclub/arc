@@ -13,6 +13,7 @@ import {
   type ActivityChannel,
 } from "@/lib/outreach-workflow";
 import { OutreachDialog } from "./OutreachDialog";
+import { useDialer } from "@/components/team/Dialer";
 import type { BdrCall } from "./CallReview";
 const stages = [
   "identified",
@@ -56,6 +57,7 @@ export function LeadDetail({
   onSaved: () => void;
   onCall: (id: string) => void;
 }) {
+  const dialer = useDialer();
   const [tab, setTab] = useState(target.id ? "overview" : "edit"),
     [form, setForm] = useState(target);
   const [busy, setBusy] = useState(""),
@@ -239,10 +241,17 @@ export function LeadDetail({
           <>
             <div className="space-y-2 text-sm">
               {target.phone && (
-                <p>
+                <p className="flex flex-wrap items-center gap-2">
                   <a href={"tel:" + target.phone} className="text-text">
                     {target.phone}
                   </a>
+                  {dialer?.ready && target.id && (
+                    <button type="button" className={btnPrimaryCls}
+                      disabled={Boolean(dialer.current && ["dialing", "connected"].includes(dialer.current.status))}
+                      onClick={() => dialer.dial({ id: target.id!, name: target.name || target.phone || "Lead" })}>
+                      Call from company number
+                    </button>
+                  )}
                 </p>
               )}
               {target.email && (
