@@ -11,11 +11,14 @@ export type AuthSuccess = { ok: true; agent: string }
 // `fleet` routes (heartbeat, next, result) also take ARC_FLEET_SECRET: the key every
 // machine's session reporter carries (workers/fleet). It opens only those routes, so
 // a leaked reporter config can't reach outreach, briefs or anything else.
-export function checkIngestAuth(req: Request, opts: { fleet?: boolean } = {}): AuthFailure | AuthSuccess {
-  const secret = process.env.ARC_INGEST_SECRET
+// `bank` routes (the phone SMS worker) take ARC_BANK_SECRET and nothing else: the
+// phone holds that key, so it must not open any other machine route, and the main
+// ingest key is not accepted there either.
+export function checkIngestAuth(req: Request, opts: { fleet?: boolean; bank?: boolean } = {}): AuthFailure | AuthSuccess {
+  const secret = opts.bank ? process.env.ARC_BANK_SECRET : process.env.ARC_INGEST_SECRET
   const fleetSecret = opts.fleet ? process.env.ARC_FLEET_SECRET : undefined
   if (!secret && !fleetSecret) {
-    return { ok: false, status: 503, error: "ingest disabled (no ARC_INGEST_SECRET)" }
+    return { ok: false, status: 503, error: opts.bank ? "bank ingest disabled (no ARC_BANK_SECRET)" : "ingest disabled (no ARC_INGEST_SECRET)" }
   }
   const header = req.headers.get("authorization")
   const okMain = !!secret && header === `Bearer ${secret}`

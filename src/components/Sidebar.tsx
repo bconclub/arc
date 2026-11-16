@@ -51,6 +51,7 @@ const nav: NavSection[] = [
     heading: "Money",
     items: [
       { label: "Invoices", href: "/dashboard/ops/money", icon: Wallet },
+      { label: "Bank", href: "/dashboard/ops/bank", icon: Landmark },
       { label: "Revenue", href: "/dashboard/analytics", icon: IndianRupee },
     ],
   },
