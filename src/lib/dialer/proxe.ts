@@ -7,6 +7,8 @@
 //   activities          a manual_call row, "[Connected] <note>"
 //   all_leads           the note appended to unified_context.admin_notes
 // Every write is keyed on the ARC call id, so a retry never duplicates.
+// brand "proxe": the AI caller's rows in this database carry it (checked 16 Nov).
+const BRAND = "proxe"
 import { createHash } from "crypto"
 
 async function px<T = unknown>(path: string, init: RequestInit & { prefer?: string } = {}): Promise<T> {
@@ -56,6 +58,7 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
   const existing = await px<{ id: string }[]>(`voice_sessions?select=id&external_session_id=eq.${sessionKey}&limit=1`)
   const session = {
     external_session_id: sessionKey,
+    brand: BRAND,
     lead_id: c.leadId,
     customer_name: c.customerName,
     customer_phone: c.phone,
@@ -77,6 +80,7 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
   const start = Date.parse(c.startedAt)
   const rows = c.transcript.slice(0, 400).map((t, i) => ({
     id: uuidFrom(`${sessionKey}:turn:${i}`),
+    brand: BRAND,
     lead_id: c.leadId,
     channel: "voice",
     sender: t.speaker === "Customer" ? "customer" : "agent",
@@ -87,6 +91,7 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
   }))
   rows.push({
     id: uuidFrom(`${sessionKey}:summary`),
+    brand: BRAND,
     lead_id: c.leadId,
     channel: "voice",
     sender: "agent",
