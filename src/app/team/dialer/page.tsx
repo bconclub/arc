@@ -88,6 +88,14 @@ function Setup({ m, onSaved }: { m: { id: string; name: string; mobile: string |
     setNote(r.ok ? "Saved." : j.error || "Could not save.");
     if (r.ok) { setPin(""); onSaved(); }
   }
+  async function connect() {
+    if (!window.confirm(`Send every incoming call on ${m.number} to the team dialer? Only do this for a number nothing else uses.`)) return;
+    setBusy(true); setNote("");
+    const r = await fetch("/api/team/dialer/setup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ member_id: m.id, connect: true }) });
+    const j = await r.json().catch(() => ({}));
+    setBusy(false);
+    setNote(r.ok ? `${j.number} now rings the dialer.` : j.error || "Could not connect.");
+  }
   const input = "h-9 rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 text-[13px] text-text outline-none focus:border-[var(--brand-line)]";
   return (
     <li className="flex flex-col gap-2 border-t border-[var(--border)] px-3 py-3 first:border-t-0">
@@ -97,6 +105,9 @@ function Setup({ m, onSaved }: { m: { id: string; name: string; mobile: string |
         <label className="flex flex-col gap-1 text-[11.5px] text-text-muted">Company number (Vobiz)<input className={input} value={number} onChange={(e) => setNumber(e.target.value)} placeholder="+9180xxxxxxxx" inputMode="tel" /></label>
         <label className="flex flex-col gap-1 text-[11.5px] text-text-muted">New passcode (6 digits)<input className={input} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder={m.pin_set ? "unchanged" : "e.g. 482913"} inputMode="numeric" type="password" autoComplete="new-password" /></label>
         <button onClick={save} disabled={busy} className="mt-auto h-9 rounded-soft bg-[var(--brand)] px-4 text-[13px] font-semibold text-[var(--brand-ink)] disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
+        {m.number && (
+          <button onClick={connect} disabled={busy} className="mt-auto h-9 rounded-soft border border-[var(--border)] px-3 text-[13px] text-text disabled:opacity-50">Connect number to dialer</button>
+        )}
       </div>
       {note && <p className="text-[12px] text-text-muted">{note}</p>}
     </li>

@@ -1,5 +1,5 @@
-import { hookOk, hookUrl, vobizParams } from "@/lib/dialer/config";
-import { db, memberByCallerId, memberByMobile, targetByPhone } from "@/lib/dialer/members";
+import { e164, hookOk, hookUrl, tail10, vobizParams } from "@/lib/dialer/config";
+import { db, memberByCallerId, memberById, memberByMobile, targetByPhone } from "@/lib/dialer/members";
 import { recordSession, speak, xml, esc } from "@/lib/dialer/vobiz";
 
 export const runtime = "nodejs";
@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
  * call INTO one of them lands here.
  *
  * - From a team member's registered mobile: ask for the dialer passcode.
- * - From anyone else (a lead calling back): ring the person whose company
- *   number they called, recorded, and file it like any other call.
+ * - From anyone else (a lead calling back): ring whoever last called them
+ *   from that number (else its owner), recorded, filed like any other call.
  */
 export async function POST(req: Request) {
   if (!hookOk(req)) return new Response("forbidden", { status: 403 });
@@ -28,8 +28,12 @@ export async function POST(req: Request) {
     );
   }
 
-  // A lead calling a company number back: put them through to that person.
-  const owner = await memberByCallerId(to);
+  // A lead calling a company number back: put them through to whoever called
+  // them last from it, else the person that number belongs to.
+  const { data: last } = await db.from("dialer_calls").select("member_id").eq("direction", "outbound")
+    .eq("phone", e164(from) || from).order("started_at", { ascending: false }).limit(1);
+  const lastMember = last?.[0]?.member_id ? await memberById(last[0].member_id) : null;
+  const owner = lastMember?.dialer_phone && tail10(lastMember.dialer_caller_id) === tail10(to) ? lastMember : await memberByCallerId(to);
   if (!owner?.dialer_phone) return xml(speak("Thank you for calling BCON. We will call you back shortly.") + "<Hangup/>");
   const target = await targetByPhone(from);
   const { data: row } = await db.from("dialer_calls").insert({

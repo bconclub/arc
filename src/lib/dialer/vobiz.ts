@@ -68,6 +68,37 @@ export async function downloadRecording(url: string): Promise<{ bytes: Buffer; t
   return { bytes, type: wav ? "audio/wav" : "audio/mpeg" }
 }
 
+// ── Provisioning: the team numbers' application ───────────────────────
+// One Vobiz application ("ARC-team-dialer") holds the answer/hangup URLs with the
+// webhook token, so nobody ever types the token into the console.
+export const APP_NAME = "ARC-team-dialer"
+
+type App = { app_id: string; app_name: string; answer_url?: string; hangup_url?: string }
+
+export async function ensureApplication(answerUrl: string, hangupUrl: string): Promise<string> {
+  let found: App | undefined
+  for (let offset = 0; offset < 1000 && !found; offset += 100) {
+    const page = await vobiz<{ objects?: App[]; meta?: { next?: string | null } }>(`Application/?limit=100&offset=${offset}`)
+    found = (page?.objects || []).find((a) => a.app_name === APP_NAME)
+    if (!page?.meta?.next) break
+  }
+  const urls = { answer_url: answerUrl, answer_method: "POST", hangup_url: hangupUrl, hangup_method: "POST" }
+  if (found) {
+    if (found.answer_url !== answerUrl || found.hangup_url !== hangupUrl) {
+      await vobiz(`Application/${encodeURIComponent(found.app_id)}/`, { method: "POST", body: JSON.stringify(urls) })
+    }
+    return found.app_id
+  }
+  const made = await vobiz<{ app_id?: string }>("Application/", { method: "POST", body: JSON.stringify({ app_name: APP_NAME, ...urls }) })
+  if (!made?.app_id) throw new Error("Vobiz did not return an application id.")
+  return String(made.app_id)
+}
+
+/** Point an owned number at the application (re-attaching overwrites the old binding). */
+export async function attachNumber(number: string, appId: string) {
+  return vobiz(`numbers/${encodeURIComponent(number)}/application`, { method: "POST", body: JSON.stringify({ application_id: appId }) })
+}
+
 // ── XML ───────────────────────────────────────────────────────────────
 export const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;")

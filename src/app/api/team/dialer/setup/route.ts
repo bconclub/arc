@@ -1,6 +1,7 @@
 import { hashPassword } from "@/lib/auth";
 import { forbidden, getViewer, unauthorized } from "@/lib/team";
-import { e164 } from "@/lib/dialer/config";
+import { e164, hookUrl, vobizConfigured } from "@/lib/dialer/config";
+import { attachNumber, ensureApplication } from "@/lib/dialer/vobiz";
 import { db } from "@/lib/dialer/members";
 
 export const runtime = "nodejs";
@@ -10,14 +11,29 @@ export const dynamic = "force-dynamic";
  * Owner only: a person's dialer setup. Body: { member_id, mobile?, number?, pin? }.
  * mobile = the phone they dial in from; number = their company (Vobiz) number;
  * pin = a new 6-digit passcode (stored hashed, never shown again).
+ * Body { member_id, connect: true } instead points their company number's
+ * incoming calls at the dialer (Vobiz application with the webhook URLs).
  */
 export async function POST(req: Request) {
   const viewer = await getViewer();
   if (!viewer) return unauthorized();
   if (viewer.kind !== "owner") return forbidden("Only the owner sets up the dialer.");
-  const b = await req.json().catch(() => null) as { member_id?: string; mobile?: string; number?: string; pin?: string } | null;
+  const b = await req.json().catch(() => null) as { member_id?: string; mobile?: string; number?: string; pin?: string; connect?: boolean } | null;
   const id = String(b?.member_id || "");
   if (!/^[0-9a-f-]{36}$/i.test(id)) return Response.json({ error: "Pick a person." }, { status: 400 });
+
+  if (b?.connect) {
+    if (!vobizConfigured()) return Response.json({ error: "Add the Vobiz keys to ARC first." }, { status: 503 });
+    const { data: m } = await db.from("team_members").select("dialer_caller_id").eq("id", id).maybeSingle();
+    if (!m?.dialer_caller_id) return Response.json({ error: "Save their company number first." }, { status: 400 });
+    try {
+      const appId = await ensureApplication(hookUrl("answer"), hookUrl("hangup"));
+      await attachNumber(m.dialer_caller_id, appId);
+      return Response.json({ ok: true, number: m.dialer_caller_id });
+    } catch (e) {
+      return Response.json({ error: (e as Error).message.slice(0, 240) }, { status: 502 });
+    }
+  }
 
   const patch: Record<string, string | null> = {};
   if (b?.mobile !== undefined) {
@@ -36,11 +52,12 @@ export async function POST(req: Request) {
   }
   if (!Object.keys(patch).length) return Response.json({ error: "Nothing to change." }, { status: 400 });
 
-  // A mobile or company number belongs to one person only.
+  // A dial-in mobile belongs to one person (it is how a dial-in is recognised).
+  // A company number may be shared: a lead calling back reaches whoever called them last.
   const { data: others } = await db.from("team_members").select("id,dialer_phone,dialer_caller_id").neq("id", id);
   const clash = ((others || []) as { dialer_phone: string | null; dialer_caller_id: string | null }[]).some((o) =>
     (patch.dialer_phone && (o.dialer_phone === patch.dialer_phone || o.dialer_caller_id === patch.dialer_phone)) ||
-    (patch.dialer_caller_id && (o.dialer_caller_id === patch.dialer_caller_id || o.dialer_phone === patch.dialer_caller_id)));
+    (patch.dialer_caller_id && o.dialer_phone === patch.dialer_caller_id));
   if (clash) return Response.json({ error: "That number is already set for someone else." }, { status: 409 });
 
   const { error } = await db.from("team_members").update(patch).eq("id", id);
