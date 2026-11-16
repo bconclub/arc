@@ -74,3 +74,8 @@ alter table public.dialer_sessions enable row level security;
 alter table public.dialer_calls enable row level security;
 revoke all on public.dialer_sessions, public.dialer_calls from anon, authenticated;
 grant all on public.dialer_sessions, public.dialer_calls to service_role;
+
+-- Recordings: a private bucket, read only through 10-minute signed links.
+insert into storage.buckets (id, name, public)
+values ('dialer-recordings', 'dialer-recordings', false)
+on conflict (id) do nothing;

@@ -1,6 +1,6 @@
 // After a lead call ends: keep the recording, write the note, file it. SERVER ONLY.
 //
-//   1. recording  Vobiz file -> ARC's private R2 (dialer/<call id>.mp3). If the
+//   1. recording  Vobiz file -> ARC's private Supabase bucket (dialer-recordings). If the
 //                 RecordStop callback never came, the Recording API is asked.
 //   2. transcript ElevenLabs speech-to-text with speakers.
 //   3. note       Claude reads the transcript: outcome, a short note, and the
@@ -10,12 +10,14 @@
 // Safe to run again: each step skips what is already done, and a lock stops two
 // runs at once.
 import { supabaseAdmin } from "@/lib/supabase"
-import { r2Configured, r2Presign } from "@/lib/r2"
 import { callAI } from "@/lib/ai-client"
 import { mirrorCallToProxe } from "@/lib/proxe-outbound-mirror"
 import { downloadRecording, findRecording } from "./vobiz"
 import { recordingLink } from "./config"
 import { pushCallToProxe } from "./proxe"
+
+/** Private bucket in ARC's Supabase; files are only ever read through signed links. */
+export const RECORDINGS_BUCKET = "dialer-recordings"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabaseAdmin as any
@@ -51,13 +53,11 @@ async function saveRecording(call: DialerCall): Promise<DialerCall> {
     if (found) { src = found.url; recId = found.id || recId }
   }
   if (!src) return call
-  if (!r2Configured()) throw new Error("R2 is not configured; the recording stays on Vobiz for now.")
   const file = await downloadRecording(src)
-  const key = `dialer/${call.id}.${file.type === "audio/wav" ? "wav" : "mp3"}`
-  const put = await fetch(r2Presign(key, { method: "PUT", expires: 600 }), {
-    method: "PUT", body: new Uint8Array(file.bytes), headers: { "Content-Type": file.type },
-  })
-  if (!put.ok) throw new Error(`R2 upload ${put.status}`)
+  const key = `${call.started_at.slice(0, 10)}/${call.id}.${file.type === "audio/wav" ? "wav" : "mp3"}`
+  const { error: upErr } = await supabaseAdmin.storage.from(RECORDINGS_BUCKET)
+    .upload(key, file.bytes, { contentType: file.type, upsert: true })
+  if (upErr) throw new Error(`Recording upload: ${upErr.message}`)
   const patch = { recording_src: src, recording_id: recId, recording_key: key, recording_status: "saved" }
   await db.from("dialer_calls").update(patch).eq("id", call.id)
   return { ...call, ...patch } as DialerCall
@@ -66,13 +66,13 @@ async function saveRecording(call: DialerCall): Promise<DialerCall> {
 async function transcribe(call: DialerCall): Promise<Turn[]> {
   const key = process.env.ELEVENLABS_API_KEY
   if (!key || !call.recording_key) return []
-  const audio = await fetch(r2Presign(call.recording_key, { expires: 600 }), { cache: "no-store" })
-  if (!audio.ok) throw new Error(`Recording read ${audio.status}`)
+  const { data: audio, error: readErr } = await supabaseAdmin.storage.from(RECORDINGS_BUCKET).download(call.recording_key)
+  if (readErr || !audio) throw new Error(`Recording read: ${readErr?.message || "empty"}`)
   const form = new FormData()
   form.append("model_id", "scribe_v1")
   form.append("diarize", "true")
   form.append("tag_audio_events", "false")
-  form.append("file", new Blob([await audio.arrayBuffer()], { type: "audio/mpeg" }), "call.mp3")
+  form.append("file", audio, "call.mp3")
   const r = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
     method: "POST", headers: { "xi-api-key": key }, body: form, signal: AbortSignal.timeout(180000),
   })

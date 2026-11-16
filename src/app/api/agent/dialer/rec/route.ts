@@ -9,7 +9,7 @@ export const maxDuration = 300;
 /**
  * Record callbackUrl. Vobiz posts here when a call's recording is ready
  * (Event=RecordStop with RecordUrl/RecordFile + RecordingID). We keep the
- * pointer, then file the call: copy to R2, transcribe, note, PROXe.
+ * pointer, then file the call: copy to the private bucket, transcribe, note, PROXe.
  */
 export async function POST(req: Request) {
   if (!hookOk(req)) return new Response("forbidden", { status: 403 });

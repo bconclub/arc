@@ -1,4 +1,5 @@
-import { r2Presign } from "@/lib/r2";
+import { supabaseAdmin } from "@/lib/supabase";
+import { RECORDINGS_BUCKET } from "@/lib/dialer/process";
 import { recordingKeyOk } from "@/lib/dialer/config";
 import { db } from "@/lib/dialer/members";
 import { getViewer } from "@/lib/team";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * Plays one team-dialer recording. Opens with a signed-in ARC session, or with
  * the per-call key in ?k= (that is the link stored on the PROXe lead, so the
- * PROXe player can follow it). Redirects to a 10-minute R2 link; the file
+ * PROXe player can follow it). Redirects to a 10-minute signed link; the file
  * itself is never public.
  */
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -20,5 +21,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   if (!allowed) return new Response("not found", { status: 404 });
   const { data } = await db.from("dialer_calls").select("recording_key").eq("id", id).maybeSingle();
   if (!data?.recording_key) return new Response("recording not saved yet", { status: 404 });
-  return Response.redirect(r2Presign(data.recording_key, { expires: 600 }), 302);
+  const { data: signed } = await supabaseAdmin.storage.from(RECORDINGS_BUCKET).createSignedUrl(data.recording_key, 600);
+  if (!signed?.signedUrl) return new Response("recording unavailable", { status: 502 });
+  return Response.redirect(signed.signedUrl, 302);
 }

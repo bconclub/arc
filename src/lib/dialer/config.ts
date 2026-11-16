@@ -4,7 +4,8 @@
 //   VOBIZ_AUTH_ID, VOBIZ_AUTH_TOKEN  the Vobiz account the numbers live on
 //   DIALER_BASE_URL                  optional; where Vobiz posts back (default https://arc.bconclub.com)
 //   SESSION_SECRET                   already set; the webhook token is derived from it, so no new secret
-// Recordings use the existing R2_* env, transcripts ELEVENLABS_API_KEY, notes ANTHROPIC_API_KEY,
+// Recordings go to the dialer-recordings bucket in ARC's Supabase, transcripts need
+// ELEVENLABS_API_KEY, notes ANTHROPIC_API_KEY,
 // PROXe writes PROXE_DB_URL + PROXE_DB_SERVICE_KEY.
 import { createHmac, timingSafeEqual } from "crypto"
 
