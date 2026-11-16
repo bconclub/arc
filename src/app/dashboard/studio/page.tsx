@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Clapperboard, Images, Loader2, Plus } from "lucide-react";
+import { Clapperboard, Images, Loader2, PlaySquare, Plus } from "lucide-react";
 import { StatusPill, type Tone } from "@/components/ui/StatusPill";
 import { useRole } from "@/components/StudioShell";
 
@@ -136,6 +136,10 @@ export default function StudioPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link href="/dashboard/studio/review"
+            className="flex h-10 items-center gap-2 rounded-soft border border-[var(--border)] px-4 text-[13px] font-medium text-text hover:bg-[var(--surface-hover)]">
+            <PlaySquare size={15} /> Review
+          </Link>
           <Link href="/dashboard/studio/references"
             className="flex h-10 items-center gap-2 rounded-soft border border-[var(--border)] px-4 text-[13px] font-medium text-text hover:bg-[var(--surface-hover)]">
             <Images size={15} /> References
