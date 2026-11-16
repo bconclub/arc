@@ -4,6 +4,13 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-11-16 #18: Two new sales hires (FDE + digital marketer), week 1.** (Open)
+- Both call in week 1, warmest leads first: AI-handed-off outbound (107), inbound Booking Made (54) and Qualified (13), then New inbound (124) and untouched outbound (184). Counts from BCON PROXe on 16 Nov.
+- Z listens in on the first 5 calls for each person on day 1. One script. Every call logged in PROXe the same day.
+- Gate Fri 20 Nov 18:00: 30 demo conversations combined, 4 commitments (card, pilot fee or signed start) before any setup.
+- From week 2: FDE owns setups and live accounts; marketer owns the Apollo list and ads that feed the calls.
+- Sprint #15 (10 paying by 15 Nov) ended at 5 paying (Z's count).
+
 **2026-11-02 #16: Windchasers app: Z's decision replaces the council verdict.** Z is giving the app to Windchasers at no
 charge, as a thank-you to Sumaiya for a long relationship, with changes done as needed. This is a one-off for this client,
 not a price or offer for anyone else. The council had advised keeping Rs 1.2 lakh; Z overrode that.
