@@ -43,3 +43,11 @@
 ## PROXe conversation films (2026-11)
 - EP 01 "The Other You" and EP 02 "The Interview": twins, MK8 voice, 19 stills from one locked face. Written PROXe, spoken "Proxy", subtitles say PROXe.
   End line: "You take care of the business. I'll do the rest." Folders: `EDITR/content/proxe/other-you/`, `the-interview/`.
+
+## Scafell Partners (founder, 2026-11-17)
+- Positioning: **"Outcome as a service."** Done-for-you services, so never "open-source" as a selling point. Proof words:
+  UK-hosted, no lock-in, outcome first. Films end on "Outcome as a service. Scafell Partners." with the site and email.
+- Brand line on the opening: "AI systems for UK businesses." No single product leads; show how all of them join up.
+- Product logos live in `bvcl-site/public/brands` (Smartsite, MyAIM, PROXe, Dialgen.AI, Faircode); use them wherever a
+  product is named. VisorFlow, Reelme and Marketing only have the site's placeholder marks so far.
+- Don't hold the light path on the logo once it is in full view; let it fade.
