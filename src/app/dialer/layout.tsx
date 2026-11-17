@@ -3,7 +3,8 @@ import { DialerProvider } from "@/components/team/Dialer";
 import { PinGate } from "./PinGate";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "PROXe Dialer" };
+// Its own manifest, so the dialer installs on a phone as "PROXe Dialer" and opens here.
+export const metadata = { title: "PROXe Dialer", manifest: "/dialer/manifest.webmanifest" };
 
 /**
  * The dialer on its own. Not signed in: the passcode pad (each caller's own
