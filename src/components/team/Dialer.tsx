@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ListChecks, Loader2, PhoneCall, PhoneOff, Radio } from "lucide-react";
+import { ChevronDown, ListChecks, Loader2, PhoneCall, PhoneOff, Radio } from "lucide-react";
 
 /**
  * The team dialer, client side. One provider in the team shell: it knows if the
@@ -32,6 +32,7 @@ type Ctx = {
   state: DialerState | null
   ready: boolean                          // this login can dial from a company number
   current: DialerCallRow | null           // the call on the line or just finished
+  starting: string | null                 // who is being called, from the tap until the server knows
   dial: (t: { id?: string; phone?: string; name: string }) => Promise<void>
   end: () => Promise<void>
   closeLine: () => Promise<void>
@@ -50,6 +51,7 @@ export function DialerProvider({ children }: { children: React.ReactNode }) {
   const [message, setMessage] = useState("");
   const [names, setNames] = useState<Record<string, string>>({});
   const [watch, setWatch] = useState<string | null>(null); // the call this tab started
+  const [starting, setStarting] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
@@ -70,19 +72,22 @@ export function DialerProvider({ children }: { children: React.ReactNode }) {
   // Poll fast while a call is on or being filed, slowly otherwise.
   useEffect(() => {
     const busy = Boolean(current && (ACTIVE.includes(current.status) || !current.processed_at)) || Boolean(state?.live);
-    timer.current = setTimeout(load, busy ? 3000 : 20000);
+    const hot = Boolean(starting) || Boolean(current && ACTIVE.includes(current.status));
+    timer.current = setTimeout(load, hot ? 1500 : busy ? 3000 : 20000);
     return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [state, current, load]);
+  }, [state, current, starting, load]);
   useEffect(() => { load(); }, [load]);
 
   const dial = useCallback(async (t: { id?: string; phone?: string; name: string }) => {
     setMessage("");
-    const r = await post("/api/team/dialer/connect", t.id ? { target_id: t.id } : { phone: t.phone });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) { setMessage(j.error || "Could not start the call."); return; }
+    setStarting(t.name); // the call screen opens on the tap, not when the server answers
+    const r = await post("/api/team/dialer/connect", t.id ? { target_id: t.id } : { phone: t.phone }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    if (!r || !r.ok) { setStarting(null); setMessage(j.error || "Could not start the call."); return; }
     setNames((n) => ({ ...n, [j.id]: t.name }));
     setWatch(j.id);
-    load();
+    await load();
+    setStarting(null);
   }, [load]);
 
   const end = useCallback(async () => {
@@ -98,7 +103,7 @@ export function DialerProvider({ children }: { children: React.ReactNode }) {
 
   const ready = Boolean(state?.configured && state.me?.number && (state.me?.mobile || state.live));
   const withName = current && !current.target_name && names[current.id] ? { ...current, target_name: names[current.id] } : current;
-  const value: Ctx = { state, ready, current: withName, dial, end, closeLine, message, reload: load };
+  const value: Ctx = { state, ready, current: withName, starting, dial, end, closeLine, message, reload: load };
   return <DialerContext.Provider value={value}>{children}</DialerContext.Provider>;
 }
 
@@ -117,11 +122,11 @@ function useTick(on: boolean) {
 }
 
 /** The questions to get answered on this call; tap one when it is covered. */
-function Guide({ questions, callId }: { questions: string[]; callId: string }) {
+function Guide({ questions, callId, bare }: { questions: string[]; callId: string; bare?: boolean }) {
   const [done, setDone] = useState<Record<string, boolean>>({});
   const left = questions.filter((_, i) => !done[callId + i]).length;
   return (
-    <div className="mx-auto mb-2 max-w-[1200px] rounded-panel border border-[var(--border)] bg-[var(--bg)] p-3">
+    <div className={bare ? "w-full" : "mx-auto mb-2 max-w-[1200px] rounded-panel border border-[var(--border)] bg-[var(--bg)] p-3"}>
       <p className="mb-2 text-[11.5px] text-text-muted">
         {left ? `${left} question${left === 1 ? "" : "s"} still to cover before you hang up. Tap one when it is answered.` : "All covered. Agree the next step and close."}
       </p>
@@ -143,6 +148,57 @@ function Guide({ questions, callId }: { questions: string[]; callId: string }) {
   );
 }
 
+/**
+ * The call screen: covers the page from the tap until the call ends, so there
+ * is never a doubt a call is going on. Who, what is happening, the timer, the
+ * questions to cover, End. "Hide" drops it to the bar.
+ */
+export function CallScreen() {
+  const d = useDialer();
+  const c = d?.current;
+  const active = Boolean(c && ACTIVE.includes(c.status));
+  const [hidden, setHidden] = useState<string | null>(null);
+  useTick(active);
+  if (!d?.state) return null;
+  const on = Boolean(d.starting) || active;
+  const key = c?.id || "starting";
+  if (!on || hidden === key) return null;
+  const who = d.starting || c?.target_name || c?.phone || "";
+  const live = d.state.live;
+  const connected = c?.status === "connected";
+  const status = connected ? `On call · ${clock(c!.answered_at || c!.started_at)}`
+    : d.starting || !live ? "Your phone is ringing. Pick up."
+    : "PROXe dialing now…";
+  const guide = d.state.guide || [];
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Call in progress" className="fixed inset-0 z-50 flex flex-col bg-[var(--bg)]">
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="text-[12px] text-text-muted">From {d.state.me?.number || "company number"} · recorded</span>
+        <button onClick={() => setHidden(key)} className="flex h-9 items-center gap-1 rounded-soft px-3 text-[12.5px] text-text-muted hover:bg-[var(--surface-hover)]">
+          <ChevronDown size={15} /> Hide
+        </button>
+      </div>
+      <div className="flex flex-col items-center gap-2 px-6 pb-5 pt-4 text-center">
+        <span className={`flex h-16 w-16 items-center justify-center rounded-full ${connected ? "bg-accent-green text-white" : "bg-[var(--brand-soft)] text-[var(--brand-text)]"}`}>
+          {connected ? <Radio size={26} /> : <Loader2 size={26} className="animate-spin" />}
+        </span>
+        <p className="max-w-full truncate text-[22px] font-bold tracking-tight text-text">{who}</p>
+        <p aria-live="polite" className={`text-[15px] ${connected ? "font-semibold text-accent-green" : "text-text"}`}>{status}</p>
+        {!connected && <p className="text-[12.5px] text-text-muted">Stay on the call.</p>}
+      </div>
+      <div className="mx-auto w-full max-w-[640px] flex-1 overflow-y-auto px-4">
+        {guide.length > 0 && c && <Guide questions={guide} callId={c.id} bare />}
+      </div>
+      <div className="flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-4">
+        <button onClick={d.end} disabled={!c}
+          className="flex h-14 w-full max-w-[320px] items-center justify-center gap-2 rounded-pill bg-accent-red text-[16px] font-semibold text-white disabled:opacity-50">
+          <PhoneOff size={18} /> End call
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** The strip above the bottom nav: line off / ringing you / on a call / filed. */
 export function DialerBar() {
   const d = useDialer();
@@ -158,9 +214,9 @@ export function DialerBar() {
 
   let body: React.ReactNode;
   if (c && c.status === "dialing" && !live) {
-    body = <><Loader2 size={15} className="animate-spin" /> <span className="truncate">Ringing your phone. Pick up, then {who} is called.</span></>;
+    body = <><Loader2 size={15} className="animate-spin" /> <span className="truncate">Your phone is ringing. Pick up.</span></>;
   } else if (c && c.status === "dialing") {
-    body = <><Loader2 size={15} className="animate-spin" /> <span className="truncate">Ringing {who}…</span></>;
+    body = <><Loader2 size={15} className="animate-spin" /> <span className="truncate">PROXe dialing {who} now…</span></>;
   } else if (c && c.status === "connected") {
     body = <><Radio size={15} className="text-accent-green" /> <span className="truncate">On call with {who} · {clock(c.answered_at || c.started_at)}</span></>;
   } else if (c && !c.processed_at) {

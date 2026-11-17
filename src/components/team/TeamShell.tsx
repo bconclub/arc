@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, CalendarCheck, Headphones, LayoutGrid, LogOut, MessageCircle, PhoneCall, Users } from "lucide-react";
-import { DialerBar, DialerProvider } from "@/components/team/Dialer";
+import { CallScreen, DialerBar, DialerProvider } from "@/components/team/Dialer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { VERSION } from "@/lib/version";
 
@@ -77,6 +77,7 @@ export function TeamShell({ name, owner, studio, children }: { name: string; own
         ))}
       </nav>
       <DialerBar />
+      <CallScreen />
     </div>
     </DialerProvider>
   );

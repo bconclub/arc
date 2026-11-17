@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   if (!member || !callUuid) return xml(speak("Sorry, the dialer could not open your line.") + "<Hangup/>");
   const sessionId = await openSession(member, callUuid);
   if (sessionId) await dialPending(member, sessionId).catch((e) => console.error("[dialer] pending", (e as Error).message));
-  return xml(roomXml(member, "Dialer is live. Calling your lead now. Stay on this line between calls."));
+  return xml(roomXml(member, "Proxy dialing now."));
 }
 
 export const GET = POST;

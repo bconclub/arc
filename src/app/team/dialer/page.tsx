@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Phone } from "lucide-react";
 import { useDialer } from "@/components/team/Dialer";
 import { DialerCallCard as CallCard, ist } from "@/components/team/DialerCallCard";
 
@@ -84,18 +84,30 @@ function Mine({ me, onSaved }: { me: { mobile: string | null; number: string | n
   );
 }
 
-/** Call a number that is not a lead yet. */
+/** The keypad: type any number and call it from the company number. */
 function Pad() {
   const d = useDialer();
   const [phone, setPhone] = useState("");
   if (!d) return null;
-  const busy = Boolean(d.current && ["dialing", "connected"].includes(d.current.status));
+  const busy = Boolean(d.starting) || Boolean(d.current && ["dialing", "connected"].includes(d.current.status));
+  const digits = phone.replace(/\D/g, "");
+  const key = "flex h-14 items-center justify-center rounded-soft border border-[var(--border)] text-[20px] font-semibold text-text hover:bg-[var(--surface-hover)] active:bg-[var(--surface-hover)]";
   return (
-    <div className="flex flex-wrap items-end gap-2 border-t border-[var(--border)] pt-3">
-      <label className="flex flex-col gap-1 text-[11.5px] text-text-muted">Call a number<input className={inputCls} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98xxxxxxxx" inputMode="tel" /></label>
-      <button onClick={() => d.dial({ phone, name: phone })} disabled={busy || phone.replace(/\D/g, "").length < 10 || !d.ready}
-        className="h-9 rounded-soft bg-[var(--brand)] px-4 text-[13px] font-semibold text-[var(--brand-ink)] disabled:opacity-40">Call</button>
-      {d.message && <span className="text-[12px] text-accent-red">{d.message}</span>}
+    <div className="mx-auto flex w-full max-w-[320px] flex-col gap-2">
+      <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d+ ]/g, "").slice(0, 16))} placeholder="Enter a number" inputMode="tel" aria-label="Number to call"
+        className="h-14 w-full rounded-soft border border-[var(--border)] bg-[var(--bg)] px-3 text-center text-[24px] font-semibold tracking-wide text-text outline-none placeholder:text-[15px] placeholder:font-normal placeholder:text-text-muted focus:border-[var(--brand-line)]" />
+      <div className="grid grid-cols-3 gap-2">
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "0"].map((k) => (
+          <button key={k} type="button" className={key} onClick={() => setPhone((p) => (p + k).slice(0, 16))}>{k}</button>
+        ))}
+        <button type="button" className={key + " text-[14px] font-normal text-text-muted"} onClick={() => setPhone((p) => p.slice(0, -1))} aria-label="Delete last digit">Delete</button>
+      </div>
+      <button onClick={() => d.dial({ phone, name: phone })} disabled={busy || digits.length < 10 || !d.ready}
+        className="flex h-14 items-center justify-center gap-2 rounded-pill bg-accent-green text-[16px] font-semibold text-white disabled:opacity-40">
+        <Phone size={18} /> Call
+      </button>
+      {!d.ready && <p className="text-center text-[12px] text-text-muted">Save your mobile below first.</p>}
+      {d.message && <p className="text-center text-[12px] text-accent-red">{d.message}</p>}
     </div>
   );
 }
@@ -157,18 +169,18 @@ export default function TeamDialer() {
             <p>You have no company number yet. The owner sets it below.</p>
           ) : (
             <>
+              <Pad />
               {s.live ? (
                 <p><span className="font-semibold text-accent-green">Your line is open</span> since {ist(s.live.since)}. Tap the phone on any lead to call it. Stay on the line between calls.</p>
               ) : (
                 <ol className="list-decimal space-y-1 pl-5">
-                  <li>Tap the phone on a lead (or type a number below). <b>Your own phone rings first</b>: pick up.</li>
+                  <li>Type a number above, or tap the phone on a lead. <b>Your own phone rings first</b>: pick up.</li>
                   <li>The lead is then called from <b>{s.me.number}</b> and joins you. They never see your number.</li>
                   <li>When they hang up, stay on the line and tap the next lead.</li>
                   <li>Open with: &quot;Hi, this is {s.me.name === "You" ? "(your name)" : s.me.name.split(" ")[0]} from PROXe. Just so you know, this call is recorded for quality. Is now a good time?&quot;</li>
                 </ol>
               )}
               <Mine me={s.me} onSaved={d.reload} />
-              <Pad />
             </>
           )}
         </section>

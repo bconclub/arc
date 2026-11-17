@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   }
 
   if (callUuid) await openSession(member, callUuid);
-  return xml(roomXml(member, `Dialer is live, ${member.name.split(" ")[0]}. Open ARC and tap a lead to call. Stay on this line.`));
+  return xml(roomXml(member, "Proxy dialer is live."));
 }
 
 export const GET = POST;
