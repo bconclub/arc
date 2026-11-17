@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 /**
  * GOD's Sales room feed (Z, 16 Nov 2026): who on the PROXe (BCON) team is logged in right now and what they did
  * today. Bearer ARC_INGEST_SECRET. Read-only. ?emails=a@x.com,b@y.com limits the list.
- * online = a dashboard session seen in the last 3 minutes; on_call = a call logged in the last 5 minutes.
+ * online = a dashboard session seen in the last 10 minutes; on_call = a call logged in the last 5 minutes.
  */
 type U = { id: string; email: string; full_name: string | null; last_login: string | null };
 type S = { user_id: string; last_seen_at: string | null; active_seconds: number | null };
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       const lastCall = calls.length ? Math.max(...calls.map((x) => Date.parse(x.created_at))) : null;
       return {
         name: u.full_name || u.email, email: u.email,
-        online: lastSeen !== null && now - lastSeen < 3 * 60e3,
+        online: lastSeen !== null && now - lastSeen < 10 * 60e3,
         on_call: lastCall !== null && now - lastCall < 5 * 60e3,
         calls: calls.length,
         followups: a.filter((x) => x.activity_type === "followup").length,
