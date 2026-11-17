@@ -1,6 +1,7 @@
 import { verifyHash } from "@/lib/auth";
 import { hookOk, hookUrl, tail10, vobizParams } from "@/lib/dialer/config";
-import { db, memberById, roomFor } from "@/lib/dialer/members";
+import { memberById } from "@/lib/dialer/members";
+import { openSession, roomXml } from "@/lib/dialer/line";
 import { esc, speak, xml } from "@/lib/dialer/vobiz";
 
 export const runtime = "nodejs";
@@ -36,20 +37,8 @@ export async function POST(req: Request) {
     );
   }
 
-  // One live line per person: an older one is closed.
-  await db.from("dialer_sessions").update({ status: "ended", ended_at: new Date().toISOString() })
-    .eq("member_id", member.id).eq("status", "live");
-  const room = roomFor(member.id);
-  if (callUuid) {
-    await db.from("dialer_sessions").upsert(
-      { member_id: member.id, agent_call_uuid: callUuid, room, status: "live", started_at: new Date().toISOString(), ended_at: null },
-      { onConflict: "agent_call_uuid" },
-    );
-  }
-  return xml(
-    speak(`Dialer is live, ${member.name.split(" ")[0]}. Open ARC and tap a lead to call. Stay on this line.`) +
-    `<Conference beep="false" stayAlone="true" startConferenceOnEnter="true" endConferenceOnExit="true" callbackUrl="${esc(hookUrl("hangup", { kind: "room" }))}" callbackMethod="POST">${esc(room)}</Conference>`,
-  );
+  if (callUuid) await openSession(member, callUuid);
+  return xml(roomXml(member, `Dialer is live, ${member.name.split(" ")[0]}. Open ARC and tap a lead to call. Stay on this line.`));
 }
 
 export const GET = POST;

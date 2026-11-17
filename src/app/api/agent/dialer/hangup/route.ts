@@ -1,6 +1,7 @@
 import { hookOk, vobizParams } from "@/lib/dialer/config";
 import { db } from "@/lib/dialer/members";
 import { processCall } from "@/lib/dialer/process";
+import { failPending } from "@/lib/dialer/line";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,10 @@ export async function POST(req: Request) {
   const callUuid = p("CallUUID");
   const isHangup = /hangup/i.test(p("Event")) || Boolean(p("HangupCause")) || /completed|hangup/i.test(p("CallStatus"));
   if (!callUuid || !isHangup) return Response.json({ ok: true });
+
+  // The leg that rang a person's own phone ended: anything still waiting on it did not happen.
+  const m = new URL(req.url).searchParams.get("m") || "";
+  if (/^[0-9a-f-]{36}$/i.test(m)) await failPending(m, "Your phone did not pick up.");
 
   const now = new Date().toISOString();
   await db.from("dialer_sessions").update({ status: "ended", ended_at: now }).eq("agent_call_uuid", callUuid).eq("status", "live");

@@ -15,6 +15,7 @@ import { mirrorCallToProxe } from "@/lib/proxe-outbound-mirror"
 import { downloadRecording, findRecording } from "./vobiz"
 import { recordingLink } from "./config"
 import { pushCallToProxe } from "./proxe"
+import { getGuide } from "./guide"
 
 /** Private bucket in ARC's Supabase; files are only ever read through signed links. */
 export const RECORDINGS_BUCKET = "dialer-recordings"
@@ -43,6 +44,7 @@ type Note = {
   note: string
   keenness: "keen" | "lukewarm" | "not" | null
   fields: Record<string, string>
+  checklist: { q: string; answered: boolean; answer: string }[]
 }
 
 async function saveRecording(call: DialerCall): Promise<DialerCall> {
@@ -92,7 +94,7 @@ async function transcribe(call: DialerCall): Promise<Turn[]> {
 
 const FIELD_KEYS = ["business", "contact_name", "role", "need", "lead_sources", "lead_volume", "current_setup", "team_size", "budget", "decision_maker", "timeline", "objections", "next_step", "callback_when"]
 
-async function writeNote(turns: Turn[], ctx: { agent: string; lead: string }): Promise<{ note: Note; labelled: Turn[] }> {
+async function writeNote(turns: Turn[], ctx: { agent: string; lead: string }, guide: string[]): Promise<{ note: Note; labelled: Turn[] }> {
   const raw = await callAI({
     max_tokens: 1500,
     systemPrompt: [
@@ -104,12 +106,14 @@ async function writeNote(turns: Turn[], ctx: { agent: string; lead: string }): P
       ' "summary": "2-3 plain sentences: what was discussed and agreed",',
       ' "note": "the note the salesperson would log: what they want, the next step and when",',
       ' "keenness": "keen" | "lukewarm" | "not" | null,',
-      ` "fields": { ${FIELD_KEYS.map((k) => `"${k}": ""`).join(", ")} } }`,
+      ` "fields": { ${FIELD_KEYS.map((k) => `"${k}": ""`).join(", ")} },`,
+      ' "checklist": [ { "q": "<the question, as given>", "answered": true | false, "answer": "<what the customer said, short>" } ] }',
+      "checklist: one entry per question in CALL GUIDE, same order. answered = true only if the customer's answer is in the transcript, even if the salesperson never asked it word for word.",
       "Fill a field only with what someone actually said (either side). Leave it empty otherwise. Never guess.",
       "interested = they want a demo, pricing or to go ahead. callback = they asked to be called at another time.",
       "Keep the customer's own words for numbers, prices and times. Use ₹ for rupees.",
     ].join("\n"),
-    userMessage: `Salesperson: ${ctx.agent}\nLead on file: ${ctx.lead}\n\nTranscript:\n${turns.map((t) => `${t.speaker}: ${t.text}`).join("\n").slice(0, 60000)}`,
+    userMessage: `Salesperson: ${ctx.agent}\nLead on file: ${ctx.lead}\n\nCALL GUIDE:\n${guide.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nTranscript:\n${turns.map((t) => `${t.speaker}: ${t.text}`).join("\n").slice(0, 60000)}`,
   })
   const m = raw.match(/\{[\s\S]*\}/)
   const j = m ? JSON.parse(m[0]) : {}
@@ -124,6 +128,10 @@ async function writeNote(turns: Turn[], ctx: { agent: string; lead: string }): P
       note: String(j.note || j.summary || "").slice(0, 3000),
       keenness: ["keen", "lukewarm", "not"].includes(j.keenness) ? j.keenness : null,
       fields,
+      checklist: guide.map((q, i) => {
+        const c = Array.isArray(j.checklist) ? j.checklist[i] : null
+        return { q, answered: c?.answered === true, answer: typeof c?.answer === "string" ? c.answer.trim().slice(0, 300) : "" }
+      }),
     },
     labelled: turns.map((t) => ({ speaker: agentSpeaker && t.speaker === agentSpeaker ? ctx.agent : "Customer", text: t.text })),
   }
@@ -176,7 +184,7 @@ export async function processCall(id: string, opts: { force?: boolean } = {}): P
       } else {
         const heard = await transcribe(call)
         if (heard.length) {
-          const written = await writeNote(heard, { agent: agentName, lead: [target?.name, target?.org].filter(Boolean).join(", ") || call.phone })
+          const written = await writeNote(heard, { agent: agentName, lead: [target?.name, target?.org].filter(Boolean).join(", ") || call.phone }, await getGuide())
           note = written.note
           turns = written.labelled
         }
@@ -194,16 +202,18 @@ export async function processCall(id: string, opts: { force?: boolean } = {}): P
     const detail = note && Object.keys(note.fields).length
       ? "\n" + Object.entries(note.fields).map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`).join("\n")
       : ""
+    const missed = (note?.checklist || []).filter((c) => !c.answered).map((c) => c.q)
     const lines = [
       `${call.direction === "inbound" ? "Inbound call" : "Call"} by ${agentName} from ${call.caller_id || "company number"}, ${call.duration_secs ?? 0}s.`,
       noteText + detail,
+      missed.length ? `NOT COVERED ON THIS CALL (ask next time):\n${missed.map((q) => "- " + q).join("\n")}` : "",
       recUrl && `RECORDING: ${recUrl}`,
       turns.length ? `TRANSCRIPT:\n${turns.map((t) => `${t.speaker}: ${t.text}`).join("\n")}` : "",
     ].filter(Boolean).join("\n")
 
     await db.from("dialer_calls").update({
       transcript: turns.length ? JSON.stringify(turns) : null,
-      note: noteText, fields: note?.fields || null, outcome,
+      note: noteText, fields: note?.fields || null, checklist: note?.checklist || null, outcome,
     }).eq("id", id)
 
     // ARC: the lead's activity (shows on the lead panel), keyed on the call.
@@ -272,6 +282,9 @@ export async function sweep(limit = 3): Promise<void> {
     const force = Date.now() - Date.parse(c.ended_at) > RECORDING_WAIT_MS
     await processCall(c.id, { force }).catch((e) => console.error("[dialer] sweep", c.id, (e as Error).message))
   }
+  // A call that waited over 3 minutes for the person's own phone never started.
+  await db.from("dialer_calls").update({ status: "failed", error: "Your phone did not pick up.", ended_at: new Date().toISOString(), recording_status: "none", processed_at: new Date().toISOString() })
+    .eq("status", "dialing").is("session_id", null).lt("started_at", new Date(Date.now() - 3 * 60_000).toISOString())
   // Calls stuck "dialing"/"connected" for 3 hours never sent a hang-up: close them.
   const old = new Date(Date.now() - 3 * 3600e3).toISOString()
   await db.from("dialer_calls").update({ status: "failed", hangup_cause: "NO_HANGUP_EVENT", ended_at: new Date().toISOString() })

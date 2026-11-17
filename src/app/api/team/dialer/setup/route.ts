@@ -3,6 +3,8 @@ import { forbidden, getViewer, unauthorized } from "@/lib/team";
 import { e164, hookUrl, vobizConfigured } from "@/lib/dialer/config";
 import { attachNumber, ensureApplication } from "@/lib/dialer/vobiz";
 import { db } from "@/lib/dialer/members";
+import { actorFor } from "@/lib/dialer/line";
+import { saveGuide } from "@/lib/dialer/guide";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,10 +19,19 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const viewer = await getViewer();
   if (!viewer) return unauthorized();
-  if (viewer.kind !== "owner") return forbidden("Only the owner sets up the dialer.");
-  const b = await req.json().catch(() => null) as { member_id?: string; mobile?: string; number?: string; pin?: string; connect?: boolean } | null;
-  const id = String(b?.member_id || "");
+  const b = await req.json().catch(() => null) as { member_id?: string; mobile?: string; number?: string; pin?: string; connect?: boolean; guide?: string[] } | null;
+  const owner = viewer.kind === "owner";
+  // The call guide (questions to get answered) is the owner's.
+  if (Array.isArray(b?.guide)) {
+    if (!owner) return forbidden("Only the owner edits the call guide.");
+    const { error } = await saveGuide(b.guide.map(String));
+    return error ? Response.json({ error: "Could not save the guide." }, { status: 500 }) : Response.json({ ok: true });
+  }
+  // A team login sets its own mobile and passcode; the owner sets anyone's, and the company number.
+  const self = await actorFor(viewer);
+  const id = owner && b?.member_id ? String(b.member_id) : self?.id || "";
   if (!/^[0-9a-f-]{36}$/i.test(id)) return Response.json({ error: "Pick a person." }, { status: 400 });
+  if (!owner && (b?.number !== undefined || b?.connect)) return forbidden("Only the owner sets the company number.");
 
   if (b?.connect) {
     if (!vobizConfigured()) return Response.json({ error: "Add the Vobiz keys to ARC first." }, { status: 503 });

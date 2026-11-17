@@ -43,6 +43,16 @@ export function DialerCallCard({ c, who, onOpenLead }: { c: DialerCallRow; who?:
           {c.has_recording && (
             <audio controls preload="none" className="mt-2 h-9 w-full max-w-md" src={`/api/agent/dialer/recording/${c.id}`} />
           )}
+          {c.checklist && c.checklist.length > 0 && (
+            <ul className="mt-2 space-y-0.5 text-[12.5px]">
+              {c.checklist.map((q, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className={`shrink-0 font-semibold ${q.answered ? "text-accent-green" : "text-accent-red"}`}>{q.answered ? "Answered" : "Not asked"}</span>
+                  <span className="text-text">{q.q}{q.answered && q.answer ? <span className="text-text-muted"> — {q.answer}</span> : null}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-1 flex flex-wrap gap-3 text-[12px]">
             {c.fields && Object.keys(c.fields).length > 0 && (
               <button onClick={() => setOpen((v) => !v)} className="text-[var(--brand-text)] underline">{open ? "Hide details" : "Details picked up"}</button>

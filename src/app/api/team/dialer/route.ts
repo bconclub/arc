@@ -2,6 +2,8 @@ import { getViewer, unauthorized } from "@/lib/team";
 import { vobizConfigured } from "@/lib/dialer/config";
 import { db, liveSession } from "@/lib/dialer/members";
 import { sweep } from "@/lib/dialer/process";
+import { actorFor } from "@/lib/dialer/line";
+import { getGuide } from "@/lib/dialer/guide";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +22,7 @@ async function named<T extends Row>(rows: T[]): Promise<T[]> {
   });
 }
 
-const CALL_COLS = "id,member_id,target_id,direction,phone,caller_id,status,hangup_cause,started_at,answered_at,ended_at,duration_secs,recording_status,recording_key,note,fields,outcome,processed_at,proxe_synced_at,proxe_error,error";
+const CALL_COLS = "id,member_id,target_id,direction,phone,caller_id,status,hangup_cause,started_at,answered_at,ended_at,duration_secs,recording_status,recording_key,note,fields,checklist,outcome,processed_at,proxe_synced_at,proxe_error,error";
 
 /**
  * Dialer state for the signed-in person: is their line open, their calls (36 h, or ?days=N)
@@ -41,22 +43,18 @@ export async function GET(req: Request) {
   const days = Math.min(60, Math.max(0, Number(new URL(req.url).searchParams.get("days")) || 0));
   const since = new Date(Date.now() - (days ? days * 24 : 36) * 3600e3).toISOString();
   const cap = days ? 500 : 0;
+  const actor = await actorFor(viewer);
+  const guide = await getGuide();
+  const session = actor ? await liveSession(actor.id) : null;
+  const me = actor ? {
+    id: actor.id, name: viewer.kind === "team" ? actor.name : "You",
+    mobile: actor.dialer_phone || null, number: actor.dialer_caller_id || null, pin_set: Boolean(actor.dialer_pin_hash),
+  } : null;
+  const live = session ? { since: session.started_at } : null;
   if (viewer.kind === "team") {
-    const m = viewer.member;
-    const { data: me } = await db.from("team_members").select("dialer_phone,dialer_caller_id,dialer_pin_hash").eq("id", m.id).maybeSingle();
-    const session = await liveSession(m.id);
-    const { data: calls } = await db.from("dialer_calls").select(CALL_COLS).eq("member_id", m.id).gt("started_at", since)
+    const { data: calls } = await db.from("dialer_calls").select(CALL_COLS).eq("member_id", viewer.member.id).gt("started_at", since)
       .order("started_at", { ascending: false }).limit(cap || 40);
-    return Response.json({
-      role: "team",
-      configured: vobizConfigured(),
-      me: {
-        id: m.id, name: m.name,
-        mobile: me?.dialer_phone || null, number: me?.dialer_caller_id || null, pin_set: Boolean(me?.dialer_pin_hash),
-      },
-      live: session ? { since: session.started_at } : null,
-      calls: await named(calls || []),
-    });
+    return Response.json({ role: "team", configured: vobizConfigured(), me, live, guide, calls: await named(calls || []) });
   }
 
   const { data: members } = await db.from("team_members").select("id,name,dialer_phone,dialer_caller_id,dialer_pin_hash").eq("active", true).order("created_at");
@@ -66,6 +64,7 @@ export async function GET(req: Request) {
   return Response.json({
     role: "owner",
     configured: vobizConfigured(),
+    me, live, guide,
     members: ((members || []) as { id: string; name: string; dialer_phone: string | null; dialer_caller_id: string | null; dialer_pin_hash: string | null }[])
       .map((x) => ({
         id: x.id, name: x.name, mobile: x.dialer_phone, number: x.dialer_caller_id, pin_set: Boolean(x.dialer_pin_hash),
