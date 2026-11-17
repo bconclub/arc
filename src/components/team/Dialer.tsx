@@ -107,12 +107,12 @@ export function DialerProvider({ children }: { children: React.ReactNode }) {
   return <DialerContext.Provider value={value}>{children}</DialerContext.Provider>;
 }
 
-const clock = (from: string) => {
+export const clock = (from: string) => {
   const s = Math.max(0, Math.floor((Date.now() - Date.parse(from)) / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-function useTick(on: boolean) {
+export function useTick(on: boolean) {
   const [, set] = useState(0);
   useEffect(() => {
     if (!on) return;
@@ -122,7 +122,7 @@ function useTick(on: boolean) {
 }
 
 /** The questions to get answered on this call; tap one when it is covered. */
-function Guide({ questions, callId, bare }: { questions: string[]; callId: string; bare?: boolean }) {
+export function Guide({ questions, callId, bare }: { questions: string[]; callId: string; bare?: boolean }) {
   const [done, setDone] = useState<Record<string, boolean>>({});
   const left = questions.filter((_, i) => !done[callId + i]).length;
   return (

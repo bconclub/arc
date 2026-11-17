@@ -243,6 +243,7 @@ export async function verifyTeamToken(token: string | undefined): Promise<string
  * (qualification, promote), or anything else in ARC.
  */
 export function teamMayOpen(pathname: string, method: string): boolean {
+  if (/^\/dialer(\/|$)/.test(pathname)) return true; // the dialer workspace
   if (/^\/team(\/|$)/.test(pathname) || /^\/api\/team(\/|$)/.test(pathname) || pathname === "/api/logout") return true;
   if (pathname === "/api/outreach") return method === "GET" || method === "POST";
   if (pathname === "/api/outreach/workspace") return method === "GET";

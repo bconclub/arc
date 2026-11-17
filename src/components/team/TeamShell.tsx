@@ -14,7 +14,7 @@ import { VERSION } from "@/lib/version";
 const NAV = [
   { href: "/team", label: "Today", icon: CalendarCheck, exact: true },
   { href: "/team/leads", label: "Leads", icon: Users },
-  { href: "/team/dialer", label: "Dialer", icon: Headphones },
+  { href: "/dialer", label: "Dialer", icon: Headphones },
   { href: "/team/calls", label: "Calls", icon: PhoneCall },
   { href: "/team/ask", label: "Ask", icon: MessageCircle },
   { href: "/team/playbook", label: "Playbook", icon: BookOpen },

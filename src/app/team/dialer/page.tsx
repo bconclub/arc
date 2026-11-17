@@ -151,9 +151,9 @@ export default function TeamDialer() {
   return (
     <div className="flex flex-col gap-4">
       <header>
-        <h1 className="text-[22px] font-bold tracking-tight text-text">Dialer</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-text">Dialer setup and call logs</h1>
         <p className="text-[12.5px] text-text-muted">
-          Call leads from the company number, never your own. Every call is recorded, and the note goes to the lead in PROXe.
+          Your mobile, the call guide and every call with its recording. To make calls, open the <a href="/dialer" className="underline">Dialer</a>.
         </p>
       </header>
 
