@@ -1,5 +1,5 @@
 import { e164, hookOk, hookUrl, tail10, vobizParams } from "@/lib/dialer/config";
-import { db, memberByCallerId, memberById, memberByMobile, targetByPhone } from "@/lib/dialer/members";
+import { db, memberById, memberByMobile, membersByCallerId, targetByPhone } from "@/lib/dialer/members";
 import { recordSession, speak, xml, esc } from "@/lib/dialer/vobiz";
 
 export const runtime = "nodejs";
@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
  *
  * - From a team member's registered mobile: ask for the dialer passcode.
  * - From anyone else (a lead calling back): ring whoever last called them
- *   from that number (else its owner), recorded, filed like any other call.
+ *   from that number; if nobody did, ring every caller on that number at
+ *   once. Recorded and filed like any other call, answered or not.
  */
 export async function POST(req: Request) {
   if (!hookOk(req)) return new Response("forbidden", { status: 403 });
@@ -33,18 +34,19 @@ export async function POST(req: Request) {
   const { data: last } = await db.from("dialer_calls").select("member_id").eq("direction", "outbound")
     .eq("phone", e164(from) || from).order("started_at", { ascending: false }).limit(1);
   const lastMember = last?.[0]?.member_id ? await memberById(last[0].member_id) : null;
-  const owner = lastMember?.dialer_phone && tail10(lastMember.dialer_caller_id) === tail10(to) ? lastMember : await memberByCallerId(to);
-  if (!owner?.dialer_phone) return xml(speak("Thank you for calling BCON. We will call you back shortly.") + "<Hangup/>");
+  const mine = lastMember?.dialer_phone && tail10(lastMember.dialer_caller_id) === tail10(to) ? [lastMember] : [];
+  const ring = mine.length ? mine : await membersByCallerId(to);
   const target = await targetByPhone(from);
   const { data: row } = await db.from("dialer_calls").insert({
-    member_id: owner.id, target_id: target?.id || null, proxe_lead_id: target?.proxe_lead_id || null,
-    direction: "inbound", phone: from, caller_id: to, call_uuid: callUuid || null,
+    member_id: ring[0]?.id || lastMember?.id || null, target_id: target?.id || null, proxe_lead_id: target?.proxe_lead_id || null,
+    direction: "inbound", phone: e164(from) || from, caller_id: to, call_uuid: callUuid || null,
     status: "connected", answered_at: new Date().toISOString(),
   }).select("id").single();
+  if (!ring.length) return xml(speak("Thank you for calling. We will call you back shortly.") + "<Hangup/>");
   const rec = row?.id ? recordSession(hookUrl("rec", { c: row.id })) : "";
   return xml(
     rec +
-    `<Dial callerId="${esc(to)}" timeout="30"><Number>${esc(owner.dialer_phone)}</Number></Dial>` +
+    `<Dial callerId="${esc(to)}" timeout="25">${ring.map((m) => `<Number>${esc(m.dialer_phone!)}</Number>`).join("")}</Dial>` +
     speak("Sorry, nobody could take your call. We will call you back shortly."),
   );
 }

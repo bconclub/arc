@@ -56,7 +56,7 @@ export function DialerProvider({ children }: { children: React.ReactNode }) {
 
   const load = useCallback(async () => {
     try {
-      const r = await fetch("/api/team/dialer", { cache: "no-store" });
+      const r = await fetch("/api/team/dialer?days=7", { cache: "no-store" });
       if (r.ok) setState(await r.json());
     } catch { /* keep the last state */ }
   }, []);

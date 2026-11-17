@@ -30,6 +30,13 @@ export async function memberByCallerId(phone: string) {
   return (await activeMembers()).find((m) => tail10(m.dialer_caller_id) === t) || null
 }
 
+/** Everyone who calls from this company number and has a mobile to ring. */
+export async function membersByCallerId(phone: string) {
+  const t = tail10(phone)
+  if (t.length < 10) return []
+  return (await activeMembers()).filter((m) => tail10(m.dialer_caller_id) === t && m.dialer_phone)
+}
+
 export async function memberById(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null
   const { data } = await db.from("team_members").select(COLS).eq("id", id).eq("active", true).maybeSingle()
