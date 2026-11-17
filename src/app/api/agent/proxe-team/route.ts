@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  */
 type U = { id: string; email: string; full_name: string | null; last_login: string | null };
 type S = { user_id: string; last_seen_at: string | null; active_seconds: number | null };
-type A = { created_by: string | null; activity_type: string; created_at: string };
+type A = { created_by: string | null; activity_type: string; created_at: string; note: string | null; lead_id: string | null; next_follow_up_date: string | null };
 
 async function px<T>(path: string): Promise<T> {
   const url = process.env.PROXE_DB_URL!, key = process.env.PROXE_DB_SERVICE_KEY!;
@@ -34,8 +34,13 @@ export async function GET(req: NextRequest) {
     const inList = `(${ids.join(",")})`;
     const [sess, acts] = await Promise.all([
       px<S[]>(`dashboard_user_sessions?select=user_id,last_seen_at,active_seconds&user_id=in.${inList}&last_seen_at=gte.${encodeURIComponent(dayStart)}`),
-      px<A[]>(`activities?select=created_by,activity_type,created_at&created_by=in.${inList}&created_at=gte.${encodeURIComponent(dayStart)}`),
+      px<A[]>(`activities?select=created_by,activity_type,created_at,note,lead_id,next_follow_up_date&created_by=in.${inList}&created_at=gte.${encodeURIComponent(dayStart)}`),
     ]);
+    const leadIds = Array.from(new Set(acts.map((x) => x.lead_id).filter(Boolean))) as string[];
+    const leads = leadIds.length ? await px<{ id: string; customer_name: string | null; phone: string | null }[]>(`all_leads?select=id,customer_name,phone&id=in.(${leadIds.join(",")})`) : [];
+    const leadName = new Map(leads.map((l) => [l.id, l.customer_name || l.phone || ""]));
+    const NOPICK = /not picked|no answer|not answer|busy|switched off|not reachable|unreachable|didn'?t pick|did not pick|ringing|wrong number/i;
+    const DEMO = /demo|meeting|booked|appointment|call (him|her|them) (at|tomorrow)|tomorrow at|visit/i;
     const now = Date.now();
     const people = users.map((u) => {
       const s = sess.filter((x) => x.user_id === u.id);
@@ -49,6 +54,11 @@ export async function GET(req: NextRequest) {
         online: lastSeen !== null && now - lastSeen < 10 * 60e3,
         on_call: lastCall !== null && now - lastCall < 5 * 60e3,
         calls: calls.length,
+        picked_up: calls.filter((x) => !NOPICK.test(x.note || "")).length,
+        demos: calls.filter((x) => DEMO.test(x.note || "") && !NOPICK.test(x.note || "")).length,
+        leads_touched: new Set(a.map((x) => x.lead_id).filter(Boolean)).size,
+        recent: a.slice().sort((p, q) => Date.parse(q.created_at) - Date.parse(p.created_at)).slice(0, 10).map((x) => ({
+          at: x.created_at, type: x.activity_type, lead: leadName.get(x.lead_id || "") || "", note: (x.note || "").slice(0, 120), next: x.next_follow_up_date })),
         followups: a.filter((x) => x.activity_type === "followup").length,
         notes: a.filter((x) => x.activity_type === "note").length,
         active_minutes: Math.round(s.reduce((t, x) => t + (x.active_seconds || 0), 0) / 60),
