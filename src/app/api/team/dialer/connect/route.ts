@@ -1,6 +1,7 @@
 import { getViewer, unauthorized } from "@/lib/team";
 import { e164, vobizConfigured } from "@/lib/dialer/config";
 import { db, liveSession, targetByPhone } from "@/lib/dialer/members";
+import { proxeLeadByPhone } from "@/lib/dialer/proxe";
 import { actorFor, dialLead, failPending, ringAgent } from "@/lib/dialer/line";
 
 export const runtime = "nodejs";
@@ -50,8 +51,11 @@ export async function POST(req: Request) {
     return Response.json({ error: "Add your mobile number on the Dialer page first, so the dialer can ring you." }, { status: 409 });
   }
 
+  // A number PROXe knows but ARC's lead list does not: the call still files on that PROXe lead.
+  const proxeLeadId = target?.proxe_lead_id || (await proxeLeadByPhone(to).catch(() => null))?.id || null;
+
   const { data: row, error } = await db.from("dialer_calls").insert({
-    member_id: actor.id, session_id: session?.id || null, target_id: target?.id || null, proxe_lead_id: target?.proxe_lead_id || null,
+    member_id: actor.id, session_id: session?.id || null, target_id: target?.id || null, proxe_lead_id: proxeLeadId,
     direction: "outbound", phone: to, caller_id: from, status: "dialing",
   }).select("id").single();
   if (error || !row) return Response.json({ error: "Could not start the call. Retry." }, { status: 500 });

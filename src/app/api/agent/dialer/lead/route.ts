@@ -1,4 +1,4 @@
-import { hookOk, hookUrl, vobizParams } from "@/lib/dialer/config";
+import { hookOk, hookUrl, liveKey, vobizParams } from "@/lib/dialer/config";
 import { db } from "@/lib/dialer/members";
 import { esc, recordSession, speak, xml } from "@/lib/dialer/vobiz";
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   const base = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/^http/, "ws");
   const streamOn = Boolean(cfg.on && base && (!cfg.only_targets?.length || (call.target_id && cfg.only_targets.includes(call.target_id))));
   const stream = streamOn
-    ? `<Stream bidirectional="false" audioTrack="${esc(cfg.track || "both")}" keepCallAlive="false" contentType="audio/x-l16;rate=8000" streamTimeout="7200">${esc(`${base}/functions/v1/dialer-stream?c=${call.id}`)}</Stream>`
+    ? `<Stream bidirectional="false" audioTrack="${esc(cfg.track || "both")}" keepCallAlive="false" contentType="audio/x-l16;rate=8000" streamTimeout="7200">${esc(`${base}/functions/v1/dialer-stream?c=${call.id}.${liveKey(call.id)}`)}</Stream>`
     : "";
   return xml(
     recordSession(hookUrl("rec", { c: call.id })) + stream +

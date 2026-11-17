@@ -121,24 +121,53 @@ export function useTick(on: boolean) {
   }, [on]);
 }
 
-/** The questions to get answered on this call; tap one when it is covered. */
-export function Guide({ questions, callId, bare }: { questions: string[]; callId: string; bare?: boolean }) {
+export type LiveLine = { who: "caller" | "lead"; text: string; at: string };
+
+/** What is being said on a call right now, and the questions it has answered. Polled while the call is on. */
+export function useLive(callId: string | null, on: boolean) {
+  const [live, setLive] = useState<{ id: string; lines: LiveLine[]; covered: Record<string, string> } | null>(null);
+  useEffect(() => {
+    if (!callId || !on) return;
+    let stop = false;
+    const pull = async () => {
+      try {
+        const r = await fetch(`/api/team/dialer/live?c=${callId}`, { cache: "no-store" });
+        if (r.ok && !stop) { const j = await r.json(); setLive({ id: callId, lines: j.lines || [], covered: j.covered || {} }); }
+      } catch { /* keep the last */ }
+    };
+    pull();
+    const t = setInterval(pull, 2500);
+    return () => { stop = true; clearInterval(t); };
+  }, [callId, on]);
+  return live && live.id === callId ? live : null;
+}
+
+/**
+ * The questions to get answered on this call. They tick themselves as the
+ * customer answers (covered, from the live transcript); a tap overrides.
+ */
+export function Guide({ questions, callId, bare, covered }: { questions: string[]; callId: string; bare?: boolean; covered?: Record<string, string> }) {
   const [done, setDone] = useState<Record<string, boolean>>({});
-  const left = questions.filter((_, i) => !done[callId + i]).length;
+  const isOn = (i: number) => done[callId + i] ?? (covered?.[String(i)] !== undefined);
+  const left = questions.filter((_, i) => !isOn(i)).length;
   return (
     <div className={bare ? "w-full" : "mx-auto mb-2 max-w-[1200px] rounded-panel border border-[var(--border)] bg-[var(--bg)] p-3"}>
       <p className="mb-2 text-[11.5px] text-text-muted">
-        {left ? `${left} question${left === 1 ? "" : "s"} still to cover before you hang up. Tap one when it is answered.` : "All covered. Agree the next step and close."}
+        {left ? `${left} question${left === 1 ? "" : "s"} still to cover before you hang up.` : "All covered. Agree the next step and close."}
       </p>
       <ul className="space-y-1">
         {questions.map((q, i) => {
-          const on = Boolean(done[callId + i]);
+          const on = isOn(i);
+          const answer = covered?.[String(i)];
           return (
             <li key={i}>
               <button onClick={() => setDone((d) => ({ ...d, [callId + i]: !on }))} aria-pressed={on}
-                className={`flex w-full items-start gap-2 rounded-soft px-2 py-1.5 text-left text-[13px] ${on ? "text-text-muted line-through" : "text-text"} hover:bg-[var(--surface-hover)]`}>
+                className="flex w-full items-start gap-2 rounded-soft px-2 py-1.5 text-left text-[13px] hover:bg-[var(--surface-hover)]">
                 <span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border ${on ? "border-accent-green bg-accent-green" : "border-[var(--border)]"}`} />
-                {q}
+                <span className="min-w-0">
+                  <span className={on ? "text-text-muted line-through" : "text-text"}>{q}</span>
+                  {on && answer ? <span className="block text-[12px] text-accent-green">{answer}</span> : null}
+                </span>
               </button>
             </li>
           );

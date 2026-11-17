@@ -16,6 +16,7 @@ import { downloadRecording, findRecording } from "./vobiz"
 import { recordingLink } from "./config"
 import { pushCallToProxe } from "./proxe"
 import { getGuide } from "./guide"
+import { clearOldLive } from "./live"
 
 /** Private bucket in ARC's Supabase; files are only ever read through signed links. */
 export const RECORDINGS_BUCKET = "dialer-recordings"
@@ -285,6 +286,7 @@ export async function sweep(limit = 3): Promise<void> {
   // A call that waited over 3 minutes for the person's own phone never started.
   await db.from("dialer_calls").update({ status: "failed", error: "Your phone did not pick up.", ended_at: new Date().toISOString(), recording_status: "none", processed_at: new Date().toISOString() })
     .eq("status", "dialing").is("session_id", null).lt("started_at", new Date(Date.now() - 3 * 60_000).toISOString())
+  await clearOldLive().catch(() => null)
   // Calls stuck "dialing"/"connected" for 3 hours never sent a hang-up: close them.
   const old = new Date(Date.now() - 3 * 3600e3).toISOString()
   await db.from("dialer_calls").update({ status: "failed", hangup_cause: "NO_HANGUP_EVENT", ended_at: new Date().toISOString() })
