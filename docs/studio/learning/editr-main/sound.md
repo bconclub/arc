@@ -103,3 +103,21 @@ Fix, now in the Windchasers build scripts:
    808 sub and hats feel louder than LUFS says.
 3. Mix, measure the mix, one fixed gain to -14 LUFS, then `alimiter`. Result: LRA 3 LU, peaks -3 dBFS.
 Check the music level in a voice pause, not just integrated LUFS.
+
+## Sound effects: stop the "90s game" sound (founder, 2026-11-17, AI Wrap 002)
+Founder on three passes (36, then 16 one-shot sounds in 55 s, then a paper kit): "a lot of sounds like a 90s game we are
+playing. It's completely wrong." and "there are resources out there which can help you to fix this. That's really important."
+What the research found (full notes with sources: EDITR content/forward-slash/SOUND-RESOURCES.md):
+- **The fault is count and placement, not level.** earshot's `real-sound` skill measured 7 professional launch films: about
+  85% of cuts carry no sound, about 75% of on-screen typing is silent, swishes come about twice a film. A sound on every
+  cut, text line and number is what a game does.
+- Cheap tells (earshot `skills/real-sound/references/sound-design.md`): whoosh on every cut, boom on every logo, one sample
+  repeated, synth beeps, a different room on every sound, endings that stop mid-note, reverb on tiny sounds.
+- Recipe to try next (voice-led reel, our adaptation, unheard): 6-10 sounds per 55 s, in the gaps between words; one hero
+  impact at 30-60% of runtime; whoosh onset 100-450 ms before its peak; risers end 30-250 ms before the hit; effects dry,
+  mono, centred; one matched kit from one designed library, 4+ takes for anything repeated; tonal sounds in the music's key.
+- **Until a pass has been heard and approved, ship the no-effects mix** (voice, real bites, music; `mix_clean.py` in
+  wrap-002) and offer a designed pass only as a second option. The agent cannot hear: never call a sound pass good.
+- Needs the founder's yes: earshot install (uv tool + about 1.1 GB of models; use only its listening commands, not its
+  synthesised `forge`/`sfx` bank), Sonniss GDC 2026 bundle (7.47 GB, royalty free, commercial use, no attribution).
+- AI Wrap rule the same day: the voice says only "This is AI Wrap"; edition and story numbers are shown, never read.
