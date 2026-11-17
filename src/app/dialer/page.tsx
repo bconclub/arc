@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ClipboardPaste, Delete, Loader2, LogOut, Phone, PhoneOff } from "lucide-react";
+import { ClipboardPaste, Delete, History as HistoryIcon, Loader2, LogOut, Phone, PhoneOff, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { clock, Guide, useDialer, useLive, useTick, type DialerCallRow, type LiveLine } from "@/components/team/Dialer";
 
 /**
- * The dialer. Left: the number pad, Call, and while a call is on, who it is,
- * how long, the recording light and End. Right (below, on a phone): who this
- * number is in PROXe, and either my recent calls or, during a call, the
- * questions to cover and what is being said. Setup and full call logs live
- * elsewhere (/team/dialer/setup, /team/calls).
+ * The dialer. In the middle: the number pad, Call, and while a call is on, who
+ * it is, how long, the recording light and End. Beside it (below, on a phone),
+ * only when there is something to show: who this number is in PROXe and,
+ * during a call, the questions to cover and what is being said. My recent
+ * calls slide in from the right behind the history button in the header.
+ * Setup and full call logs live elsewhere (/team/dialer/setup, /team/calls).
  */
 const ACTIVE = ["dialing", "connected"];
 const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -118,7 +119,6 @@ function History({ calls, onCall, canCall }: { calls: DialerCallRow[]; onCall: (
   const [open, setOpen] = useState<string | null>(null);
   return (
     <section>
-      <h2 className="mb-1 px-1 text-[12px] text-text-muted">Recent calls</h2>
       {!calls.length ? <p className="rounded-panel border border-[var(--border)] bg-surface p-4 text-[13px] text-text-muted">No calls yet. Your calls show here with the recording and the note.</p> : (
         <ul className="overflow-hidden rounded-panel border border-[var(--border)] bg-surface">
           {calls.map((c) => {
@@ -159,6 +159,13 @@ function History({ calls, onCall, canCall }: { calls: DialerCallRow[]; onCall: (
 export default function Dialer() {
   const d = useDialer();
   const [phone, setPhone] = useState("");
+  const [history, setHistory] = useState(false);
+  useEffect(() => {
+    if (!history) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setHistory(false); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [history]);
   const c = d?.current || null;
   const active = Boolean(c && ACTIVE.includes(c.status));
   useTick(active);
@@ -200,6 +207,8 @@ export default function Dialer() {
       <header className="flex h-14 items-center gap-2 px-4">
         <span className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-text"><span className="h-2.5 w-2.5 rounded-full bg-[var(--brand)]" /> PROXe Dialer</span>
         <span className="ml-auto text-[12.5px] text-text-muted">{me?.name && me.name !== "You" ? me.name : ""}</span>
+        <button onClick={() => setHistory(true)} aria-label="Recent calls" title="Recent calls"
+          className="flex h-9 w-9 items-center justify-center rounded-soft text-text-muted hover:bg-[var(--surface-hover)] hover:text-text"><HistoryIcon size={16} /></button>
         <ThemeToggle />
         <button onClick={logout} aria-label="Log out" className="flex h-9 w-9 items-center justify-center rounded-soft text-text-muted hover:bg-[var(--surface-hover)] hover:text-text"><LogOut size={15} /></button>
       </header>
@@ -247,7 +256,7 @@ export default function Dialer() {
           )}
         </div>
 
-        <div className="flex w-full max-w-[360px] flex-col gap-3 lg:max-w-[480px] lg:flex-1">
+        {(busy || lead || loading) && <div className="flex w-full max-w-[360px] flex-col gap-3 lg:max-w-[480px] lg:flex-1">
           <LeadCard lead={lead} loading={loading} />
           {busy && c && guide.length > 0 && (
             <section className="rounded-panel border border-[var(--border)] bg-surface p-3">
@@ -255,9 +264,23 @@ export default function Dialer() {
             </section>
           )}
           {connected && <Transcript lines={live?.lines || []} me={me?.name && me.name !== "You" ? me.name : "You"} />}
-          {!busy && <History calls={mine} canCall={Boolean(d.ready)} onCall={(x) => d.dial(x.target_id ? { id: x.target_id, name: x.target_name || x.phone } : { phone: x.phone, name: x.phone })} />}
-        </div>
+        </div>}
       </main>
+
+      {history && (
+        <div className="fixed inset-0 z-40 flex justify-end">
+          <button aria-label="Close recent calls" onClick={() => setHistory(false)} className="absolute inset-0 bg-black/40" />
+          <aside role="dialog" aria-label="Recent calls" className="relative flex h-full w-full max-w-[400px] flex-col border-l border-[var(--border)] bg-[var(--bg)] shadow-xl">
+            <div className="flex h-14 shrink-0 items-center px-4">
+              <h2 className="text-[15px] font-bold tracking-tight text-text">Recent calls</h2>
+              <button onClick={() => setHistory(false)} aria-label="Close" className="ml-auto flex h-9 w-9 items-center justify-center rounded-soft text-text-muted hover:bg-[var(--surface-hover)] hover:text-text"><X size={16} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-6">
+              <History calls={mine} canCall={Boolean(d.ready) && !busy} onCall={(x) => { setHistory(false); d.dial(x.target_id ? { id: x.target_id, name: x.target_name || x.phone } : { phone: x.phone, name: x.phone }); }} />
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
