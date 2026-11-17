@@ -225,7 +225,7 @@ export function DialerBar() {
     const missed = (c.checklist || []).filter((q) => !q.answered).length;
     const bad = c.recording_status === "missing" || c.proxe_error || c.status === "failed";
     body = (
-      <Link href="/team/dialer" className={`truncate ${bad ? "text-accent-red" : ""}`}>
+      <Link href="/team/dialer/setup" className={`truncate ${bad ? "text-accent-red" : ""}`}>
         {c.status === "failed" ? `${who}: ${c.error || "did not go through"}`
           : c.status === "no_answer" ? `${who}: no answer. Logged.`
           : bad ? `${who}: ${c.recording_status === "missing" ? "recording missing" : "not in PROXe yet"}. Open`
@@ -235,7 +235,7 @@ export function DialerBar() {
   } else if (live) {
     body = <><Radio size={15} className="text-accent-green" /> <span className="truncate">Line open. Tap a lead&apos;s phone to call.</span></>;
   } else if (!me.mobile) {
-    body = <Link href="/team/dialer" className="truncate underline">Add your mobile on the Dialer page to start calling.</Link>;
+    body = <Link href="/team/dialer/setup" className="truncate underline">Add your mobile on the Dialer page to start calling.</Link>;
   } else {
     body = <span className="truncate text-text-muted">Tap a lead&apos;s phone to call. Your phone rings first; the lead sees {me.number}.</span>;
   }

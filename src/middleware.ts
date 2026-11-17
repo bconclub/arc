@@ -43,9 +43,12 @@ async function teamMemberAccess(id: string): Promise<string[] | null> {
 //
 // reports/<slug> is a client market report sent by link (public/reports, static
 // files only). It holds market data, never fees, offers or anything private.
+// dialer and api/dialer are the dialer's own door: /dialer shows a passcode pad
+// to anyone not signed in, and api/dialer/login checks the passcode (rate-limited).
+// Everything the dialer then calls (api/team/dialer/*) still needs the session.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|studio/|reports/|manifest\\.webmanifest|sw\\.js|offline\\.html|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|login|api/login|dialer|api/dialer|api/arc/sync|api/agent|api/proxe/briefs|investor|api/investor|api/public|studio/|reports/|manifest\\.webmanifest|sw\\.js|offline\\.html|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$).*)",
   ],
 };
 

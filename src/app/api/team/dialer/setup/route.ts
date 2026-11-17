@@ -1,4 +1,4 @@
-import { hashPassword } from "@/lib/auth";
+import { hashPassword, verifyHash } from "@/lib/auth";
 import { forbidden, getViewer, unauthorized } from "@/lib/team";
 import { e164, hookUrl, vobizConfigured } from "@/lib/dialer/config";
 import { attachNumber, ensureApplication } from "@/lib/dialer/vobiz";
@@ -59,6 +59,11 @@ export async function POST(req: Request) {
   }
   if (b?.pin) {
     if (!/^\d{6}$/.test(b.pin)) return Response.json({ error: "Passcode must be 6 digits." }, { status: 400 });
+    // The passcode alone signs a caller in at /dialer, so no two people may share one.
+    const { data: pins } = await db.from("team_members").select("id,dialer_pin_hash").neq("id", id).not("dialer_pin_hash", "is", null);
+    for (const o of (pins || []) as { dialer_pin_hash: string }[]) {
+      if (await verifyHash(b.pin, o.dialer_pin_hash)) return Response.json({ error: "Pick a different passcode." }, { status: 409 });
+    }
     patch.dialer_pin_hash = await hashPassword(b.pin);
   }
   if (!Object.keys(patch).length) return Response.json({ error: "Nothing to change." }, { status: 400 });

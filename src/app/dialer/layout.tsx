@@ -1,13 +1,17 @@
-import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/team";
 import { DialerProvider } from "@/components/team/Dialer";
+import { PinGate } from "./PinGate";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "PROXe Dialer" };
 
-/** The dialer on its own: sign in, land here, start calling. Team logins and the owner. */
+/**
+ * The dialer on its own. Not signed in: the passcode pad (each caller's own
+ * 6-digit passcode signs them in as themselves). Signed in (a caller, or the
+ * owner): the dialer.
+ */
 export default async function DialerLayout({ children }: { children: React.ReactNode }) {
-  const viewer = await getViewer();
-  if (!viewer) redirect("/login?next=/dialer");
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return <PinGate />;
   return <DialerProvider>{children}</DialerProvider>;
 }
