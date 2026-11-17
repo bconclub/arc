@@ -199,3 +199,13 @@ has figured it out, we need to do this for the GTM content."
   fill ~80% of the frame, every scene's cards on screen from its first frame, no white/grey flash frames, and a hard cut
   between dark and light layers (a light layer left up after its content fades covers the next scene). Always watch the
   final at 0.5 s in both aspects (`fps=2,tile`) before sending.
+- **Founder on Scafell v02/v03 (2026-11-17): "not showing any animation of anything... just showing messages... no design
+  sense... go learn everything EDITR knows and read ARC, then build."** The lesson was already written here: flat tiles
+  were rejected for this brand on 3 Nov. **Before any new cut for a brand, read founder-feedback.md for that brand and
+  open the last film they accepted; start from its engine.** v04 reused the premium 3D logo scene (EDITR
+  `content/scafell/motion/scene.html`) and added: pieces of the logo that drift apart and lock on the voice; lost points
+  of light with labels projected from 3D (`vector.project(cam)`, works with `setViewOffset`); one glass DOM panel over the
+  WebGL canvas with CSS perspective tilt, wired to the pulse by an SVG curve from the projected head; panel contents
+  rebuilt as an HTML string per frame so every element moves (dash-offset dots on wires, waveform bars, typing, a ring
+  that fills, a chart that draws). `cam.setViewOffset` shifts the subject aside so panel and type get their own half.
+  A card is "showing a message"; a panel where something travels, fills, types or draws is animation.
