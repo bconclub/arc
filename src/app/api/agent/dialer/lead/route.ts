@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const id = new URL(req.url).searchParams.get("c") || "";
   const p = await vobizParams(req);
   const { data: call } = /^[0-9a-f-]{36}$/i.test(id)
-    ? await db.from("dialer_calls").select("id,session_id").eq("id", id).maybeSingle()
+    ? await db.from("dialer_calls").select("id,session_id,target_id").eq("id", id).maybeSingle()
     : { data: null };
   if (!call) return xml("<Hangup/>");
 
@@ -29,8 +29,17 @@ export async function POST(req: Request) {
   if (!session || session.status !== "live") {
     return xml(speak("Hello, this is BCON. Sorry, we got cut off. We will call you back shortly.") + "<Hangup/>");
   }
+  // Live audio to the transcriber (dialer_settings "stream"): off unless switched
+  // on, and while it is being proven, only for the targets listed there.
+  const { data: st } = await db.from("dialer_settings").select("value").eq("key", "stream").maybeSingle();
+  const cfg = (st?.value || {}) as { on?: boolean; only_targets?: string[]; track?: string };
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/^http/, "ws");
+  const streamOn = Boolean(cfg.on && base && (!cfg.only_targets?.length || (call.target_id && cfg.only_targets.includes(call.target_id))));
+  const stream = streamOn
+    ? `<Stream bidirectional="false" audioTrack="${esc(cfg.track || "both")}" keepCallAlive="false" contentType="audio/x-l16;rate=8000" streamTimeout="7200">${esc(`${base}/functions/v1/dialer-stream?c=${call.id}`)}</Stream>`
+    : "";
   return xml(
-    recordSession(hookUrl("rec", { c: call.id })) +
+    recordSession(hookUrl("rec", { c: call.id })) + stream +
     `<Conference beep="false" startConferenceOnEnter="true" endConferenceOnExit="false">${esc(session.room)}</Conference>`,
   );
 }
