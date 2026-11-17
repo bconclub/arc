@@ -146,3 +146,65 @@ Founder notes on v1: three stories is too thin, cover the whole market (who owns
   Kit in EDITR content/forward-slash/brand/logo-v2. Film end: a red cut slashes down, wordmark opens from the cut (~2 s).
 - To end a film earlier with the same song: Edit Song "make the Main Hook X s instead of Y, do not add a section, keep the
   Final Hit as the last 10 s". `tighten.py` (max pause 0.30 s) recovers ~2 s from a 73 s voice.
+
+
+## 2026-11-17: AI Wrap 002, India AI v02 and the Vox look (thread: EDITR Main fork (forward slash), 17 Nov 2026)
+Where it lives: EDITR `content/forward-slash/wrap-002` (the template to copy), `india-ai`, `radar/`, `SOUND-RESOURCES.md`.
+
+### What the founder asked for, and what changed
+- A wrap beats a single-story polish when he wants something to send: five stories of the month so far, people level
+  (your phone, your SIM plan, your language), 55 s. India story second; the weakest story (Jio) pushed to the end.
+- **Numbers are shown, not read.** The voice says only "This is AI Wrap." The edition (002) and story numbers (1-5) are the
+  badge on screen. Facts with numbers inside a story (4,000 rupees, 80 times) are still spoken.
+- **Voice = Z** (his new ElevenLabs clone), **Eleven v4**. Do not press Auto-tag blindly: it added `[clears throat]` and
+  `[sighs]`. Type plain tags yourself: `[energetic]` at the top, `[short pause]` between stories, `[serious]`, `[proud]`,
+  `[upbeat]` where the story turns. 620 characters cost about 650 credits for two takes.
+- "We cannot say last year": the money line must be this year's or labelled honestly. The fact-check found no single source
+  with a 2026 country-by-country AI investment table; Stanford AI Index 2026 (calendar 2025) is the solid chart, and
+  India is 6th there (France and Canada sit above it), so a US/China/UK/India chart would lie about rank.
+- Music: he picks by ear from two options; AI Wrap 002 = option B "Tech Wrap" (ElevenLabs Music v2.5, instrumental
+  hip-hop news theme). Make the film first, then make the track to the film's exact length.
+- Sound effects: see sound.md (17 Nov). Default is the no-effects mix until he has heard and liked a designed pass.
+
+### The engine: every time in the edit comes from the voice
+- `edit.py` holds SENT (the captions, token for token as faster-whisper writes the take) and reads `vo/<take>.words.json`.
+  `at(sentence, word)` gives the film time of any word; shots, slams, badges, clippings and captions all hang off it.
+  A new take, or a new order, retimes the whole film with no hand timing. If the transcription splits a number
+  ("4 ,000"), the token count assert fails: transcribe again or edit SENT to match.
+- `ORDER = [(0, 3), (8, 10), (6, 7), "BONTA", ...]`: runs of sentences and real bites in screen order. Each story is its
+  own phrase in the take with a pause on both sides, so stories can be reordered or dropped without re-recording
+  (India to #2, Jio to last: zero credits). Keep one sentence per idea so cuts stay clean.
+- Real bites sit between voice pieces (`sync()` locks the picture to the bite). Two short ones are enough: Rob Bonta
+  "This is all hands on deck", Sam Altman "It's hard to imagine the AI revolution without Jensen".
+- Partial renders: `render_wrap.mjs "hook=A" SECONDS OUTDIR PORT 1080 1920 START` writes f0000.png from START; copy the
+  frames back at `round(START * 24)` and re-encode. A 2 s fix takes a minute; a full 55 s render takes 5-15.
+- Story badge = the Jensen year odometer reused (`YEARS` with y 1-5 and a label). First entry at t = -1 so frame 0 has it.
+- Captions: two lines of four words on crisp ink pills, live word yellow, upcoming words dim. No shadows anywhere; slams
+  stay readable because the picture dims to 60% under them (`bg`).
+- Level every music option the same way: gain = 10^((-29.4 - track LUFS) / 20). The second option peaked over 0 dBFS
+  until the limiter came down to 0.78.
+
+### The Vox look (`ui/vox.html`, same EDL, one flag: `PAGE=ui/vox.html`)
+- Paper ground (#F1EEE4 + grain drawn once), footage as square black-and-white cut-outs with a white border, a strip of
+  tape and a yellow block behind, tilted 1-2 degrees, moving on twos (12 fps) with a small boil.
+- Real headlines as clippings: outlet and date in small red mono, the exact headline, a highlighter that sweeps across
+  the words in `[brackets]` (`CLIPS` in edit.py). Only headlines we opened and can quote exactly.
+- Hero figures on a highlighter block; captions are ink on paper with the live word highlighted.
+- A square card shows about 1.8x more of a 16:9 frame than the 9:16 crop, so channel tickers and lower thirds come back
+  into view: band shots keep their own zoom, others cap at 1.25, a shot can carry `vz`.
+
+### Checks that caught real faults
+- **Look at the in-point of every shot at full frame**, not only the contact sheet: a Firstpost shot opened on 0.9 s of
+  the channel's own article graphic. The 9:16 crop hid most of it; the square card showed it.
+- Whisper small.en heard "tier" as "year" in one take: compare takes and pick by transcript, then listen to names.
+- Two downloads with the same byte size are not the same file; `cmp` them before choosing.
+- A sub-agent's "confirmed" is a claim: open the source yourself before scripting. Outlet search results (FT, CNBC,
+  Guardian, NPR on the OpenAI suit; Moneycontrol, India Today on phone prices) were opened in the built-in browser.
+
+### Working with sub-agents on a day of many videos
+- Scouts (India, global) return ranked picks with sources and "needs checking"; a fact-checker reads the primary report
+  and writes FACTCHECK.md; prep agents take a reel to "ready for voice": SCRIPT.md, footage, edit.py on a placeholder
+  words file (2.4 words/s, 0.45 s between sentences), test frames in both looks. The main thread keeps ElevenLabs and
+  the final render, because two agents in one browser tab collide.
+- Give each agent its own folder and port range, the template folder to copy, and the house rules that bit us that day.
+- Agents stop when the session restarts: check their folders, then resume them by id with a short note.

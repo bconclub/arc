@@ -17,7 +17,7 @@ Other threads write their own folders next to this one; this folder holds what t
 | [edit-and-delivery.md](edit-and-delivery.md) | The edit script, captions, end card, frame 0, QA commands, Drive and ARC Studio delivery |
 | [tools.md](tools.md) | Driving ChatGPT, ComfyUI, ElevenLabs, Drive and ARC from the browser; every quirk we hit |
 | [documentary-films.md](documentary-films.md) | Manipur and frwdslash: sourced scripts, real footage, one visual rule, the build |
-| [today-in-ai.md](today-in-ai.md) | The daily forward slash show: format, routine, what bit us |
+| [today-in-ai.md](today-in-ai.md) | The forward slash show and AI Wrap: format, routine, what bit us; AI Wrap 002 voice-timed engine, Vox look, sub-agent day (17 Nov 2026) |
 | [brands.md](brands.md) | Product truth and guardrails per brand this thread worked on |
 | [reference-library.md](reference-library.md) | The rated template library on ARC at /dashboard/studio/references and how it was made |
 | [code-made-app-films.md](code-made-app-films.md) | Four Instagram references for code-made app films and explainer reels, and what we built |

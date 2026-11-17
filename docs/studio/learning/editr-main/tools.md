@@ -72,3 +72,18 @@ buy or upgrade.
 - ElevenLabs TTS: page layout shifts cost two broken takes (about 780 credits). Screenshot and check the speaker chip and the text before Generate.
 - Read the balance before planning sound: bottom of the TTS page, or `/app/subscription` for the renewal date. Music is 30 credits a second.
 - Openverse often times out; Wikimedia Commons worked for SFX. Check the licence and listen for a usable file.
+
+
+## ElevenLabs, 17 Nov 2026 (thread: EDITR Main fork (forward slash), 17 Nov 2026)
+- **Voice picker:** Settings tab, click the Voice row, "My voices", type the name, hover the row and click **Use**
+  (clicking the row itself only previews, and may preview the neighbour). The founder's clone is **Z**; "Z V1" is old.
+- **Model row:** a new professional clone can be ready on Eleven v4 while still "being fine-tuned" for older models; use v4.
+- **Typing a long script** into the v4 box can freeze the tab for 30 s (the tool call times out but the text lands);
+  take a screenshot before retrying. Click inside the paragraph first, or Ctrl+A selects the whole page.
+- **Downloads:** each generation card has its own download icon; the positions move when the window resizes, so screenshot
+  before clicking. Files land in Downloads as `ElevenLabs_<UTC time>_<voice>_pvc_...mp3`; copy them out at once.
+- **Music length:** the duration menu's Custom field is a text input (placeholder `mm:ss`) that ignores typing. Click
+  Custom, then set it from the page: native value setter + `input`, `change` and an Enter keydown. Two 55 s options
+  cost 1,650 credits. Download menu per track: MP3 / MP4 / WAV.
+- The browser extension can drop for a minute; `list_connected_browsers` again and wait for the BCON Club browser
+  (deviceId f28429cc) rather than using whichever browser is listed.
