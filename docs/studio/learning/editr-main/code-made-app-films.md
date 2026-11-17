@@ -194,3 +194,8 @@ has figured it out, we need to do this for the GTM content."
 - **Assemble animations with a real logo:** move simple rounded tiles while the shape is in motion, but swap to the true
   logo paths the moment it is assembled (frame 0, the gather, the end); four loose tiles misdraw the connector.
 - ElevenLabs Music (narrow layout): download lives under the row's ⋮ → Download → MP3; sometimes a track won't download.
+- **"Too white, not showing anything" (Scafell v02, 2026-11-17):** light UI scenes on near-white with small cards read as
+  empty on a phone. Fix that held: tinted brand background (indigo-lavender gradient) so white cards pop, UI scaled to
+  fill ~80% of the frame, every scene's cards on screen from its first frame, no white/grey flash frames, and a hard cut
+  between dark and light layers (a light layer left up after its content fades covers the next scene). Always watch the
+  final at 0.5 s in both aspects (`fps=2,tile`) before sending.
