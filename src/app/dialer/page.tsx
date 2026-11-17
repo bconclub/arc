@@ -7,8 +7,8 @@ import { clock, Guide, useDialer, useLive, useTick, type DialerCallRow, type Liv
 
 /**
  * The dialer. In the middle: the number pad, Call, and while a call is on, who
- * it is, how long, the recording light and End. Beside it (below, on a phone),
- * only when there is something to show: who this number is in PROXe and,
+ * it is, how long, the recording light and End. It never moves. To its right
+ * (below, on a phone), sliding in only when there is something to show: who this number is in PROXe and,
  * during a call, the questions to cover and what is being said. My recent
  * calls slide in from the right behind the history button in the header.
  * Setup and full call logs live elsewhere (/team/dialer/setup, /team/calls).
@@ -213,7 +213,8 @@ export default function Dialer() {
         <button onClick={logout} aria-label="Log out" className="flex h-9 w-9 items-center justify-center rounded-soft text-text-muted hover:bg-[var(--surface-hover)] hover:text-text"><LogOut size={15} /></button>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[980px] flex-1 flex-col items-center gap-6 px-4 pb-8 pt-4 lg:flex-row lg:items-start lg:justify-center lg:gap-10">
+      <style>{`@keyframes dialer-side-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}`}</style>
+      <main className="relative flex w-full flex-1 flex-col items-center gap-6 px-4 pb-8 pt-4">
         <div className="flex w-full max-w-[360px] shrink-0 flex-col gap-3">
           {busy ? (
             <>
@@ -256,7 +257,8 @@ export default function Dialer() {
           )}
         </div>
 
-        {(busy || lead || loading) && <div className="flex w-full max-w-[360px] flex-col gap-3 lg:max-w-[480px] lg:flex-1">
+        {(busy || lead || loading) && <div style={{ animation: "dialer-side-in 220ms ease-out" }}
+          className="flex w-full max-w-[360px] flex-col gap-3 lg:absolute lg:bottom-4 lg:left-[calc(50%+212px)] lg:top-4 lg:w-[min(440px,calc(50vw-236px))] lg:max-w-none lg:overflow-y-auto lg:pr-1">
           <LeadCard lead={lead} loading={loading} />
           {busy && c && guide.length > 0 && (
             <section className="rounded-panel border border-[var(--border)] bg-surface p-3">
