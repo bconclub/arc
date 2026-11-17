@@ -1,6 +1,7 @@
 import { getViewer, unauthorized } from "@/lib/team";
 import { e164 } from "@/lib/dialer/config";
 import { db, targetByPhone } from "@/lib/dialer/members";
+import { proxeLeadByPhone } from "@/lib/dialer/proxe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,8 +36,10 @@ export async function GET(req: Request) {
   for (const c of ((calls || []) as { fields: Record<string, string> | null }[]).slice().reverse()) {
     for (const [k, v] of Object.entries(c.fields || {})) if (v) known[k] = v;
   }
+  const proxe = await proxeLeadByPhone(num).catch(() => null);
   return Response.json({
     target: target || null,
+    proxe,
     known,
     activity: ((activity || []) as { summary: string }[]).map((a) => ({ ...a, summary: String(a.summary || "").split("\nTRANSCRIPT:")[0].slice(0, 500) })),
     calls: ((calls || []) as { id: string; recording_key: string | null; fields: unknown }[]).map(({ recording_key, fields, ...c }) => {

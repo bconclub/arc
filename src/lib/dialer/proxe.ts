@@ -138,3 +138,38 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
     })
   }
 }
+
+export type ProxeLead = {
+  id: string; name: string | null; company: string | null; phone: string | null; email: string | null
+  stage: string | null; temperature: string | null; score: number | null; status: string | null
+  source: string | null; last_interaction_at: string | null; booking: string | null
+  summary: string | null; notes: { text: string; at: string | null }[]
+}
+
+/** The PROXe lead with this phone number (newest when there are several), with what PROXe knows about it. */
+export async function proxeLeadByPhone(phone: string | null | undefined): Promise<ProxeLead | null> {
+  const tail = String(phone || "").replace(/\D/g, "").slice(-10)
+  if (tail.length !== 10 || !process.env.PROXE_DB_URL || !process.env.PROXE_DB_SERVICE_KEY) return null
+  type Row = {
+    id: string; customer_name: string | null; phone: string | null; email: string | null; lead_stage: string | null; lead_score: number | null
+    status: string | null; first_touchpoint: string | null; last_interaction_at: string | null; booking_date: string | null; booking_time: string | null
+    unified_context: Record<string, unknown> | null
+  }
+  const rows = await px<Row[]>(
+    `all_leads?select=id,customer_name,phone,email,lead_stage,lead_score,status,first_touchpoint,last_interaction_at,booking_date,booking_time,unified_context` +
+    `&or=(customer_phone_normalized.eq.${tail},phone.like.*${tail})&order=last_interaction_at.desc.nullslast&limit=1`,
+  ).catch(() => [] as Row[])
+  const r = rows[0]
+  if (!r) return null
+  const uc = r.unified_context || {}
+  const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null)
+  const notes = (Array.isArray(uc.admin_notes) ? uc.admin_notes : []) as { text?: string; created_at?: string; at?: string }[]
+  return {
+    id: r.id, name: str(r.customer_name), company: str(uc.company), phone: r.phone, email: str(r.email),
+    stage: str(r.lead_stage), temperature: str(uc.lead_temperature), score: r.lead_score, status: str(r.status),
+    source: str(r.first_touchpoint), last_interaction_at: r.last_interaction_at,
+    booking: r.booking_date ? [r.booking_date, r.booking_time].filter(Boolean).join(" ") : null,
+    summary: str(uc.unified_summary)?.slice(0, 900) || null,
+    notes: notes.filter((n) => str(n?.text)).slice(-3).reverse().map((n) => ({ text: String(n.text).slice(0, 300), at: str(n.created_at) || str(n.at) })),
+  }
+}

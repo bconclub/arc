@@ -52,6 +52,16 @@ export const recordingKeyOk = (callId: string, k: string | null) => {
 export const recordingLink = (callId: string) =>
   `${baseUrl()}/api/agent/dialer/recording/${callId}?k=${recordingKey(callId)}`
 
+/** The live-audio relay proves itself with this: one key per call, handed to it inside the stream URL. */
+export const liveKey = (callId: string) => sign("live:" + callId).slice(0, 32)
+export const liveKeyOk = (callId: string, k: string | null) => {
+  try {
+    return Boolean(k) && same(k!, liveKey(callId))
+  } catch {
+    return false
+  }
+}
+
 /** A webhook URL with the token and any extra query values. */
 export function hookUrl(path: string, q: Record<string, string> = {}) {
   const u = new URL(`${baseUrl()}/api/agent/dialer/${path}`)
