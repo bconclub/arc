@@ -45,6 +45,16 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
    - Case studies (Zensquare, Scan2Kare, Ahoy, Windchasers): collect before vs after numbers; no result without a
      baseline.
 
+6. **From session 10 (18 Nov, [session-10.md](session-10.md)):**
+   - ICP for PROXe: 20 to 30+ leads a day, multi-location, heavy lead flow. Lists, ads and dialer filters use it.
+   - Demo gate: Z's four questions (leads a day, ads, team, trouble), then the loss. Then company profiling and the
+     Dream 100 (prepare it).
+   - Tag every lead and demo with its experiment (new ICP outbound, new ads, old-pool rework of 300+ leads). Target:
+     each caller 20 good calls and 2 demos a day, 15 demos a week; 30 demos by 25 Nov. Weekly count per experiment.
+   - Write the callers' playbook (list building, calling, scripts) so the next hires ramp in half the time. No new
+     hires for 15 days to a month.
+   - Case studies: call, draft the review from their words, send for approval. Ask before recording.
+
 ## Outbound callers: ready (from PROXe Core, 26 Oct, on Z's go)
 - **Agents** (ElevenLabs, all on the Sanket voice): Intro Cold (`noname`, V4: "Hi, is this {business}?", the opener,
   then "who am I speaking with", goal ~30 s and a callback time for Thanzeel, end reason `callback_requested`);

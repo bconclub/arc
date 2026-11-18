@@ -1,6 +1,6 @@
 # PROXe sales pain model (VPP + TEMQ loss), for agents and the voice agent
 
-> **Updated:** 2026-11-12, from Axlrate sessions 07, 08, 09  
+> **Updated:** 2026-11-12, from Axlrate sessions 07 to 10  
 > **Lives in:** ARC Supabase `arc_context`: `sales_pain_model` (this), `gtm_learnings` (method + session notes),
 > `gtm_handoff` (tasks for the GTM agent), `gtm_brief` (offer, rules). Pull from there.  
 > **Use it:** the outbound voice agent, call-prep agents, follow-up writers, trial watchers, case-study writers.  
@@ -10,6 +10,13 @@
 ## 1. The idea in one line
 Nobody buys a feature. They buy when they feel what the current way is costing them. Find that cost, in their
 numbers, before any demo. No loss, no demo.
+
+## 1b. Who we talk to (ICP) and the gate to a demo
+- PROXe is for businesses with 20 to 30+ leads a day, multi-location, heavy lead flow (WhatsApp, JustDial, ads).
+  Under ~15 a day goes to BCON, not PROXe. Never lead a PROXe call with "we'll get you leads".
+- Before any demo, these four must be answered: How many leads do you get a day? Are you running ads? Do you have a
+  team handling them? Are you having trouble with this? Not answered, no demo.
+- An ICP that works: a single founder struggling with ~100 WhatsApps a day.
 
 ## 2. How the buyer sees us (VPP)
 - **Value provider:** "nice to have". They listen, ask little, say "after Diwali", "send details". No urgency.
@@ -48,7 +55,7 @@ Ask in the first conversation, write every number down. It is their loss, never 
    second call with Z. Not a demo, not a price, not a payment link.
 2. **Open on them, not PROXe.** Reason for the call in one line, tied to their business ("we work with clinics in
    Bangalore on missed enquiries; quick question about how you handle yours").
-3. **Ask the section 4 questions,** a few at a time, in their language (English, Hindi, Kannada, Malayalam as they
+3. **Ask the four questions in section 1b first (no fit, end politely), then the section 4 questions,** a few at a time, in their language (English, Hindi, Kannada, Malayalam as they
    speak). Listen more than talk. Repeat their numbers back to confirm.
 4. **Say the loss back in rupees, using only their numbers.** Never invent or round up a number they did not give.
    If they don't know a number, ask for a rough guess; if still none, log "unknown" and move on.

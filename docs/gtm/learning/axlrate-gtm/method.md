@@ -61,3 +61,6 @@ The Google Sheet "PROXe GTM Trifecta" (tabs Trifecta, Causal Law, PROXe GTM, TEM
 - **09 (11 Nov) Loss as per TEMQ:** get their time/effort/money/quality loss before any demo; trials checked on day
   2 and triggered on that loss; results told as a delta on the loss; no LinkedIn crawling. Notes:
   [session-09.md](session-09.md).
+- **10 (18 Nov) ICP:** market, company, person (IMP, ICoP, IPP), worked back from a closed deal; PROXe ICP = 20 to 30+
+  leads a day, multi-location; count each experiment on its own with a deadline; structure before hiring; four
+  questions before any demo; draft reviews for them to approve. Notes: [session-10.md](session-10.md).
