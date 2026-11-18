@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FileText, Boxes, FolderKanban, Wallet, Radio,
   BarChart3, Users, Radar, Rss, CalendarDays, PenLine,
   Palette, Bot, TrendingUp, Plug, Settings, LogOut, X, IndianRupee,
-  Target, ShieldCheck, AlertTriangle, Rocket, Send, Landmark, Clapperboard, Film, LayoutGrid, Headset, Server, PhoneCall,
+  Target, ShieldCheck, AlertTriangle, Rocket, Send, Landmark, Clapperboard, Film, LayoutGrid, Headset, Server, PhoneCall, Phone,
 } from "lucide-react";
 import { VERSION } from "@/lib/version";
 import { ArcLogo, ArcMark } from "@/components/ArcLogo";
@@ -87,6 +87,8 @@ const nav: NavSection[] = [
     heading: "Strategy",
     items: [
       { label: "GTM", href: "/dashboard/gtm", icon: Target, exact: true },
+      { label: "Dialer", href: "/dialer", icon: Phone, exact: true },
+      { label: "Dialer setup", href: "/team/dialer/setup", icon: Settings },
       { label: "Outreach", href: "/dashboard/outreach", icon: Send, exact: true },
       { label: "Caller log", href: "/dashboard/outreach/callers", icon: PhoneCall },
       { label: "Team & access", href: "/dashboard/team", icon: Headset },
