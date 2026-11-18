@@ -121,3 +121,13 @@ What the research found (full notes with sources: EDITR content/forward-slash/SO
 - Needs the founder's yes: earshot install (uv tool + about 1.1 GB of models; use only its listening commands, not its
   synthesised `forge`/`sfx` bank), Sonniss GDC 2026 bundle (7.47 GB, royalty free, commercial use, no attribution).
 - AI Wrap rule the same day: the voice says only "This is AI Wrap"; edition and story numbers are shown, never read.
+
+## "Where is the sound" (Scafell T27 v05, 2026-11-18)
+- The files had audio, but **mono** AAC (amix of mono sources stays mono). Some phone and web players play mono from one
+  side or drop it. Always end the mix with `aformat=sample_rates=48000:channel_layouts=stereo` and `-ac 2 -ar 48000`,
+  and check with `ffprobe -show_entries stream=codec_type,channels` before sending.
+- **Lines cut from one take clipped their first word** ("Orders, stock" became "Stocking"; "Staff rotas" became
+  "Off-roaders"). faster-whisper word starts run late. Cut each line from 0.25-0.3 s before the first word (not before
+  the previous word's end) to 0.2 s after the last, and re-transcribe the delivered file, not the source, as the check.
+- Never write the transcript next to the audio with a name the tool can overwrite: `tx.py` replaced `x.wav` with
+  `x.wav` → `.words.json` rule only for `.mp3`. Keep transcripts in `qa/`.
