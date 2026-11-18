@@ -53,6 +53,7 @@ export async function dialLead(callId: string, from: string, to: string) {
   } catch (e) {
     const error = (e as Error).message.slice(0, 500)
     await db.from("dialer_calls").update({ status: "failed", ended_at: new Date().toISOString(), error, recording_status: "none", processed_at: new Date().toISOString() }).eq("id", callId)
+    await endLineAfter(callId).catch(() => null)
     return { ok: false as const, error }
   }
 }
@@ -82,6 +83,23 @@ export async function ringAgent(member: DialerMember) {
   if (!from) throw new Error("No company number is set for you yet.")
   if (!to) throw new Error("Add your mobile number on the Dialer page first.")
   return makeCall({ from, to, answerUrl: hookUrl("agent", { m: member.id }), hangupUrl: hookUrl("hangup", { m: member.id }) })
+}
+
+/**
+ * The lead's side of a call ended (hung up, never picked up, or failed to
+ * ring): hang up the person's own phone too, unless another call is already
+ * going on their line. Otherwise their leg sat in an empty room for ever.
+ */
+export async function endLineAfter(callId: string) {
+  const { data: call } = await db.from("dialer_calls").select("id,session_id").eq("id", callId).maybeSingle()
+  if (!call?.session_id) return
+  const { data: other } = await db.from("dialer_calls").select("id").eq("session_id", call.session_id).neq("id", callId)
+    .in("status", ["dialing", "connected"]).limit(1)
+  if (other?.length) return
+  const { data: s } = await db.from("dialer_sessions").select("id,agent_call_uuid,status").eq("id", call.session_id).maybeSingle()
+  if (!s || s.status !== "live") return
+  await db.from("dialer_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", s.id)
+  await hangup(s.agent_call_uuid, null)
 }
 
 export async function closeLine(memberId: string) {

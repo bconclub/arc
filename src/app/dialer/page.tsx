@@ -192,6 +192,13 @@ export default function Dialer() {
   const d = useDialer();
   const [phone, setPhone] = useState("");
   const [history, setHistory] = useState(false);
+  // Opened from a lead's Call button in PROXe (/dialer?n=<number>): the number is ready, one tap calls.
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("n");
+    if (!n) return;
+    setPhone(n.replace(/[^\d+ ]/g, "").slice(0, 16));
+    window.history.replaceState(null, "", "/dialer");
+  }, []);
   useEffect(() => {
     if (!history) return;
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setHistory(false); };
