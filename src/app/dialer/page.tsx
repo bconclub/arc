@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ClipboardPaste, Delete, History as HistoryIcon, Loader2, LogOut, Phone, PhoneOff, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { clock, Guide, useDialer, useLive, useTick, type DialerCallRow, type LiveLine } from "@/components/team/Dialer";
+import { clock, Guide, useDialer, useLive, useTick, type DialerCallRow, type LiveLine, type LiveScore } from "@/components/team/Dialer";
 
 /**
  * The dialer. In the middle: the number pad, Call, and while a call is on, who
@@ -105,11 +105,43 @@ function Transcript({ lines, me }: { lines: LiveLine[]; me: string }) {
         : (
           <div className="max-h-[260px] space-y-1.5 overflow-y-auto text-[13px]">
             {lines.map((l, i) => (
-              <p key={i} className="text-text"><span className={l.who === "lead" ? "font-semibold text-accent-green" : "font-semibold text-text-muted"}>{l.who === "lead" ? "Them" : me}: </span>{l.text}</p>
+              <div key={i}>
+                <p className="text-text"><span className={l.who === "lead" ? "font-semibold text-accent-green" : "font-semibold text-text-muted"}>{l.who === "lead" ? "Them" : me}: </span>{l.text}</p>
+                {l.en ? <p className="pl-3 text-[12.5px] italic text-text-muted">{l.en}</p> : null}
+              </div>
             ))}
             <div ref={end} />
           </div>
         )}
+    </section>
+  );
+}
+
+const STAGE = { value: "Nice to have", problem: "Could fix a problem", pain: "Feels the pain" } as const;
+
+/** How intent-ful and committed this lead is right now, from what they have said on the call. */
+function ScoreCard({ score }: { score: LiveScore | null | undefined }) {
+  if (!score) {
+    return <section className="rounded-panel border border-[var(--border)] bg-surface p-4 text-[13px] text-text-muted">Live score shows once the customer has said a few things.</section>;
+  }
+  const bar = (label: string, n: number) => (
+    <div className="min-w-0 flex-1">
+      <div className="flex items-baseline justify-between"><span className="text-[11.5px] text-text-muted">{label}</span><span className="text-[20px] font-bold tabular-nums text-text">{n}</span></div>
+      <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-[var(--border)]">
+        <span className={`block h-full rounded-full transition-all ${n >= 65 ? "bg-accent-green" : n >= 35 ? "bg-[var(--brand)]" : "bg-accent-red"}`} style={{ width: `${n}%` }} />
+      </span>
+    </div>
+  );
+  return (
+    <section className="rounded-panel border border-[var(--border)] bg-surface p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-[12px] font-semibold text-text">Live score</span>
+        <span className={`rounded-pill px-2 py-0.5 text-[11.5px] font-semibold ${score.stage === "pain" ? "bg-accent-green text-white" : score.stage === "problem" ? "bg-[var(--brand-soft)] text-[var(--brand-text)]" : "bg-[var(--surface-hover)] text-text-muted"}`}>{STAGE[score.stage]}</span>
+        {score.loss ? <span className="ml-auto text-[12.5px] font-semibold text-accent-red">Losing {score.loss.replace(/^losing\s+/i, "")}</span> : null}
+      </div>
+      <div className="flex gap-4">{bar("Intent", score.intent)}{bar("Commitment", score.commitment)}</div>
+      {score.why ? <p className="mt-3 text-[12.5px] text-text-muted">{score.why}</p> : null}
+      {score.next ? <p className="mt-1 text-[13px] text-text"><span className="font-semibold">Next: </span>{score.next}</p> : null}
     </section>
   );
 }
@@ -259,12 +291,13 @@ export default function Dialer() {
 
         {(busy || lead || loading) && <div style={{ animation: "dialer-side-in 220ms ease-out" }}
           className="flex w-full max-w-[360px] flex-col gap-3 lg:absolute lg:bottom-4 lg:left-[calc(50%+212px)] lg:top-4 lg:w-[min(440px,calc(50vw-236px))] lg:max-w-none lg:overflow-y-auto lg:pr-1">
-          <LeadCard lead={lead} loading={loading} />
+          {connected && <ScoreCard score={live?.score} />}
           {busy && c && guide.length > 0 && (
             <section className="rounded-panel border border-[var(--border)] bg-surface p-3">
-              <Guide questions={guide} callId={c.id} bare covered={live?.covered} />
+              <Guide questions={guide} levels={s.guide_levels} callId={c.id} bare covered={live?.covered} />
             </section>
           )}
+          <LeadCard lead={lead} loading={loading} />
           {connected && <Transcript lines={live?.lines || []} me={me?.name && me.name !== "You" ? me.name : "You"} />}
         </div>}
       </main>

@@ -14,5 +14,5 @@ export async function GET(req: Request) {
   const { data: call } = await db.from("dialer_calls").select("id,member_id").eq("id", id).maybeSingle();
   if (!call || (viewer.kind === "team" && call.member_id !== viewer.member.id)) return Response.json({ error: "Call not found." }, { status: 404 });
   const [lines, check] = await Promise.all([liveLines(id), liveCheck(id)]);
-  return Response.json({ lines, covered: check?.covered || {} });
+  return Response.json({ lines, covered: check?.covered || {}, score: check?.score || null });
 }

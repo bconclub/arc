@@ -113,8 +113,8 @@ function Pad() {
 }
 
 /** The call guide: the questions to get answered on every call. The owner edits it. */
-function GuideBox({ guide, owner, onSaved }: { guide: string[]; owner: boolean; onSaved: () => void }) {
-  const [text, setText] = useState(guide.join("\n"));
+function GuideBox({ guide, raw, owner, onSaved }: { guide: string[]; raw?: string[]; owner: boolean; onSaved: () => void }) {
+  const [text, setText] = useState((raw || guide).join("\n"));
   const [note, setNote] = useState("");
   async function save() {
     setNote("");
@@ -132,7 +132,7 @@ function GuideBox({ guide, owner, onSaved }: { guide: string[]; owner: boolean; 
             className="w-full rounded-soft border border-[var(--border)] bg-[var(--bg)] p-3 text-[13px] text-text outline-none focus:border-[var(--brand-line)]" />
           <div className="mt-2 flex items-center gap-3">
             <button onClick={save} className="h-9 rounded-soft bg-[var(--brand)] px-4 text-[13px] font-semibold text-[var(--brand-ink)]">Save guide</button>
-            <span className="text-[12px] text-text-muted">{note || "One question per line."}</span>
+            <span className="text-[12px] text-text-muted">{note || "One question per line. Start a line with High:, Medium: or Low: to set how much it matters; High ones show first."}</span>
           </div>
         </>
       ) : (
@@ -186,7 +186,7 @@ export default function TeamDialer() {
         </section>
       )}
 
-      {s.guide && s.installed !== false && <GuideBox guide={s.guide} owner={s.role === "owner"} onSaved={d.reload} />}
+      {s.guide && s.installed !== false && <GuideBox guide={s.guide} raw={s.guide_raw} owner={s.role === "owner"} onSaved={d.reload} />}
 
       {s.role === "owner" && (
         <section className="overflow-hidden rounded-panel border border-[var(--border)] bg-surface">

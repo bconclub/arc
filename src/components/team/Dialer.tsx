@@ -24,6 +24,8 @@ export type DialerState = {
   me?: { id: string; name: string; mobile: string | null; number: string | null; pin_set: boolean } | null
   live?: { since: string } | null
   guide?: string[]
+  guide_levels?: number[]
+  guide_raw?: string[]
   members?: { id: string; name: string; mobile: string | null; number: string | null; pin_set: boolean; live: boolean }[]
   calls: DialerCallRow[]
 };
@@ -121,18 +123,19 @@ export function useTick(on: boolean) {
   }, [on]);
 }
 
-export type LiveLine = { who: "caller" | "lead"; text: string; at: string };
+export type LiveLine = { who: "caller" | "lead"; text: string; at: string; lang?: string; en?: string };
+export type LiveScore = { intent: number; commitment: number; stage: "value" | "problem" | "pain"; loss: string; why: string; next: string };
 
 /** What is being said on a call right now, and the questions it has answered. Polled while the call is on. */
 export function useLive(callId: string | null, on: boolean) {
-  const [live, setLive] = useState<{ id: string; lines: LiveLine[]; covered: Record<string, string> } | null>(null);
+  const [live, setLive] = useState<{ id: string; lines: LiveLine[]; covered: Record<string, string>; score: LiveScore | null } | null>(null);
   useEffect(() => {
     if (!callId || !on) return;
     let stop = false;
     const pull = async () => {
       try {
         const r = await fetch(`/api/team/dialer/live?c=${callId}`, { cache: "no-store" });
-        if (r.ok && !stop) { const j = await r.json(); setLive({ id: callId, lines: j.lines || [], covered: j.covered || {} }); }
+        if (r.ok && !stop) { const j = await r.json(); setLive({ id: callId, lines: j.lines || [], covered: j.covered || {}, score: j.score || null }); }
       } catch { /* keep the last */ }
     };
     pull();
@@ -142,37 +145,79 @@ export function useLive(callId: string | null, on: boolean) {
   return live && live.id === callId ? live : null;
 }
 
+const LEVEL = { 1: "Must ask", 2: "Should ask", 3: "If there is time" } as const;
+
 /**
- * The questions to get answered on this call. They tick themselves as the
- * customer answers (covered, from the live transcript); a tap overrides.
+ * The questions to get answered on this call, most important first. The next
+ * one to ask sits on top, big. They tick themselves as the customer answers
+ * (covered, from the live transcript) and fold down with the answer; a tap
+ * overrides either way.
  */
-export function Guide({ questions, callId, bare, covered }: { questions: string[]; callId: string; bare?: boolean; covered?: Record<string, string> }) {
+export function Guide({ questions, levels, callId, bare, covered }: { questions: string[]; levels?: number[]; callId: string; bare?: boolean; covered?: Record<string, string> }) {
   const [done, setDone] = useState<Record<string, boolean>>({});
   const isOn = (i: number) => done[callId + i] ?? (covered?.[String(i)] !== undefined);
-  const left = questions.filter((_, i) => !isOn(i)).length;
+  const flip = (i: number) => setDone((d) => ({ ...d, [callId + i]: !isOn(i) }));
+  const all = questions.map((q, i) => ({ q, i, level: (levels?.[i] || 2) as 1 | 2 | 3 }));
+  const open = all.filter((x) => !isOn(x.i));
+  const got = all.filter((x) => isOn(x.i));
+  const next = open[0];
   return (
     <div className={bare ? "w-full" : "mx-auto mb-2 max-w-[1200px] rounded-panel border border-[var(--border)] bg-[var(--bg)] p-3"}>
-      <p className="mb-2 text-[11.5px] text-text-muted">
-        {left ? `${left} question${left === 1 ? "" : "s"} still to cover before you hang up.` : "All covered. Agree the next step and close."}
-      </p>
-      <ul className="space-y-1">
-        {questions.map((q, i) => {
-          const on = isOn(i);
-          const answer = covered?.[String(i)];
-          return (
-            <li key={i}>
-              <button onClick={() => setDone((d) => ({ ...d, [callId + i]: !on }))} aria-pressed={on}
-                className="flex w-full items-start gap-2 rounded-soft px-2 py-1.5 text-left text-[13px] hover:bg-[var(--surface-hover)]">
-                <span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border ${on ? "border-accent-green bg-accent-green" : "border-[var(--border)]"}`} />
-                <span className="min-w-0">
-                  <span className={on ? "text-text-muted line-through" : "text-text"}>{q}</span>
-                  {on && answer ? <span className="block text-[12px] text-accent-green">{answer}</span> : null}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="mb-2 flex items-center gap-2">
+        <span className="text-[12px] font-semibold text-text">Questions</span>
+        <span className="text-[11.5px] tabular-nums text-text-muted">{got.length} of {all.length} answered</span>
+        <span className="ml-auto h-1.5 w-24 overflow-hidden rounded-full bg-[var(--border)]">
+          <span className="block h-full rounded-full bg-accent-green transition-all" style={{ width: `${all.length ? (got.length / all.length) * 100 : 0}%` }} />
+        </span>
+      </div>
+      {next ? (
+        <button onClick={() => flip(next.i)} className="mb-2 w-full rounded-soft border border-[var(--brand-line)] bg-[var(--brand-soft)] px-3 py-2.5 text-left">
+          <span className="block text-[11px] font-semibold text-[var(--brand-text)]">Ask next{next.level === 1 ? " · must ask" : ""}</span>
+          <span className="block text-[15px] font-semibold leading-snug text-text">{next.q}</span>
+        </button>
+      ) : (
+        <p className="mb-2 rounded-soft bg-[var(--surface-hover)] px-3 py-2.5 text-[13px] text-text">All answered. Agree the next step and close.</p>
+      )}
+      {([1, 2, 3] as const).map((lv) => {
+        const rows = open.filter((x) => x.level === lv && x !== next);
+        if (!rows.length) return null;
+        return (
+          <div key={lv} className="mb-1.5">
+            <p className={`px-2 text-[11px] font-semibold ${lv === 1 ? "text-accent-red" : "text-text-muted"}`}>{LEVEL[lv]}</p>
+            <ul>
+              {rows.map((x) => (
+                <li key={x.i}>
+                  <button onClick={() => flip(x.i)} aria-pressed={false} className="flex w-full items-start gap-2 rounded-soft px-2 py-1.5 text-left text-[13px] hover:bg-[var(--surface-hover)]">
+                    <span className={`mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 ${lv === 1 ? "border-accent-red" : "border-[var(--border)]"}`} />
+                    <span className="text-text">{x.q}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+      {got.length > 0 && (
+        <div className="mt-1 border-t border-[var(--border)] pt-1.5">
+          <p className="px-2 text-[11px] font-semibold text-accent-green">Answered</p>
+          <ul>
+            {got.map((x) => {
+              const answer = covered?.[String(x.i)];
+              return (
+                <li key={x.i}>
+                  <button onClick={() => flip(x.i)} aria-pressed className="flex w-full items-start gap-2 rounded-soft px-2 py-1 text-left text-[12.5px] hover:bg-[var(--surface-hover)]">
+                    <span className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full bg-accent-green" />
+                    <span className="min-w-0">
+                      <span className="block text-text-muted">{x.q}</span>
+                      {answer ? <span className="block font-medium text-text">{answer}</span> : null}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -216,7 +261,7 @@ export function CallScreen() {
         {!connected && <p className="text-[12.5px] text-text-muted">Stay on the call.</p>}
       </div>
       <div className="mx-auto w-full max-w-[640px] flex-1 overflow-y-auto px-4">
-        {guide.length > 0 && c && <Guide questions={guide} callId={c.id} bare />}
+        {guide.length > 0 && c && <Guide questions={guide} levels={d.state.guide_levels} callId={c.id} bare />}
       </div>
       <div className="flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-4">
         <button onClick={d.end} disabled={!c}
@@ -271,7 +316,7 @@ export function DialerBar() {
 
   return (
     <div className="fixed inset-x-0 bottom-[56px] z-30 border-t border-[var(--border)] bg-surface px-4 py-2 text-[12.5px] text-text md:bottom-0">
-      {active && guideOpen && guide.length > 0 && c && <Guide questions={guide} callId={c.id} />}
+      {active && guideOpen && guide.length > 0 && c && <Guide questions={guide} levels={d.state.guide_levels} callId={c.id} />}
       <div className="mx-auto flex max-w-[1200px] items-center gap-2">
         <PhoneCall size={14} className="shrink-0 text-text-muted" />
         <span className="flex min-w-0 flex-1 items-center gap-2">{body}</span>

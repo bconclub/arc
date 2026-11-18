@@ -3,7 +3,7 @@ import { vobizConfigured } from "@/lib/dialer/config";
 import { db, liveSession } from "@/lib/dialer/members";
 import { sweep } from "@/lib/dialer/process";
 import { actorFor } from "@/lib/dialer/line";
-import { getGuide } from "@/lib/dialer/guide";
+import { getGuideItems, getGuideRaw } from "@/lib/dialer/guide";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,7 +44,10 @@ export async function GET(req: Request) {
   const since = new Date(Date.now() - (days ? days * 24 : 36) * 3600e3).toISOString();
   const cap = days ? 500 : 0;
   const actor = await actorFor(viewer);
-  const guide = await getGuide();
+  const items = await getGuideItems();
+  const guide = items.map((x) => x.q);
+  const guide_levels = items.map((x) => x.level);
+  const guide_raw = viewer.kind === "owner" ? await getGuideRaw() : undefined;
   const session = actor ? await liveSession(actor.id) : null;
   const me = actor ? {
     id: actor.id, name: viewer.kind === "team" ? actor.name : "You",
@@ -54,7 +57,7 @@ export async function GET(req: Request) {
   if (viewer.kind === "team") {
     const { data: calls } = await db.from("dialer_calls").select(CALL_COLS).eq("member_id", viewer.member.id).gt("started_at", since)
       .order("started_at", { ascending: false }).limit(cap || 40);
-    return Response.json({ role: "team", configured: vobizConfigured(), me, live, guide, calls: await named(calls || []) });
+    return Response.json({ role: "team", configured: vobizConfigured(), me, live, guide, guide_levels, calls: await named(calls || []) });
   }
 
   const { data: members } = await db.from("team_members").select("id,name,dialer_phone,dialer_caller_id,dialer_pin_hash").eq("active", true).order("created_at");
@@ -64,7 +67,7 @@ export async function GET(req: Request) {
   return Response.json({
     role: "owner",
     configured: vobizConfigured(),
-    me, live, guide,
+    me, live, guide, guide_levels, guide_raw,
     members: ((members || []) as { id: string; name: string; dialer_phone: string | null; dialer_caller_id: string | null; dialer_pin_hash: string | null }[])
       .map((x) => ({
         id: x.id, name: x.name, mobile: x.dialer_phone, number: x.dialer_caller_id, pin_set: Boolean(x.dialer_pin_hash),
