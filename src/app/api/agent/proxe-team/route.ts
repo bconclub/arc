@@ -32,9 +32,11 @@ export async function GET(req: NextRequest) {
     if (!ids.length) return NextResponse.json({ at: new Date().toISOString(), people: [] });
     const dayStart = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30").toISOString();
     const inList = `(${ids.join(",")})`;
-    const [sess, acts] = await Promise.all([
+    const weekStart = new Date(Date.now() - 7 * 864e5).toISOString();
+    const [sess, acts, acts7] = await Promise.all([
       px<S[]>(`dashboard_user_sessions?select=user_id,last_seen_at,active_seconds&user_id=in.${inList}&last_seen_at=gte.${encodeURIComponent(dayStart)}`),
       px<A[]>(`activities?select=created_by,activity_type,created_at,note,lead_id,next_follow_up_date&created_by=in.${inList}&created_at=gte.${encodeURIComponent(dayStart)}`),
+      px<A[]>(`activities?select=created_by,activity_type,created_at,note,lead_id&created_by=in.${inList}&created_at=gte.${encodeURIComponent(weekStart)}&limit=5000`),
     ]);
     const leadIds = Array.from(new Set(acts.map((x) => x.lead_id).filter(Boolean))) as string[];
     const leads = leadIds.length ? await px<{ id: string; customer_name: string | null; phone: string | null }[]>(`all_leads?select=id,customer_name,phone&id=in.(${leadIds.join(",")})`) : [];
@@ -42,6 +44,14 @@ export async function GET(req: NextRequest) {
     const NOPICK = /not picked|no answer|not answer|busy|switched off|not reachable|unreachable|didn'?t pick|did not pick|ringing|wrong number/i;
     const DEMO = /demo|meeting|booked|appointment|call (him|her|them) (at|tomorrow)|tomorrow at|visit/i;
     const now = Date.now();
+    // last 24 h and last 7 days (Z, 19 Nov 2026: "see the last 24 hours and last 7 days"); [Connected]/[No Answer] tags from the PROXe dialler win over note words
+    const picked = (n: string | null) => /^\s*\[connected\]/i.test(n || "") || (!/^\s*\[/.test(n || "") && !NOPICK.test(n || ""));
+    const win = (rows: A[], since: number) => {
+      const r = rows.filter((x) => Date.parse(x.created_at) >= since), c = r.filter((x) => /call/.test(x.activity_type));
+      return { calls: c.length, connected: c.filter((x) => picked(x.note)).length, demos: c.filter((x) => picked(x.note) && DEMO.test(x.note || "")).length,
+        followups: r.filter((x) => x.activity_type === "followup").length, notes: r.filter((x) => x.activity_type === "note").length,
+        leads: new Set(r.map((x) => x.lead_id).filter(Boolean)).size };
+    };
     const people = users.map((u) => {
       const s = sess.filter((x) => x.user_id === u.id);
       const a = acts.filter((x) => x.created_by === u.id);
@@ -51,6 +61,8 @@ export async function GET(req: NextRequest) {
       const lastCall = calls.length ? Math.max(...calls.map((x) => Date.parse(x.created_at))) : null;
       return {
         name: u.full_name || u.email, email: u.email,
+        h24: win(acts7.filter((x) => x.created_by === u.id), now - 864e5),
+        d7: win(acts7.filter((x) => x.created_by === u.id), now - 7 * 864e5),
         online: lastSeen !== null && now - lastSeen < 10 * 60e3,
         on_call: lastCall !== null && now - lastCall < 5 * 60e3,
         calls: calls.length,
