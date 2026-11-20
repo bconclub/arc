@@ -125,7 +125,11 @@ export async function liveLines(callId: string): Promise<LiveLine[]> {
 
 export async function liveCheck(callId: string): Promise<LiveCheck | null> {
   const { data } = await db.from("dialer_settings").select("value").eq("key", `livecheck:${callId}`).maybeSingle()
-  return (data?.value as LiveCheck) || null
+  const v = (data?.value as LiveCheck) || null
+  if (!v) return null
+  // A question ticked with "Not answered" is still open: drop it, so the check asks again.
+  const covered = Object.fromEntries(Object.entries(v.covered || {}).filter(([, a]) => typeof a === "string" && a.trim() && !NOT_AN_ANSWER.test(a.trim())))
+  return { ...v, covered }
 }
 
 const clamp = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)))
