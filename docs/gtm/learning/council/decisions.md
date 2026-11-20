@@ -4,6 +4,13 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-11-20 #20: Launching PROXe Dialer.** (Open)
+- Dialer ships inside PROXe Core, not as its own product or price. Standing rule: no new products before 10 paying clients and a team.
+- The story is "every call your team makes is recorded, read and filed on the lead". A human makes the call; PROXe keeps everything that was said.
+- One feature film, 45 to 60 seconds, on the real Dialer screen. The call is staged with people who agreed to be filmed. No real customer audio or numbers.
+- Proof we can say: our own team, 17 to 20 Nov: 58 calls, 29 connected, all 29 recorded and filed (ARC dialer_calls, 20 Nov).
+- Script approved Mon 23 Nov, film delivered Fri 27 Nov. Measure: used in every demo from 30 Nov; 10 demo bookings that name the Dialer by 15 Dec.
+
 **2026-11-16 #19: Managing the new sales team (Varnit Raina, Aftab Shaikh). Replaces the #18 week-1 gate.** (Open)
 - By Wed 18 Nov each gets a one-page brief: pay and incentive in writing (5% also on BCON work from a PROXe lead), weekly targets, the pain-TEMQ demo gate, an opener, how to log calls.
 - Named leads per person, not an open pool.
