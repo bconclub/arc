@@ -106,6 +106,12 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
   })
   await px("conversations?on_conflict=id", { method: "POST", prefer: "resolution=ignore-duplicates", body: JSON.stringify(rows) })
 
+  // A lead with no name takes the name said on the call (a short first call may have had none).
+  const heardName = typeof c.fields?.contact_name === "string" ? c.fields.contact_name.trim() : ""
+  if (heardName) {
+    await px(`all_leads?id=eq.${c.leadId}&customer_name=is.null`, { method: "PATCH", body: JSON.stringify({ customer_name: heardName.slice(0, 120) }) }).catch(() => null)
+  }
+
   // 3. activities + 4. admin note, once per call (the activity note carries the call key).
   const marker = `[arc:${c.callId.slice(0, 8)}]`
   const activityNote = `[${c.outcome}] ${c.note} ${marker}`.trim()
