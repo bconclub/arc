@@ -14,7 +14,7 @@ import { callAI } from "@/lib/ai-client"
 import { mirrorCallToProxe } from "@/lib/proxe-outbound-mirror"
 import { downloadRecording, findRecording } from "./vobiz"
 import { recordingLink } from "./config"
-import { pushCallToProxe } from "./proxe"
+import { createProxeLead, proxeLeadByPhone, pushCallToProxe } from "./proxe"
 import { getGuide } from "./guide"
 import { clearOldLive } from "./live"
 
@@ -38,7 +38,7 @@ export type DialerCall = {
 /** A connected call waits this long for its recording before it is filed as missing. */
 const RECORDING_WAIT_MS = 30 * 60_000
 
-type Turn = { speaker: string; text: string }
+type Turn = { speaker: string; text: string; en?: string }
 type Note = {
   outcome: "connected" | "callback" | "interested" | "not_interested" | "wrong_number"
   summary: string
@@ -93,6 +93,40 @@ async function transcribe(call: DialerCall): Promise<Turn[]> {
   return clean.length ? clean : d.text ? [{ speaker: "speaker_0", text: d.text.trim() }] : []
 }
 
+/** Indian scripts (Devanagari to Malayalam) or Urdu mean the line is not (only) English. */
+const notEnglish = (s: string) => /[ऀ-෿؀-ۿ]/.test(s)
+
+/**
+ * An English line under every turn that is not in English, so a Hindi or
+ * Kannada call reads in English after the call too (Z, 20 Nov 2026: Hindi
+ * calls showed no translation once the call was filed). Best effort: a turn
+ * keeps its own words if translation fails.
+ */
+export async function addEnglish(turns: Turn[]): Promise<Turn[]> {
+  const todo = turns.map((t, i) => ({ i, text: t.text })).filter((t) => notEnglish(t.text))
+  if (!todo.length) return turns
+  const out = turns.map((t) => ({ ...t }))
+  for (let k = 0; k < todo.length; k += 50) {
+    const part = todo.slice(k, k + 50)
+    try {
+      const raw = await callAI({
+        max_tokens: 4000,
+        systemPrompt: "You translate lines from a recorded sales phone call in India into plain, natural English. A line may mix English with Hindi, Kannada, Tamil, Telugu, Malayalam or another language, and may contain mishearings. Keep numbers, names and rupee amounts exactly. Reply with ONLY a JSON array of strings: the English of each numbered line, in order, same length as the input.",
+        userMessage: part.map((t, n) => `${n}. ${t.text}`).join("\n"),
+      })
+      const m = raw.match(/\[[\s\S]*\]/)
+      const en = m ? (JSON.parse(m[0]) as unknown[]) : []
+      part.forEach((t, n) => {
+        const e = typeof en[n] === "string" ? (en[n] as string).trim() : ""
+        if (e && e.toLowerCase() !== t.text.toLowerCase()) out[t.i].en = e.slice(0, 2000)
+      })
+    } catch (e) {
+      console.error("[dialer] translation failed:", (e as Error).message)
+    }
+  }
+  return out
+}
+
 const FIELD_KEYS = ["business", "contact_name", "role", "need", "lead_sources", "lead_volume", "current_setup", "team_size", "budget", "decision_maker", "timeline", "objections", "next_step", "callback_when"]
 
 async function writeNote(turns: Turn[], ctx: { agent: string; lead: string }, guide: string[]): Promise<{ note: Note; labelled: Turn[] }> {
@@ -101,6 +135,7 @@ async function writeNote(turns: Turn[], ctx: { agent: string; lead: string }, gu
     systemPrompt: [
       "You read a recorded sales call. A BCON/PROXe salesperson called a business lead. PROXe is an AI lead-management product.",
       "The transcript has anonymous speaker ids. The salesperson introduces themselves or PROXe; the other speaker is the customer.",
+      "Use people's names in summary and note: the salesperson by their name, the customer by the name on file or the name said on the call (fill contact_name with it). Say 'the customer' only when no name is known.",
       "Reply with ONE JSON object, nothing else:",
       '{"agent_speaker": "<speaker id of the salesperson>",',
       ' "outcome": "connected" | "callback" | "interested" | "not_interested" | "wrong_number",',
@@ -113,6 +148,7 @@ async function writeNote(turns: Turn[], ctx: { agent: string; lead: string }, gu
       "Fill a field only with what someone actually said (either side). Leave it empty otherwise. Never guess.",
       "interested = they want a demo, pricing or to go ahead. callback = they asked to be called at another time.",
       "Keep the customer's own words for numbers, prices and times. Use ₹ for rupees.",
+      "Write summary, note, fields and checklist answers in English, whatever language the call was in (Hindi, Kannada, Tamil, Telugu, Malayalam or a mix).",
     ].join("\n"),
     userMessage: `Salesperson: ${ctx.agent}\nLead on file: ${ctx.lead}\n\nCALL GUIDE:\n${guide.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nTranscript:\n${turns.map((t) => `${t.speaker}: ${t.text}`).join("\n").slice(0, 60000)}`,
   })
@@ -185,9 +221,11 @@ export async function processCall(id: string, opts: { force?: boolean } = {}): P
       } else {
         const heard = await transcribe(call)
         if (heard.length) {
-          const written = await writeNote(heard, { agent: agentName, lead: [target?.name, target?.org].filter(Boolean).join(", ") || call.phone }, await getGuide())
+          const onFile = target ? null : await proxeLeadByPhone(call.phone).catch(() => null)
+          const leadLabel = [target?.name || onFile?.name, target?.org || onFile?.company].filter(Boolean).join(", ") || call.phone
+          const written = await writeNote(heard, { agent: agentName, lead: leadLabel }, await getGuide())
           note = written.note
-          turns = written.labelled
+          turns = await addEnglish(written.labelled)
         }
       }
     } else if (call.recording_status === "pending") {
@@ -209,7 +247,7 @@ export async function processCall(id: string, opts: { force?: boolean } = {}): P
       noteText + detail,
       missed.length ? `NOT COVERED ON THIS CALL (ask next time):\n${missed.map((q) => "- " + q).join("\n")}` : "",
       recUrl && `RECORDING: ${recUrl}`,
-      turns.length ? `TRANSCRIPT:\n${turns.map((t) => `${t.speaker}: ${t.text}`).join("\n")}` : "",
+      turns.length ? `TRANSCRIPT:\n${turns.map((t) => `${t.speaker}: ${t.text}${t.en ? `\n   (${t.en})` : ""}`).join("\n")}` : "",
     ].filter(Boolean).join("\n")
 
     await db.from("dialer_calls").update({
@@ -230,7 +268,18 @@ export async function processCall(id: string, opts: { force?: boolean } = {}): P
     // PROXe.
     let proxeError: string | null = null
     try {
-      const leadId = call.proxe_lead_id || target?.proxe_lead_id || null
+      // A typed number with no ARC target still lands on PROXe: the lead with
+      // that number, or (for a connected call) a new one, so the call and its
+      // note reach the lead and its summary (Z, 20 Nov 2026: a Hindi call by
+      // Aftab was dropped as "No lead matched this number").
+      let leadId = call.proxe_lead_id || target?.proxe_lead_id || null
+      if (!leadId && !target) {
+        leadId = (await proxeLeadByPhone(call.phone))?.id || null
+        if (!leadId && connected) {
+          leadId = await createProxeLead({ phone: call.phone, name: note?.fields.contact_name || null, business: note?.fields.business || null, at: call.started_at })
+        }
+        if (leadId) await db.from("dialer_calls").update({ proxe_lead_id: leadId }).eq("id", id)
+      }
       if (leadId) {
         await pushCallToProxe({
           callId: call.id, leadId, agentName, phone: call.phone, customerName: target?.name || null,

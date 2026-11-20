@@ -17,6 +17,7 @@
 // livecheck:<call>.
 import { db } from "./members"
 import { getGuide } from "./guide"
+import { proxeLeadByPhone } from "./proxe"
 
 export type LiveLine = { who: "caller" | "lead"; text: string; at: string; lang?: string; en?: string }
 export type LiveScore = {
@@ -100,6 +101,23 @@ function toEnglish(text: string): Promise<string> {
   ).catch(() => "")
 }
 
+const names = new Map<string, { agent: string; lead: string; known: boolean }>()
+/** Who is on this call: the teammate, and the customer as PROXe or ARC knows them. Cached per call. */
+async function callNames(callId: string): Promise<{ agent: string; lead: string; known: boolean }> {
+  const hit = names.get(callId)
+  if (hit) return hit
+  const { data: call } = await db.from("dialer_calls").select("member_id,target_id,phone").eq("id", callId).maybeSingle()
+  const [{ data: member }, { data: target }, lead] = await Promise.all([
+    call?.member_id ? db.from("team_members").select("name").eq("id", call.member_id).maybeSingle() : Promise.resolve({ data: null }),
+    call?.target_id ? db.from("outreach_targets").select("name").eq("id", call.target_id).maybeSingle() : Promise.resolve({ data: null }),
+    call?.phone ? proxeLeadByPhone(call.phone).catch(() => null) : Promise.resolve(null),
+  ])
+  const leadName = (target as { name?: string } | null)?.name || lead?.name || null
+  const out = { agent: (member as { name?: string } | null)?.name || "Salesperson", lead: leadName || "Customer", known: !!leadName }
+  names.set(callId, out)
+  return out
+}
+
 export async function liveLines(callId: string): Promise<LiveLine[]> {
   const { data } = await db.from("dialer_settings").select("key,value").like("key", `live:${callId}:%`).order("key").limit(2000)
   return ((data || []) as { value: LiveLine }[]).map((r) => r.value).filter((v) => v?.text)
@@ -124,7 +142,9 @@ const SCORE_RULES = [
   "- why: under 15 words, the reason for the score.",
   "- next: under 12 words, the single most useful thing for the salesperson to ask or do next.",
 ].join("\n")
-const SCORE_SHAPE = 'Reply with ONE JSON object, nothing else: {"answers": {"<question number>": "<the customer\'s answer in under 12 words>"}, "intent": 0, "commitment": 0, "stage": "value", "loss": "", "why": "", "next": ""}'
+/** The model sometimes fills an open question with "Not answered": that is not an answer (Z, 20 Nov 2026: 9 of 9 "answered", every one "Not answered"). */
+const NOT_AN_ANSWER = /^(not (yet )?(answered|asked|mentioned|discussed|covered|said|given|known|clear)|no answer|none|n\/?a|unknown|unanswered|-+|\?+)\.?$/i
+const SCORE_SHAPE = 'Reply with ONE JSON object, nothing else: {"answers": {"<question number>": "<the customer\'s answer in under 12 words>"} (only questions the customer has actually answered; leave the rest out),"intent": 0, "commitment": 0, "stage": "value", "loss": "", "why": "", "next": ""}'
 
 /**
  * Which guide questions the customer has answered so far (once answered,
@@ -142,10 +162,12 @@ async function check(callId: string): Promise<void> {
   const [lines, guide] = await Promise.all([liveLines(callId), getGuide()])
   if (!lines.length) return
   const open = guide.map((q, i) => ({ q, i })).filter((x) => covered[String(x.i)] === undefined)
-  const said = lines.map((l) => `${l.who === "lead" ? "Customer" : "Salesperson"}: ${l.en || l.text}`).join("\n").slice(-12000)
+  // Real names, so "next" reads "Ask Ravi..." and not "Ask the customer" (Z, 20 Nov 2026).
+  const who = await callNames(callId)
+  const said = lines.map((l) => `${l.who === "lead" ? who.lead : who.agent}: ${l.en || l.text}`).join("\n").slice(-12000)
   const before = score ? `The score a few seconds ago was intent ${score.intent}, commitment ${score.commitment}, stage ${score.stage}. Move it only on new evidence.` : ""
   const raw = await haiku([SCORE_RULES, before, SCORE_SHAPE].filter(Boolean).join("\n"),
-    `OPEN QUESTIONS:\n${open.length ? open.map((x) => `${x.i + 1}. ${x.q}`).join("\n") : "(none left)"}\n\nTRANSCRIPT:\n${said}`, 600).catch(() => "")
+    `SALESPERSON: ${who.agent}. CUSTOMER: ${who.lead}${who.known ? "" : " (name not on file: use the name they give on the call, if any)"}. Use their names in why and next.\n\nOPEN QUESTIONS:\n${open.length ? open.map((x) => `${x.i + 1}. ${x.q}`).join("\n") : "(none left)"}\n\nTRANSCRIPT:\n${said}`, 600).catch(() => "")
   const m = raw.match(/\{[\s\S]*\}/)
   if (!m) return
   let got: Record<string, unknown> = {}
@@ -153,7 +175,7 @@ async function check(callId: string): Promise<void> {
   const answers = (got.answers && typeof got.answers === "object" ? got.answers : {}) as Record<string, unknown>
   for (const [n, a] of Object.entries(answers)) {
     const i = Number(n) - 1
-    if (Number.isInteger(i) && i >= 0 && i < guide.length && covered[String(i)] === undefined && typeof a === "string" && a.trim()) covered[String(i)] = a.trim().slice(0, 160)
+    if (Number.isInteger(i) && i >= 0 && i < guide.length && covered[String(i)] === undefined && typeof a === "string" && a.trim() && !NOT_AN_ANSWER.test(a.trim())) covered[String(i)] = a.trim().slice(0, 160)
   }
   if (got.intent !== undefined) {
     score = {

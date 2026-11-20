@@ -45,14 +45,14 @@ export type ProxeCall = {
   outcome: "Connected" | "No Answer" | "Busy"
   note: string                  // the note a human would have typed
   summary: string
-  transcript: { speaker: string; text: string }[]
+  transcript: { speaker: string; text: string; en?: string }[]
   recordingUrl: string | null
   fields: Record<string, unknown> | null
 }
 
 export async function pushCallToProxe(c: ProxeCall): Promise<void> {
   const sessionKey = `arc_dialer_${c.callId}`
-  const transcriptText = c.transcript.map((t) => `${t.speaker}: ${t.text}`).join("\n")
+  const transcriptText = c.transcript.map((t) => `${t.speaker}: ${t.text}${t.en ? `\n   (${t.en})` : ""}`).join("\n")
 
   // 1. voice_sessions: update-or-insert by hand (external_session_id has no unique index on live DBs).
   const existing = await px<{ id: string }[]>(`voice_sessions?select=id&external_session_id=eq.${sessionKey}&limit=1`)
@@ -86,7 +86,8 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
     sender: t.speaker === "Customer" ? "customer" : "agent",
     content: t.text.slice(0, 4000),
     message_type: "text",
-    metadata: { call_id: sessionKey, source: "arc_dialer", engine: "arc_dialer", human: true, agent_name: c.agentName, turn: i },
+    // content_en: the call screen in PROXe shows English without another translation.
+    metadata: { call_id: sessionKey, source: "arc_dialer", engine: "arc_dialer", human: true, agent_name: c.agentName, turn: i, ...(t.en ? { content_en: t.en } : {}) },
     created_at: new Date(start + i * 1000).toISOString(),
   }))
   rows.push({
@@ -137,6 +138,21 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
       }),
     })
   }
+}
+
+/** A new PROXe lead for a number the team called that PROXe did not have yet. Returns its id. */
+export async function createProxeLead(p: { phone: string; name: string | null; business: string | null; at: string }): Promise<string | null> {
+  const tail = String(p.phone || "").replace(/\D/g, "").slice(-10)
+  if (tail.length !== 10) return null
+  const rows = await px<{ id: string }[]>("all_leads?select=id", {
+    method: "POST", prefer: "return=representation",
+    body: JSON.stringify({
+      brand: BRAND, customer_name: p.name || p.business || null, phone: p.phone, customer_phone_normalized: tail,
+      first_touchpoint: "voice", last_touchpoint: "voice", last_interaction_at: p.at, lead_stage: "New",
+      unified_context: { lead_sources: ["team_call"], attribution: { source: "team_call", source_label: "Team call" }, ...(p.business ? { company: p.business } : {}) },
+    }),
+  })
+  return rows[0]?.id || null
 }
 
 export type ProxeLead = {
