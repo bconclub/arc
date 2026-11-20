@@ -140,6 +140,12 @@ export async function pushCallToProxe(c: ProxeCall): Promise<void> {
   }
 }
 
+/** Whether this PROXe lead still exists (a lead can be deleted after ARC linked it). */
+export async function proxeLeadExists(id: string): Promise<boolean> {
+  const rows = await px<{ id: string }[]>(`all_leads?select=id&id=eq.${encodeURIComponent(id)}&limit=1`).catch(() => null)
+  return rows === null ? true : rows.length > 0 // on a read error, keep the link and let the write report it
+}
+
 /** A new PROXe lead for a number the team called that PROXe did not have yet. Returns its id. */
 export async function createProxeLead(p: { phone: string; name: string | null; business: string | null; at: string }): Promise<string | null> {
   const tail = String(p.phone || "").replace(/\D/g, "").slice(-10)

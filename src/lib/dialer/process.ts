@@ -14,7 +14,7 @@ import { callAI } from "@/lib/ai-client"
 import { mirrorCallToProxe } from "@/lib/proxe-outbound-mirror"
 import { downloadRecording, findRecording } from "./vobiz"
 import { recordingLink } from "./config"
-import { createProxeLead, proxeLeadByPhone, pushCallToProxe } from "./proxe"
+import { createProxeLead, proxeLeadByPhone, proxeLeadExists, pushCallToProxe } from "./proxe"
 import { getGuide } from "./guide"
 import { clearOldLive } from "./live"
 
@@ -273,7 +273,12 @@ export async function processCall(id: string, opts: { force?: boolean } = {}): P
       // note reach the lead and its summary (Z, 20 Nov 2026: a Hindi call by
       // Aftab was dropped as "No lead matched this number").
       let leadId = call.proxe_lead_id || target?.proxe_lead_id || null
-      if (!leadId && !target) {
+      // A linked lead that was since deleted from PROXe: find it again by phone
+      // (20 Nov 2026: a call failed with voice_sessions 409, lead not in all_leads).
+      const staleLink = !!leadId && !(await proxeLeadExists(leadId))
+      if (staleLink) leadId = null
+      // Outbound prospects with no PROXe lead yet keep going through the mirror below.
+      if (!leadId && (!target || staleLink)) {
         leadId = (await proxeLeadByPhone(call.phone))?.id || null
         if (!leadId && connected) {
           leadId = await createProxeLead({ phone: call.phone, name: note?.fields.contact_name || null, business: note?.fields.business || null, at: call.started_at })
