@@ -4,6 +4,14 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-11-23 #21: Owners whose enquiries come to their own WhatsApp number.** (Open)
+- Only the official route: Meta's Coexistence. The owner keeps the WhatsApp Business app on the same number and phone, and PROXe connects to it through the Cloud API.
+- A number on personal WhatsApp switches to the WhatsApp Business app first. Chats can be kept on the same phone.
+- No unofficial WhatsApp Web bots or "personal WhatsApp automation" tools, ever. They break Meta's terms and get numbers banned. Say this plainly to prospects.
+- The AI goes quiet on any chat the owner answers from the phone. It replies only to new enquiries, never to saved contacts.
+- Sales line: "Keep your number and your phone. PROXe answers the enquiries you miss."
+- Test on one testing-brand number by Fri 4 Dec. Measure: one real owner number live with zero double replies for 7 days by 15 Dec.
+
 **2026-11-20 #20: Launching PROXe Dialer.** (Open)
 - Dialer ships inside PROXe Core, not as its own product or price. Standing rule: no new products before 10 paying clients and a team.
 - The story is "every call your team makes is recorded, read and filed on the lead". A human makes the call; PROXe keeps everything that was said.
