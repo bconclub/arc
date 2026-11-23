@@ -50,7 +50,10 @@ export async function GET(req: NextRequest) {
       const r = rows.filter((x) => Date.parse(x.created_at) >= since), c = r.filter((x) => /call/.test(x.activity_type));
       return { calls: c.length, connected: c.filter((x) => picked(x.note)).length, demos: c.filter((x) => picked(x.note) && DEMO.test(x.note || "")).length,
         followups: r.filter((x) => x.activity_type === "followup").length, notes: r.filter((x) => x.activity_type === "note").length,
-        leads: new Set(r.map((x) => x.lead_id).filter(Boolean)).size };
+        leads: new Set(r.map((x) => x.lead_id).filter(Boolean)).size,
+        // calls made on their own phone and logged by hand in PROXe (not through the ARC dialer) (Z, 23 Nov 2026: Aftab's calls didn't show)
+        manual_calls: r.filter((x) => x.activity_type === "manual_call").length,
+        manual_connected: r.filter((x) => x.activity_type === "manual_call" && picked(x.note)).length };
     };
     const people = users.map((u) => {
       const s = sess.filter((x) => x.user_id === u.id);
@@ -61,6 +64,7 @@ export async function GET(req: NextRequest) {
       const lastCall = calls.length ? Math.max(...calls.map((x) => Date.parse(x.created_at))) : null;
       return {
         name: u.full_name || u.email, email: u.email,
+        today: win(acts7.filter((x) => x.created_by === u.id), Date.parse(dayStart)),
         h24: win(acts7.filter((x) => x.created_by === u.id), now - 864e5),
         d7: win(acts7.filter((x) => x.created_by === u.id), now - 7 * 864e5),
         online: lastSeen !== null && now - lastSeen < 10 * 60e3,
