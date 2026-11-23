@@ -47,3 +47,10 @@ Assumes every lead is called, 55% pickup, about 1.5 min per connected call, abou
 ## Before signing a high-volume client
 Anthropic credits on auto-reload (API was cut off 3 times since July), card payments fixed across providers, prompt
 caching fixed, call concurrency raised to 10+.
+
+## PROXe Core terms (Z picked 2026-11-22, council #22 on 2026-11-23)
+- Monthly: Rs 9,999 + 18% GST = Rs 11,798.82.
+- 3 months upfront: Rs 8,999 a month, Rs 26,997 + GST = Rs 31,856.46 every 3 months.
+- Yearly upfront: Rs 7,999 a month, Rs 95,988 + GST = Rs 1,13,265.84 a year.
+- Extra seats Rs 999 a month on every term. Charged on Razorpay (INR). USD $149 monthly on Dodo only.
+- Card and UPI auto-debit without customer approval stops at Rs 15,000 (RBI, as Razorpay docs state). Above that, there is no UPI, and a card owner approves each renewal.

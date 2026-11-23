@@ -4,6 +4,15 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-11-23 #22: The 3-month option on PROXe Core billing.** (Open)
+- 3 months is paid upfront: Rs 8,999 a month, so Rs 26,997 + 18% GST = Rs 31,856.46, one Razorpay charge, one GST invoice. It renews every 3 months at the same price until cancelled.
+- No "3-month minimum, billed monthly". It adds contracts and collections, not cash.
+- Yearly stays at Rs 7,999 a month (20% off), as Z picked on 22 Nov.
+- These are published term prices, not deal discounts. "Never discount below tier" still holds: no cuts on top of them in a deal or a follow-up.
+- Renewal leak to manage: Rs 31,856 is over the RBI Rs 15,000 auto-debit limit. UPI is not offered for it, and a card owner must approve each renewal from a bank link (sent about 36 hours before, live 72 hours). Tell the payer at checkout; remind admins in the week before.
+- USD stays monthly on Dodo.
+- Measure: 2 of the next new paying clients on 3 months by 15 Dec; no 3-month renewal lost to a missed approval.
+
 **2026-11-23 #21: Owners whose enquiries come to their own WhatsApp number.** (Open)
 - Only the official route: Meta's Coexistence. The owner keeps the WhatsApp Business app on the same number and phone, and PROXe connects to it through the Cloud API.
 - A number on personal WhatsApp switches to the WhatsApp Business app first. Chats can be kept on the same phone.
