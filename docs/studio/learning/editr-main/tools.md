@@ -49,6 +49,12 @@ buy or upgrade.
   `HTMLInputElement.prototype.click`, inject your own input, `file_upload` (≤ 10 MB per call), hand the files over with
   a DataTransfer and dispatch `change`. Over 10 MB: `split -b 9000000`, upload chunks, rebuild `new File([...])` in the
   page, check SHA-256, then hand over.
+- 2026-11-25: the Drive connector's `create_file` (file reference) refuses anything over 10 MB. Shift+U no longer
+  clicks Drive's file input, so the capture above caught nothing. What worked: open the folder, rebuild the file from
+  9 MB chunks as above, then dispatch `dragenter`, `dragover`, `drop` (a `DragEvent` carrying a DataTransfer with the
+  File) on `document.elementFromPoint` in the file list. Confirm with a connector search: `fileSize` must match.
+- 2026-11-25: there is no Google Sheets connector in this setup, so the BCON Video Library sheet row can't be written
+  from here. Add the row to EDITR VIDEO-LIBRARY.md and tell the founder the sheet row is still pending.
 
 ## ARC Studio (sharing understanding with every agent)
 - No ingest secret on the Windows PC, so use the ops API from the logged-in arc.bconclub.com tab:
