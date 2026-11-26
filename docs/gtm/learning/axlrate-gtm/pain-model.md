@@ -1,6 +1,6 @@
 # PROXe sales pain model (VPP + TEMQ loss), for agents and the voice agent
 
-> **Updated:** 2026-11-12, from Axlrate sessions 07 to 10  
+> **Updated:** 2026-11-12, from Axlrate sessions 07 to 11  
 > **Lives in:** ARC Supabase `arc_context`: `sales_pain_model` (this), `gtm_learnings` (method + session notes),
 > `gtm_handoff` (tasks for the GTM agent), `gtm_brief` (offer, rules). Pull from there.  
 > **Use it:** the outbound voice agent, call-prep agents, follow-up writers, trial watchers, case-study writers.  
@@ -49,6 +49,16 @@ Ask in the first conversation, write every number down. It is their loss, never 
   bike, so ~Rs 40,000 a day at stake. "You are losing about 40K a day. PROXe is 10K a month."
 - **Then ask how they feel about it** ("How are you feeling about this number?") and **leave them unsettled.** Do not
   pitch in the same breath. "Let me think about your setup and come back." If they chase us, the pain landed.
+
+## 4b. Outcomes are pain too
+Pain comes from problems they want to solve and from outcomes they want and don't have. Turn both into TEMQ loss in
+their numbers. Outcomes PROXe enables, and the pain behind each:
+- Every lead answered in under a minute, day and night: every day without it, leads wait and some buy elsewhere.
+- Team on the right lead: today the best lead waits behind the loudest one.
+- More bookings from the same ad spend: leads lost before anyone talks to them.
+- The founder's hours back: hours spent replying are hours not spent selling.
+- One place for every channel: leads split across phones and inboxes, nobody sees the whole picture.
+Every message, ad, script and call starts from one problem or outcome, converted into pain. Never from features.
 
 ## 5. Call flow for the outbound voice agent
 1. **One outcome per call, set before dialing.** For a new or warm lead the outcome is their loss numbers and a

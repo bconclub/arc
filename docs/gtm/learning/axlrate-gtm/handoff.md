@@ -55,6 +55,10 @@ Read first, in order: ARC `gtm_brief` and `gtm_plans` (source of truth), then [m
      hires for 15 days to a month.
    - Case studies: call, draft the review from their words, send for approval. Ask before recording.
 
+7. **From session 11 (25 Nov, [session-11.md](session-11.md)):**
+   - Keep two lists, problems we solve and outcomes we enable, each with its pain line. Every outbound message, ad
+     and script starts from one item. Fill them with real customer numbers as they come in.
+
 ## Outbound callers: ready (from PROXe Core, 26 Oct, on Z's go)
 - **Agents** (ElevenLabs, all on the Sanket voice): Intro Cold (`noname`, V4: "Hi, is this {business}?", the opener,
   then "who am I speaking with", goal ~30 s and a callback time for Thanzeel, end reason `callback_requested`);
