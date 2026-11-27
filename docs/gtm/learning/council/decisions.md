@@ -4,6 +4,12 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-11-27 #23: Identity plus background verification API.** (Open)
+- Not building it now. Standing rule: no new products before 10 paying PROXe clients and a team (5 paying as of 16 Nov).
+- India's KYC and background-check API market is already served by licensed players (IDfy, Signzy, HyperVerge, Surepass, AuthBridge). Aadhaar e-KYC needs UIDAI licensing or a licensed partner.
+- If a paying PROXe client asks for verification, resell a licensed vendor's API inside PROXe as an add-on. No standalone product.
+- Revisit at 25 paying PROXe clients. Until then, log every prospect who asks for verification without being prompted.
+
 **2026-11-23 #22: The 3-month option on PROXe Core billing.** (Open)
 - 3 months is paid upfront: Rs 8,999 a month, so Rs 26,997 + 18% GST = Rs 31,856.46, one Razorpay charge, one GST invoice. It renews every 3 months at the same price until cancelled.
 - No "3-month minimum, billed monthly". It adds contracts and collections, not cash.
