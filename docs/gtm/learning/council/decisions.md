@@ -4,6 +4,14 @@ Each line: date, council number, decision. "Open" means not yet confirmed done b
 
 ## Active
 
+**2026-11-27 #24: PROXe Meta form campaign, friction and North India.** (Open)
+- Numbers 18 to 27 Nov (Ads Manager + PROXe database): 86 leads for Rs 5,577 (Rs 65 each). 33 good so far (21 Qualified, 10 Booking Made, 1 High Intent, 1 Closed Won), about Rs 169 per good lead. 16 Closed Lost.
+- Leave the Bangalore and Hyderabad ad sets untouched. They are the control.
+- Build form v3: the current form plus business name, an optional website or Instagram link, "under 50 enquiries a day" split into "under 15" and "15 to 50", and preferred call language.
+- Launch v3 on one new ad set in Hindi-speaking cities (Z picks them) with the 3 Hinglish ads at Rs 500 a day by Mon 30 Nov.
+- Judge at 30 leads or 7 days: cost per good lead under Rs 250, and the share of leads the callers could talk to. If v3 wins, move it to Bangalore and Hyderabad next.
+- Why: the form's enquiry question does not sort leads. 7 of 26 who said "about 100" or "100+" are good, against 26 of 60 who said "under 50". Kannada and Telugu ads produce good leads at the same rate as Hinglish ones (23 of 59 against 10 of 27), so the language problem is on the calling side.
+
 **2026-11-27 #23: Identity plus background verification API.** (Open)
 - Not building it now. Standing rule: no new products before 10 paying PROXe clients and a team (5 paying as of 16 Nov).
 - India's KYC and background-check API market is already served by licensed players (IDfy, Signzy, HyperVerge, Surepass, AuthBridge). Aadhaar e-KYC needs UIDAI licensing or a licensed partner.
